@@ -1,0 +1,339 @@
+import amsoil.core.log
+import amsoil.core.pluginmanager as pm
+from amsoil.core import serviceinterface
+from DelegateBase import DelegateBase
+from HandlerBase import HandlerBase
+from Exceptions import *
+
+sa_logger = amsoil.core.log.getLogger('sav1')
+xmlrpc = pm.getService('xmlrpc')
+
+# Handler for SA APi. This version only handles the Slice service
+class SAv1Handler(HandlerBase):
+    def __init__(self):
+        super(SAv1Handler, self).__init__(sa_logger)
+
+    ## SLICE SERVICE methods
+
+    # This call is unprotected: no checking of credentials
+    # Return version information about this SA including what
+    # services are provided and underlying object model
+    def get_version(self):
+        try:
+            return self._delegate.get_version()
+        except Exception as e:
+            return self._errorReturn(e)
+
+    # This call is protected
+    # Create a slice given provided options and authorized by client_cert
+    # and given credentials
+    def create_slice(self, credentials, options):
+        client_cert = self.requestCertificate()
+        try:
+            self._guard.validate(client_cert, 'create_slice', \
+                                     credentials, options)
+            return self._delegate.create_slice(client_cert, credentials, options)
+        except Exception as e:
+            return self._errorReturn(e)
+
+    # This call is protected
+    # Lookup slices with filters and match criterial given in options
+    # Authorized by client cert and credentials
+    def lookup_slices(self, credentials, options):
+        client_cert = self.requestCertificate()
+        try:
+            self._guard.validate(client_cert, 'lookup_slices', \
+                                     credentials, options)
+            return self._delegate.lookup_slices(client_cert, credentials, options)
+        except Exception as e:
+            return self._errorReturn(e)
+
+    # This call is protected
+    # Update slice with fields specified in given options for given slice
+    # Authorized by client cert and credentials
+    def update_slice(self, slice_urn, credentials, options):
+        client_cert = self.requestCertificate()
+        try:
+            self._guard.validate(client_cert, 'update_slice', \
+                                     credentials, options, \
+                                     {'slice_urn' : slice_urn})
+            return self._delegate.update_slice(client_cert, slice_urn, \
+                                                    credentials, options)
+        except Exception as e:
+            return self._errorReturn(e)
+
+    # This call is protected
+    # Get credentials for given user with respect to given slice
+    # Authorization based on client cert and givencredentiabls
+    def get_credentials(self, slice_urn, credentials, options):
+        client_cert = self.requestCertificate()
+        try:
+            self._guard.validate(client_cert, 'get_credentials', \
+                                     credentials, options, \
+                                     {'slice_urn' : slice_urn})
+            return self._delegate.get_credentials(client_cert, slice_urn, \
+                                                      credentials, options)
+        except Exception as e:
+            return self._errorReturn(e)
+
+    ## SLICE MEMBER SERVICE methods
+    
+    # Modify slice membership, adding, removing and changing roles
+    # of members with respect to given slice
+    # The list of members_to_add, members_to_remove, members_to_modify
+    # are fields in the options directionary
+    # 'members_to_add' : List of {URN : ROLE} dictionaries
+    # 'members_to_remove' : List of URNs
+    # 'members_to_modify' : List of {URN : ROLE} dictionaries
+    def modify_slice_membership(self, slice_urn, 
+                                    credentials, options):
+        client_cert = self.requestCertificate()
+        try:
+            self._guard.validate(client_cert, 'modify_slice_membership', \
+                                     credentials, options, \
+                                     {'slice_urn' : slice_urn})
+            return self._delegate.modify_slice_membership(\
+                client_cert, \
+                    slice_urn,
+                    credentials, options)
+        except Exception as e:
+            return self._errorReturn(e)
+
+    # Lookup members of given slice and their roles within that slice
+    def lookup_slice_members(self, slice_urn, credentials, options):
+        client_cert = self.requestCertificate()
+        try:
+            self._guard.validate(client_cert, 'lookup_slice_members', \
+                                     credentials, options, \
+                                     {'slice_urn' : slice_urn})
+            return self._delegate.lookup_slice_members(client_cert, \
+                                                           slice_urn, \
+                                                           credentials, \
+                                                           options)
+        except Exception as e:
+            return self._errorReturn(e)
+
+    ## SLIVER INFO SERVICE methods
+        
+    # Associate an aggregate as having sliver information in a given 
+    # slice. Expected to be called by an aggregate as an asynchronous 
+    # (not critical-path) part of the resource allocation process.
+    def register_aggregate(self, slice_urn, aggregate_url, credentials, options):
+        client_cert = self.requestCertificate()
+        try:
+            self._guard.validate(client_cert, 'register_aggregate', \
+                                     credentials, options, \
+                                     {'slice_urn' : slice_urn,
+                                      'aggregate_url' : aggregate_url})
+            return self._delegate.register_aggregate(client_cert, \
+                                                         slice_urn, \
+                                                         aggregate_url, \
+                                                         credentials, \
+                                                         options)
+        except Exception as e:
+            return self._errorReturn(e)
+
+    # Dis-associate an aggregate as having sliver information in a given slice
+    # Expected to be called by the aggregate as an asynchronous 
+    # (non-critical path) part of the resource de-allocation process
+    def remove_aggregate(self, slice_urn, aggregate_url, credentials, options):
+        client_cert = self.requestCertificate()
+        try:
+            self._guard.validate(client_cert, 'remove_aggregate', \
+                                     credentials, options, \
+                                     {'slice_urn' : slice_urn,
+                                      'aggregate_url' : aggregate_url})
+            return self._delegate.remove_aggregate(client_cert, \
+                                                       slice_urn, \
+                                                       aggregate_url, \
+                                                       credentials, \
+                                                       options)
+        except Exception as e:
+            return self._errorReturn(e)
+
+    # Provide a list of URLs of all aggregates that have been registered
+    # as having resources allocated with a given slice
+    # NB: This list is not definitive in that the aggregate maynot have 
+    # called register_aggregate call, and that the slivers may no longer
+    # be at that aggregate. But it is provided as a convenience for tools to 
+    # know where to go for sliver information (rather than querying 
+    # every aggregate in the CH)
+    def get_slice_aggregates(self, slice_urn, credentials, options):
+        client_cert = self.requestCertificate()
+        try:
+            self._guard.validate(client_cert, 'get_slice_aggregates', \
+                                     credentials, options, \
+                                     {'slice_urn' : slice_urn})
+            return self._delegate.get_slice_aggregates(client_cert, \
+                                                           slice_urn, \
+                                                           credentials, \
+                                                           options)
+        except Exception as e:
+            return self._errorReturn(e)
+
+    ## PROJECT SERVICE methods
+
+    # Create project with given details in options
+    def create_project(self, credentials, options):
+        client_cert = self.requestCertificate()
+        try:
+            self._guard.validate(client_cert, 'create_project', \
+                                     credentials, options)
+            return self._delegate.create_project(client_cert, \
+                                                     credentials, \
+                                                     options)
+        except Exception as e:
+            return self._errorReturn(e)
+
+
+    # Lookup project detail for porject matching 'match' option
+    # returning fields in 'filter' option
+    def lookup_projects(self, credentials, options):
+        client_cert = self.requestCertificate()
+        try:
+            self._guard.validate(client_cert, 'lookup_projects', \
+                                     credentials, options)
+            return self._delegate.lookup_projects(client_cert, \
+                                                      credentials, \
+                                                      options)
+        except Exception as e:
+            return self._errorReturn(e)
+
+    # Update fields in given project object specified in options
+    def update_project(self, project_urn, credentials, options):
+        client_cert = self.requestCertificate()
+        try:
+            self._guard.validate(client_cert, 'update_project', \
+                                     credentials, options,
+                                 {'project_urn' : project_urn})
+            return self._delegate.update_project(client_cert, \
+                                                     project_urn, \
+                                                     credentials, \
+                                                     options)
+        except Exception as e:
+            return self._errorReturn(e)
+
+        pass
+
+    ## PROJECT MEMBER SERVICE methods
+    
+    # Modify project membership, adding, removing and changing roles
+    # of members with respect to given project
+    # The list of members_to_add, members_to_remove, members_to_modify
+    # are fields in the options directionary
+    # 'members_to_add' : List of {URN : ROLE} dictionaries
+    # 'members_to_remove' : List of URNs
+    # 'members_to_modify' : List of {URN : ROLE} dictionaries
+    def modify_project_membership(self, project_urn, 
+                                      credentials, options):
+        client_cert = self.requestCertificate()
+        try:
+            self._guard.validate(client_cert, 'modify_project_membership', \
+                                     credentials, options, \
+                                     {'project_urn' : project_urn})
+            return self._delegate.modify_project_membership(\
+                client_cert, \
+                    project_urn, \
+                    credentials, options)
+        except Exception as e:
+            return self._errorReturn(e)
+
+    # Lookup members of given project and their roles within that project
+    def lookup_project_members(self, project_urn, credentials, options):
+        client_cert = self.requestCertificate()
+        try:
+            self._guard.validate(client_cert, 'lookup_project_members', \
+                                     credentials, options, \
+                                     {'project_urn' : project_urn})
+            return self._delegate.lookup_project_members(client_cert, \
+                                                           project_urn, \
+                                                           credentials, \
+                                                           options)
+        except Exception as e:
+            return self._errorReturn(e)
+
+
+
+
+# Base class for implementing the SA Slice interface. Must be
+# implemented in a derived class, and that derived class
+# must call setDelegate on the handler
+class SAv1DelegateBase(DelegateBase):
+    
+    ## SLICE SERVICE methods
+
+    def __init__(self):
+        super(SAv1DelegateBase, self).__init__(sa_logger)
+    
+    def get_version(self):
+        raise CHAPIv1NotImplementedError('')
+
+    # This call is protected
+    def create_slice(self, client_cert, credentials, options):
+        raise CHAPIv1NotImplementedError('')
+
+    # This call is protected
+    def lookup_slices(self, client_cert, credentials, options):
+        raise CHAPIv1NotImplementedError('')
+
+    # This call is protected
+    def update_slice(self, client_cert, slice_urn, credentials, options):
+        raise CHAPIv1NotImplementedError('')
+
+    # This call is protected
+    def get_credentials(self, client_cert, slice_urn, credentials, options):
+        raise CHAPIv1NotImplementedError('')
+
+    ## SLICE MEMBER SERVICE methods
+    
+    def modify_slice_membership(self,  \
+                                    client_cert, slice_urn, 
+                                    credentials, options):
+        raise CHAPIv1NotImplementedError('')
+
+    def lookup_slice_members(self, \
+                                 client_cert, slice_urn, credentials, options):
+        raise CHAPIv1NotImplementedError('')
+
+
+    ## SLIVER INFO SERVICE methods
+        
+    def register_aggregate(self, client_cert, \
+                               slice_urn, aggregate_url, credentials, options):
+        raise CHAPIv1NotImplementedError('')
+
+    def remove_aggregate(self, client_cert, \
+                             slice_urn, aggregate_url, credentials, options):
+        raise CHAPIv1NotImplementedError('')
+
+    def get_slice_aggregates(self, client_cert, \
+                           slice_urn, credentials, options):
+        raise CHAPIv1NotImplementedError('')
+
+
+
+    
+    ## PROJECT SERVICE methods
+
+    def create_project(self, client_cert, credentials, options):
+        raise CHAPIv1NotImplementedError('')
+
+    def lookup_projects(self, client_cert, credentials, options):
+        raise CHAPIv1NotImplementedError('')
+
+    def update_project(self, client_cert, project_urn, credentials, options):
+        raise CHAPIv1NotImplementedError('')
+
+    ## PROJECT MEMBER SERVICE methods
+    
+    def modify_project_membership(self,  \
+                                    client_cert, project_urn, 
+                                    credentials, options):
+        raise CHAPIv1NotImplementedError('')
+
+    def lookup_project_members(self, \
+                                 client_cert, project_urn, \
+                                   credentials, options):
+        raise CHAPIv1NotImplementedError('')
+
+

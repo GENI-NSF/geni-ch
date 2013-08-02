@@ -1,0 +1,9 @@
+{
+  "name" : "RM (test) Clearinghouse",
+  "author" : "Tom Rothe",
+  "author-email" : "tom.rothe@eict.de",
+  "version" : 1,
+  "implements" : [],
+  "loads-after" : ["chv1handler"],
+  "requires" : []
+}

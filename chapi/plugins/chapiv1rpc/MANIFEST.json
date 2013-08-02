@@ -1,0 +1,9 @@
+{
+  "name" : "GENI v1 CH/SA/MA API RPC",
+  "author" : "Marshall Brinn",
+  "author-email" : "mbrinn@bbn.com",
+  "version" : 1,
+  "implements" : ["chv1handler", "mav1handler", "sav1handler"],
+  "loads-after" : ["xmlrpc", "config"],
+  "requires" : []
+}
