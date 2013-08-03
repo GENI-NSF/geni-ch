@@ -29,10 +29,17 @@ class SAv1Handler(HandlerBase):
     # and given credentials
     def create_slice(self, credentials, options):
         client_cert = self.requestCertificate()
+        method = 'create_slice'
         try:
-            self._guard.validate(client_cert, 'create_slice', \
-                                     credentials, options)
-            return self._delegate.create_slice(client_cert, credentials, options)
+            self._guard.validate_call(client_cert, method, \
+                                          credentials, options)
+            results = self._delegate.create_slice(client_cert, credentials, options)
+            if results['code'] == NO_ERROR:
+                results_value = results['value']
+                new_resuls_value = self._guard.protect_results(client_cert, method, results_value)
+                results = self._successReturn(new_results_value)
+
+            return results
         except Exception as e:
             return self._errorReturn(e)
 
@@ -41,10 +48,17 @@ class SAv1Handler(HandlerBase):
     # Authorized by client cert and credentials
     def lookup_slices(self, credentials, options):
         client_cert = self.requestCertificate()
+        method = 'lookup_slices'
         try:
-            self._guard.validate(client_cert, 'lookup_slices', \
-                                     credentials, options)
-            return self._delegate.lookup_slices(client_cert, credentials, options)
+            self._guard.validate_call(client_cert, method, \
+                                          credentials, options)
+            results = self._delegate.lookup_slices(client_cert, credentials, options)
+            if results['code'] == NO_ERROR:
+                results_value = results['value']
+                new_resuls_value = self._guard.protect_results(client_cert, method, results_value)
+                results = self._successReturn(new_results_value)
+
+            return results
         except Exception as e:
             return self._errorReturn(e)
 
@@ -53,12 +67,19 @@ class SAv1Handler(HandlerBase):
     # Authorized by client cert and credentials
     def update_slice(self, slice_urn, credentials, options):
         client_cert = self.requestCertificate()
+        method = 'update_slice'
         try:
-            self._guard.validate(client_cert, 'update_slice', \
-                                     credentials, options, \
-                                     {'slice_urn' : slice_urn})
-            return self._delegate.update_slice(client_cert, slice_urn, \
-                                                    credentials, options)
+            self._guard.validate_call(client_cert, method, \
+                                          credentials, options, \
+                                          {'slice_urn' : slice_urn})
+            results = self._delegate.update_slice(client_cert, slice_urn, \
+                                                      credentials, options)
+            if results['code'] == NO_ERROR:
+                results_value = results['value']
+                new_resuls_value = self._guard.protect_results(client_cert, method, results_value)
+                results = self._successReturn(new_results_value)
+
+            return results
         except Exception as e:
             return self._errorReturn(e)
 
@@ -67,12 +88,19 @@ class SAv1Handler(HandlerBase):
     # Authorization based on client cert and givencredentiabls
     def get_credentials(self, slice_urn, credentials, options):
         client_cert = self.requestCertificate()
+        method = 'get_credentials'
         try:
-            self._guard.validate(client_cert, 'get_credentials', \
-                                     credentials, options, \
-                                     {'slice_urn' : slice_urn})
-            return self._delegate.get_credentials(client_cert, slice_urn, \
-                                                      credentials, options)
+            self._guard.validate_call(client_cert, method, \
+                                          credentials, options, \
+                                          {'slice_urn' : slice_urn})
+            results = self._delegate.get_credentials(client_cert, slice_urn, \
+                                                         credentials, options)
+            if results['code'] == NO_ERROR:
+                results_value = results['value']
+                new_resuls_value = self._guard.protect_results(client_cert, method, results_value)
+                results = self._successReturn(new_results_value)
+
+            return results
         except Exception as e:
             return self._errorReturn(e)
 
@@ -88,28 +116,42 @@ class SAv1Handler(HandlerBase):
     def modify_slice_membership(self, slice_urn, 
                                     credentials, options):
         client_cert = self.requestCertificate()
+        method = 'modify_slice_membership'
         try:
-            self._guard.validate(client_cert, 'modify_slice_membership', \
-                                     credentials, options, \
-                                     {'slice_urn' : slice_urn})
-            return self._delegate.modify_slice_membership(\
+            self._guard.validate_call(client_cert, method, \
+                                          credentials, options, \
+                                          {'slice_urn' : slice_urn})
+            results = self._delegate.modify_slice_membership(\
                 client_cert, \
-                    slice_urn,
+                    slice_urn, \
                     credentials, options)
+            if results['code'] == NO_ERROR:
+                results_value = results['value']
+                new_resuls_value = self._guard.protect_results(client_cert, method, results_value)
+                results = self._successReturn(new_results_value)
+
+            return results
         except Exception as e:
             return self._errorReturn(e)
 
     # Lookup members of given slice and their roles within that slice
     def lookup_slice_members(self, slice_urn, credentials, options):
         client_cert = self.requestCertificate()
+        method = 'lookup_slice_members'
         try:
-            self._guard.validate(client_cert, 'lookup_slice_members', \
-                                     credentials, options, \
-                                     {'slice_urn' : slice_urn})
-            return self._delegate.lookup_slice_members(client_cert, \
-                                                           slice_urn, \
-                                                           credentials, \
-                                                           options)
+            self._guard.validate_call(client_cert, method, \
+                                          credentials, options, \
+                                          {'slice_urn' : slice_urn})
+            results = self._delegate.lookup_slice_members(client_cert, \
+                                                              slice_urn, \
+                                                              credentials, \
+                                                              options)
+            if results['code'] == NO_ERROR:
+                results_value = results['value']
+                new_resuls_value = self._guard.protect_results(client_cert, method, results_value)
+                results = self._successReturn(new_results_value)
+
+            return results
         except Exception as e:
             return self._errorReturn(e)
 
@@ -120,16 +162,23 @@ class SAv1Handler(HandlerBase):
     # (not critical-path) part of the resource allocation process.
     def register_aggregate(self, slice_urn, aggregate_url, credentials, options):
         client_cert = self.requestCertificate()
+        method = 'register_aggregate'
         try:
-            self._guard.validate(client_cert, 'register_aggregate', \
-                                     credentials, options, \
-                                     {'slice_urn' : slice_urn,
-                                      'aggregate_url' : aggregate_url})
-            return self._delegate.register_aggregate(client_cert, \
-                                                         slice_urn, \
-                                                         aggregate_url, \
-                                                         credentials, \
-                                                         options)
+            self._guard.validate_call(client_cert, method, \
+                                          credentials, options, \
+                                          {'slice_urn' : slice_urn,
+                                           'aggregate_url' : aggregate_url})
+            results = self._delegate.register_aggregate(client_cert, \
+                                                            slice_urn, \
+                                                            aggregate_url, \
+                                                            credentials, \
+                                                            options)
+            if results['code'] == NO_ERROR:
+                results_value = results['value']
+                new_resuls_value = self._guard.protect_results(client_cert, method, results_value)
+                results = self._successReturn(new_results_value)
+
+            return results
         except Exception as e:
             return self._errorReturn(e)
 
@@ -138,16 +187,23 @@ class SAv1Handler(HandlerBase):
     # (non-critical path) part of the resource de-allocation process
     def remove_aggregate(self, slice_urn, aggregate_url, credentials, options):
         client_cert = self.requestCertificate()
+        method = 'remove_aggregate'
         try:
-            self._guard.validate(client_cert, 'remove_aggregate', \
-                                     credentials, options, \
-                                     {'slice_urn' : slice_urn,
-                                      'aggregate_url' : aggregate_url})
-            return self._delegate.remove_aggregate(client_cert, \
-                                                       slice_urn, \
-                                                       aggregate_url, \
-                                                       credentials, \
-                                                       options)
+            self._guard.validate_call(client_cert, method, \
+                                          credentials, options, \
+                                          {'slice_urn' : slice_urn,
+                                           'aggregate_url' : aggregate_url})
+            results = self._delegate.remove_aggregate(client_cert, \
+                                                          slice_urn, \
+                                                          aggregate_url, \
+                                                          credentials, \
+                                                          options)
+            if results['code'] == NO_ERROR:
+                results_value = results['value']
+                new_resuls_value = self._guard.protect_results(client_cert, method, results_value)
+                results = self._successReturn(new_results_value)
+
+            return results
         except Exception as e:
             return self._errorReturn(e)
 
@@ -160,14 +216,21 @@ class SAv1Handler(HandlerBase):
     # every aggregate in the CH)
     def get_slice_aggregates(self, slice_urn, credentials, options):
         client_cert = self.requestCertificate()
+        method = 'get_slice_aggregates'
         try:
-            self._guard.validate(client_cert, 'get_slice_aggregates', \
-                                     credentials, options, \
-                                     {'slice_urn' : slice_urn})
-            return self._delegate.get_slice_aggregates(client_cert, \
-                                                           slice_urn, \
-                                                           credentials, \
-                                                           options)
+            self._guard.validate_call(client_cert, method, \
+                                          credentials, options, \
+                                          {'slice_urn' : slice_urn})
+            results = self._delegate.get_slice_aggregates(client_cert, \
+                                                              slice_urn, \
+                                                              credentials, \
+                                                              options)
+            if results['code'] == NO_ERROR:
+                results_value = results['value']
+                new_resuls_value = self._guard.protect_results(client_cert, method, results_value)
+                results = self._successReturn(new_results_value)
+
+            return results
         except Exception as e:
             return self._errorReturn(e)
 
@@ -176,12 +239,19 @@ class SAv1Handler(HandlerBase):
     # Create project with given details in options
     def create_project(self, credentials, options):
         client_cert = self.requestCertificate()
+        method = 'create_project'
         try:
-            self._guard.validate(client_cert, 'create_project', \
-                                     credentials, options)
-            return self._delegate.create_project(client_cert, \
-                                                     credentials, \
-                                                     options)
+            self._guard.validate_call(client_cert, method, \
+                                          credentials, options)
+            results = self._delegate.create_project(client_cert, \
+                                                        credentials, \
+                                                        options)
+            if results['code'] == NO_ERROR:
+                results_value = results['value']
+                new_resuls_value = self._guard.protect_results(client_cert, method, results_value)
+                results = self._successReturn(new_results_value)
+
+            return results
         except Exception as e:
             return self._errorReturn(e)
 
@@ -190,26 +260,40 @@ class SAv1Handler(HandlerBase):
     # returning fields in 'filter' option
     def lookup_projects(self, credentials, options):
         client_cert = self.requestCertificate()
+        method = 'lookup_projects'
         try:
-            self._guard.validate(client_cert, 'lookup_projects', \
-                                     credentials, options)
-            return self._delegate.lookup_projects(client_cert, \
-                                                      credentials, \
-                                                      options)
+            self._guard.validate_call(client_cert, method, \
+                                          credentials, options)
+            results = self._delegate.lookup_projects(client_cert, \
+                                                         credentials, \
+                                                         options)
+            if results['code'] == NO_ERROR:
+                results_value = results['value']
+                new_resuls_value = self._guard.protect_results(client_cert, method, results_value)
+                results = self._successReturn(new_results_value)
+
+            return results
         except Exception as e:
             return self._errorReturn(e)
 
     # Update fields in given project object specified in options
     def update_project(self, project_urn, credentials, options):
         client_cert = self.requestCertificate()
+        method = 'update_project'
         try:
-            self._guard.validate(client_cert, 'update_project', \
-                                     credentials, options,
-                                 {'project_urn' : project_urn})
-            return self._delegate.update_project(client_cert, \
-                                                     project_urn, \
-                                                     credentials, \
-                                                     options)
+            self._guard.validate_call(client_cert, method, \
+                                          credentials, options,
+                                      {'project_urn' : project_urn})
+            results = self._delegate.update_project(client_cert, \
+                                                        project_urn, \
+                                                        credentials, \
+                                                        options)
+            if results['code'] == NO_ERROR:
+                results_value = results['value']
+                new_resuls_value = self._guard.protect_results(client_cert, method, results_value)
+                results = self._successReturn(new_results_value)
+
+            return results
         except Exception as e:
             return self._errorReturn(e)
 
@@ -227,32 +311,44 @@ class SAv1Handler(HandlerBase):
     def modify_project_membership(self, project_urn, 
                                       credentials, options):
         client_cert = self.requestCertificate()
+        method = 'modify_project_membership'
         try:
-            self._guard.validate(client_cert, 'modify_project_membership', \
-                                     credentials, options, \
-                                     {'project_urn' : project_urn})
-            return self._delegate.modify_project_membership(\
+            self._guard.validate_call(client_cert, method, \
+                                          credentials, options, \
+                                          {'project_urn' : project_urn})
+            results = self._delegate.modify_project_membership(\
                 client_cert, \
                     project_urn, \
                     credentials, options)
+            if results['code'] == NO_ERROR:
+                results_value = results['value']
+                new_resuls_value = self._guard.protect_results(client_cert, method, results_value)
+                results = self._successReturn(new_results_value)
+
+            return results
         except Exception as e:
             return self._errorReturn(e)
 
     # Lookup members of given project and their roles within that project
     def lookup_project_members(self, project_urn, credentials, options):
         client_cert = self.requestCertificate()
+        method = 'lookup_project_members'
         try:
-            self._guard.validate(client_cert, 'lookup_project_members', \
-                                     credentials, options, \
-                                     {'project_urn' : project_urn})
-            return self._delegate.lookup_project_members(client_cert, \
-                                                           project_urn, \
-                                                           credentials, \
-                                                           options)
+            self._guard.validate_call(client_cert, method, \
+                                          credentials, options, \
+                                          {'project_urn' : project_urn})
+            results = self._delegate.lookup_project_members(client_cert, \
+                                                                project_urn, \
+                                                                credentials, \
+                                                                options)
+            if results['code'] == NO_ERROR:
+                results_value = results['value']
+                new_resuls_value = self._guard.protect_results(client_cert, method, results_value)
+                results = self._successReturn(new_results_value)
+
+            return results
         except Exception as e:
             return self._errorReturn(e)
-
-
 
 
 # Base class for implementing the SA Slice interface. Must be
