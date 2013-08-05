@@ -1,7 +1,7 @@
 #!/bin/bash
 base=$PWD
 AMSOIL=$base/AMsoil
-CHAPI=$base/chapi
+CHAPI=$base
 
 if [ -d $AMSOIL ]; then
     echo "updating $AMSOIL"
@@ -15,16 +15,15 @@ else
 fi
 cd $base
 
-# link in chapi bits
-if [ ! -d $AMSOIL/src/plugins/chrm ]; then
-    ln -s $CHAPI/plugins/chrm $AMSOIL/src/plugins/chrm
-fi
-if [ ! -d $AMSOIL/src/plugins/marm ]; then
-    ln -s $CHAPI/plugins/marm $AMSOIL/src/plugins/marm
-fi
-if [ ! -d $AMSOIL/src/plugins/chapiv1rpc ]; then
-    ln -s $CHAPI/plugins/chapiv1rpc $AMSOIL/src/plugins/chapiv1rpc
-fi
+rm -f $AMSOIL/src/plugins/.gitignore
+# hold off on marm for now
+for pl in chrm chapiv1rpc
+do
+    if [ ! -d $AMSOIL/src/plugins/$pl ]; then
+	ln -s $CHAPI/plugins/$pl $AMSOIL/src/plugins/$pl
+    fi
+    echo $pl >> $AMSOIL/src/plugins/.gitignore
+done
 
 if [ ! -d $AMSOIL/src/tools ]; then
     ln -s $CHAPI/tools $AMSOIL/src/tools
