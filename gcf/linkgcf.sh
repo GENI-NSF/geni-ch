@@ -15,5 +15,6 @@ fi
 cd $base
 
 rm -rf $GCF/src/omnilib/frameworks/.gitignore
-ln -s src/omnilib/frameworks/framework_chapi.py $GCF/src/omnilib/frameworks/framework_chapi.py 
+rm -f $GCF/src/omnilib/frameworks/framework_chapi.py 
+ln -s $base/src/omnilib/frameworks/framework_chapi.py $GCF/src/omnilib/frameworks/framework_chapi.py 
 echo framework_chapi.py >> $GCF/src/omnilib/frameworks/.gitignore
