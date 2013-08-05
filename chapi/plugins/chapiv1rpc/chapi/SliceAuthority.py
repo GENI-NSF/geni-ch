@@ -36,7 +36,7 @@ class SAv1Handler(HandlerBase):
             results = self._delegate.create_slice(client_cert, credentials, options)
             if results['code'] == NO_ERROR:
                 results_value = results['value']
-                new_resuls_value = self._guard.protect_results(client_cert, method, results_value)
+                new_results_value = self._guard.protect_results(client_cert, method, results_value)
                 results = self._successReturn(new_results_value)
 
             return results
@@ -51,11 +51,11 @@ class SAv1Handler(HandlerBase):
         method = 'lookup_slices'
         try:
             self._guard.validate_call(client_cert, method, \
-                                          credentials, options)
+                                          credentials, options, {})
             results = self._delegate.lookup_slices(client_cert, credentials, options)
             if results['code'] == NO_ERROR:
                 results_value = results['value']
-                new_resuls_value = self._guard.protect_results(client_cert, method, results_value)
+                new_results_value = self._guard.protect_results(client_cert, method, results_value)
                 results = self._successReturn(new_results_value)
 
             return results
@@ -76,7 +76,7 @@ class SAv1Handler(HandlerBase):
                                                       credentials, options)
             if results['code'] == NO_ERROR:
                 results_value = results['value']
-                new_resuls_value = self._guard.protect_results(client_cert, method, results_value)
+                new_results_value = self._guard.protect_results(client_cert, method, results_value)
                 results = self._successReturn(new_results_value)
 
             return results
@@ -97,7 +97,7 @@ class SAv1Handler(HandlerBase):
                                                          credentials, options)
             if results['code'] == NO_ERROR:
                 results_value = results['value']
-                new_resuls_value = self._guard.protect_results(client_cert, method, results_value)
+                new_results_value = self._guard.protect_results(client_cert, method, results_value)
                 results = self._successReturn(new_results_value)
 
             return results
@@ -127,7 +127,7 @@ class SAv1Handler(HandlerBase):
                     credentials, options)
             if results['code'] == NO_ERROR:
                 results_value = results['value']
-                new_resuls_value = self._guard.protect_results(client_cert, method, results_value)
+                new_results_value = self._guard.protect_results(client_cert, method, results_value)
                 results = self._successReturn(new_results_value)
 
             return results
@@ -148,7 +148,7 @@ class SAv1Handler(HandlerBase):
                                                               options)
             if results['code'] == NO_ERROR:
                 results_value = results['value']
-                new_resuls_value = self._guard.protect_results(client_cert, method, results_value)
+                new_results_value = self._guard.protect_results(client_cert, method, results_value)
                 results = self._successReturn(new_results_value)
 
             return results
@@ -175,7 +175,7 @@ class SAv1Handler(HandlerBase):
                                                             options)
             if results['code'] == NO_ERROR:
                 results_value = results['value']
-                new_resuls_value = self._guard.protect_results(client_cert, method, results_value)
+                new_results_value = self._guard.protect_results(client_cert, method, results_value)
                 results = self._successReturn(new_results_value)
 
             return results
@@ -200,7 +200,7 @@ class SAv1Handler(HandlerBase):
                                                           options)
             if results['code'] == NO_ERROR:
                 results_value = results['value']
-                new_resuls_value = self._guard.protect_results(client_cert, method, results_value)
+                new_results_value = self._guard.protect_results(client_cert, method, results_value)
                 results = self._successReturn(new_results_value)
 
             return results
@@ -227,7 +227,7 @@ class SAv1Handler(HandlerBase):
                                                               options)
             if results['code'] == NO_ERROR:
                 results_value = results['value']
-                new_resuls_value = self._guard.protect_results(client_cert, method, results_value)
+                new_results_value = self._guard.protect_results(client_cert, method, results_value)
                 results = self._successReturn(new_results_value)
 
             return results
@@ -248,7 +248,7 @@ class SAv1Handler(HandlerBase):
                                                         options)
             if results['code'] == NO_ERROR:
                 results_value = results['value']
-                new_resuls_value = self._guard.protect_results(client_cert, method, results_value)
+                new_results_value = self._guard.protect_results(client_cert, method, results_value)
                 results = self._successReturn(new_results_value)
 
             return results
@@ -269,7 +269,7 @@ class SAv1Handler(HandlerBase):
                                                          options)
             if results['code'] == NO_ERROR:
                 results_value = results['value']
-                new_resuls_value = self._guard.protect_results(client_cert, method, results_value)
+                new_results_value = self._guard.protect_results(client_cert, method, results_value)
                 results = self._successReturn(new_results_value)
 
             return results
@@ -290,7 +290,7 @@ class SAv1Handler(HandlerBase):
                                                         options)
             if results['code'] == NO_ERROR:
                 results_value = results['value']
-                new_resuls_value = self._guard.protect_results(client_cert, method, results_value)
+                new_results_value = self._guard.protect_results(client_cert, method, results_value)
                 results = self._successReturn(new_results_value)
 
             return results
@@ -322,7 +322,7 @@ class SAv1Handler(HandlerBase):
                     credentials, options)
             if results['code'] == NO_ERROR:
                 results_value = results['value']
-                new_resuls_value = self._guard.protect_results(client_cert, method, results_value)
+                new_results_value = self._guard.protect_results(client_cert, method, results_value)
                 results = self._successReturn(new_results_value)
 
             return results
@@ -343,7 +343,7 @@ class SAv1Handler(HandlerBase):
                                                                 options)
             if results['code'] == NO_ERROR:
                 results_value = results['value']
-                new_resuls_value = self._guard.protect_results(client_cert, method, results_value)
+                new_results_value = self._guard.protect_results(client_cert, method, results_value)
                 results = self._successReturn(new_results_value)
 
             return results

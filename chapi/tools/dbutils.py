@@ -1,3 +1,6 @@
+from chapi.Exceptions import *
+import types
+
 # A set of utilities for dealing with SQL alchemy as the database backend
 # Convert between external (in get_version) and internal (in database) field names
 # Support query and filter clauses
@@ -30,7 +33,10 @@ def add_filters(query, match_criteria, table, mapping):
         internal_match_field = convert_to_internal(external_match_field, mapping)
         match_value = match_criterion[external_match_field]
         column = table.c[internal_match_field]
-        query = query.filter(column == match_value)
+        if isinstance(match_value, types.ListType):
+            query = query.filter(column.in_(match_value))
+        else:
+            query = query.filter(column == match_value)
     return query
 
 # Construct a result row {external_field : value, external_field : value} 
@@ -39,7 +45,11 @@ def construct_result_row(row, columns, mapping):
     result_row = {}
     for column in columns:
         internal_name = convert_to_internal(column, mapping)
-        column_value = eval("row.%s" % internal_name)
+        print "IN = " + str(internal_name) + " " + str(type(internal_name))
+        if isinstance(internal_name, types.FunctionType):
+            column_value = internal_name(row)
+        else:
+            column_value = eval("row.%s" % internal_name)
         result_row[column] = column_value
     return result_row
 
