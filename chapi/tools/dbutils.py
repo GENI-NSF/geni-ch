@@ -45,7 +45,7 @@ def construct_result_row(row, columns, mapping):
     result_row = {}
     for column in columns:
         internal_name = convert_to_internal(column, mapping)
-        print "IN = " + str(internal_name) + " " + str(type(internal_name))
+#        print "IN = " + str(internal_name) + " " + str(type(internal_name))
         if isinstance(internal_name, types.FunctionType):
             column_value = internal_name(row)
         else:

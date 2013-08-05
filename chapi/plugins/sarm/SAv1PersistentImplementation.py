@@ -71,7 +71,13 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
 
 
         self.SLICE_TABLE = Table('sa_slice', self.metadata, autoload=True)
+        self.SLICE_MEMBER_TABLE = \
+            Table('sa_slice_member', self.metadata, autoload=True)
         self.PROJECT_TABLE = Table('pa_project', self.metadata, autoload=True)
+        self.PROJECT_MEMBER_TABLE = \
+            Table('pa_project_member', self.metadata, autoload=True)
+        self.MEMBER_ATTRIBUTE_TABLE = \
+            Table('ma_member_attribute', self.metadata, autoload=True)
 
     def get_version(self):
         version_info = {"VERSION" : self.version_number, 
@@ -88,7 +94,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         q = session.query(self.SLICE_TABLE, self.PROJECT_TABLE.c.project_id, self.PROJECT_TABLE.c.project_name)
         q = q.filter(self.SLICE_TABLE.c.project_id == self.PROJECT_TABLE.c.project_id)
         q = add_filters(q, match_criteria, self.SLICE_TABLE, self.field_mapping)
-        print "Q = " + str(q)
+#        print "Q = " + str(q)
         rows = q.all()
         session.close()
 
@@ -100,7 +106,26 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
 
     def lookup_slice_members(self, \
                                  client_cert, slice_urn, credentials, options):
-        return self._successReturn([])
+
+        session = self.session_class()
+        q = session.query(self.SLICE_MEMBER_TABLE, 
+                          self.SLICE_TABLE.c.slice_urn,
+                          self.MEMBER_ATTRIBUTE_TABLE.c.value)
+        q = q.filter(self.SLICE_TABLE.c.expired == 'f')
+        q = q.filter(self.SLICE_TABLE.c.slice_urn == slice_urn)
+        q = q.filter(self.SLICE_MEMBER_TABLE.c.slice_id == self.SLICE_TABLE.c.slice_id)
+        q = q.filter(self.MEMBER_ATTRIBUTE_TABLE.c.name=='urn')
+        q = q.filter(self.SLICE_MEMBER_TABLE.c.member_id == self.MEMBER_ATTRIBUTE_TABLE.c.member_id)
+
+#        print "Q = " + str(q)
+        rows = q.all()
+
+        members = []
+        for row in rows:
+            member = {"SLICE_ROLE" : row.role, "SLICE_MEMBER_URN": row.value}
+            members.append(member)
+
+        return self._successReturn(members)
 
 
 
