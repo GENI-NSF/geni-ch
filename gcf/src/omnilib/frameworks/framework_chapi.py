@@ -121,6 +121,7 @@ class Framework(Framework_Base):
             userurn = URN(auth, "user", user).urn_string()
 
         # TODO: sa.lookup_slices (username), then ma.lookup_public/private_member_info 
+        # TODO: can we filter lookup_slices with username directly, or do we need to go back to MA?
 
         # invoke ListMySlices(urn)
         (slices, message) = _do_ssl(self, None, ("List Slices for %s at CHAPI SA %s" % (user, self.config['ch'])), 
