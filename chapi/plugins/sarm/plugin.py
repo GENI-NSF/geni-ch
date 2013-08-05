@@ -12,6 +12,8 @@ def setup():
     config.install("chrm.authority", "ch-mb.gpolab.bbn.com", \
                        "name of CH/SA/MA authority")
 
+    config.install("flask.debug.client_cert_file", "/home/mbrinn/.gcf/mbrinn-cert.pem", "Debug client cert file")
+
     delegate = SAv1PersistentImplementation()
     guard = SAv1Guard()
     handler = pm.getService('sav1handler')
