@@ -206,7 +206,9 @@ type=chapi
 authority=geni:gpo:gcf
 
 # Where the gcf-ch server is listening
-ch=https://localhost:8001
+ch=https://localhost:8001/CH
+am=https://localhost:8001/AM
+sa=https://localhost:8001/SA
 
 cert=~/.gcf/alice-cert.pem
 key=~/.gcf/alice-key.pem

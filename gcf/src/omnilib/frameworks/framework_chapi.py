@@ -48,8 +48,13 @@ class Framework(Framework_Base):
             config['verbose'] = False
         self.config = config
         
-        self.ch = self.make_client(config['ch'], self.key, self.cert,
+        self.ch = self.make_client(config['ch']+'/CH', self.key, self.cert,
                                    verbose=config['verbose'])
+        self.ma = self.make_client(config['ch']+'/MA', self.key, self.cert,
+                                   verbose=config['verbose'])
+        self.sa = self.make_client(config['ch']+'/SA', self.key, self.cert,
+                                   verbose=config['verbose'])
+
         self.cert_string = file(config['cert'],'r').read()
         self.user_cred = self.init_user_cred( opts )
         self.logger = config['logger']
@@ -57,35 +62,44 @@ class Framework(Framework_Base):
     def get_user_cred(self):
         message = ""
         if self.user_cred == None:
-            self.logger.debug("Getting user credential from CHAPI CH %s", self.config['ch'])
-            (self.user_cred, message) = _do_ssl(self, None, ("lookup public member info on CHAPI CH %s" % self.config['ch']), self.ch.lookup_public_member_info, self.cert_string)
+            self.logger.debug("Getting user credential from CHAPI MA %s", self.config['ch'])
+            # TODO: supply empty filter/query critera now. Should we do getversion so that we can filter on nothing and query on *?
+            (self.user_cred, message) = _do_ssl(self, None, ("lookup public member info on CHAPI CH %s" % self.config['ch']),
+                                                self.ma.lookup_public_member_info, 
+                                                self.cert_string,
+                                                {'match':{'USER_URN':[]}})
 
         return self.user_cred, message
     
     def get_slice_cred(self, urn):
-        (cred, message) = _do_ssl(self, None, ("Create slice %s on CHAPI CH %s" % (urn, self.config['ch'])), self.ch.CreateSlice, urn)
+        scred = '' #TODO: where do we get the cred to pass in??
+        (cred, message) = _do_ssl(self, None, ("Get slice credentials  %s on CHAPI SA %s" % (urn, self.config['ch'])),
+                                  self.sa.lookup_slices,
+                                  scred,
+                                  {'match':{'SLICE_URN':[urn]}})
         # FIXME: use any message?
         _ = message #Appease eclipse
         return cred
     
     def create_slice(self, urn):    
-        return self.get_slice_cred(urn)
-    
-    def delete_slice(self, urn):
-        (bool, message) = _do_ssl(self, None, ("Delete Slice %s on CHAPI CH %s" % (urn, self.config['ch'])), self.ch.DeleteSlice, urn)
+        (cred, message) = _do_ssl(self, None, ("Create slice %s on CHAPI SA %s" % (urn, self.config['ch'])), self.sa.create_slice, urn)
         # FIXME: use any message?
         _ = message #Appease eclipse
-        return bool
+        return cred
+    
+    def delete_slice(self, urn):
+        self.logger.error("CHAPI SA does not allow delete_slice")
+        return False
      
     def list_aggregates(self):
-        (sites, message) = _do_ssl(self, None, ("List Aggregates at CHAPI CH %s" % self.config['ch']), self.ch.ListAggregates)
-        if sites is None:
-            # FIXME: use any message?
-            _ = message #Appease eclipse
-            sites = []
-        aggs = {}
-        for (urn, url) in sites:
-            aggs[urn] = url
+        # TODO: list of field names from getVersion - should we get all or assume we have URN and URL
+        (res, message) = _do_ssl(self, None, ("List Aggregates at CHAPI CH %s" % self.config['ch']), 
+                                 self.ch.get_aggregates, ['SERVICE_URN', 'SERVICE_URL'])
+
+        aggs = dict()
+        if res['value'] is not None:
+            for (urn, url) in res['value']:
+                aggs[urn] = url
         
         return aggs
 
@@ -106,8 +120,11 @@ class Framework(Framework_Base):
             auth = self.config['authority']
             userurn = URN(auth, "user", user).urn_string()
 
+        # TODO: sa.lookup_slices (username), then ma.lookup_public/private_member_info 
+
         # invoke ListMySlices(urn)
-        (slices, message) = _do_ssl(self, None, ("List Slices for %s at CHAPI CH %s" % (user, self.config['ch'])), self.ch.ListMySlices, userurn)
+        (slices, message) = _do_ssl(self, None, ("List Slices for %s at CHAPI SA %s" % (user, self.config['ch'])), 
+                                    self.sa.ListMySlices, userurn)
         # FIXME: use any message?
         _ = message #Appease eclipse
 
@@ -154,7 +171,9 @@ class Framework(Framework_Base):
         """See framework_base for doc.
         """
         expiration = expiration_dt.isoformat()
-        (bool, message) = _do_ssl(self, None, ("Renew slice %s on CHAPI CH %s until %s" % (urn, self.config['ch'], expiration_dt)), self.ch.RenewSlice, urn, expiration)
+        cred = self.get_slice_cred(urn)
+        (bool, message) = _do_ssl(self, None, ("Renew slice %s on CHAPI SA %s until %s" % (urn, self.config['ch'], expiration_dt)), 
+                                  self.sa.update_slice, urn, cred, {'SLICE_EXPIRATION':expiration})
         if bool:
             return expiration_dt
         else:
