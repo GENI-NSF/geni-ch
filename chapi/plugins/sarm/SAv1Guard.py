@@ -2,6 +2,7 @@ from sqlalchemy import *
 from sqlalchemy.orm import sessionmaker
 from chapi.GuardBase import GuardBase
 from chapi.Exceptions import *
+import sfa.trust.certificate;
 import amsoil.core.pluginmanager as pm
 from ABAC import *
 from ABACManager import ABACManager
@@ -34,6 +35,20 @@ class SAv1InvocationGuard:
         self.authorize_call(client_cert, credentials, options, args)
 
 # Some helper methods
+
+def extract_user_urn(user_urn):
+    client_cert_object = \
+        sfa.trust.certificate.Certificate(string=client_cert)
+    user_urn = None
+    identifiers = client_cert_object.get_extension('subjectAltName')
+    identifier_parts = identifiers.split(',')
+    for identifier in identifier_parts:
+        identifier = identifier.strip()
+        if identifier.startswith('URI:urn:publicid'):
+            user_urn = identifier[4:]
+            break
+    return user_urn
+
 def lookup_project_name_for_slice(slice_urn):
     parts = slice_urn.split("+")
     authority = parts[1]
@@ -108,7 +123,38 @@ class LookupSlicesInvocationGuard(SAv1InvocationGuard):
         
 class LookupSliceMembersInvocationGuard(SAv1InvocationGuard): 
     def authorize_call(self, client_cert, credentials, options, args):
-        pass
+        user_urn = extract_user_urn(client_cert)
+        slice_urn = args['slice_urn']
+        slice_project_name = lookup_project_name_for_slice(slice_urn)
+#        print "PROJECT_NAME = " + slice_project_name
+        # Bind entities : C = clien_cert, SA = sa_cert, sa_key
+        certs = {'C' : client_cert}
+        abac_manager = ABACManager("SA", cert_file, key_file, certs)
+
+        # Gather assertions:
+        # MA.is_member_Pi<-C for each project that C is a member of
+        #  MA.is_operator<-C [If C is an operator]
+        user_project_names = lookup_project_names_for_user(user_urn)
+        for user_project_name in user_project_names:
+            assertion = "SA.is_member_%s<-C" % user_project_name
+            abac_manager.register_assertion(str(assertion))
+        is_operator = lookup_operator_privilege(user_urn)
+        if is_operator:
+            abac_manager.register_assertion("SA.is_operator<-C")
+
+        # Try to prove any of:
+        #   MA.is_operator<- C
+        #   MA.is_member_P <- C [For the project of the slice URN]
+        queries = [
+            {'role' : 'is_operator', 'target' : 'C'},
+            {'role' : 'is_member_%s' % slice_project_name, 'target' : 'C'}
+            ]
+        for q in queries:
+            q_role = q['role']
+            q_target = q['target']
+            if abac_manager.query(q_target, q_role):
+                return 
+        raise CHAPIv1AuthorizationError("Caller %s is not allowed to access slice_membership for slice %s" (user_urn, slice_urn))
 
 class LookupSlicesRowGuard(SAv1RowGuard): 
     def permit(self, client_cert, credentials, urn, urn_results):
@@ -120,17 +166,7 @@ class LookupSlicesRowGuard(SAv1RowGuard):
 #        print "KEY = " + key_file
 #        print "CERT = " + cert_file
 #        print "CLIENT_CERT = " + str(client_cert)
-        import sfa.trust.certificate;
-        client_cert_object = \
-            sfa.trust.certificate.Certificate(string=client_cert)
-        user_urn = None
-        identifiers = client_cert_object.get_extension('subjectAltName')
-        identifier_parts = identifiers.split(',')
-        for identifier in identifier_parts:
-            identifier = identifier.strip()
-            if identifier.startswith('URI:urn:publicid'):
-                user_urn = identifier[4:]
-                break
+        user_urn = extract_user_urn(client_cert)
         if user_urn == None:
             raise CHAPIv1AuthorizationError("Certificate has no subjectAltName publicid URN")
 
@@ -138,9 +174,9 @@ class LookupSlicesRowGuard(SAv1RowGuard):
         certs = {'C' : client_cert}
         abac_manager = ABACManager("SA", cert_file, key_file, certs)
 
-        # Gather credentials:
+        # Gather assertions:
         #   MA.is_operator<- C [If C is an operator]
-        #   MA.is_member_Pi<-C [For each project that C is a member of
+        #   MA.is_member_Pi<-C [For each project that C is a member of]
         user_project_names = lookup_project_names_for_user(user_urn)
         for user_project_name in user_project_names:
             assertion = "SA.is_member_%s<-C" % user_project_name
