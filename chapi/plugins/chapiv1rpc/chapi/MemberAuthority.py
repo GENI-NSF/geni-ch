@@ -36,12 +36,21 @@ class MAv1Handler(HandlerBase):
     # Authorized by client cert and credentials
     def lookup_private_member_info(self, credentials, options):
         client_cert = self.requestCertificate()
+        method = 'lookup_private_member_info'
         try:
-            self._guard.validate(client_cert, 'lookup_private_member_info', \
-                                     credentials, options)
-            return self._delegate.lookup_private_member_info(client_cert, \
-                                                                 credentials, \
-                                                                 options)
+            self._guard.validate_call(client_cert, method, \
+                                          credentials, options)
+            results = self._delegate.lookup_private_member_info(client_cert, \
+                                                                    credentials, \
+                                                                    options)
+
+            if results['code'] == NO_ERROR:
+                results_value = results['value']
+                new_results_value = self._guard.protect_results(client_cert, method, results_value)
+                results = self._successReturn(new_results_value)
+
+            return results
+
         except Exception as e:
             return self._errorReturn(e)
 
@@ -51,12 +60,20 @@ class MAv1Handler(HandlerBase):
     # Authorized by client cert and credentials
     def lookup_identifying_member_info(self, credentials, options):
         client_cert = self.requestCertificate()
-        self._guard.validate(client_cert, 'lookup_identifying_member_info', \
-                                 credentials, options)
+        method = 'lookup_identifying_member_info'
         try:
-            return self._delegate.lookup_identifying_member_info(client_cert, \
-                                                                     credentials, \
-                                                                     options)
+            self._guard.validate_call(client_cert, method, \
+                                          credentials, options)
+            results = self._delegate.lookup_identifying_member_info(client_cert, \
+                                                                        credentials, \
+                                                                        options)
+            if results['code'] == NO_ERROR:
+                results_value = results['value']
+                new_results_value = self._guard.protect_results(client_cert, method, results_value)
+                results = self._successReturn(new_results_value)
+
+            return results
+
         except Exception as e:
             return self._errorReturn(e)
 
@@ -65,12 +82,19 @@ class MAv1Handler(HandlerBase):
     # Authorized by client cert and credentials
     def update_member_info(self, member_urn, credentials, options):
         client_cert = self.requestCertificate()
+        method = 'update_member_info'
         try:
-            self._guard.validate(client_cert, 'update_member_info', \
-                                     credentials, options, \
-                                 {'member_urn' : member_urn})
-            return self._delegate.update_member_info(client_cert, member_urn, \
-                                                         credentials, options)
+            self._guard.validate_call(client_cert, method,
+                                          credentials, options, \
+                                          {'member_urn' : member_urn})
+            results = self._delegate.update_member_info(client_cert, member_urn, \
+                                                            credentials, options)
+            if results['code'] == NO_ERROR:
+                results_value = results['value']
+                new_results_value = self._guard.protect_results(client_cert, method, results_value)
+                results = self._successReturn(new_results_value)
+
+            return results
         except Exception as e:
             return self._errorReturn(e)
 

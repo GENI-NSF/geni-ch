@@ -56,9 +56,9 @@ class DelegateBase(object):
         # do some logging
         self.logger.error(e)
         self.logger.error(traceback.format_exc())
-        return { 'geni_api' : 3, 'code' : { 'geni_code' : e.code }, 'output' : str(e) }
+        return {'code' :  e.code , 'value' : None, 'output' : str(e) }
         
     def _successReturn(self, result):
         """Assembles a GENI compliant return result for successful methods."""
-        return { 'geni_api' : 3, 'code' : { 'geni_code' : 0 }, 'value' : result, 'output' : None }
+        return { 'code' :  0 , 'value' : result, 'output' : None }
 
