@@ -113,13 +113,13 @@ class LookupSliceMembersInvocationGuard(SAv1InvocationGuard):
 class LookupSlicesRowGuard(SAv1RowGuard): 
     def permit(self, client_cert, credentials, urn, urn_results):
         urn_project_name = lookup_project_name_for_slice(urn)
-        print "PROJECT_NAME = " + urn_project_name
+#        print "PROJECT_NAME = " + urn_project_name
         config = pm.getService('config')
         key_file = config.get("chapiv1rpc.ch_key")
         cert_file = config.get("chapiv1rpc.ch_cert")
-        print "KEY = " + key_file
-        print "CERT = " + cert_file
-        print "CLIENT_CERT = " + str(client_cert)
+#        print "KEY = " + key_file
+#        print "CERT = " + cert_file
+#        print "CLIENT_CERT = " + str(client_cert)
         import sfa.trust.certificate;
         client_cert_object = \
             sfa.trust.certificate.Certificate(string=client_cert)
@@ -134,7 +134,6 @@ class LookupSlicesRowGuard(SAv1RowGuard):
         if user_urn == None:
             raise CHAPIv1AuthorizationError("Certificate has no subjectAltName publicid URN")
 
-        import pdb; pdb.set_trace()
         # Bind entities : C = client_cert, SA = sa_cert, sa_key
         certs = {'C' : client_cert}
         abac_manager = ABACManager("SA", cert_file, key_file, certs)
