@@ -5,7 +5,7 @@ from chapi.GuardBase import GuardBase
 from chapi.Exceptions import *
 import sfa.trust.certificate;
 from ABAC import *
-from ABACManager import ABACManager
+from tools.ABACManager import ABACManager
 
 # Pre-processor for method invocations
 class SAv1InvocationGuard:
