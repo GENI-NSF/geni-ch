@@ -78,6 +78,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
             Table('pa_project_member', self.metadata, autoload=True)
         self.MEMBER_ATTRIBUTE_TABLE = \
             Table('ma_member_attribute', self.metadata, autoload=True)
+        self.ROLE_TABLE = Table('cs_attribute', self.metadata, autoload=True)
 
     def get_version(self):
         version_info = {"VERSION" : self.version_number, 
@@ -113,22 +114,30 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         session = self.session_class()
         q = session.query(self.SLICE_MEMBER_TABLE, 
                           self.SLICE_TABLE.c.slice_urn,
-                          self.MEMBER_ATTRIBUTE_TABLE.c.value)
+                          self.MEMBER_ATTRIBUTE_TABLE.c.value,
+                          self.ROLE_TABLE.c.name)
         q = q.filter(self.SLICE_TABLE.c.expired == 'f')
         q = q.filter(self.SLICE_TABLE.c.slice_urn == slice_urn)
         q = q.filter(self.SLICE_MEMBER_TABLE.c.slice_id == self.SLICE_TABLE.c.slice_id)
         q = q.filter(self.MEMBER_ATTRIBUTE_TABLE.c.name=='urn')
         q = q.filter(self.SLICE_MEMBER_TABLE.c.member_id == self.MEMBER_ATTRIBUTE_TABLE.c.member_id)
+        q = q.filter(self.SLICE_MEMBER_TABLE.c.role == self.ROLE_TABLE.c.id)
 
 #        print "Q = " + str(q)
         rows = q.all()
 
         members = []
         for row in rows:
-            member = {"SLICE_ROLE" : row.role, "SLICE_MEMBER": row.value}
+            member = {"SLICE_ROLE" : row.name, "SLICE_MEMBER": row.value}
             members.append(member)
 
         return self._successReturn(members)
+
+    def lookup_slices_for_member(self, \
+                                     client_cert, member_urn, \
+                                     credentials, options):
+        raise CHAPIv1NotImplementedError('')
+
 
 
 
