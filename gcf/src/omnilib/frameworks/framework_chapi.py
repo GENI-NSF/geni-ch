@@ -30,6 +30,7 @@ from geni.util.urn_util import is_valid_urn, URN, string_to_urn_format
 import os
 import string
 import sys
+from pprint import pprint
 
 class Framework(Framework_Base):
     def __init__(self, config, opts):
@@ -94,12 +95,12 @@ class Framework(Framework_Base):
     def list_aggregates(self):
         # TODO: list of field names from getVersion - should we get all or assume we have URN and URL
         (res, message) = _do_ssl(self, None, ("List Aggregates at CHAPI CH %s" % self.config['ch']), 
-                                 self.ch.get_aggregates, ['SERVICE_URN', 'SERVICE_URL'])
-
+                                 self.ch.get_aggregates,
+                                 {'filter':['SERVICE_URN', 'SERVICE_URL']})
         aggs = dict()
         if res['value'] is not None:
-            for (urn, url) in res['value']:
-                aggs[urn] = url
+            for d in res['value']:
+                aggs[d['SERVICE_URN']] = d['SERVICE_URL']
         
         return aggs
 
