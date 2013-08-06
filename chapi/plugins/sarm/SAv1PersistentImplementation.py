@@ -1,5 +1,4 @@
 from sqlalchemy import *
-from sqlalchemy.orm import sessionmaker
 from chapi.Exceptions import *
 import amsoil.core.pluginmanager as pm
 from tools.dbutils import *
@@ -61,24 +60,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
 
 
     def __init__(self):
-        self.config = pm.getService('config')
-        self.db_url_filename = self.config.get('chrm.db_url_filename')
-        self.authority = self.config.get("chrm.authority")
-        self.db_url = open(self.db_url_filename).read()
-        self.db = create_engine(self.db_url)
-        self.session_class = sessionmaker(bind=self.db)
-        self.metadata = MetaData(self.db)
-
-
-        self.SLICE_TABLE = Table('sa_slice', self.metadata, autoload=True)
-        self.SLICE_MEMBER_TABLE = \
-            Table('sa_slice_member', self.metadata, autoload=True)
-        self.PROJECT_TABLE = Table('pa_project', self.metadata, autoload=True)
-        self.PROJECT_MEMBER_TABLE = \
-            Table('pa_project_member', self.metadata, autoload=True)
-        self.MEMBER_ATTRIBUTE_TABLE = \
-            Table('ma_member_attribute', self.metadata, autoload=True)
-        self.ROLE_TABLE = Table('cs_attribute', self.metadata, autoload=True)
+        self.db = pm.getService('chdbengine')
 
     def get_version(self):
         version_info = {"VERSION" : self.version_number, 
@@ -91,10 +73,10 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
 
         selected_columns, match_criteria = \
             unpack_query_options(options, self.field_mapping)
-        session = self.session_class()
-        q = session.query(self.SLICE_TABLE, self.PROJECT_TABLE.c.project_id, self.PROJECT_TABLE.c.project_name)
-        q = q.filter(self.SLICE_TABLE.c.project_id == self.PROJECT_TABLE.c.project_id)
-        q = add_filters(q, match_criteria, self.SLICE_TABLE, self.field_mapping)
+        session = self.db.getSession()
+        q = session.query(self.db.SLICE_TABLE, self.db.PROJECT_TABLE.c.project_id, self.db.PROJECT_TABLE.c.project_name)
+        q = q.filter(self.db.SLICE_TABLE.c.project_id == self.db.PROJECT_TABLE.c.project_id)
+        q = add_filters(q, match_criteria, self.db.SLICE_TABLE, self.field_mapping)
 #        print "Q = " + str(q)
         rows = q.all()
         session.close()
@@ -111,17 +93,17 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
     def lookup_slice_members(self, \
                                  client_cert, slice_urn, credentials, options):
 
-        session = self.session_class()
-        q = session.query(self.SLICE_MEMBER_TABLE, 
-                          self.SLICE_TABLE.c.slice_urn,
-                          self.MEMBER_ATTRIBUTE_TABLE.c.value,
-                          self.ROLE_TABLE.c.name)
-        q = q.filter(self.SLICE_TABLE.c.expired == 'f')
-        q = q.filter(self.SLICE_TABLE.c.slice_urn == slice_urn)
-        q = q.filter(self.SLICE_MEMBER_TABLE.c.slice_id == self.SLICE_TABLE.c.slice_id)
-        q = q.filter(self.MEMBER_ATTRIBUTE_TABLE.c.name=='urn')
-        q = q.filter(self.SLICE_MEMBER_TABLE.c.member_id == self.MEMBER_ATTRIBUTE_TABLE.c.member_id)
-        q = q.filter(self.SLICE_MEMBER_TABLE.c.role == self.ROLE_TABLE.c.id)
+        session = self.db.getSession()
+        q = session.query(self.db.SLICE_MEMBER_TABLE, 
+                          self.db.SLICE_TABLE.c.slice_urn,
+                          self.db.MEMBER_ATTRIBUTE_TABLE.c.value,
+                          self.db.ROLE_TABLE.c.name)
+        q = q.filter(self.db.SLICE_TABLE.c.expired == 'f')
+        q = q.filter(self.db.SLICE_TABLE.c.slice_urn == slice_urn)
+        q = q.filter(self.db.SLICE_MEMBER_TABLE.c.slice_id == self.db.SLICE_TABLE.c.slice_id)
+        q = q.filter(self.db.MEMBER_ATTRIBUTE_TABLE.c.name=='urn')
+        q = q.filter(self.db.SLICE_MEMBER_TABLE.c.member_id == self.db.MEMBER_ATTRIBUTE_TABLE.c.member_id)
+        q = q.filter(self.db.SLICE_MEMBER_TABLE.c.role == self.db.ROLE_TABLE.c.id)
 
 #        print "Q = " + str(q)
         rows = q.all()
@@ -137,17 +119,17 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                                      client_cert, member_urn, \
                                      credentials, options):
 
-        session = self.session_class()
-        q = session.query(self.SLICE_MEMBER_TABLE, 
-                          self.MEMBER_ATTRIBUTE_TABLE,
-                          self.SLICE_TABLE.c.slice_urn,
-                          self.ROLE_TABLE.c.name)
-        q = q.filter(self.SLICE_TABLE.c.expired == 'f')
-        q = q.filter(self.MEMBER_ATTRIBUTE_TABLE.c.name == 'urn')
-        q = q.filter(self.MEMBER_ATTRIBUTE_TABLE.c.value == member_urn)
-        q = q.filter(self.SLICE_MEMBER_TABLE.c.member_id == self.MEMBER_ATTRIBUTE_TABLE.c.member_id)
-        q = q.filter(self.SLICE_TABLE.c.slice_id == self.SLICE_MEMBER_TABLE.c.slice_id)
-        q = q.filter(self.SLICE_MEMBER_TABLE.c.role == self.ROLE_TABLE.c.id)
+        session = self.db.getSession()
+        q = session.query(self.db.SLICE_MEMBER_TABLE, 
+                          self.db.MEMBER_ATTRIBUTE_TABLE,
+                          self.db.SLICE_TABLE.c.slice_urn,
+                          self.db.ROLE_TABLE.c.name)
+        q = q.filter(self.db.SLICE_TABLE.c.expired == 'f')
+        q = q.filter(self.db.MEMBER_ATTRIBUTE_TABLE.c.name == 'urn')
+        q = q.filter(self.db.MEMBER_ATTRIBUTE_TABLE.c.value == member_urn)
+        q = q.filter(self.db.SLICE_MEMBER_TABLE.c.member_id == self.db.MEMBER_ATTRIBUTE_TABLE.c.member_id)
+        q = q.filter(self.db.SLICE_TABLE.c.slice_id == self.db.SLICE_MEMBER_TABLE.c.slice_id)
+        q = q.filter(self.db.SLICE_MEMBER_TABLE.c.role == self.db.ROLE_TABLE.c.id)
 
         print "Q = " + str(q)
 

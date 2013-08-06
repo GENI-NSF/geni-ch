@@ -1,14 +1,17 @@
-from sqlalchemy import *
-from sqlalchemy.orm import sessionmaker
+from CHDatabaseEngine import CHDatabaseEngine
+import amsoil.core.pluginmanager as pm
+from  sqlalchemy import *
 from chapi.GuardBase import GuardBase
 from chapi.Exceptions import *
 import sfa.trust.certificate;
-import amsoil.core.pluginmanager as pm
 from ABAC import *
-from ABACManager import ABACManager
+from tools.ABACManager import ABACManager
 
 # Pre-processor for method invocations
 class SAv1InvocationGuard:
+
+    def __init__(self):
+        self.db_engine = pm.getService('chdbengine')
 
     # Raise an AUTHENTICATION_ERROR if there is something wrong about the 
     # certs and credentials passed to the call
@@ -57,55 +60,33 @@ def lookup_project_name_for_slice(slice_urn):
     return project_name
 
 def lookup_project_names_for_user(user_urn):
-    config = pm.getService('config')
-    db_url_filename = config.get('chrm.db_url_filename')
-    db_url = open(db_url_filename).read()
-    db = create_engine(db_url)
-    session_class = sessionmaker(bind=db)
-    metadata = MetaData(db)
-    session = session_class()
+    db = pm.getService('chdbengine')
+    session = db.getSession()
 
-    SLICE_TABLE = Table('sa_slice', metadata, autoload=True)
-    SLICE_MEMBER_TABLE = \
-        Table('sa_slice_member', metadata, autoload=True)
-    PROJECT_TABLE = Table('pa_project', metadata, autoload=True)
-    PROJECT_MEMBER_TABLE = \
-        Table('pa_project_member', metadata, autoload=True)
-    MEMBER_ATTRIBUTE_TABLE = \
-        Table('ma_member_attribute', metadata, autoload=True)
-
-    q = session.query(MEMBER_ATTRIBUTE_TABLE, PROJECT_TABLE, PROJECT_MEMBER_TABLE)
-    q = q.filter(PROJECT_TABLE.c.expired == 'f')
-    q = q.filter(MEMBER_ATTRIBUTE_TABLE.c.name == 'urn')
-    q = q.filter(PROJECT_TABLE.c.project_id == PROJECT_MEMBER_TABLE.c.project_id)
-    q = q.filter(MEMBER_ATTRIBUTE_TABLE.c.member_id == PROJECT_MEMBER_TABLE.c.member_id)
-    q = q.filter(MEMBER_ATTRIBUTE_TABLE.c.value == user_urn)
+    q = session.query(db.MEMBER_ATTRIBUTE_TABLE, db.PROJECT_TABLE, db.PROJECT_MEMBER_TABLE)
+    q = q.filter(db.PROJECT_TABLE.c.expired == 'f')
+    q = q.filter(db.MEMBER_ATTRIBUTE_TABLE.c.name == 'urn')
+    q = q.filter(db.PROJECT_TABLE.c.project_id == db.PROJECT_MEMBER_TABLE.c.project_id)
+    q = q.filter(db.MEMBER_ATTRIBUTE_TABLE.c.member_id == db.PROJECT_MEMBER_TABLE.c.member_id)
+    q = q.filter(db.MEMBER_ATTRIBUTE_TABLE.c.value == user_urn)
     rows = q.all()
     
     project_names = [row.project_name for row in rows]
     return project_names
 
 def lookup_operator_privilege(user_urn):
-    config = pm.getService('config')
-    db_url_filename = config.get('chrm.db_url_filename')
-    db_url = open(db_url_filename).read()
-    db = create_engine(db_url)
-    session_class = sessionmaker(bind=db)
-    metadata = MetaData(db)
-    session = session_class()
+    db = pm.getService('chdbengine')
+    session = db.getSession()
 
     OPERATOR_ATTRIBUTE = 5
     SLICE_CONTEXT = 2
 
-    ASSERTION_TABLE = Table('cs_assertion', metadata, autoload=True)
-    MEMBER_ATTRIBUTE_TABLE = Table('ma_member_attribute', metadata, autoload=True)
-
-    q = session.query(ASSERTION_TABLE, MEMBER_ATTRIBUTE_TABLE)
-    q = q.filter(ASSERTION_TABLE.c.attribute == OPERATOR_ATTRIBUTE)
-    q = q.filter(ASSERTION_TABLE.c.context_type == SLICE_CONTEXT)
-    q = q.filter(MEMBER_ATTRIBUTE_TABLE.c.member_id == ASSERTION_TABLE.c.principal)
-    q = q.filter(MEMBER_ATTRIBUTE_TABLE.c.name == 'urn')
-    q = q.filter(MEMBER_ATTRIBUTE_TABLE.c.value == user_urn)
+    q = session.query(db.ASSERTION_TABLE, db.MEMBER_ATTRIBUTE_TABLE)
+    q = q.filter(db.ASSERTION_TABLE.c.attribute == OPERATOR_ATTRIBUTE)
+    q = q.filter(db.ASSERTION_TABLE.c.context_type == SLICE_CONTEXT)
+    q = q.filter(db.MEMBER_ATTRIBUTE_TABLE.c.member_id == db.ASSERTION_TABLE.c.principal)
+    q = q.filter(db.MEMBER_ATTRIBUTE_TABLE.c.name == 'urn')
+    q = q.filter(db.MEMBER_ATTRIBUTE_TABLE.c.value == user_urn)
 
     rows = q.all()
     return len(rows) > 0
@@ -114,6 +95,10 @@ def lookup_operator_privilege(user_urn):
 # For individual rows that were computed, are they permitted to be
 # seen by caller?
 class SAv1RowGuard:
+
+    def __init__(self):
+        self.db_engine = pm.getService('chdbengine')
+
     def permit(self, client_cert, credentials, urn, urn_results):
         return True
 
