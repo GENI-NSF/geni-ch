@@ -131,8 +131,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         q = q.filter(self.db.SLICE_TABLE.c.slice_id == self.db.SLICE_MEMBER_TABLE.c.slice_id)
         q = q.filter(self.db.SLICE_MEMBER_TABLE.c.role == self.db.ROLE_TABLE.c.id)
 
-        print "Q = " + str(q)
-
+#        print "Q = " + str(q)
         rows = q.all()
 
         slices = []

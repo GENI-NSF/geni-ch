@@ -22,6 +22,8 @@ class CHDatabaseEngine:
         self.MEMBER_ATTRIBUTE_TABLE = \
             Table('ma_member_attribute', self.metadata, autoload=True)
         self.ASSERTION_TABLE = Table('cs_assertion', self.metadata, autoload=True)
+        self.SERVICES_TABLE = \
+            Table('service_registry', self.metadata, autoload=True)
         self.ROLE_TABLE = Table('cs_attribute', self.metadata, autoload=True)
 
     def getSession(self):
