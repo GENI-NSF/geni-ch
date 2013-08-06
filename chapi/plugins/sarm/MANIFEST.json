@@ -1,0 +1,9 @@
+{
+  "name" : "RM (test) Slice Authority",
+  "author" : "Marshall Brinn",
+  "author-email" : "mbrinn@bbn.com",
+  "version" : 1,
+  "implements" : [],
+  "loads-after" : ["sav1handler"],
+  "requires" : []
+}

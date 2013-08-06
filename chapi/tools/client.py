@@ -2,6 +2,7 @@ import os, os.path, sys
 import json
 import optparse
 from omnilib.util.dossl import _do_ssl
+import xmlrpclib
 from omnilib.frameworks.framework_base import Framework_Base
 
 class MAClientFramework(Framework_Base):
@@ -58,13 +59,15 @@ def main():
     suppress_errors = None
     reason = "Testing"
     config = {'cert' : opts.cert, 'key' : opts.key}
+
     framework = MAClientFramework(config, {})
-    client = framework.make_client(opts.url, opts.key, opts.cert)
+    client = framework.make_client(opts.url, opts.key, opts.cert, verbose=False)
     fcn = eval("client.%s" % opts.method)
     
     # Methods that take no arguments
     result = None
     msg = None
+
     if opts.method in ['get_version', 'get_trust_roots']:
         (result, msg) = _do_ssl(framework, suppress_errors, reason, fcn)
     # Methods that take options argument
