@@ -68,18 +68,22 @@ class CHv1Implementation(CHv1DelegateBase):
         }
 
     # The externally visible data schema for services
-    fields = { 
+    mandatory_fields = { 
         "SERVICE_URN": {"TYPE": "URN"},
         "SERVICE_URL": {"TYPE": "URL"},
         "SERVICE_CERTIFICATE": {"TYPE": "CERTIFICATE"},
-        "SERVICE_NAME" : {"TYPE" : "STRING"},
+        "SERVICE_NAME" : {"TYPE" : "STRING"}
+        }
+
+    supplemental_fields = { 
         "SERVICE_DESCRIPTION": {"TYPE" : "STRING"}
         }
+
 
     version_number = "1.0"
 
     def get_version(self):
-        version_info = {"VERSION": self.version_number, "FIELDS": self.fields}
+        version_info = {"VERSION": self.version_number, "FIELDS": self.supplemental_fields}
         return self._successReturn(version_info)
 
     def get_member_authorities(self, options):
