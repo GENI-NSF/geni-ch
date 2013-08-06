@@ -136,7 +136,29 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
     def lookup_slices_for_member(self, \
                                      client_cert, member_urn, \
                                      credentials, options):
-        raise CHAPIv1NotImplementedError('')
+
+        session = self.session_class()
+        q = session.query(self.SLICE_MEMBER_TABLE, 
+                          self.MEMBER_ATTRIBUTE_TABLE,
+                          self.SLICE_TABLE.c.slice_urn,
+                          self.ROLE_TABLE.c.name)
+        q = q.filter(self.SLICE_TABLE.c.expired == 'f')
+        q = q.filter(self.MEMBER_ATTRIBUTE_TABLE.c.name == 'urn')
+        q = q.filter(self.MEMBER_ATTRIBUTE_TABLE.c.value == member_urn)
+        q = q.filter(self.SLICE_MEMBER_TABLE.c.member_id == self.MEMBER_ATTRIBUTE_TABLE.c.member_id)
+        q = q.filter(self.SLICE_TABLE.c.slice_id == self.SLICE_MEMBER_TABLE.c.slice_id)
+        q = q.filter(self.SLICE_MEMBER_TABLE.c.role == self.ROLE_TABLE.c.id)
+
+        print "Q = " + str(q)
+
+        rows = q.all()
+
+        slices = []
+        for row in rows:
+            slice = {"SLICE_ROLE" : row.name, "SLICE_URN": row.slice_urn}
+            slices.append(slice)
+
+        return self._successReturn(slices)
 
 
 
