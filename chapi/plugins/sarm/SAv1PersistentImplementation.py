@@ -125,7 +125,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
 
         members = []
         for row in rows:
-            member = {"SLICE_ROLE" : row.role, "SLICE_MEMBER_URN": row.value}
+            member = {"SLICE_ROLE" : row.role, "SLICE_MEMBER": row.value}
             members.append(member)
 
         return self._successReturn(members)

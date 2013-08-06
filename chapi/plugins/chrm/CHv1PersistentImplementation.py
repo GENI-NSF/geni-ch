@@ -44,6 +44,7 @@ class CHv1PersistentImplementation(CHv1Implementation):
         session.close()
 
         authorities = [construct_result_row(row, selected_columns, self.field_mapping) for row in rows]
+
         return self._successReturn(authorities)
 
 

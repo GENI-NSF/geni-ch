@@ -36,7 +36,7 @@ class SAv1InvocationGuard:
 
 # Some helper methods
 
-def extract_user_urn(user_urn):
+def extract_user_urn(client_cert):
     client_cert_object = \
         sfa.trust.certificate.Certificate(string=client_cert)
     user_urn = None
@@ -127,6 +127,9 @@ class LookupSliceMembersInvocationGuard(SAv1InvocationGuard):
         slice_urn = args['slice_urn']
         slice_project_name = lookup_project_name_for_slice(slice_urn)
 #        print "PROJECT_NAME = " + slice_project_name
+        config = pm.getService('config')
+        key_file = config.get("chapiv1rpc.ch_key")
+        cert_file = config.get("chapiv1rpc.ch_cert")
         # Bind entities : C = clien_cert, SA = sa_cert, sa_key
         certs = {'C' : client_cert}
         abac_manager = ABACManager("SA", cert_file, key_file, certs)
@@ -147,14 +150,16 @@ class LookupSliceMembersInvocationGuard(SAv1InvocationGuard):
         #   MA.is_member_P <- C [For the project of the slice URN]
         queries = [
             {'role' : 'is_operator', 'target' : 'C'},
-            {'role' : 'is_member_%s' % slice_project_name, 'target' : 'C'}
+            {'role' : str('is_member_%s' % slice_project_name), 'target' : 'C'}
             ]
         for q in queries:
             q_role = q['role']
             q_target = q['target']
-            if abac_manager.query(q_target, q_role):
-                return 
-        raise CHAPIv1AuthorizationError("Caller %s is not allowed to access slice_membership for slice %s" (user_urn, slice_urn))
+            ok, proof =  abac_manager.query(q_target, q_role)
+            if ok:
+                print "Proof " + "\n".join(abac_manager.pretty_print_proof(proof))
+                return
+        raise CHAPIv1AuthorizationError("Caller %s is not allowed to access slice_membership for slice %s" % (user_urn, slice_urn))
 
 class LookupSlicesRowGuard(SAv1RowGuard): 
     def permit(self, client_cert, credentials, urn, urn_results):
@@ -190,12 +195,14 @@ class LookupSlicesRowGuard(SAv1RowGuard):
         #   MA.is_member_P <- C [For the project of the slice URN]
         queries = [
             {'role' : 'is_operator', 'target' : 'C'},
-            {'role' : 'is_member_%s' % urn_project_name, 'target' : 'C'}
+            {'role' : str('is_member_%s' % urn_project_name), 'target' : 'C'}
             ]
         for q in queries:
             q_role = q['role']
             q_target = q['target']
-            if abac_manager.query(q_target, q_role):
+            ok, proof = abac_manager.query(q_target, q_role)
+            if ok:
+                print "Proof " + "\n".join(abac_manager.pretty_print_proof(proof))
                 return True
         return False
 
