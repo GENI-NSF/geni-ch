@@ -1,7 +1,7 @@
 {
   "name" : "RM (test) Clearinghouse",
-  "author" : "Tom Rothe",
-  "author-email" : "tom.rothe@eict.de",
+  "author" : "Narshall Brinn",
+  "author-email" : "mbrinn@bbn.com",
   "version" : 1,
   "implements" : [],
   "loads-after" : ["chv1handler"],

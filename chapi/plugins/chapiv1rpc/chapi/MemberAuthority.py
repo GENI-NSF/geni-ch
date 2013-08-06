@@ -46,7 +46,7 @@ class MAv1Handler(HandlerBase):
 
             if results['code'] == NO_ERROR:
                 results_value = results['value']
-                new_results_value = self._guard.protect_results(client_cert, method, results_value)
+                new_results_value = self._guard.protect_results(client_cert, method, credentials, results_value)
                 results = self._successReturn(new_results_value)
 
             return results
@@ -69,7 +69,7 @@ class MAv1Handler(HandlerBase):
                                                                         options)
             if results['code'] == NO_ERROR:
                 results_value = results['value']
-                new_results_value = self._guard.protect_results(client_cert, method, results_value)
+                new_results_value = self._guard.protect_results(client_cert, method, credentials, results_value)
                 results = self._successReturn(new_results_value)
 
             return results
@@ -91,7 +91,7 @@ class MAv1Handler(HandlerBase):
                                                             credentials, options)
             if results['code'] == NO_ERROR:
                 results_value = results['value']
-                new_results_value = self._guard.protect_results(client_cert, method, results_value)
+                new_results_value = self._guard.protect_results(client_cert, method, credentials, results_value)
                 results = self._successReturn(new_results_value)
 
             return results

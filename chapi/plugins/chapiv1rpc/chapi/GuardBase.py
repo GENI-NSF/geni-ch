@@ -15,5 +15,5 @@ class GuardBase(object):
     # Check that the results to the given method are permitted
     # To be returned to caller. If not, modify results accordinlgy
     # per policy (removing entries, masking values, etc.)
-    def protect_results(self, client_cert, method, results):
+    def protect_results(self, client_cert, method, credentials, results):
         return results
