@@ -155,6 +155,28 @@ class SAv1Handler(HandlerBase):
         except Exception as e:
             return self._errorReturn(e)
 
+    # Lookup slices to which member belongs and their roles
+    def lookup_slices_for_member(self, member_urn, credentials, options):
+        client_cert = self.requestCertificate()
+        method = 'lookup_slices_for_member'
+        try:
+            self._guard.validate_call(client_cert, method, \
+                                          credentials, options, \
+                                          {'member_urn' : member_urn})
+            results = \
+                self._delegate.lookup_slices_for__member(client_cert, \
+                                                             member_urn, \
+                                                             credentials, \
+                                                             options)
+            if results['code'] == NO_ERROR:
+                results_value = results['value']
+                new_resuls_value = self._guard.protect_results(client_cert, method, results_value)
+                results = self._successReturn(new_results_value)
+
+            return results
+        except Exception as e:
+            return self._errorReturn(e)
+
     ## SLIVER INFO SERVICE methods
         
     # Associate an aggregate as having sliver information in a given 
@@ -350,6 +372,28 @@ class SAv1Handler(HandlerBase):
         except Exception as e:
             return self._errorReturn(e)
 
+    # Lookup projects to which member belongs and their roles
+    def lookup_projects_for_member(self, member_urn, credentials, options):
+        client_cert = self.requestCertificate()
+        method = 'lookup_projects_for_member'
+        try:
+            self._guard.validate_call(client_cert, method, \
+                                          credentials, options, \
+                                          {'member_urn' : member_urn})
+            results = \
+                self._delegate.lookup_projects_for__member(client_cert, \
+                                                             member_urn, \
+                                                             credentials, \
+                                                             options)
+            if results['code'] == NO_ERROR:
+                results_value = results['value']
+                new_resuls_value = self._guard.protect_results(client_cert, method, results_value)
+                results = self._successReturn(new_results_value)
+
+            return results
+        except Exception as e:
+            return self._errorReturn(e)
+
 
 # Base class for implementing the SA Slice interface. Must be
 # implemented in a derived class, and that derived class
@@ -391,6 +435,11 @@ class SAv1DelegateBase(DelegateBase):
                                  client_cert, slice_urn, credentials, options):
         raise CHAPIv1NotImplementedError('')
 
+    def lookup_slices_for_member(self, \
+                                     client_cert, member_urn, \
+                                     credentials, options):
+        raise CHAPIv1NotImplementedError('')
+
 
     ## SLIVER INFO SERVICE methods
         
@@ -430,6 +479,11 @@ class SAv1DelegateBase(DelegateBase):
     def lookup_project_members(self, \
                                  client_cert, project_urn, \
                                    credentials, options):
+        raise CHAPIv1NotImplementedError('')
+
+    def lookup_projects_for_member(self, \
+                                     client_cert, member_urn, \
+                                     credentials, options):
         raise CHAPIv1NotImplementedError('')
 
 
