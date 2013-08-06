@@ -9,8 +9,7 @@ class CHv1PersistentImplementation(CHv1Implementation):
 
     def __init__(self):
         self.config = pm.getService('config')
-        self.db_url_filename = self.config.get('chrm.db_url_filename')
-        self.db_url = open(self.db_url_filename).read()
+        self.db_url= self.config.get('chrm.db_url')
         self.db = create_engine(self.db_url)
         self.session_class = sessionmaker(bind=self.db)
         self.metadata = MetaData(self.db)
