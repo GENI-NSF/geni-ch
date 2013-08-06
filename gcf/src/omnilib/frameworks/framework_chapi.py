@@ -59,33 +59,64 @@ class Framework(Framework_Base):
         self.cert_string = file(config['cert'],'r').read()
         self.user_cred = self.init_user_cred( opts )
         self.logger = config['logger']
-        
+
     def get_user_cred(self):
         message = ""
         if self.user_cred == None:
             self.logger.debug("Getting user credential from CHAPI MA %s", self.config['ch'])
-            # TODO: supply empty filter/query critera now. Should we do getversion so that we can filter on nothing and query on *?
-            (self.user_cred, message) = _do_ssl(self, None, ("lookup public member info on CHAPI CH %s" % self.config['ch']),
-                                                self.ma.lookup_public_member_info, 
-                                                self.cert_string,
-                                                {'match':{'USER_URN':[]}})
+            (res, message) = _do_ssl(self, None, ("lookup public member info on CHAPI CH %s" % self.config['ch']),
+                                     self.ma.lookup_public_member_info, 
+                                     self.cert_string,
+                                     {'match':{'USER_URN':[]}})
+        if res is not None:
+            if res['output'] is not None:
+                message = res['output']
+            self.user_cred = res['value']
 
         return self.user_cred, message
     
     def get_slice_cred(self, urn):
-        scred = '' #TODO: where do we get the cred to pass in??
-        (cred, message) = _do_ssl(self, None, ("Get slice credentials  %s on CHAPI SA %s" % (urn, self.config['ch'])),
+        self.get_user_cred()
+        scred = ''
+        if self.user_cred:
+            scred = self.user_cred
+        (res, message) = _do_ssl(self, None, ("Get slice credentials  %s on CHAPI SA %s" % (urn, self.config['ch'])),
                                   self.sa.lookup_slices,
                                   scred,
-                                  {'match':{'SLICE_URN':[urn]}})
-        # FIXME: use any message?
-        _ = message #Appease eclipse
+                                  {'match':{'SLICE_URN':[urn]},
+                                   'filter':['SLICE_CREDENTIAL']})
+        cred = None
+        if res is not None:
+            if res['output'] is not None:
+                message = res['output']
+                cred = res['value']
+        if message is not None:
+            self.logger.error(message)
         return cred
     
-    def create_slice(self, urn):    
-        (cred, message) = _do_ssl(self, None, ("Create slice %s on CHAPI SA %s" % (urn, self.config['ch'])), self.sa.create_slice, urn)
-        # FIXME: use any message?
-        _ = message #Appease eclipse
+    def create_slice(self, urn):
+        # TODO: cred is user's for create?
+        self.get_user_cred()
+        scred = ''
+        if self.user_cred is not None:
+            scred = self.user_cred
+
+        # how do we get this information into options?
+        options = {'SLICE_NAME': urn,
+                   'SLICE_DESCRIPTION': "",
+                   'SLICE_EMAIL': "",
+                   'PROJECT_URN': urn}
+        (res, message) = _do_ssl(self, None, ("Create slice %s on CHAPI SA %s" % (urn, self.config['ch'])),
+                                 self.sa.create_slice, scred, options)
+        cred = None
+        if res is not None:
+            if res['output'] is not None:
+                message = res['output']
+                d = res['value']
+                if d is not None:
+                    cred = d['SLICE_CREDENTIAL']
+        if message is not None:
+            self.logger.error(message)
         return cred
     
     def delete_slice(self, urn):
@@ -97,6 +128,8 @@ class Framework(Framework_Base):
         (res, message) = _do_ssl(self, None, ("List Aggregates at CHAPI CH %s" % self.config['ch']), 
                                  self.ch.get_aggregates,
                                  {'filter':['SERVICE_URN', 'SERVICE_URL']})
+        if message:
+            self.logger.warn(message)
         aggs = dict()
         if res['value'] is not None:
             for d in res['value']:
@@ -174,9 +207,19 @@ class Framework(Framework_Base):
         """
         expiration = expiration_dt.isoformat()
         cred = self.get_slice_cred(urn)
-        (bool, message) = _do_ssl(self, None, ("Renew slice %s on CHAPI SA %s until %s" % (urn, self.config['ch'], expiration_dt)), 
+        (res, message) = _do_ssl(self, None, ("Renew slice %s on CHAPI SA %s until %s" % (urn, self.config['ch'], expiration_dt)), 
                                   self.sa.update_slice, urn, cred, {'SLICE_EXPIRATION':expiration})
-        if bool:
+
+        b = False
+        if res is not None:
+            if res['code'] == 0:
+                b = True
+            else:
+                message = res['output']
+        if message is not None:
+            self.logger.error(message)
+
+        if b:
             return expiration_dt
         else:
             # FIXME: use any message?
