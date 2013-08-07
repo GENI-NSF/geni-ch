@@ -1,8 +1,10 @@
-# Simple persistence-free version of CH for testing/development
+# Simple persistence-free version of MA for testing/development
 from chapi.MemberAuthority import MAv1DelegateBase
 from chapi.Exceptions import *
 from ext.geni.util.urn_util import URN
 from tools.dbutils import *
+import ext.sfa.trust.credential as sfa_cred
+import ext.sfa.trust.gid as sfa_gid
 
 class MAv1Implementation(MAv1DelegateBase):
 
@@ -32,7 +34,23 @@ class MAv1Implementation(MAv1DelegateBase):
         print "MAv1DelegateBase.lookup_public_member_info " + \
             "CREDS = %s OPTIONS = %s" % \
             (str(credentials), str(options))
-        raise CHAPIv1NotImplementedError('')
+        if not options.get('match'):
+            raise CHAPIv1ArgumentError('Missing a "match" option')
+        if not options['match'].get('MEMBER_URN'):
+            raise CHAPIv1ArgumentError('Missing a "MEMBER_URN" in match option')
+        if not options.get('filter'):
+            raise CHAPIv1ArgumentError('Missing a "filter" option')
+        if 'USER_CREDENTIAL' not in options['filter']:
+            raise CHAPIv1ArgumentError('Missing a "USER_CREDENTIAL" in filter option')
+        cred = sfa_cred.Credential()
+        urn = options['match']['MEMBER_URN']
+        print 'urn =', urn
+        gid = sfa_gid.GID(urn=urn, create=True)
+        print 'gid =', gid
+        cred.set_gid_object(gid)
+        cred.set_gid_caller(gid)
+        print 'str =', cred.save_to_string()
+        return cred.save_to_string()
 
     # This call is protected
     def lookup_private_member_info(self, client_cert, credentials, options):
