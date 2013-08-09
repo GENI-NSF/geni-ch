@@ -100,12 +100,16 @@ class MAv1Implementation(MAv1DelegateBase):
         rows = q.all()
         return [row.value for row in rows]
 
+    def get_val_for_uid(self, session, table, field, uid):
+        q = session.query(table.c[field])
+        q = q.filter(table.c.member_id == uid)
+        rows = q.all()
+        return [eval("row.%s" % field) for row in rows]
+
     # Common code for answering query
     def lookup_member_info(self, options):
         selected_columns, match_criteria = \
             unpack_query_options(options, self.field_mapping)
-        print "cols =", selected_columns
-        print "crit = ", match_criteria
         if not match_criteria:
             raise CHAPIv1ArgumentError('Missing a "match" option')
         session = self.db.getSession()
@@ -114,13 +118,26 @@ class MAv1Implementation(MAv1DelegateBase):
         uids = [set(self.get_uids_for_attribute(session, attr, value)) \
                 for attr, value in match_criteria.iteritems()]
         uids = set.intersection(*uids)
-        print 'uids =', uids
 
         # then, get the values
         members = {}
         for uid in uids:
-            urns = self.get_attr_for_uid(session, "MEMBER_URN", uid)
-            members[urns[0]] = {"USER_CREDENTIAL": urn_to_user_credential(urns[0])}
+            urn = self.get_attr_for_uid(session, "MEMBER_URN", uid)[0]
+            values = {}
+            for col in selected_columns:
+                if col == "USER_CREDENTIAL":
+                    values[col] = urn_to_user_credential(urn)
+                elif col in self.attributes:
+                    # TODO: What happens if list empty????????
+                    values[col] = self.get_attr_for_uid(session, col, uid)[0]
+                elif col in ["MEMBER_SSH_PUBLIC_KEY", "MEMBER_SSH_PRIVATE_KEY"]:
+                    # TODO: What happens if list empty????????
+                    values[col] = self.get_val_for_uid(session, \
+                        self.db.SSH_KEY_TABLE, self.field_mapping[col], uid)[0]
+                else:
+                    # TODO: handle case for SSL keys??????????
+                    pass
+            members[urn] = values
 
         session.close()
         return self._successReturn(members)
