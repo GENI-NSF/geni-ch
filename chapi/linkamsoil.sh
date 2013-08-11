@@ -1,4 +1,5 @@
 #!/bin/bash
+# Set up links from CHAPI plugins and tools into the AMSoil deployment
 base=$PWD
 AMSOIL=$base/AMsoil
 CHAPI=$base
