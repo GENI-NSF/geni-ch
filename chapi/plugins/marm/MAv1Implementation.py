@@ -17,16 +17,6 @@ def urn_to_user_credential(urn):
     cred.set_gid_caller(gid)
     return cred.save_to_string()
 
-def row_to_ssl_public_key(row):
-    if row.ma_outside_cert.certificate:
-        return row.ma_outside_cert.certificate
-    return row.ma_inside_key.certificate
-
-def row_to_ssl_private_key(row):
-    if row.ma_outside_cert.private_key:
-        return row.ma_outside_cert.private_key
-    return row.ma_inside_key.private_key
-
 
 class MAv1Implementation(MAv1DelegateBase):
 
@@ -61,8 +51,8 @@ class MAv1Implementation(MAv1DelegateBase):
         "MEMBER_AFFILIATION": "affiliation",
         "MEMBER_SSH_PUBLIC_KEY": "public_key",
         "MEMBER_SSH_PRIVATE_KEY": "private_key",
-        "MEMBER_SSL_PUBLIC_KEY": row_to_ssl_public_key, # "certificate"
-        "MEMBER_SSL_PRIVATE_KEY": row_to_ssl_private_key, # "private_key"
+        "MEMBER_SSL_PUBLIC_KEY": "certificate",
+        "MEMBER_SSL_PRIVATE_KEY": "private_key",
         "USER_CREDENTIAL": urn_to_user_credential
         }
 
