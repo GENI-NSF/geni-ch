@@ -27,6 +27,7 @@ from ABACGuard import *
 # Provide a set of invocation checks and row checks per method
 class SAv1Guard(ABACGuardBase):
 
+    # Set of invocation checks indexedc by method name
     INVOCATION_CHECKS_FOR_METHOD = \
         { 
         # lookup_slice_members can be called by anyone who is either
@@ -40,6 +41,7 @@ class SAv1Guard(ABACGuardBase):
                             queries = [["C", "is_operator"], QueryProjectMemberBySliceURN()])
     }
 
+    # Set of row checks indexedc by method name
     ROW_CHECKS_FOR_METHOD = \
         { 
         # Rows returned from lookup_slices must belong to a project that the caller belongs to
@@ -52,11 +54,13 @@ class SAv1Guard(ABACGuardBase):
                      queries = [["C", "is_operator"], QueryProjectMemberBySliceURN()]) 
         }
 
+    # Lookup invocation check per method (or None if none registered)
     def get_invocation_check(self, method):
         if self.INVOCATION_CHECKS_FOR_METHOD.has_key(method):
             return self.INVOCATION_CHECKS_FOR_METHOD[method]
         return None
 
+    # Lookup row check per method (or None if none registered)
     def get_row_check(self, method):
         if self.ROW_CHECKS_FOR_METHOD.has_key(method):
             return self.ROW_CHECKS_FOR_METHOD[method]

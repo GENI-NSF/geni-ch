@@ -30,14 +30,17 @@ from chapi.SliceAuthority import SAv1DelegateBase
 # Utility functions for morphing from native schema to public-facing
 # schema
 
+# Turn a project URN into a project name
 def from_project_urn(project_urn):
     parts = project_urn.split('+')
     return parts[len(parts)-1]
 
+# Turn a project name into a project URN
 def to_project_urn(authority, project_name):
     return "urn:publicid:IDN+%s+project+%s" % \
         (authority, project_name)
 
+# Turn a row with project name into a project URN
 def row_to_project_urn(row):
     config = pm.getService('config')
     authority = config.get("chrm.authority")
