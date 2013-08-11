@@ -27,6 +27,8 @@ import amsoil.core.pluginmanager as pm
 from tools.dbutils import *
 from CHv1Implementation import CHv1Implementation
 
+# Version of ClearingHouse that works with GPO CH Service Registry tables
+
 class CHv1PersistentImplementation(CHv1Implementation):
 
     def __init__(self):

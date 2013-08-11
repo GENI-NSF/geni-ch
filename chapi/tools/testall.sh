@@ -1,5 +1,7 @@
 # /bin/bash
 
+# Set of tests of API (not the function, just each call)
+
 # Clearinghouse API test
 python client.py --url https://localhost:8001/CH --method get_version --options_file /tmp/options.json
 python client.py --url https://localhost:8001/CH --method get_slice_authorities --options_file /tmp/options.json

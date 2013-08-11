@@ -1,4 +1,7 @@
 #!/bin/bash
+
+#  Set up links for chapi framework into GCF installation
+
 base=$PWD
 GCF=$base/gcf
 

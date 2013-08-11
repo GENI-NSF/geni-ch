@@ -26,6 +26,10 @@ from CHv1Implementation import CHv1Implementation
 from CHv1PersistentImplementation import CHv1PersistentImplementation
 from CHDatabaseEngine import CHDatabaseEngine
 
+# This plugin sets the delgate for the CH handler to be the CH Persistent
+# Implementation. There are no guards for this handler: all methods
+# are public
+
 def setup():
 
     # set up config keys
