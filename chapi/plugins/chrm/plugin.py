@@ -24,6 +24,7 @@
 import amsoil.core.pluginmanager as pm
 from CHv1Implementation import CHv1Implementation
 from CHv1PersistentImplementation import CHv1PersistentImplementation
+from CHDatabaseEngine import CHDatabaseEngine
 
 def setup():
 
@@ -39,3 +40,7 @@ def setup():
     delegate = CHv1PersistentImplementation()
     handler = pm.getService('chv1handler')
     handler.setDelegate(delegate)
+
+    db_engine = CHDatabaseEngine()
+    pm.registerService('chdbengine', db_engine)
+

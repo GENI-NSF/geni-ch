@@ -4,6 +4,6 @@
   "author-email" : "mbrinn@bbn.com",
   "version" : 1,
   "implements" : [],
-  "loads-after" : ["sav1handler"],
+  "loads-after" : ["sav1handler", "chdbengine"],
   "requires" : []
 }
