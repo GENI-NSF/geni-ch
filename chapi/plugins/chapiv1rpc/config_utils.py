@@ -26,6 +26,9 @@ from sqlalchemy import *
 from sqlalchemy.orm import sessionmaker
 import optparse
 
+# Test program for reading/writing the sqllite config database file
+# Currently doesn't work: use admin/client.py instead
+
 def parseOptions():
     parser = optparse.OptionParser()
     

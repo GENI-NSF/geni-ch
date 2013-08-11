@@ -6,6 +6,8 @@ from sqlalchemy.orm import sessionmaker
 # Loads the database table schemas
 class CHDatabaseEngine:
 
+    # Grab a database engine and pre-fetch table meta-data for all
+    # Tables we'll be using
     def __init__(self):
         config = pm.getService('config')
         self.db_url = config.get('chrm.db_url')
@@ -32,6 +34,7 @@ class CHDatabaseEngine:
         self.ASSERTION_TABLE = Table('cs_assertion', self.metadata, autoload=True)
         self.ROLE_TABLE = Table('cs_attribute', self.metadata, autoload=True)
 
+    # Get a new session on the database engine
     def getSession(self):
         return self.session_class()
 

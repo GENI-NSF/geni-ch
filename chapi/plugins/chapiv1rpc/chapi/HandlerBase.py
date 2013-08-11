@@ -29,6 +29,8 @@ from Exceptions import *
 
 xmlrpc = pm.getService('xmlrpc')
 
+# Base class for API handlers, which can have 
+#   plug-replaceable delegates and guards
 class HandlerBase(xmlrpc.Dispatcher):
 
     def __init__(self, logger):
@@ -36,6 +38,7 @@ class HandlerBase(xmlrpc.Dispatcher):
         self._delegate = None
         self._guard = None
 
+    # Interfaces for setting/getting the delegate (for implementing API calls)
     @serviceinterface
     def setDelegate(self, delegate):
         self._delegate = delegate
@@ -44,6 +47,8 @@ class HandlerBase(xmlrpc.Dispatcher):
     def getDelegate(self):
         return self._delegate
 
+    # Interfaces for setting/getting the guard delegate 
+    # (for authenticating/authorizing  API calls)
     @serviceinterface
     def setGuard(self, guard):
         self._guard = guard
@@ -52,6 +57,7 @@ class HandlerBase(xmlrpc.Dispatcher):
     def getGuard(self):
         return self._guard
 
+    # Standard format for error returns from API calls
     def _errorReturn(self, e):
         """Assembles a GENI compliant return result for faulty methods."""
         if not isinstance(e, CHAPIv1BaseError): # convert common errors into CHAPIv1GeneralError
@@ -62,6 +68,7 @@ class HandlerBase(xmlrpc.Dispatcher):
         self._log.error(traceback.format_exc())
         return { 'code' : e.code , 'output' : str(e), 'value' : None }
         
+    # Standard format for successful returns from API calls
     def _successReturn(self, result):
         """Assembles a GENI compliant return result for successful methods."""
         return { 'code' : 0, 'output' : None, 'value' : result  }

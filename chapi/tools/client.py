@@ -28,6 +28,8 @@ from omnilib.util.dossl import _do_ssl
 import xmlrpclib
 from omnilib.frameworks.framework_base import Framework_Base
 
+# Generic client to speak XMLRPC/SSL SA/CH/MA API calls to 
+
 class MAClientFramework(Framework_Base):
     def __init__(self, config, opts):
         Framework_Base.__init__(self, config)

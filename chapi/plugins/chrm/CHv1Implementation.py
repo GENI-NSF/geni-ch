@@ -27,6 +27,9 @@ from chapi.Exceptions import *
 from ext.geni.util.urn_util import URN
 from tools.dbutils import *
 
+# A simple fixed implemntation of the CH API. 
+# Only for testing. The real implementation is in CHv1PersistentImplementation
+
 class CHv1Implementation(CHv1DelegateBase):
 
     AGGREGATE_SERVICE_TYPE = 0

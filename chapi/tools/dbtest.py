@@ -25,6 +25,8 @@ from sqlalchemy import *
 from sqlalchemy.orm import sessionmaker
 import sys
 
+# Test program for playing with sqlalchemy connections and expressions
+
 def services_test(db):
     metadata = MetaData(db)
     services = Table('service_registry', metadata, autoload=True)

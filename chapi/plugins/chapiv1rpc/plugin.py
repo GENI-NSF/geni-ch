@@ -50,6 +50,11 @@ def setup():
     # register xmlrpc endpoint
     xmlrpc = pm.getService('xmlrpc')
 
+    # Invoke the CH, SA and MA and set them with default/dummy 
+    # guards and delegates
+    # Subsequent plugins should replace these with proper guard and delegate
+    # implementations
+
     ch_handler = CHv1Handler()
     ch_delegate = CHv1DelegateBase()
     ch_handler.setDelegate(ch_delegate)
