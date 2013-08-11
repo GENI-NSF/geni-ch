@@ -127,16 +127,20 @@ class MAv1Implementation(MAv1DelegateBase):
             for col in selected_columns:
                 if col == "USER_CREDENTIAL":
                     values[col] = urn_to_user_credential(urn)
-                elif col in self.attributes:
-                    # TODO: What happens if list empty????????
-                    values[col] = self.get_attr_for_uid(session, col, uid)[0]
-                elif col in ["MEMBER_SSH_PUBLIC_KEY", "MEMBER_SSH_PRIVATE_KEY"]:
-                    # TODO: What happens if list empty????????
-                    values[col] = self.get_val_for_uid(session, \
-                        self.db.SSH_KEY_TABLE, self.field_mapping[col], uid)[0]
                 else:
-                    # TODO: handle case for SSL keys??????????
-                    pass
+                    if col in self.attributes:
+                        vals = self.get_attr_for_uid(session, col, uid)
+                    elif col in ["MEMBER_SSH_PUBLIC_KEY", "MEMBER_SSH_PRIVATE_KEY"]:
+                        vals = self.get_val_for_uid(session, \
+                            self.db.SSH_KEY_TABLE, self.field_mapping[col], uid)
+                    else:
+                        vals = self.get_val_for_uid(session, \
+                            self.db.OUTSIDE_CERT_TABLE, self.field_mapping[col], uid)
+                        if not vals:
+                            vals = self.get_val_for_uid(session, \
+                                self.db.INSIDE_KEY_TABLE, self.field_mapping[col], uid)
+                    if vals:
+                        values[col] = vals[0]
             members[urn] = values
 
         session.close()
