@@ -17,7 +17,7 @@ cd $base
 
 rm -f $AMSOIL/src/plugins/.gitignore
 # hold off on marm for now
-for pl in chrm chapiv1rpc
+for pl in chrm chapiv1rpc sarm
 do
     if [ ! -d $AMSOIL/src/plugins/$pl ]; then
 	ln -s $CHAPI/plugins/$pl $AMSOIL/src/plugins/$pl

@@ -19,8 +19,16 @@ class CHDatabaseEngine:
         self.PROJECT_TABLE = Table('pa_project', self.metadata, autoload=True)
         self.PROJECT_MEMBER_TABLE = \
             Table('pa_project_member', self.metadata, autoload=True)
+        self.MEMBER_TABLE = \
+            Table('ma_member', self.metadata, autoload=True)
         self.MEMBER_ATTRIBUTE_TABLE = \
             Table('ma_member_attribute', self.metadata, autoload=True)
+        self.SSH_KEY_TABLE = \
+            Table('ma_ssh_key', self.metadata, autoload=True)
+        self.INSIDE_KEY_TABLE = \
+            Table('ma_inside_key', self.metadata, autoload=True)
+        self.OUTSIDE_CERT_TABLE = \
+            Table('ma_outside_cert', self.metadata, autoload=True)
         self.ASSERTION_TABLE = Table('cs_assertion', self.metadata, autoload=True)
         self.SERVICES_TABLE = \
             Table('service_registry', self.metadata, autoload=True)
