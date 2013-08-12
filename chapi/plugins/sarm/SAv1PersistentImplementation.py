@@ -57,21 +57,34 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
     credential_types = ["SFA", "ABAC"]
 
     # The externally visible data schema for slices
-    mandatory_fields  = {
+    slice_mandatory_fields  = {
         "SLICE_URN": {"TYPE": "URN"},
         "SLICE_UID": {"TYPE": "UID"},
         "SLICE_NAME": {"TYPE": "STRING", "CREATE": "REQUIRED"},
         "SLICE_DESCRIPTION": {"TYPE": "STRING", "CREATE": "ALLOWED", "UPDATE": True},
-        "SLICE_EXPIRATION": {"TYPE": "DATETIME", "UPDATE": True},
+        "SLICE_EXPIRATION": {"TYPE": "DATETIME", "CREATE" : "ALLOWED", "UPDATE": True},
         "SLICE_EXPIRED": {"TYPE": "BOOLEAN"},
         "SLICE_CREATION": {"TYPE": "DATETIME"},
         }
 
-    supplementary_fields = {
+    slice_supplemental_fields = {
         "SLICE_EMAIL": {"TYPE": "EMAIL", "CREATE": "REQUIRED", "UPDATE": True},
-        "PROJECT_URN": {"TYPE": "URN", "CREATE": "REQUIRED", "UPDATE": False},
-        "PROJECT_EMAIL": {"TYPE": "EMAIL", "CREATE": "REQUIRED", "UPDATE": True, "OBJECT" : "PROJECT"}
+        "PROJECT_URN": {"TYPE": "URN", "CREATE": "REQUIRED", "UPDATE": False}
     }
+
+    project_mandatory_fields = {
+        "PROJECT_URN" : {"TYPE" : "URN"},
+        "PROJECT_UID" : {"TYPE" : "UID"},
+        "PROJECT_NAME" : {"TYPE" : "STRING", "CREATE" : "REQUIRED"},
+        "PROJECT_DESCRIPTION" : {"TYPE" : "STRING", "CREATE" : "ALLOWED", "UPDATE" : True},
+        "PROJECT_EXPIRATION" : {"TYPE" : "DATETIME", "CREATE" : "ALLOWED", "UPDATE" : True},
+        "PROJECT_EXPIRED" : {"TYPE" : "BOOLEAN"},
+        "PROJECT_CREATION" : {"TYPE" : "DATETIME"},
+        }
+
+    project_supplemental_fields = {
+        "PROJECT_EMAIL": {"TYPE": "EMAIL", "CREATE": "REQUIRED", "UPDATE": True, "OBJECT" : "PROJECT"}
+        }
 
     # Mapping from external to internal data schema
     field_mapping = {
@@ -95,7 +108,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         version_info = {"VERSION" : self.version_number, 
                         "SERVICES" : self.services,
                         "CREDENTIAL_TYPES" : self.credential_types, 
-                        "FIELDS": self.supplementary_fields}
+                        "FIELDS": self.supplemental_fields}
         return self._successReturn(version_info)
 
     def lookup_slices(self, client_cert, credentials, options):

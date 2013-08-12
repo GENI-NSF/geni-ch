@@ -22,13 +22,30 @@
 #----------------------------------------------------------------------
 
 from ABACGuard import *
+from ArgumentCheck import *
+from SAv1PersistentImplementation import *
 
 # Specific guard for GPO SA
 # Provide a set of invocation checks and row checks per method
 class SAv1Guard(ABACGuardBase):
 
-    # Set of invocation checks indexedc by method name
-    INVOCATION_CHECKS_FOR_METHOD = \
+    # Set of argument checks indexed by method name
+    ARGUMENT_CHECK_FOR_METHOD = \
+        {
+        'create_slice' : \
+            CreateArgumentCheck(SAv1PersistentImplementation.slice_mandatory_fields,\
+                                   SAv1PersistentImplementation.slice_supplemental_fields),
+        'update_slice' : \
+            UpdateArgumentCheck(SAv1PersistentImplementation.slice_mandatory_fields,\
+                                    SAv1PersistentImplementation.slice_supplemental_fields),
+        'lookup_slices' : \
+            LookupArgumentCheck(SAv1PersistentImplementation.slice_mandatory_fields,\
+                                    SAv1PersistentImplementation.slice_supplemental_fields)
+        }
+    
+
+    # Set of invocation checks indexed by method name
+    INVOCATION_CHECK_FOR_METHOD = \
         { 
         # lookup_slice_members can be called by anyone who is either
         #   - a member of the project to which the slice belongs
@@ -41,8 +58,8 @@ class SAv1Guard(ABACGuardBase):
                             queries = [["C", "is_operator"], QueryProjectMemberBySliceURN()])
     }
 
-    # Set of row checks indexedc by method name
-    ROW_CHECKS_FOR_METHOD = \
+    # Set of row checks indexed by method name
+    ROW_CHECK_FOR_METHOD = \
         { 
         # Rows returned from lookup_slices must belong to a project that the caller belongs to
         # Unless the requester is an operator, in which case all rows are okay to return
@@ -54,17 +71,24 @@ class SAv1Guard(ABACGuardBase):
                      queries = [["C", "is_operator"], QueryProjectMemberBySliceURN()]) 
         }
 
+    # Lookup argument check per method (or None if none registered)
+    def get_argument_check(self, method):
+        if self.ARGUMENT_CHECK_FOR_METHOD.has_key(method):
+            return self.ARGUMENT_CHECK_FOR_METHOD[method]
+        return None
+
     # Lookup invocation check per method (or None if none registered)
     def get_invocation_check(self, method):
-        if self.INVOCATION_CHECKS_FOR_METHOD.has_key(method):
-            return self.INVOCATION_CHECKS_FOR_METHOD[method]
+        if self.INVOCATION_CHECK_FOR_METHOD.has_key(method):
+            return self.INVOCATION_CHECK_FOR_METHOD[method]
         return None
 
     # Lookup row check per method (or None if none registered)
     def get_row_check(self, method):
-        if self.ROW_CHECKS_FOR_METHOD.has_key(method):
-            return self.ROW_CHECKS_FOR_METHOD[method]
+        if self.ROW_CHECK_FOR_METHOD.has_key(method):
+            return self.ROW_CHECK_FOR_METHOD[method]
         return None
+
 
 
 
