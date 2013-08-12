@@ -214,8 +214,10 @@ class MAv1Implementation(MAv1DelegateBase):
                   " set value='" + value + "' where name='" + \
                   self.field_mapping[attr] + "' and member_id='" + uid + "';"
             print 'sql = ', sql
-            res = session.execute(sql);
+            res = session.execute(sql)
+            session.commit()
             
+            # couldn't get this to work
 #            q = session.query(self.db.MEMBER_ATTRIBUTE_TABLE)
 #            q = q.filter(self.db.MEMBER_ATTRIBUTE_TABLE.c.name == \
 #                         self.field_mapping[attr])
@@ -223,4 +225,4 @@ class MAv1Implementation(MAv1DelegateBase):
 #            q.update({self.db.MEMBER_ATTRIBUTE_TABLE.c.value: value})
             
         session.close()
-        raise self._successReturn(True)
+        return self._successReturn(True)
