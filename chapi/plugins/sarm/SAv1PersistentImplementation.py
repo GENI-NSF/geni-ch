@@ -30,14 +30,17 @@ from chapi.SliceAuthority import SAv1DelegateBase
 # Utility functions for morphing from native schema to public-facing
 # schema
 
+# Turn a project URN into a project name
 def from_project_urn(project_urn):
     parts = project_urn.split('+')
     return parts[len(parts)-1]
 
+# Turn a project name into a project URN
 def to_project_urn(authority, project_name):
     return "urn:publicid:IDN+%s+project+%s" % \
         (authority, project_name)
 
+# Turn a row with project name into a project URN
 def row_to_project_urn(row):
     config = pm.getService('config')
     authority = config.get("chrm.authority")
@@ -54,17 +57,33 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
     credential_types = ["SFA", "ABAC"]
 
     # The externally visible data schema for slices
-    fields = {
+    slice_mandatory_fields  = {
         "SLICE_URN": {"TYPE": "URN"},
         "SLICE_UID": {"TYPE": "UID"},
         "SLICE_NAME": {"TYPE": "STRING", "CREATE": "REQUIRED"},
         "SLICE_DESCRIPTION": {"TYPE": "STRING", "CREATE": "ALLOWED", "UPDATE": True},
-        "PROJECT_URN": {"TYPE": "URN", "CREATE": "REQUIRED", "UPDATE": False},
-        "SLICE_EXPIRATION": {"TYPE": "DATETIME", "UPDATE": True},
+        "SLICE_EXPIRATION": {"TYPE": "DATETIME", "CREATE" : "ALLOWED", "UPDATE": True},
         "SLICE_EXPIRED": {"TYPE": "BOOLEAN"},
         "SLICE_CREATION": {"TYPE": "DATETIME"},
-        "SLICE_EMAIL": {"TYPE": "EMAIL", "CREATE": "REQUIRED", "UPDATE": True},
+        }
 
+    slice_supplemental_fields = {
+        "SLICE_EMAIL": {"TYPE": "EMAIL", "CREATE": "REQUIRED", "UPDATE": True},
+        "PROJECT_URN": {"TYPE": "URN", "CREATE": "REQUIRED", "UPDATE": False}
+    }
+
+    project_mandatory_fields = {
+        "PROJECT_URN" : {"TYPE" : "URN"},
+        "PROJECT_UID" : {"TYPE" : "UID"},
+        "PROJECT_NAME" : {"TYPE" : "STRING", "CREATE" : "REQUIRED"},
+        "PROJECT_DESCRIPTION" : {"TYPE" : "STRING", "CREATE" : "ALLOWED", "UPDATE" : True},
+        "PROJECT_EXPIRATION" : {"TYPE" : "DATETIME", "CREATE" : "ALLOWED", "UPDATE" : True},
+        "PROJECT_EXPIRED" : {"TYPE" : "BOOLEAN"},
+        "PROJECT_CREATION" : {"TYPE" : "DATETIME"},
+        }
+
+    project_supplemental_fields = {
+        "PROJECT_EMAIL": {"TYPE": "EMAIL", "CREATE": "REQUIRED", "UPDATE": True, "OBJECT" : "PROJECT"}
         }
 
     # Mapping from external to internal data schema
@@ -89,7 +108,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         version_info = {"VERSION" : self.version_number, 
                         "SERVICES" : self.services,
                         "CREDENTIAL_TYPES" : self.credential_types, 
-                        "FIELDS": self.fields}
+                        "FIELDS": self.supplemental_fields}
         return self._successReturn(version_info)
 
     def lookup_slices(self, client_cert, credentials, options):
@@ -154,8 +173,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         q = q.filter(self.db.SLICE_TABLE.c.slice_id == self.db.SLICE_MEMBER_TABLE.c.slice_id)
         q = q.filter(self.db.SLICE_MEMBER_TABLE.c.role == self.db.ROLE_TABLE.c.id)
 
-        print "Q = " + str(q)
-
+#        print "Q = " + str(q)
         rows = q.all()
 
         slices = []

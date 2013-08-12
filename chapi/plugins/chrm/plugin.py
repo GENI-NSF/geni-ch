@@ -40,6 +40,8 @@ def setup():
     config.install("chrm.authority", "ch-mb.gpolab.bbn.com", \
                        "name of CH/SA/MA authority")
 
+    db_engine = CHDatabaseEngine()
+    pm.registerService('chdbengine', db_engine)
 
 #    delegate = CHv1Implementation()
     delegate = CHv1PersistentImplementation()
@@ -48,6 +50,4 @@ def setup():
     handler.setDelegate(delegate)
     handler.setGuard(guard)
 
-    db_engine = CHDatabaseEngine()
-    pm.registerService('chdbengine', db_engine)
 
