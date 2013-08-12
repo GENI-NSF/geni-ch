@@ -205,17 +205,17 @@ class SAv1Handler(HandlerBase):
     # Associate an aggregate as having sliver information in a given 
     # slice. Expected to be called by an aggregate as an asynchronous 
     # (not critical-path) part of the resource allocation process.
-    def register_aggregate(self, slice_urn, aggregate_url, credentials, options):
+    def register_aggregate(self, slice_urn, aggregate_urn, credentials, options):
         client_cert = self.requestCertificate()
         method = 'register_aggregate'
         try:
             self._guard.validate_call(client_cert, method, \
                                           credentials, options, \
                                           {'slice_urn' : slice_urn,
-                                           'aggregate_url' : aggregate_url})
+                                           'aggregate_urn' : aggregate_urn})
             results = self._delegate.register_aggregate(client_cert, \
                                                             slice_urn, \
-                                                            aggregate_url, \
+                                                            aggregate_urn, \
                                                             credentials, \
                                                             options)
             if results['code'] == NO_ERROR:
@@ -230,17 +230,17 @@ class SAv1Handler(HandlerBase):
     # Dis-associate an aggregate as having sliver information in a given slice
     # Expected to be called by the aggregate as an asynchronous 
     # (non-critical path) part of the resource de-allocation process
-    def remove_aggregate(self, slice_urn, aggregate_url, credentials, options):
+    def remove_aggregate(self, slice_urn, aggregate_urn, credentials, options):
         client_cert = self.requestCertificate()
         method = 'remove_aggregate'
         try:
             self._guard.validate_call(client_cert, method, \
                                           credentials, options, \
                                           {'slice_urn' : slice_urn,
-                                           'aggregate_url' : aggregate_url})
+                                           'aggregate_urn' : aggregate_urn})
             results = self._delegate.remove_aggregate(client_cert, \
                                                           slice_urn, \
-                                                          aggregate_url, \
+                                                          aggregate_urn, \
                                                           credentials, \
                                                           options)
             if results['code'] == NO_ERROR:
@@ -252,7 +252,7 @@ class SAv1Handler(HandlerBase):
         except Exception as e:
             return self._errorReturn(e)
 
-    # Provide a list of URLs of all aggregates that have been registered
+    # Provide a list of URNs of all aggregates that have been registered
     # as having resources allocated with a given slice
     # NB: This list is not definitive in that the aggregate maynot have 
     # called register_aggregate call, and that the slivers may no longer
@@ -467,11 +467,11 @@ class SAv1DelegateBase(DelegateBase):
     ## SLIVER INFO SERVICE methods
         
     def register_aggregate(self, client_cert, \
-                               slice_urn, aggregate_url, credentials, options):
+                               slice_urn, aggregate_urn, credentials, options):
         raise CHAPIv1NotImplementedError('')
 
     def remove_aggregate(self, client_cert, \
-                             slice_urn, aggregate_url, credentials, options):
+                             slice_urn, aggregate_urn, credentials, options):
         raise CHAPIv1NotImplementedError('')
 
     def get_slice_aggregates(self, client_cert, \
