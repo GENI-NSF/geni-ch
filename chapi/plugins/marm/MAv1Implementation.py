@@ -84,6 +84,16 @@ class MAv1Implementation(MAv1DelegateBase):
                   "MEMBER_LASTNAME", "MEMBER_USERNAME", "MEMBER_EMAIL", \
                   "MEMBER_DISPLAYNAME", "MEMBER_PHONE_NUMBER", "MEMBER_AFFILIATION"]
 
+    public_fields = ["MEMBER_URN", "MEMBER_UID", "MEMBER_USERNAME", \
+                     "MEMBER_SSL_PUBLIC_KEY", "MEMBER_SSH_PUBLIC_KEY", \
+                     "USER_CREDENTIAL"]
+
+    identifying_fields = ["MEMBER_FIRSTNAME", "MEMBER_LASTNAME", "MEMBER_EMAIL", \
+                          "MEMBER_DISPLAYNAME", "MEMBER_PHONE_NUMBER", \
+                          "MEMBER_AFFILIATION"]
+
+    private_fields = ["MEMBER_SSH_PRIVATE_KEY", "MEMBER_SSL_PRIVATE_KEY"]
+
 
     def __init__(self):
         self.db = pm.getService('chdbengine')
@@ -94,6 +104,11 @@ class MAv1Implementation(MAv1DelegateBase):
                         "CREDENTIAL_TYPES": self.credential_types,
                         "FIELDS": self.optional_fields}
         return self._successReturn(version_info)
+
+    def check_attributes(self, attrs):
+        for attr in attrs:
+            if attr not in self.attributes:
+                raise CHAPIv1ArgumentError('Unknown attribute ' + attr)
 
     def get_uids_for_attribute(self, session, attr, value):
         q = session.query(self.db.MEMBER_ATTRIBUTE_TABLE.c.member_id)
@@ -121,11 +136,14 @@ class MAv1Implementation(MAv1DelegateBase):
         return [eval("row.%s" % field) for row in rows]
 
     # Common code for answering query
-    def lookup_member_info(self, options):
+    def lookup_member_info(self, options, allowed_fields):
+        # preliminaries
         selected_columns, match_criteria = \
             unpack_query_options(options, self.field_mapping)
         if not match_criteria:
             raise CHAPIv1ArgumentError('Missing a "match" option')
+        self.check_attributes(match_criteria)
+        selected_columns = set(selected_columns) & set(allowed_fields)
         session = self.db.getSession()
 
         # first, get all the member ids of matches
@@ -162,19 +180,47 @@ class MAv1Implementation(MAv1DelegateBase):
 
     # This call is unprotected: no checking of credentials
     def lookup_public_member_info(self, credentials, options):
-        print "MAv1DelegateBase.lookup_public_member_info " + \
-            "CREDS = %s OPTIONS = %s" % \
-            (str(credentials), str(options))
-        return self.lookup_member_info(options)
+        return self.lookup_member_info(options, self.public_fields)
 
     # This call is protected
     def lookup_private_member_info(self, client_cert, credentials, options):
-        return self.lookup_member_info(options)
+        return self.lookup_member_info(options, self.private_fields)
 
     # This call is protected
     def lookup_identifying_member_info(self, client_cert, credentials, options):
-        return self.lookup_member_info(options)
+        return self.lookup_member_info(options, self.identifying_fields + \
+                                       self.public_fields)
 
     # This call is protected
     def update_member_info(self, client_cert, member_urn, credentials, options):
-        raise CHAPIv1NotImplementedError('')
+        # preliminary error checking
+        if not hasattr(options, 'update'):
+            raise CHAPIv1ArgumentError('Missing an update key')
+        new_attrs = options['update']
+        if not isinstance(new_attrs, types.DictType):
+            raise CHAPIv1ArgumentError('update value should be dictionary')
+
+        # find member to update
+        session = self.db.getSession()
+        uids = self.get_uids_for_attribute(session, "MEMBER_URN", member_urn)
+        if len(uids) == 0:
+            session.close()
+            raise CHAPIv1ArgumentError('No member with that URN')
+        uid = uids[0]
+        
+        # do the update
+        for attr, value in new_attrs.iteritems():
+            sql = "update " + self.db.MEMBER_ATTRIBUTE_TABLE.name + \
+                  " set value='" + value + "' where name='" + \
+                  self.field_mapping[attr] + "' and member_id='" + uid + "';"
+            print 'sql = ', sql
+            res = session.execute(sql);
+            
+#            q = session.query(self.db.MEMBER_ATTRIBUTE_TABLE)
+#            q = q.filter(self.db.MEMBER_ATTRIBUTE_TABLE.c.name == \
+#                         self.field_mapping[attr])
+#            q = q.filter(self.db.MEMBER_ATTRIBUTE_TABLE.c.member_id == uid)
+#            q.update({self.db.MEMBER_ATTRIBUTE_TABLE.c.value: value})
+            
+        session.close()
+        raise self._successReturn(True)
