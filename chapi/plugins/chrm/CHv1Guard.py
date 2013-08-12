@@ -21,33 +21,30 @@
 # IN THE WORK.
 #----------------------------------------------------------------------
 
-import amsoil.core.pluginmanager as pm
+from ABACGuard import *
+from ArgumentCheck import *
 from CHv1Implementation import CHv1Implementation
-from CHv1PersistentImplementation import CHv1PersistentImplementation
-from CHDatabaseEngine import CHDatabaseEngine
-from CHv1Guard import CHv1Guard
 
-# This plugin sets the delgate for the CH handler to be the CH Persistent
-# Implementation. There are no guards for this handler: all methods
-# are public
+# Specific guard for GPO CH
+# These are all open calls (no authN or authZ) , so all we do is argument
+# checking
 
-def setup():
+class CHv1Guard(ABACGuardBase):
 
-    # set up config keys
-    config = pm.getService('config')
-    config.install("chrm.db_url", None, "database URL")
+    ARGUMENT_CHECK_FOR_METHOD = \
+        {
+        'get_member_authorities' : \
+            LookupArgumentCheck(CHv1Implementation.fields, {}),
+        'get_slice_authorities' : \
+            LookupArgumentCheck(CHv1Implementation.fields, {}),
+        'get_aggregates' : \
+            LookupArgumentCheck(CHv1Implementation.fields, {}),
+        'lookup_aggregates_for_urns' :
+            ValidURNCheck('urns')
+        }
 
-    config.install("chrm.authority", "ch-mb.gpolab.bbn.com", \
-                       "name of CH/SA/MA authority")
-
-
-#    delegate = CHv1Implementation()
-    delegate = CHv1PersistentImplementation()
-    guard = CHv1Guard()
-    handler = pm.getService('chv1handler')
-    handler.setDelegate(delegate)
-    handler.setGuard(guard)
-
-    db_engine = CHDatabaseEngine()
-    pm.registerService('chdbengine', db_engine)
+    def get_argument_check(self, method):
+        if self.ARGUMENT_CHECK_FOR_METHOD.has_key(method):
+            return self.ARGUMENT_CHECK_FOR_METHOD[method]
+        return None
 
