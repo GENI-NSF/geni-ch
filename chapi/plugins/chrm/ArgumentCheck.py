@@ -53,9 +53,9 @@ class FieldsArgumentCheck(ArgumentCheck):
 
     def validate(self, options, arguments):
 
-        if self._field_option not in options.keys():
+        if self._field_option and self._field_option not in options.keys():
             raise CHAPIv1ArgumentError("Missing Option: " \
-                                           + self._field_option)
+                                           + str(self._field_option))
             
         # Check to see that all the additional required options are present
         if self._additional_required_options:
@@ -72,10 +72,12 @@ class FieldsArgumentCheck(ArgumentCheck):
                 raise CHAPIv1ArgumentError("Unrecognized field : " + field)
 
                            
+    # Take a list of {field : value} dictionaries
     # Make sure all field name/value pairs are recognized and of proper type
     def validateFieldValueList(self, field_values):
 
-        for field in field_values:
+        for field_value in field_values:
+            field = field_value.keys()[0]
             value = field_value[field]
             if not field in self._mandatory_fields and \
                     not field in self._supplemental_fields:

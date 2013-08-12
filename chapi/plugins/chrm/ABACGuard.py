@@ -235,11 +235,11 @@ class ABACGuardBase(GuardBase):
     # Base class: Provide a list of argument checks, 
     # invocation_checks and row_checks
     def get_argument_check(self, method): 
-        raise CHAPIv1NotImplemented('Abstract Base class ABACGuard.get_argument_checks')
+        raise CHAPIv1NotImplementedError('Abstract Base class ABACGuard.get_argument_check')
     def get_invocation_check(self, method): 
-        raise CHAPIv1NotImplemented('Abstract Base class ABACGuard.get_invocation_checks')
+        raise CHAPIv1NotImplementedError('Abstract Base class ABACGuard.get_invocation_check')
     def get_row_check(self, method): 
-        raise CHAPIv1NotImplemented('Abstract Base class ABACGuard.get_row_checks')
+        raise CHAPIv1NotImplementedError('Abstract Base class ABACGuard.get_row_check')
 
 
     def validate_call(self, client_cert, method, credentials, options, arguments = {}):

@@ -29,16 +29,34 @@ from CHv1Implementation import CHv1Implementation
 # These are all open calls (no authN or authZ) , so all we do is argument
 # checking
 
+# A 'match' criteria is optional for ghe CH get_* methods
+class CHGetServicesCheck(FieldsArgumentCheck):
+    def __init__(self, mandatory_fields, supplemental_fields):
+        FieldsArgumentCheck.__init__(self, None, None, \
+                                         mandatory_fields, supplemental_fields)
+
+    def validate(self, options, arguments):
+        FieldsArgumentCheck.validate(self, options, arguments)
+
+        if 'match' in options:
+            self.validateFieldValueList(options['match'])
+
+        if 'filter' in options:
+            self.validateFieldList(options['filter'])
+
 class CHv1Guard(ABACGuardBase):
 
     ARGUMENT_CHECK_FOR_METHOD = \
         {
         'get_member_authorities' : \
-            LookupArgumentCheck(CHv1Implementation.fields, {}),
+            CHGetServicesCheck(CHv1Implementation.mandatory_fields, \
+                                   CHv1Implementation.supplemental_fields),
         'get_slice_authorities' : \
-            LookupArgumentCheck(CHv1Implementation.fields, {}),
+            CHGetServicesCheck(CHv1Implementation.mandatory_fields, \
+                                   CHv1Implementation.supplemental_fields),
         'get_aggregates' : \
-            LookupArgumentCheck(CHv1Implementation.fields, {}),
+            CHGetServicesCheck(CHv1Implementation.mandatory_fields, \
+                                   CHv1Implementation.supplemental_fields),
         'lookup_aggregates_for_urns' :
             ValidURNCheck('urns')
         }
@@ -46,5 +64,12 @@ class CHv1Guard(ABACGuardBase):
     def get_argument_check(self, method):
         if self.ARGUMENT_CHECK_FOR_METHOD.has_key(method):
             return self.ARGUMENT_CHECK_FOR_METHOD[method]
+        return None
+
+    # The CH methods are all openly available: no invocation or row checks
+    def get_invocation_check(self, method):
+        return None
+
+    def get_row_check(self, method):
         return None
 
