@@ -173,7 +173,6 @@ class MAv1Implementation(MAv1DelegateBase):
                         if not vals:
                             vals = self.get_val_for_uid(session, \
                                 self.db.INSIDE_KEY_TABLE, self.field_mapping[col], uid)
-                    print 'col =', col, 'attr = ', options
                     if vals:
                         values[col] = vals[0]
                     elif 'filter' in options:
