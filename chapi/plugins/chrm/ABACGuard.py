@@ -29,6 +29,7 @@ from chapi.Exceptions import *
 import sfa.trust.certificate;
 import types
 from ABAC import *
+from SpeaksFor import determine_speaks_for
 from tools.ABACManager import ABACManager
 from ArgumentCheck import *
 
@@ -97,13 +98,13 @@ class OperatorAsserter(ABACAssertionGenerator):
         user_urn = extract_user_urn(client_cert)
         is_operator = lookup_operator_privilege(user_urn)
         if is_operator:
-            abac_manager.register_assertion("SA.is_operator<-C")
+            abac_manager.register_assertion("ME.is_operator<-C")
 
 class ProjectMemberAsserterByURN(ABACAssertionGenerator):
     def generate_assertions(self, abac_manager, client_cert, credentials, arguments, user_urn):
         user_project_names = lookup_project_names_for_user(user_urn)
         for user_project_name in user_project_names:
-            assertion = "SA.is_member_%s<-C" % str(user_project_name)
+            assertion = "ME.is_member_%s<-C" % str(user_project_name)
             print "Asserting " + assertion
             abac_manager.register_assertion(assertion)
 
@@ -175,9 +176,12 @@ class ABACCheck(object):
 
     def compute(self, client_cert, credentials, arguments, urn):
 
-        # Bind entities : C = client_cert, SA = sa_cert, sa_key
-        certs = {'C' : client_cert}
-        abac_manager = ABACManager('SA', self.cert_file, self.key_file, certs)
+        # Bind entities : C = client_cert, ME = auth_cert, auth_key
+        certs_by_name = {'C' : client_cert, 'ME' : self.cert_file}
+        abac_manager = \
+            ABACManager(certs_by_name = {"C" : client_cert}, \
+                            cert_files_by_name = {"ME" : self.cert_file}, \
+                            key_files_by_name = {"ME" : self.key_file})
 
         # Gather all assertions about context
         for asserter in self._asserters:
@@ -194,8 +198,9 @@ class ABACCheck(object):
             for target_role in target_roles:
                 q_target = target_role[0]
                 q_role = target_role[1]
+                query_expression = "ME.%s<-%s" % (q_role, q_target)
 
-                ok, proof = abac_manager.query(q_target, q_role)
+                ok, proof = abac_manager.query(query_expression)
                 print "query : " + q_target + " " + q_role + " " + str(ok)
                 if ok:
                     print "Proof " + "\n".join(abac_manager.pretty_print_proof(proof))
@@ -254,6 +259,15 @@ class ABACGuardBase(GuardBase):
         if invocation_check:
             invocation_check.validate(client_cert, method, \
                                           credentials, options, arguments)
+
+    # Support speaks-for invocation:
+    # If a speaks-for credential is provided and 
+    # a matching 'speaking_for' option is provided
+    # If so, return the cert of the agent who signed the speaks-for
+    #   credential and put the original (invoking) client_cert in a 
+    #   'speaking_as' option
+    def adjust_client_identity(self, client_cert, credentials, options):
+        return determine_speaks_for(client_cert, credentials, options)
 
     def protect_results(self, client_cert, method, credentials, results):
         print "ABACGuardBase.protect_results : " + method + " " + str(results)
