@@ -51,12 +51,12 @@ def get_urn_from_cert(cert):
 
 # Determine if the given method context is 'speaks-for'
 # That is:
-#     1. There is a 'speaking-for' option with the value of the 
+#     1. There is a 'speaking_for' option with the value of the 
 #          URN of the spoken-for user
 #     2. There is a speaks-for credential in the list of credentials 
 #         that is signed by the spoken-for user authorizing the 
 #         speaking entity to speak for it
-#     3. The URN of the 'speaking-for' option matches the URN 
+#     3. The URN of the 'speaking_for' option matches the URN 
 #         in the speaks-for credential
 #     4. The certificate of the spoken-for user is in the 
 #         list of credentials [Note: This one is still open to debate...]
@@ -66,7 +66,7 @@ def get_urn_from_cert(cert):
 #   credentials: the list of credentials passed with the call, 
 #        possibly including user certs and speaks-for credentials
 #   options: the dictionary of options supplied with the call, 
-#        possibly including a 'speaking-for' option
+#        possibly including a 'speaking_for' option
 #
 # Return: 
 #   agent_cert: Cert of actual (spoken for) speaker if 'speaks for', 
@@ -82,7 +82,7 @@ def determine_speaks_for(client_cert, credentials, options):
     speaks_for_credential = None
     for credential in credentials:
         if credential['geni_type'] == 'ABAC' and \
-                credential['value'].find('speaks_for') >= 0:
+                credential['geni_value'].find('speaks_for') >= 0:
             speaks_for_credential = credential['geni_value']
             break
 
@@ -93,16 +93,16 @@ def determine_speaks_for(client_cert, credentials, options):
 
     # Check arguments:
 
-    # If neither a speaks-for credential or a speaking-for option, this is not speaks-for.
+    # If neither a speaks-for credential or a speaking_for option, this is not speaks-for.
     # Return the cert and options as given
     if not speaks_for_credential and not speaking_for:
         return client_cert, options
 
-    # If there is either a  speaks-for credential or a speaking-for option, 
+    # If there is either a  speaks-for credential or a speaking_for option, 
     #    but not both, error
     if (speaks_for_credential and not speaking_for) or \
             (not speaks_for_credential and speaking_for):
-        raise Exception("Must have both speaks-for-credential and speaking-for option")
+        raise Exception("Must have both speaks-for-credential and speaking_for option")
 
     # We are processing aspeaks-for request
 
@@ -114,7 +114,7 @@ def determine_speaks_for(client_cert, credentials, options):
     
     # The agent_urn must match the speaking_for option
     if agent_urn != speaking_for:
-        raise Exception("Mismatch: speaking-for %s and agent URN %s" % (speaking_for, agent_urn))
+        raise Exception("Mismatch: speaking_for %s and agent URN %s" % (speaking_for, agent_urn))
 
     # The speaks-for credential must assert the statement AGENT.speaks_for(AGENT)<-CLIENT
     certs_by_name = {"CLIENT" : client_cert, "AGENT" : agent_cert}

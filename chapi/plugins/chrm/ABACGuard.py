@@ -29,6 +29,7 @@ from chapi.Exceptions import *
 import sfa.trust.certificate;
 import types
 from ABAC import *
+from SpeaksFor import determine_speaks_for
 from tools.ABACManager import ABACManager
 from ArgumentCheck import *
 
@@ -258,6 +259,15 @@ class ABACGuardBase(GuardBase):
         if invocation_check:
             invocation_check.validate(client_cert, method, \
                                           credentials, options, arguments)
+
+    # Support speaks-for invocation:
+    # If a speaks-for credential is provided and 
+    # a matching 'speaking_for' option is provided
+    # If so, return the cert of the agent who signed the speaks-for
+    #   credential and put the original (invoking) client_cert in a 
+    #   'speaking_as' option
+    def adjust_client_identity(self, client_cert, credentials, options):
+        return determine_speaks_for(client_cert, credentials, options)
 
     def protect_results(self, client_cert, method, credentials, results):
         print "ABACGuardBase.protect_results : " + method + " " + str(results)

@@ -63,6 +63,9 @@ class MAv1Handler(HandlerBase):
         try:
             self._guard.validate_call(client_cert, method, \
                                           credentials, options)
+            client_cert, options = \
+                self._guard.adjust_client_identity(client_cert, \
+                                                       credentials, options)
             results = self._delegate.lookup_private_member_info(client_cert, \
                                                                     credentials, \
                                                                     options)
@@ -87,6 +90,9 @@ class MAv1Handler(HandlerBase):
         try:
             self._guard.validate_call(client_cert, method, \
                                           credentials, options)
+            client_cert, options = \
+                self._guard.adjust_client_identity(client_cert, \
+                                                       credentials, options)
             results = self._delegate.lookup_identifying_member_info(client_cert, \
                                                                         credentials, \
                                                                         options)
@@ -110,6 +116,9 @@ class MAv1Handler(HandlerBase):
             self._guard.validate_call(client_cert, method,
                                           credentials, options, \
                                           {'member_urn' : member_urn})
+            client_cert, options = \
+                self._guard.adjust_client_identity(client_cert, \
+                                                       credentials, options)
             results = self._delegate.update_member_info(client_cert, member_urn, \
                                                             credentials, options)
             if results['code'] == NO_ERROR:
