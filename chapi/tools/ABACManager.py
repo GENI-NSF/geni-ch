@@ -23,9 +23,9 @@
 
 # Class to manage a set o ABAC credentials, certificates and prove queries
 
+from ConfigParser import ConfigParser
 import optparse
 import os
-import json
 import sys
 import tempfile
 import ABAC
@@ -35,76 +35,228 @@ class ABACManager:
     # Constants
     ten_years = 10*365*24*3600
 
-    # Certs and cert_files are dictioanries of name=> cert/cert_file
-    # Assertions are a list of RT0 statements 
-    #    X.Y<-Z 
-    #    X.Y<-Z.W
-    # or RT1_lite statements (translated into RT0)
-    #    X.Y(S)<-Z(T)
-    #    X.Y(S)<-Z.W(T)
-    # 
-    # Throw an exception if any assertion refers 
-    #to any object not in a provided cert/file
-    def __init__(self, my_name, my_cert_filename, my_key_filename, \
-                     certs = {}, cert_files = {}, \
-                     assertions = [], raw_assertions = [], \
-                     assertion_files = []):
-        self._my_name = my_name
-        self._my_cert_filename = my_cert_filename
-        self._my_key_filename = my_key_filename
-        self._certs = certs
-        self._cert_files = cert_files
-        self._assertions = assertions
-        self._assertion_files = assertion_files
+    # Constructor 
+    # Optional arguments:
+    #    certs_by_name : A dictionary of principal_name => cert
+    #    cert_files_by_name : A dictionary of principal_name => cert_filename
+    #    key_files_by_name: A dictionary of principal_name => private_key_filename
+    #    assertions :  A list of assertions as ABAC statements (X.Y<-Z e.g.)
+    #    raw_assertions : A list of signed XML versions of ABAC statements
+    #    assertion_files : A list of files contianing signed XML versions of ABAC statements    
+    #    options : List of command-line provided optional values
+    def __init__(self, certs_by_name={}, cert_files_by_name={}, \
+                     key_files_by_name={}, \
+                     assertions=[], raw_assertions=[], assertion_files=[],  \
+                     options=None):
 
+        # For verbose debug output
+        self._verbose = False
+
+        # List of all ABAC principals (IDs) by name
         self._ids_by_name = {}
-        self._files_by_name = {}
 
         # List of all files created from dumping certs or raw assertions
         self._created_filenames = []
 
+        # The ABAC context object
         self._ctxt = ABAC.Context()
 
-        # Register 'me' ID object (my name, cert, key) to the context
-        self._me = ABAC.ID(self._my_cert_filename)
-        self._me.load_privkey(self._my_key_filename)
-        self.register_id(self._me, self._my_name)
+        # All certs provided as raw cert objects
+        self._certs = []
 
-        # dump all the certs into temp cert files and register
-        for name in self._certs.keys():
-            cert = self._certs[name]
-            cert_filename = self._dump_to_file(cert)
-            id = ABAC.ID(cert_filename)
-            self.register_id(id, name)
+        # All cert files indexed by principal name
+        self._cert_files = {}
 
-        # Add all cert_files provided
-        for name in self._cert_files.keys():
-            cert_filename = self._cert_files[name]
-            id = ABAC.ID(cert_filename)
-            self.register_id(id, name)
+        # All key files indexed by principal name
+        self._key_files ={}
 
-        # Parse and create all the assertions. 
+        # All raw assertions (as ABAC expressions)
+        self._assertions = []
+
+        # All assertion files
+        self._assertion_files = []
+
+        # Process all the cert files
+        for principal_name  in cert_files_by_name.keys():
+            cert_file = cert_files_by_name[principal_name]
+            principal = self.register_id(principal_name, cert_file)
+
+        # Process all the raw certs
+        for principal_name in certs_by_name.keys():
+            cert = certs_by_name[principal_name]
+            cert_file = self._dump_to_file(cert)
+            principal = self.register_id(principal_name, cert_file)
+
+        # Process the private keys
+        for principal_name in key_files_by_name.keys():
+            key_file = key_files_by_name[principal_name]
+            self.register_key(principal_name,  key_file)
+
+        # Process all assertions
         for assertion in assertions:
             self.register_assertion(assertion)
 
-        # Dump all raw_assertions (signed XML documents containing assertions)
+        # Process all raw_assertions
         for raw_assertion in raw_assertions:
             raw_assertion_file = self._dump_to_file(raw_assertion)
 #            print "Loading raw assertion file " + raw_assertion_file
-            self._ctxt.load_attribute_file(raw_assertion_file)
+            self.register_assertion_file(raw_assertion_file)
 
-        # Register assertions from files
+        # Process all assertion files
         for assertion_file in assertion_files:
-#            print "Loading assertion file " + assertion_file
-            self._ctxt.load_attribute_file(assertion_file)
+            self.register_assertion_file(assertion_file)
+
+
+        # Save command-line options
+        self._options = options
+
+        # And process if provided
+        if self._options:
+            self.init_from_options()
+
+        
+
+    def init_from_options(self):
+
+        # If a config file is provided, read it into the ABACManager
+        if self._options.config:
+            cp = ConfigParser()
+            cp.optionxform=str
+            cp.read(self._options.config)
+
+            for name in cp.options('Principals'):
+                cert_file = cp.get('Principals', name)
+                self.register_id(name, cert_file)
+
+            for name in cp.options('Keys'):
+                key_file = cp.get('Keys', name)
+                self.register_key(name, key_file)
+
+            for assertion in cp.options('Assertions'):
+                self.register_assertion(assertion)
+
+            for assertion_file in cp.options("AssertionFiles"):
+                self.register_assertion_file(assertion_file)
+
+        # Use all the other command-line options to override/augment 
+        # the values in the ABCManager
+
+        # Add new principal ID's / keys
+        if self._options.id:
+            for id_filename in options.id:
+                parts = id_filename.split(':')
+                id_name = parts[0].strip()
+                id_cert_file = None
+                if len(parts) > 1:
+                    id_cert_file = parts[1].strip()
+                    self.register_id(id_name, id_cert_file)
+                    
+                id_key_file = None
+                if len(parts) > 2:
+                    id_key_file = parts[2].strip()
+                    self.register_key(name, id_key_file)
+
+        # Register assertion files provided by command line
+        if self._options.assertion_file:
+            for assertion_file in self._options.assertion_file:
+                self.register_assertion_file(assertion_file)
+
+        # Grab pure ABAC assertions from commandline
+        if self._options.assertion:
+            for assertion in self._options.assertion:
+                self.register_assertion(assertion)
+
+
+#     # Certs and cert_files are dictioanries of name=> cert/cert_file
+#     # Assertions are a list of RT0 statements 
+#     #    X.Y<-Z 
+#     #    X.Y<-Z.W
+#     # or RT1_lite statements (translated into RT0)
+#     #    X.Y(S)<-Z(T)
+#     #    X.Y(S)<-Z.W(T)
+#     # 
+#     # Throw an exception if any assertion refers 
+#     #to any object not in a provided cert/file
+#     def __init__(self, certs = {}, cert_files = {}, key_files = {},
+#                      assertions = [], raw_assertions = [], assertion_files = []):
+#         self._certs = certs
+#         self._cert_files = cert_files # Indexed by principal name
+#         self._key_files = key_files # Indexed by principal name
+#         self._assertions = assertions
+#         self._assertion_files = assertion_files
+
+
+#         # dump all the certs into temp cert files and register
+#         for name in self._certs.keys():
+#             cert = self._certs[name]
+#             cert_filename = self._dump_to_file(cert)
+#             self.register_id(iname, cert_filename)
+
+#         # Add all cert_files provided
+#         for name in self._cert_files.keys():
+#             cert_filename = self._cert_files[name]
+#             self.register_id(name, cert_filename)
+#             # Generate self-signed cert if no cert file provided
+#             if cert_filename is None:
+#                 id = ABAC.ID(name, self.ten_years)
+#             else:
+#                 id = ABAC.ID(cert_filename)
+#                 # If there is a key associated with this principal, load it
+#                 if self._key_files.has_key(name):
+#                     key_filename = self._key_files[name]
+#                     if key_filename is not None:
+#                         id.load_privkey(key_filename)
+#             self.register_id(id, name)
+
+
+#         # Parse and create all the assertions. 
+#         for assertion in assertions:
+#             self.register_assertion(assertion)
+
+#         # Dump all raw_assertions (signed XML documents containing assertions)
+#         for raw_assertion in raw_assertions:
+#             raw_assertion_file = self._dump_to_file(raw_assertion)
+# #            print "Loading raw assertion file " + raw_assertion_file
+#             self._ctxt.load_attribute_file(raw_assertion_file)
+
+#         # Register assertions from files
+#         for assertion_file in assertion_files:
+# #            print "Loading assertion file " + assertion_file
+#             self._ctxt.load_attribute_file(assertion_file)
+
+    def run(self):
+        if self._options.query:
+            ok, proof = self.query(self._options.query)
+            if ok:
+                print "Succeeded"
+            else:
+                print "Failed"
+            print "\n".join(self.pretty_print_proof(proof))
+        else:
+            assertion = self.register_assertion(self._options.credential)
+            self._dump_assertion(assertion, self._options.outfile)
 
     # Does given target have given role?
-    # I.e. can we prove ME.role<-target
+    # I.e. can we prove query statement Q (X.role<-target)
     # Return ok, proof
-    def query(self, target_name, role_name):
+    def query(self, query_expression):
+        query_expression_parts = query_expression.split("<-")
+        if len(query_expression_parts) != 2:
+            raise Exception("Illegal query expression : " + query_expression)
+        query_lhs = query_expression_parts[0].strip()
+        query_lhs_parts = query_lhs.split(".")
+        if len(query_lhs_parts) != 2:
+            raise Exception("Illegal query expression : " + query_expression)
+        signer = query_lhs_parts[0].strip()
+        signer_keyid = self._resolve_principal(signer).keyid()
+        role_name = query_lhs_parts[1].strip()
         role = self._resolve_role(role_name)
+        query_rhs = query_expression_parts[1].strip()
+        target_name = query_rhs
         target = self._resolve_principal(target_name)
-        return self._ctxt.query(self._me.keyid() + "." + role, target.keyid())
+        resolved_query_expression = "%s.%s" % (signer_keyid, role)
+        ok, proof = self._ctxt.query(resolved_query_expression, target.keyid())
+        return ok, proof
 
     # Delete all the tempfiles create
     def __del__(self):
@@ -112,12 +264,30 @@ class ABACManager:
             os.remove(created_filename)
 
     # Register a new ID with the manager, loading into lookup table and context
-    def register_id(self, id, name):
+    def register_id(self, name, cert_file):
+        if cert_file == '' or cert_file == 'None':
+            cert_file = None
+        if cert_file:
+            id = ABAC.ID(cert_file)
+        else:
+            id = ABAC.ID(name, self.ten_years)
+
+        if self._verbose:
+            print "Registering ID: " + name + " " + str(cert_file)
+
         if self._ids_by_name.has_key(name):
             raise Exception("ABACManager: name doubley defined " + name)
         self._ids_by_name[name] = id
-#        print "Loading ID chunk " + name
         self._ctxt.load_id_chunk(id.cert_chunk())
+
+    # Load a private key with a principal
+    def register_key(self, name, key_file):
+        if key_file and key_file != '' and key_file != 'None':
+            id = self._ids_by_name[name]
+            id.load_privkey(key_file)
+            if self._verbose:
+                print "Registering key " + name + " " + key_file
+
 
     # Register a new assertion with the manager
     # Parse the expression and resolve the pieces 
@@ -142,21 +312,38 @@ class ABACManager:
 
         rhs_pieces = rhs.split('.')
         if len(rhs_pieces) >= 1:
-            object = self._resolve_principal(rhs_pieces[0])
+            principal_name = rhs_pieces[0].strip()
+            object = self._resolve_principal(principal_name)
 
         if len(rhs_pieces) == 1:
             P.principal(object.keyid())
         elif len(rhs_pieces) == 2:
-            role = self._resolve_role(rhs_pieces[1])
+            role_name = rhs_pieces[1].strip()
+            role = self._resolve_role(role_name)
             P.role(object.keyid(), role)
+        elif len(rhs_pieces) == 3:
+            # Linking role
+            role1 = rhs_pieces[1].strip()
+            role2 = rhs_pieces[2].strip()
+            linking_role_left = self._resolve_role(role1)
+            linking_role_right = self._resolve_role(role2)
+            P.linking_role(object.keyid(), linking_role_left,linking_role_right)
         else:
             raise Exception("Ill-formed assertion RHS: need < 2 . : " + rhs)
         P.bake()
-#        print "Loading assertion  chunk : " + str(P)
         self._ctxt.load_attribute_chunk(P.cert_chunk())
 
+        if self._verbose:
+            print "Registering assertion  " + assertion
+
+        self._assertions.append(assertion)
         return P
 
+    def register_assertion_file(self, assertion_file):
+        if self._verbose:
+            print "Registering assertion file " + assertion_file
+        self._assertion_files.append(assertion_file)
+        self._ctxt.load_attribute_file(assertion_file)
 
     # return list of user-readable credentials in proof chain
     def pretty_print_proof(self, proof):
@@ -180,13 +367,28 @@ class ABACManager:
         self._created_filenames.append(filename)
         return filename
 
+    # Dump an assertion to stdout or a file, 
+    # depending on whether outfile_name is set
+    def _dump_assertion(self, assertion, outfile_name):
+        outfile = sys.stdout
+        if outfile_name:
+            try:
+                outfile = open(outfile_name, 'w')
+            except Exception:
+                print "Can't open outfile " + options.outfile
+                sys.exit(-1)
+        assertion.write(outfile)
+        if outfile_name:
+            outfile.close()
+
+
     # Lookup principal by name and return
     # Raise exception if not found
     def _resolve_principal(self, name):
         if self._ids_by_name.has_key(name):
             return self._ids_by_name[name]
         else:
-            raise "Unregistered principal: " + name
+            raise Exception("Unregistered principal: " + name)
 
     # Resolve a role string into RT1_lite syntax
     # I.e. 
@@ -199,20 +401,13 @@ class ABACManager:
             return role
         elif has_lpar >- 0 and has_rpar >= 0 and has_lpar < has_rpar:
             role_parts = role.split('(')
-            role_name = role_parts[0]
+            role_name = role_parts[0].strip()
             object_parts = role_parts[1].split(')')
-            object_name = object_parts[0]
+            object_name = object_parts[0].strip()
             object = self._resolve_principal(object_name)
             return "%s_%s" % (role_name, object.keyid())
         else:
             raise Exception("Ill-formed role: " + role)
-
-    # Return the name for a cert
-    def _lookup_cert(self, cert):
-        for id_name in self._ids_by_name.keys():
-            id_cert = self._ids_by_name[id_name]
-            if (id_cert == cert):
-                return id_name
 
     # Replace keyids with string names in string
     def _transform_string(self, string):
@@ -225,95 +420,43 @@ class ABACManager:
 
 def main():
     parser = optparse.OptionParser(description='Produce an ABAC Assertion')
-    parser.add_option('--username', 
-                      help="Name of user signing the assertion",
-                      default="ME")
-    parser.add_option('--user_cert_key', 
-                      help="Cert/key for user signing the assertion")
-    parser.add_option('--user_cert', 
-                      help="Cert for user signing the assertion")
-    parser.add_option('--user_key', 
-                      help="Key for user signing the assertion")
-    parser.add_option('--cert_files', 
-                      help="JSON Dictionary of additional " + 
-                      "user name/cert_filename pairs", 
-                      default={})
-    parser.add_option("--assertions", 
-                      help="JSON list of ABAC-style assertions",
+    parser.add_option("--assertion", 
+                      help="ABAC-style assertion",
+                      action = 'append',
                       default=[])
-    parser.add_option("--assertion_files", 
-                      help="JSON list of files containing ABAC assertions",
+    parser.add_option("--assertion_file", 
+                      help="file containing ABAC assertion",
                       default = [])
-    parser.add_option("--target", 
-                      help="Target (principal name) of ABAC query/assertion")
-    parser.add_option("--role", 
-                      help="Role  (ABAC style) of ABAC query/assertion")
-    parser.add_option("--query", help="Generate a query (default = assertion)",
-                      default=False, action="store_true")
+    parser.add_option("--id", action='append', 
+                      help="Identifier name (self-signed case) or " + 
+                      "name:cert_file (externally signed case")
+    parser.add_option("--credential", 
+                      help="Expression of ABAC statement for which to generate signed credential")
+    parser.add_option("--query", help="Query expression to evaluate")
+    parser.add_option('--outfile',  
+                      help="name of file to put signed XML contents of credential (default=stdout)")
+    parser.add_option('--config', 
+                      help="Name of config file with Principals/Keys/Assertions/AssertionFiles sections", 
+                      default = None)
 
     (options, args) = parser.parse_args(sys.argv)
 
-    # We need either a user_cert and user_key OR a user_cert_key file
-    # We need both target and role for query or assertion
-    if (not options.user_cert_key and \
-            (not options.user_cert or not options.user_key)) or \
-            (not options.target or not options.role):
+    # We need either a query or credential expression
+    if not options.query and not options.credential:
         parser.print_help()
         sys.exit(-1)
 
-    # ABAC wants simple strings not unicode (which JSON provides)
-
-    # Translate cert_files structure from JSON to python
-    cert_files_unicode = json.loads(options.cert_files)
-    cert_files = {}
-    for id_name_unicode in cert_files_unicode.keys():
-        id_name = str(id_name_unicode)
-        cert_file_unicode = cert_files_unicode[id_name_unicode]
-        cert_file = str(cert_file_unicode)
-        cert_files[id_name] = cert_file
-
-    # Translate assertion_files structure from JSON to python
-    assertion_files = []
-    if options.assertion_files != []:
-        assertion_files = \
-            [str(a_file) for a_file in json.loads(options.assertion_files)]
-
-    # Translate assertions from JSON to python
-    assertions = []
-    if options.assertions != []:
-        assertions = \
-            [str(assertion) for assertion in json.loads(options.assertions)]
-
-    user_cert = options.user_cert
-    user_key = options.user_key
-    if options.user_cert_key:
-        user_cert = options.user_cert_key
-        user_key = options.user_cert_key
-
-    manager = ABACManager(options.username, user_cert, user_key, \
-                              assertion_files = assertion_files, \
-                              assertions = assertions, \
-                              cert_files=cert_files)
-
-    if options.query:
-        # Generate and prove a query
-        ok, proof = manager.query(options.target, options.role)
-        if ok:
-            print "\n".join(manager.pretty_print_proof(proof))
-        else:
-            print "Failed"
-    elif options.target and options.role:
-        # Generate an assertion
-        assertion_text = "%s.%s<-%s" % \
-            ( options.username, options.role, options.target)
-        assertion = manager.register_assertion(assertion_text)
-        assertion.write(sys.stdout)
+    manager = ABACManager(options=options)
+    manager.run()
 
 if __name__ == "__main__":
 
     main()
     sys.exit(0)
 
+
+# TTD
+# 1. Add support for conjunctions A.good_movie & B.good_movie as different roles
 
 
 
