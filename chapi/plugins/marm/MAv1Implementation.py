@@ -53,12 +53,12 @@ class MAv1Implementation(MAv1DelegateBase):
                                 "UPDATE": True, "PROTECT": "IDENTIFYING"},
         "MEMBER_AFFILIATION": {"TYPE": "STRING", "CREATE": "ALLOWED", \
                                "UPDATE": True, "PROTECT": "IDENTIFYING"},
-#        "MEMBER_SPEAKS_FOR_CREDENTIAL": {"TYPE": "CREDENTIAL"},
+        "MEMBER_EPPN": {"TYPE": "STRING", "CREATE": "ALLOWED", \
+                        "UPDATE": True, "PROTECT": "IDENTIFYING"},
         "MEMBER_SSL_PUBLIC_KEY": {"TYPE": "SSL_KEY"},
         "MEMBER_SSL_PRIVATE_KEY": {"TYPE": "SSL_KEY", "PROTECT": "PRIVATE"},
         "MEMBER_SSH_PUBLIC_KEY": {"TYPE": "SSH_KEY"},
         "MEMBER_SSH_PRIVATE_KEY": {"TYPE": "SSH_KEY", "PROTECT": "PRIVATE"},
-#        "MEMBER_ENABLED": {"TYPE": "BOOLEAN", "UPDATE": True},
         "USER_CREDENTIAL": {"TYPE": "CREDENTIAL"}
 	}
 
@@ -73,6 +73,7 @@ class MAv1Implementation(MAv1DelegateBase):
         "MEMBER_DISPLAYNAME": "displayName",
         "MEMBER_PHONE_NUMBER": "telephone_number",
         "MEMBER_AFFILIATION": "affiliation",
+        "MEMBER_EPPN": "eppn",
         "MEMBER_SSH_PUBLIC_KEY": "public_key",
         "MEMBER_SSH_PRIVATE_KEY": "private_key",
         "MEMBER_SSL_PUBLIC_KEY": "certificate",
@@ -82,7 +83,8 @@ class MAv1Implementation(MAv1DelegateBase):
 
     attributes = ["MEMBER_URN", "MEMBER_UID", "MEMBER_FIRSTNAME", \
                   "MEMBER_LASTNAME", "MEMBER_USERNAME", "MEMBER_EMAIL", \
-                  "MEMBER_DISPLAYNAME", "MEMBER_PHONE_NUMBER", "MEMBER_AFFILIATION"]
+                  "MEMBER_DISPLAYNAME", "MEMBER_PHONE_NUMBER", \
+                  "MEMBER_AFFILIATION", "MEMBER_EPPN"]
 
     public_fields = ["MEMBER_URN", "MEMBER_UID", "MEMBER_USERNAME", \
                      "MEMBER_SSL_PUBLIC_KEY", "MEMBER_SSH_PUBLIC_KEY", \
@@ -90,7 +92,7 @@ class MAv1Implementation(MAv1DelegateBase):
 
     identifying_fields = ["MEMBER_FIRSTNAME", "MEMBER_LASTNAME", "MEMBER_EMAIL", \
                           "MEMBER_DISPLAYNAME", "MEMBER_PHONE_NUMBER", \
-                          "MEMBER_AFFILIATION"]
+                          "MEMBER_AFFILIATION", "MEMBER_EPPN"]
 
     private_fields = ["MEMBER_SSH_PRIVATE_KEY", "MEMBER_SSL_PRIVATE_KEY"]
 
@@ -173,6 +175,8 @@ class MAv1Implementation(MAv1DelegateBase):
                                 self.db.INSIDE_KEY_TABLE, self.field_mapping[col], uid)
                     if vals:
                         values[col] = vals[0]
+                    elif 'filter' in options:
+                        values[col] = None
             members[urn] = values
 
         session.close()
@@ -188,13 +192,12 @@ class MAv1Implementation(MAv1DelegateBase):
 
     # This call is protected
     def lookup_identifying_member_info(self, client_cert, credentials, options):
-        return self.lookup_member_info(options, self.identifying_fields + \
-                                       self.public_fields)
+        return self.lookup_member_info(options, self.identifying_fields)
 
     # This call is protected
     def update_member_info(self, client_cert, member_urn, credentials, options):
         # preliminary error checking
-        if not hasattr(options, 'update'):
+        if 'update' not in options:
             raise CHAPIv1ArgumentError('Missing an update key')
         new_attrs = options['update']
         if not isinstance(new_attrs, types.DictType):
@@ -238,7 +241,15 @@ class MAv1Implementation(MAv1DelegateBase):
                 sql = "update " + self.db.SSH_KEY_TABLE.name + " set " + text + \
                       " where member_id='" + uid + "';"
             else:
-                sql = ""
+                if "MEMBER_SSH_PUBLIC_KEY" not in ssh_keys:
+                    raise CHAPIv1ArgumentError('Cannot insert just private key')
+                text1, text2 = "", ""
+                if "MEMBER_SSH_PRIVATE_KEY" in ssh_keys:
+                    text1 = ", private_key"
+                    text2 = "', '" + ssh_keys["MEMBER_SSH_PRIVATE_KEY"]
+                sql = "insert into " + self.db.SSH_KEY_TABLE.name + \
+                      " (member_id, public_key" + text1 + ") values ('" + uid + \
+                      "', '" + ssh_keys["MEMBER_SSH_PUBLIC_KEY"] + text2 + "');"
             print 'sql = ', sql
             res = session.execute(sql)
             session.commit()
