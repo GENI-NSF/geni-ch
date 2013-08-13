@@ -57,7 +57,9 @@ def setup():
 
     ch_handler = CHv1Handler()
     ch_delegate = CHv1DelegateBase()
+    ch_guard = GuardBase()
     ch_handler.setDelegate(ch_delegate)
+    ch_handler.setGuard(ch_guard)
     pm.registerService('chv1handler', ch_handler)
     xmlrpc.registerXMLRPC('ch1', ch_handler, '/CH') # name, handlerObj, endpoint
 

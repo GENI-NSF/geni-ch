@@ -25,6 +25,8 @@ import amsoil.core.pluginmanager as pm
 from SAv1PersistentImplementation import SAv1PersistentImplementation
 from SAv1Guard import SAv1Guard
 
+# Plugin for SARM (Slice Authority Resource Manager) Implemntation
+
 def setup():
 
     # set up config keys
@@ -37,8 +39,11 @@ def setup():
 
     config.install("flask.debug.client_cert_file", "/home/mbrinn/.gcf/mbrinn-cert.pem", "Debug client cert file")
 
+    # Set the delegate to SAv1PersistentImplementation
+    # and set the guard to SAv1Guard
     delegate = SAv1PersistentImplementation()
     guard = SAv1Guard()
+
     handler = pm.getService('sav1handler')
     handler.setDelegate(delegate)
     handler.setGuard(guard)

@@ -25,6 +25,7 @@ import amsoil.core.pluginmanager as pm
 from CHv1Implementation import CHv1Implementation
 from CHv1PersistentImplementation import CHv1PersistentImplementation
 from CHDatabaseEngine import CHDatabaseEngine
+from CHv1Guard import CHv1Guard
 
 # This plugin sets the delgate for the CH handler to be the CH Persistent
 # Implementation. There are no guards for this handler: all methods
@@ -39,12 +40,14 @@ def setup():
     config.install("chrm.authority", "ch-mb.gpolab.bbn.com", \
                        "name of CH/SA/MA authority")
 
+    db_engine = CHDatabaseEngine()
+    pm.registerService('chdbengine', db_engine)
 
 #    delegate = CHv1Implementation()
     delegate = CHv1PersistentImplementation()
+    guard = CHv1Guard()
     handler = pm.getService('chv1handler')
     handler.setDelegate(delegate)
+    handler.setGuard(guard)
 
-    db_engine = CHDatabaseEngine()
-    pm.registerService('chdbengine', db_engine)
 
