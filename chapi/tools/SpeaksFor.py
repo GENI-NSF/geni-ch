@@ -81,9 +81,9 @@ def determine_speaks_for(client_cert, credentials, options):
     # Pull out speaks_for credential
     speaks_for_credential = None
     for credential in credentials:
-        if credential['type'] == 'ABAC' and \
+        if credential['geni_type'] == 'ABAC' and \
                 credential['value'].find('speaks_for') >= 0:
-            speaks_for_credential = credential['value']
+            speaks_for_credential = credential['geni_value']
             break
 
     # Pull out speaking_for option
@@ -159,7 +159,7 @@ if __name__ == "__main__":
     if opts.speaks_for_cred:
         filename = opts.speaks_for_cred
         sf_cred = open(filename).read()
-        credentials.append({'type' : 'ABAC', 'value' : sf_cred})
+        credentials.append({'geni_type' : 'ABAC', 'geni_value' : sf_cred, 'geni_version' : '1'})
 
     # Set agent_urn
     agent_urn = None
