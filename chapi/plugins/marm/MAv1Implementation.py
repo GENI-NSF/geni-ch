@@ -205,14 +205,40 @@ class MAv1Implementation(MAv1DelegateBase):
         uids = self.get_uids_for_attribute(session, "MEMBER_URN", member_urn)
         if len(uids) == 0:
             session.close()
-            raise CHAPIv1ArgumentError('No member with that URN')
+            raise CHAPIv1ArgumentError('No member with URN ' + member_urn)
         uid = uids[0]
         
         # do the update
+        ssh_keys = {}
+        ssl_keys = {}
         for attr, value in new_attrs.iteritems():
-            sql = "update " + self.db.MEMBER_ATTRIBUTE_TABLE.name + \
-                  " set value='" + value + "' where name='" + \
-                  self.field_mapping[attr] + "' and member_id='" + uid + "';"
+            if attr in self.attributes:
+                if len(self.get_attr_for_uid(session, attr, uid)) > 0:
+                    sql = "update " + self.db.MEMBER_ATTRIBUTE_TABLE.name + \
+                          " set value='" + value + "' where name='" + \
+                          self.field_mapping[attr] + "' and member_id='" + uid + "';"
+                else:
+                    sql = "insert into " + self.db.MEMBER_ATTRIBUTE_TABLE.name + \
+                          " (name, value, member_id, self_asserted) values ('" + \
+                          self.field_mapping[attr] + "', '" + value + "', '" + \
+                          uid + "', 'f');"
+                print 'sql = ', sql
+                res = session.execute(sql)
+                session.commit()
+            elif attr in ["MEMBER_SSH_PUBLIC_KEY", "MEMBER_SSH_PRIVATE_KEY"]:
+                ssh_keys[attr] = value
+            elif attr in ["MEMBER_SSL_PUBLIC_KEY", "MEMBER_SSL_PRIVATE_KEY"]:
+                ssl_keys[attr] = value
+        if ssh_keys:
+            if self.get_val_for_uid(session, self.db.SSH_KEY_TABLE, "public_key", uid):
+                text = ""
+                for attr, value in ssh_keys.iteritems():
+                    if text: text += ", "
+                    text += self.field_mapping[attr] + "='" + value + "'"
+                sql = "update " + self.db.SSH_KEY_TABLE.name + " set " + text + \
+                      " where member_id='" + uid + "';"
+            else:
+                sql = ""
             print 'sql = ', sql
             res = session.execute(sql)
             session.commit()
