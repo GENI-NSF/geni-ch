@@ -183,7 +183,7 @@ class MAv1Implementation(MAv1DelegateBase):
 
     # This call is unprotected: no checking of credentials
     def lookup_public_member_info(self, credentials, options):
-        return self.lookup_member_info(options, self.public_fields)
+        return self.lookup_member_info(options, self.public_fields, None)
 
     # This call is protected
     def lookup_private_member_info(self, client_cert, credentials, options):
@@ -191,12 +191,6 @@ class MAv1Implementation(MAv1DelegateBase):
 
     # This call is protected
     def lookup_identifying_member_info(self, client_cert, credentials, options):
-        try:
-            gid = sfa_gid.GID(string = client_cert)
-            client_urn = gid.get_urn()
-            print "client_urn = ", client_urn
-        except:
-            client_urn = None
         return self.lookup_member_info(options, self.identifying_fields)
 
     # This call is protected
@@ -207,6 +201,14 @@ class MAv1Implementation(MAv1DelegateBase):
         new_attrs = options['update']
         if not isinstance(new_attrs, types.DictType):
             raise CHAPIv1ArgumentError('update value should be dictionary')
+
+        # determine whether self_asserted
+        try:
+            gid = sfa_gid.GID(string = client_cert)
+            self_asserted = ['f', 't'][gid.get_urn() == member_urn]
+        except:
+            self_asserted = 'f'
+        print 'self_asserted =', self_asserted
 
         # find member to update
         session = self.db.getSession()
@@ -223,13 +225,14 @@ class MAv1Implementation(MAv1DelegateBase):
             if attr in self.attributes:
                 if len(self.get_attr_for_uid(session, attr, uid)) > 0:
                     sql = "update " + self.db.MEMBER_ATTRIBUTE_TABLE.name + \
-                          " set value='" + value + "' where name='" + \
+                          " set value='" + value + "', self_asserted='" + \
+                          self_asserted + "' where name='" + \
                           self.field_mapping[attr] + "' and member_id='" + uid + "';"
                 else:
                     sql = "insert into " + self.db.MEMBER_ATTRIBUTE_TABLE.name + \
                           " (name, value, member_id, self_asserted) values ('" + \
                           self.field_mapping[attr] + "', '" + value + "', '" + \
-                          uid + "', 'f');"
+                          uid + "', '" + self_asserted + "');"
                 print 'sql = ', sql
                 res = session.execute(sql)
                 session.commit()
