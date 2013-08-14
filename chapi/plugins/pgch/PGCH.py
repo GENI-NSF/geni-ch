@@ -89,6 +89,29 @@ class PGCHv1Delegate(DelegateBase):
         self._ma_handler = pm.getService('mav1handler')
 
     def GetVersion(self):
+
+        # Values returned by GetVersion
+        API_VERSION = 1.3
+        CODE_VERSION = "0001"
+        CH_HOSTNAME = "ch.geni.net"
+        CH_PORT = "8443"
+
+        self.logger.info("Called GetVersion")
+        version = dict()
+
+        peers = dict() # FIXME: This is the registered CMs at PG Utah
+        version['peers'] = peers
+        version['api'] = API_VERSION
+        version['urn'] = 'urn:publicid:IDN+' + CH_HOSTNAME + '+authority+ch'
+        version['hrn'] = CH_HOSTNAME
+        version['url'] = 'https://' + CH_HOSTNAME + ':' + CH_PORT
+        version['interface'] = 'registry'
+        version['code_tag'] = CODE_VERSION
+        version['hostname'] = CH_HOSTNAME
+        version['gcf-pgch_api'] = API_VERSION
+
+        return version
+
         # Note that the SA GetVersion is not implemented
         # return value should be a struct with a bunch of entries
         return self._ch_handler.get_version()
@@ -159,6 +182,7 @@ class PGCHv1Delegate(DelegateBase):
         # Matt seems to say hrn is not critical, and can maybe even skip cert
         # args: credential
 
+        self.logger.info("Called ListComponents")
         options = dict()
         get_aggregates_result = self._ch_handler.get_aggregates(options)
         if get_aggregates_result['code'] != NO_ERROR:

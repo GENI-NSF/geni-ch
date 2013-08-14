@@ -86,7 +86,8 @@ def main():
                                     fcn, client_args)
 
     print "RESULT = " + str(result)
-    print "MSG = " + str(msg)
+    if msg:
+        print "MSG = " + str(msg)
     
 if __name__ == "__main__":
     sys.exit(main())
