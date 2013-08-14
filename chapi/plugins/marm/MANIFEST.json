@@ -4,6 +4,6 @@
   "author-email" : "tom.rothe@eict.de",
   "version" : 1,
   "implements" : [],
-  "loads-after" : ["chv1handler"],
+  "loads-after" : ["chv1handler", "mav1handler", "chdbengine"],
   "requires" : []
 }
