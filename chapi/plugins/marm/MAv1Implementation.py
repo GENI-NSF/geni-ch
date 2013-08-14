@@ -244,28 +244,8 @@ class MAv1Implementation(MAv1DelegateBase):
             elif attr in ["MEMBER_SSL_PUBLIC_KEY", "MEMBER_SSL_PRIVATE_KEY"]:
                 ssl_keys[attr] = value
         if ssl_keys:
-            if self.get_val_for_uid(session, self.db.OUTSIDE_CERT_TABLE, \
-                                    "certificate", uid):
-                text = ""
-                for attr, value in ssl_keys.iteritems():
-                    if text: text += ", "
-                    text += self.field_mapping[attr] + "='" + value + "'"
-                sql = "update " + self.db.OUTSIDE_CERT_TABLE.name + " set " + text + \
-                      " where member_id='" + uid + "';"
-            else:
-                if "MEMBER_SSL_PUBLIC_KEY" not in ssl_keys:
-                    raise CHAPIv1ArgumentError('Cannot insert just private key')
-                text1, text2 = "", ""
-                if "MEMBER_SSL_PRIVATE_KEY" in ssl_keys:
-                    text1 = ", private_key"
-                    text2 = "', '" + ssl_keys["MEMBER_SSL_PRIVATE_KEY"]
-                sql = "insert into " + self.db.OUTSIDE_CERT_TABLE.name + \
-                      " (member_id, certificate" + text1 + ") values ('" + uid + \
-                      "', '" + ssl_keys["MEMBER_SSL_PUBLIC_KEY"] + text2 + "');"
-            print 'sql = ', sql
-            res = session.execute(sql)
-            session.commit()
-            
+            self.update_ssl_keys(session, ssl_keys, uid)
+
             # couldn't get this to work
 #            q = session.query(self.db.MEMBER_ATTRIBUTE_TABLE)
 #            q = q.filter(self.db.MEMBER_ATTRIBUTE_TABLE.c.name == \
@@ -275,3 +255,26 @@ class MAv1Implementation(MAv1DelegateBase):
             
         session.close()
         return self._successReturn(True)
+
+    def update_ssl_keys(self, session, ssl_keys, uid):
+        if self.get_val_for_uid(session, self.db.OUTSIDE_CERT_TABLE, \
+                                "certificate", uid):
+            text = ""
+            for attr, value in ssl_keys.iteritems():
+                if text: text += ", "
+                text += self.field_mapping[attr] + "='" + value + "'"
+            sql = "update " + self.db.OUTSIDE_CERT_TABLE.name + " set " + text + \
+                  " where member_id='" + uid + "';"
+        else:
+            if "MEMBER_SSL_PUBLIC_KEY" not in ssl_keys:
+                raise CHAPIv1ArgumentError('Cannot insert just private key')
+            text1, text2 = "", ""
+            if "MEMBER_SSL_PRIVATE_KEY" in ssl_keys:
+                text1 = ", private_key"
+                text2 = "', '" + ssl_keys["MEMBER_SSL_PRIVATE_KEY"]
+            sql = "insert into " + self.db.OUTSIDE_CERT_TABLE.name + \
+                  " (member_id, certificate" + text1 + ") values ('" + uid + \
+                  "', '" + ssl_keys["MEMBER_SSL_PUBLIC_KEY"] + text2 + "');"
+        print 'sql = ', sql
+        res = session.execute(sql)
+        session.commit()
