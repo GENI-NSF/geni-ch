@@ -56,6 +56,9 @@ class SAv1Handler(HandlerBase):
         try:
             self._guard.validate_call(client_cert, method, \
                                           credentials, options)
+            client_cert, options = \
+                self._guard.adjust_client_identity(client_cert, \
+                                                       credentials, options)
             results = self._delegate.create_slice(client_cert, credentials, options)
             if results['code'] == NO_ERROR:
                 results_value = results['value']
@@ -75,6 +78,9 @@ class SAv1Handler(HandlerBase):
         try:
             self._guard.validate_call(client_cert, method, \
                                           credentials, options, {})
+            client_cert, options = \
+                self._guard.adjust_client_identity(client_cert, \
+                                                       credentials, options)
             results = self._delegate.lookup_slices(client_cert, credentials, options)
             if results['code'] == NO_ERROR:
                 results_value = results['value']
@@ -95,6 +101,9 @@ class SAv1Handler(HandlerBase):
             self._guard.validate_call(client_cert, method, \
                                           credentials, options, \
                                           {'slice_urn' : slice_urn})
+            client_cert, options = \
+                self._guard.adjust_client_identity(client_cert, \
+                                                       credentials, options)
             results = self._delegate.update_slice(client_cert, slice_urn, \
                                                       credentials, options)
             if results['code'] == NO_ERROR:
@@ -116,6 +125,9 @@ class SAv1Handler(HandlerBase):
             self._guard.validate_call(client_cert, method, \
                                           credentials, options, \
                                           {'slice_urn' : slice_urn})
+            client_cert, options = \
+                self._guard.adjust_client_identity(client_cert, \
+                                                       credentials, options)
             results = self._delegate.get_credentials(client_cert, slice_urn, \
                                                          credentials, options)
             if results['code'] == NO_ERROR:
@@ -165,6 +177,9 @@ class SAv1Handler(HandlerBase):
             self._guard.validate_call(client_cert, method, \
                                           credentials, options, \
                                           {'slice_urn' : slice_urn})
+            client_cert, options = \
+                self._guard.adjust_client_identity(client_cert, \
+                                                       credentials, options)
             results = self._delegate.lookup_slice_members(client_cert, \
                                                               slice_urn, \
                                                               credentials, \
@@ -186,6 +201,9 @@ class SAv1Handler(HandlerBase):
             self._guard.validate_call(client_cert, method, \
                                           credentials, options, \
                                           {'member_urn' : member_urn})
+            client_cert, options = \
+                self._guard.adjust_client_identity(client_cert, \
+                                                       credentials, options)
             results = \
                 self._delegate.lookup_slices_for_member(client_cert, \
                                                              member_urn, \
@@ -213,6 +231,9 @@ class SAv1Handler(HandlerBase):
                                           credentials, options, \
                                           {'slice_urn' : slice_urn,
                                            'aggregate_urn' : aggregate_urn})
+            client_cert, options = \
+                self._guard.adjust_client_identity(client_cert, \
+                                                       credentials, options)
             results = self._delegate.register_aggregate(client_cert, \
                                                             slice_urn, \
                                                             aggregate_urn, \
@@ -238,6 +259,9 @@ class SAv1Handler(HandlerBase):
                                           credentials, options, \
                                           {'slice_urn' : slice_urn,
                                            'aggregate_urn' : aggregate_urn})
+            client_cert, options = \
+                self._guard.adjust_client_identity(client_cert, \
+                                                       credentials, options)
             results = self._delegate.remove_aggregate(client_cert, \
                                                           slice_urn, \
                                                           aggregate_urn, \
@@ -266,6 +290,9 @@ class SAv1Handler(HandlerBase):
             self._guard.validate_call(client_cert, method, \
                                           credentials, options, \
                                           {'slice_urn' : slice_urn})
+            client_cert, options = \
+                self._guard.adjust_client_identity(client_cert, \
+                                                       credentials, options)
             results = self._delegate.get_slice_aggregates(client_cert, \
                                                               slice_urn, \
                                                               credentials, \
@@ -288,6 +315,9 @@ class SAv1Handler(HandlerBase):
         try:
             self._guard.validate_call(client_cert, method, \
                                           credentials, options)
+            client_cert, options = \
+                self._guard.adjust_client_identity(client_cert, \
+                                                       credentials, options)
             results = self._delegate.create_project(client_cert, \
                                                         credentials, \
                                                         options)
@@ -309,6 +339,9 @@ class SAv1Handler(HandlerBase):
         try:
             self._guard.validate_call(client_cert, method, \
                                           credentials, options)
+            client_cert, options = \
+                self._guard.adjust_client_identity(client_cert, \
+                                                       credentials, options)
             results = self._delegate.lookup_projects(client_cert, \
                                                          credentials, \
                                                          options)
@@ -329,6 +362,9 @@ class SAv1Handler(HandlerBase):
             self._guard.validate_call(client_cert, method, \
                                           credentials, options,
                                       {'project_urn' : project_urn})
+            client_cert, options = \
+                self._guard.adjust_client_identity(client_cert, \
+                                                       credentials, options)
             results = self._delegate.update_project(client_cert, \
                                                         project_urn, \
                                                         credentials, \
@@ -361,6 +397,9 @@ class SAv1Handler(HandlerBase):
             self._guard.validate_call(client_cert, method, \
                                           credentials, options, \
                                           {'project_urn' : project_urn})
+            client_cert, options = \
+                self._guard.adjust_client_identity(client_cert, \
+                                                       credentials, options)
             results = self._delegate.modify_project_membership(\
                 client_cert, \
                     project_urn, \
@@ -382,6 +421,9 @@ class SAv1Handler(HandlerBase):
             self._guard.validate_call(client_cert, method, \
                                           credentials, options, \
                                           {'project_urn' : project_urn})
+            client_cert, options = \
+                self._guard.adjust_client_identity(client_cert, \
+                                                       credentials, options)
             results = self._delegate.lookup_project_members(client_cert, \
                                                                 project_urn, \
                                                                 credentials, \
@@ -403,6 +445,9 @@ class SAv1Handler(HandlerBase):
             self._guard.validate_call(client_cert, method, \
                                           credentials, options, \
                                           {'member_urn' : member_urn})
+            client_cert, options = \
+                self._guard.adjust_client_identity(client_cert, \
+                                                       credentials, options)
             results = \
                 self._delegate.lookup_projects_for_member(client_cert, \
                                                              member_urn, \
