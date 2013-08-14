@@ -30,13 +30,15 @@ import amsoil.core.pluginmanager as pm
 from tools.dbutils import *
 import ext.sfa.trust.credential as sfa_cred
 import ext.sfa.trust.gid as sfa_gid
+import ext.geni.util.cert_util as cert_util
 
 # Utility functions for morphing from native schema to public-facing
 # schema
 
 def urn_to_user_credential(urn):
     cred = sfa_cred.Credential()
-    gid = sfa_gid.GID(urn = urn, create = True)
+#    gid = sfa_gid.GID(urn = urn, create = True)
+    gid, keys = cert_util.create_cert(str(urn))
     cred.set_gid_object(gid)
     cred.set_gid_caller(gid)
     return cred.save_to_string()
@@ -170,9 +172,6 @@ class MAv1Implementation(MAv1DelegateBase):
                     else:
                         vals = self.get_val_for_uid(session, \
                             self.db.OUTSIDE_CERT_TABLE, self.field_mapping[col], uid)
-                        if not vals:
-                            vals = self.get_val_for_uid(session, \
-                                self.db.INSIDE_KEY_TABLE, self.field_mapping[col], uid)
                     if vals:
                         values[col] = vals[0]
                     elif 'filter' in options:
@@ -192,6 +191,12 @@ class MAv1Implementation(MAv1DelegateBase):
 
     # This call is protected
     def lookup_identifying_member_info(self, client_cert, credentials, options):
+        try:
+            gid = sfa_gid.GID(string = client_cert)
+            client_urn = gid.get_urn()
+            print "client_urn = ", client_urn
+        except:
+            client_urn = None
         return self.lookup_member_info(options, self.identifying_fields)
 
     # This call is protected
