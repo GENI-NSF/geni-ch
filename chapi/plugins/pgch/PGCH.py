@@ -23,6 +23,7 @@
 
 import amsoil.core.log
 import amsoil.core.pluginmanager as pm
+import sfa.util.xrn
 from amsoil.core import serviceinterface
 from chapi.DelegateBase import DelegateBase
 from chapi.HandlerBase import HandlerBase
@@ -83,11 +84,14 @@ class PGCHv1Delegate(DelegateBase):
 
     def __init__(self):
         super(PGCHv1Delegate, self).__init__(pgch_logger)
+        self._ch_handler = pm.getService('chv1handler')
+        self._sa_handler = pm.getService('sav1handler')
+        self._ma_handler = pm.getService('mav1handler')
 
     def GetVersion(self):
         # Note that the SA GetVersion is not implemented
         # return value should be a struct with a bunch of entries
-        return self._successReturn("GetVersion")
+        return self._ch_handler.get_version()
 
     def GetCredential(self, args=None):
         # all none means return user cred
@@ -154,5 +158,20 @@ class PGCHv1Delegate(DelegateBase):
         # return list( of dict(gid=<cert>, hrn=<hrn>, url=<AM URL>))
         # Matt seems to say hrn is not critical, and can maybe even skip cert
         # args: credential
-        return self._successReturn("ListComponents" + str(args))
+
+        options = dict()
+        get_aggregates_result = self._ch_handler.get_aggregates(options)
+        if get_aggregates_result['code'] != NO_ERROR:
+            return get_aggregates_result
+        aggregates = get_aggregates_result['value']
+        components = []
+        for aggregate in aggregates:
+            cert_file = aggregate['SERVICE_CERTIFICATE']
+            gid = open(cert_file).read()
+            urn = aggregate['SERVICE_URN']
+            hrn = sfa.util.xrn.urn_to_hrn(urn)
+            url = aggregate['SERVICE_URL']
+            component = {'gid' : gid, 'hrn' : hrn, 'url' : url}
+            components.append(component)
+        return self._successReturn(components)
 
