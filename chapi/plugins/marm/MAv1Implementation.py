@@ -59,6 +59,8 @@ class MAv1Implementation(MAv1DelegateBase):
                         "UPDATE": True, "PROTECT": "IDENTIFYING"},
         "MEMBER_SSL_PUBLIC_KEY": {"TYPE": "SSL_KEY"},
         "MEMBER_SSL_PRIVATE_KEY": {"TYPE": "SSL_KEY", "PROTECT": "PRIVATE"},
+        "MEMBER_INSIDE_PUBLIC_KEY": {"TYPE": "SSL_KEY"},
+        "MEMBER_INSIDE_PRIVATE_KEY": {"TYPE": "SSL_KEY", "PROTECT": "PRIVATE"},
         "MEMBER_SSH_PUBLIC_KEY": {"TYPE": "SSH_KEY"},
         "MEMBER_SSH_PRIVATE_KEY": {"TYPE": "SSH_KEY", "PROTECT": "PRIVATE"},
         "USER_CREDENTIAL": {"TYPE": "CREDENTIAL"}
@@ -80,6 +82,8 @@ class MAv1Implementation(MAv1DelegateBase):
         "MEMBER_SSH_PRIVATE_KEY": "private_key",
         "MEMBER_SSL_PUBLIC_KEY": "certificate",
         "MEMBER_SSL_PRIVATE_KEY": "private_key",
+        "MEMBER_INSIDE_PUBLIC_KEY": "certificate",
+        "MEMBER_INSIDE_PRIVATE_KEY": "private_key",
         "USER_CREDENTIAL": urn_to_user_credential
         }
 
@@ -89,18 +93,27 @@ class MAv1Implementation(MAv1DelegateBase):
                   "MEMBER_AFFILIATION", "MEMBER_EPPN"]
 
     public_fields = ["MEMBER_URN", "MEMBER_UID", "MEMBER_USERNAME", \
-                     "MEMBER_SSL_PUBLIC_KEY", "MEMBER_SSH_PUBLIC_KEY", \
-                     "USER_CREDENTIAL"]
+                     "MEMBER_SSL_PUBLIC_KEY", "MEMBER_INSIDE_PUBLIC_KEY", \
+                     "MEMBER_SSH_PUBLIC_KEY", "USER_CREDENTIAL"]
 
     identifying_fields = ["MEMBER_FIRSTNAME", "MEMBER_LASTNAME", "MEMBER_EMAIL", \
                           "MEMBER_DISPLAYNAME", "MEMBER_PHONE_NUMBER", \
                           "MEMBER_AFFILIATION", "MEMBER_EPPN"]
 
-    private_fields = ["MEMBER_SSH_PRIVATE_KEY", "MEMBER_SSL_PRIVATE_KEY"]
+    private_fields = ["MEMBER_SSH_PRIVATE_KEY", "MEMBER_SSL_PRIVATE_KEY", \
+                      "MEMBER_INSIDE_PRIVATE_KEY"]
 
 
     def __init__(self):
         self.db = pm.getService('chdbengine')
+        self.table_mapping = {
+            "MEMBER_SSH_PUBLIC_KEY": self.db.SSH_KEY_TABLE,
+            "MEMBER_SSH_PRIVATE_KEY": self.db.SSH_KEY_TABLE,
+            "MEMBER_SSL_PUBLIC_KEY": self.db.OUTSIDE_CERT_TABLE,
+            "MEMBER_SSL_PRIVATE_KEY": self.db.OUTSIDE_CERT_TABLE,
+            "MEMBER_INSIDE_PUBLIC_KEY": self.db.INSIDE_KEY_TABLE,
+            "MEMBER_INSIDE_PRIVATE_KEY": self.db.INSIDE_KEY_TABLE,
+            }
 
     # This call is unprotected: no checking of credentials
     def get_version(self):
@@ -170,12 +183,9 @@ class MAv1Implementation(MAv1DelegateBase):
                 else:
                     if col in self.attributes:
                         vals = self.get_attr_for_uid(session, col, uid)
-                    elif col in ["MEMBER_SSL_PUBLIC_KEY", "MEMBER_SSL_PRIVATE_KEY"]:
+                    elif col in self.table_mapping:
                         vals = self.get_val_for_uid(session, \
-                            self.db.OUTSIDE_CERT_TABLE, self.field_mapping[col], uid)
-                    else:
-                        vals = self.get_val_for_uid(session, \
-                            self.db.SSH_KEY_TABLE, self.field_mapping[col], uid)
+                            self.table_mapping[col], self.field_mapping[col], uid)
                     if vals:
                         values[col] = vals[0]
                     elif 'filter' in options:
@@ -222,59 +232,61 @@ class MAv1Implementation(MAv1DelegateBase):
         uid = uids[0]
         
         # do the update
-        ssh_keys = {}
-        ssl_keys = {}
+        all_keys = {}
         for attr, value in new_attrs.iteritems():
             if attr in self.attributes:
-                if len(self.get_attr_for_uid(session, attr, uid)) > 0:
-                    sql = "update " + self.db.MEMBER_ATTRIBUTE_TABLE.name + \
-                          " set value='" + value + "', self_asserted='" + \
-                          self_asserted + "' where name='" + \
-                          self.field_mapping[attr] + "' and member_id='" + uid + "';"
-                else:
-                    sql = "insert into " + self.db.MEMBER_ATTRIBUTE_TABLE.name + \
-                          " (name, value, member_id, self_asserted) values ('" + \
-                          self.field_mapping[attr] + "', '" + value + "', '" + \
-                          uid + "', '" + self_asserted + "');"
-                print 'sql = ', sql
-                res = session.execute(sql)
-                session.commit()
-            elif attr in ["MEMBER_SSH_PUBLIC_KEY", "MEMBER_SSH_PRIVATE_KEY"]:
-                ssh_keys[attr] = value
-            elif attr in ["MEMBER_SSL_PUBLIC_KEY", "MEMBER_SSL_PRIVATE_KEY"]:
-                ssl_keys[attr] = value
-        if ssl_keys:
-            self.update_ssl_keys(session, ssl_keys, uid)
-
-            # couldn't get this to work
-#            q = session.query(self.db.MEMBER_ATTRIBUTE_TABLE)
-#            q = q.filter(self.db.MEMBER_ATTRIBUTE_TABLE.c.name == \
-#                         self.field_mapping[attr])
-#            q = q.filter(self.db.MEMBER_ATTRIBUTE_TABLE.c.member_id == uid)
-#            q.update({self.db.MEMBER_ATTRIBUTE_TABLE.c.value: value})
+                self.update_attr(session, attr, value, uid, self_asserted)
+            elif attr in self.table_mapping:
+                table = self.table_mapping[attr]
+                if table not in all_keys:
+                    all_keys[table] = {}
+                all_keys[table][self.field_mapping[attr]] = value
+        for table, keys in all_keys.iteritems():
+            self.update_keys(session, table, keys, uid)
             
         session.close()
         return self._successReturn(True)
 
-    def update_ssl_keys(self, session, ssl_keys, uid):
-        if self.get_val_for_uid(session, self.db.OUTSIDE_CERT_TABLE, \
-                                "certificate", uid):
+    def update_attr(self, session, attr, value, uid, self_asserted):
+        if len(self.get_attr_for_uid(session, attr, uid)) > 0:
+            sql = "update " + self.db.MEMBER_ATTRIBUTE_TABLE.name + \
+                  " set value='" + value + "', self_asserted='" + \
+                  self_asserted + "' where name='" + \
+                  self.field_mapping[attr] + "' and member_id='" + uid + "';"
+        else:
+            sql = "insert into " + self.db.MEMBER_ATTRIBUTE_TABLE.name + \
+                  " (name, value, member_id, self_asserted) values ('" + \
+                  self.field_mapping[attr] + "', '" + value + "', '" + \
+                  uid + "', '" + self_asserted + "');"
+        print 'sql = ', sql
+        res = session.execute(sql)
+        session.commit()
+
+        # couldn't get this to work for update
+#        q = session.query(self.db.MEMBER_ATTRIBUTE_TABLE)
+#        q = q.filter(self.db.MEMBER_ATTRIBUTE_TABLE.c.name == \
+#                     self.field_mapping[attr])
+#        q = q.filter(self.db.MEMBER_ATTRIBUTE_TABLE.c.member_id == uid)
+#        q.update({self.db.MEMBER_ATTRIBUTE_TABLE.c.value: value})
+
+    def update_keys(self, session, table, keys, uid):
+        if self.get_val_for_uid(session, table, "certificate", uid):
             text = ""
-            for attr, value in ssl_keys.iteritems():
+            for field, value in keys.iteritems():
                 if text: text += ", "
-                text += self.field_mapping[attr] + "='" + value + "'"
-            sql = "update " + self.db.OUTSIDE_CERT_TABLE.name + " set " + text + \
+                text += field + "='" + value + "'"
+            sql = "update " + table.name + " set " + text + \
                   " where member_id='" + uid + "';"
         else:
-            if "MEMBER_SSL_PUBLIC_KEY" not in ssl_keys:
+            if "certificate" not in keys:
                 raise CHAPIv1ArgumentError('Cannot insert just private key')
             text1, text2 = "", ""
-            if "MEMBER_SSL_PRIVATE_KEY" in ssl_keys:
+            if "private_key" in keys:
                 text1 = ", private_key"
-                text2 = "', '" + ssl_keys["MEMBER_SSL_PRIVATE_KEY"]
+                text2 = "', '" + keys["private_key"]
             sql = "insert into " + self.db.OUTSIDE_CERT_TABLE.name + \
                   " (member_id, certificate" + text1 + ") values ('" + uid + \
-                  "', '" + ssl_keys["MEMBER_SSL_PUBLIC_KEY"] + text2 + "');"
+                  "', '" + keys["certificate"] + text2 + "');"
         print 'sql = ', sql
         res = session.execute(sql)
         session.commit()

@@ -52,6 +52,8 @@ class CHDatabaseEngine:
             Table('ma_ssh_key', self.metadata, autoload=True)
         self.OUTSIDE_CERT_TABLE = \
             Table('ma_outside_cert', self.metadata, autoload=True)
+        self.INSIDE_KEY_TABLE = \
+            Table('ma_inside_key', self.metadata, autoload=True)
         self.ASSERTION_TABLE = Table('cs_assertion', self.metadata, autoload=True)
         self.SERVICES_TABLE = \
             Table('service_registry', self.metadata, autoload=True)
