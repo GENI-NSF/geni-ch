@@ -28,6 +28,7 @@ from amsoil.core import serviceinterface
 from chapi.DelegateBase import DelegateBase
 from chapi.HandlerBase import HandlerBase
 from chapi.Exceptions import *
+from ABACGuard import extract_user_urn
 
 pgch_logger = amsoil.core.log.getLogger('pgchv1')
 
@@ -38,45 +39,52 @@ class PGCHv1Handler(HandlerBase):
 
     def GetVersion(self):
         try:
-            return self._delegate.GetVersion()
+            client_cert = self.requestCertificate()
+            return self._delegate.GetVersion(client_cert)
         except Exception as e:
             return self._errorReturn(e)
 
 
     def GetCredential(self, args=None):
         try:
-            return self._delegate.GetCredential(args)
+            client_cert = self.requestCertificate()
+            return self._delegate.GetCredential(client_cert, args)
         except Exception as e:
             return self._errorReturn(e)
 
     def Resolve(self, args):
         try:
-            return self._delegate.Resolve(args)
+            client_cert = self.requestCertificate()
+            return self._delegate.Resolve(client_cert, args)
         except Exception as e:
             return self._errorReturn(e)
 
     def Register(self, args):
         try:
-            return self._delegate.Register(args)
+            client_cert = self.requestCertificate()
+            return self._delegate.Register(client_cert, args)
         except Exception as e:
             return self._errorReturn(e)
 
 
     def RenewSlice(self, args):
         try:
-            return self._delegate.RenewSlice(args)
+            client_cert = self.requestCertificate()
+            return self._delegate.RenewSlice(client_cert, args)
         except Exception as e:
             return self._errorReturn(e)
 
     def GetKeys(self, args):
         try:
-            return self._delegate.GetKeys(args)
+            client_cert = self.requestCertificate()
+            return self._delegate.GetKeys(client_cert, args)
         except Exception as e:
             return self._errorReturn(e)
 
     def ListComponents(self, args):
         try:
-            return self._delegate.ListComponents(args)
+            client_cert = self.requestCertificate()
+            return self._delegate.ListComponents(client_cert, args)
         except Exception as e:
             return self._errorReturn(e)
 
@@ -88,7 +96,7 @@ class PGCHv1Delegate(DelegateBase):
         self._sa_handler = pm.getService('sav1handler')
         self._ma_handler = pm.getService('mav1handler')
 
-    def GetVersion(self):
+    def GetVersion(self, client_cert):
 
         # Values returned by GetVersion
         API_VERSION = 1.3
@@ -110,21 +118,22 @@ class PGCHv1Delegate(DelegateBase):
         version['hostname'] = CH_HOSTNAME
         version['gcf-pgch_api'] = API_VERSION
 
-        return version
+        return self._successReturn(version)
 
         # Note that the SA GetVersion is not implemented
         # return value should be a struct with a bunch of entries
         return self._ch_handler.get_version()
 
-    def GetCredential(self, args=None):
+    def GetCredential(self, client_cert, args):
         # all none means return user cred
         # else cred is user cred, id is uuid or urn of object, type=Slice
         #    where omni always uses the urn
         # return is slice credential
         #args: credential, type, uuid, urn
+        # *** WRITE ME ***
         return self._successReturn("GetCredential" + str(args))
 
-    def Resolve(self, args):
+    def Resolve(self, client_cert, args):
         # Omni uses this, Flack may not need it
 
         # ID may be a uuid, hrn, or urn
@@ -152,30 +161,71 @@ class PGCHv1Delegate(DelegateBase):
 #  "gid"  : "ProtoGENI Identifier (an x509 certificate)",
 #  "name" : "common name",
 #}
+        # *** WRITE ME ***
         return self._successReturn("Resolve" + str(args))
 
-    def Register(self, args):
+    def Register(self, client_cert, args):
         # Omni uses this, Flack should not for our purposes
         # args are credential, hrn, urn, type
         # cred is user cred, type must be Slice
         # returns slice cred
+        # *** WRITE ME ***
         return self._successReturn("Register"  + str(args))
 
-    def RenewSlice(self, args):
-        # Omni uses this, Flack should not for our purposes
-        # args are credential, hrn, urn, type
-        # cred is user cred, type must be Slice
-        # returns slice cred
+    def RenewSlice(self, client_cert, args):
+        # args are credential, expiration
+        # cred is user cred
+        # returns renewed slice credential
+        slice_credential = args['credential']
+        expiration = args['expiration']
+
+        # *** Need to support update_slice in SA
+        slice_urn = None
+        credentials [slice_credential]
+        options = {'fields' : {'SLICE_EXPIRATION' : expiration}}
+        update_slice_return = \
+            self._sa_handler.update_slice(slice_urn, credentials, options)
+        if update_slice_return['code'] != NO_ERROR:
+            return update_slice_return
+
+        # *** Need to support get_credentials  in SA
+        get_credentials_return = \
+            self._sa_handler.get_credentials(slice_urn, credentials, options)
+        if get_credentials_return['code'] != NO_ERROR:
+            return get_credentials_return
+        renewed_slice_credentials = get_credentials_return['value']
+
         return self._successReturn("RenewSlice" + str(args))
 
-    def GetKeys(self, args):
+    def GetKeys(self, client_cert, args):
         # cred is user cred
         # return list( of dict(type='ssh', key=$key))
         # args: credential
-        return self._successReturn("GetKeys" + str(args))
+
+        self.logger.info("Called GetKeys")
+
+        credential = args['credential']
+        creds = [credential]
+
+        member_urn = extract_user_urn(client_cert)
+
+        options = {'match' : {'MEMBER_URN' : member_urn}}
+        member_info_result = \
+            self._ma_handler.lookup_public_member_info(creds, options)
+        if member_info_result['code'] != NO_ERROR:
+            return member_info_result
+        member_info = member_info_result['value']
+        keys = []
+        for member_urn in member_info.keys():
+            member = member_info[member_urn]
+            ssh_key = member['MEMBER_SSH_PUBLIC_KEY']
+            ssh_key_dict = {'type' : 'ssh', 'key' : ssh_key}
+            keys.append(ssh_key_dict)
+        
+        return self._successReturn(keys)
 
 
-    def ListComponents(self, args):
+    def ListComponents(self, client_cert, args):
         # Returns list of CMs (AMs)
         # cred is user cred or slice cred - Omni uses user cred
         # return list( of dict(gid=<cert>, hrn=<hrn>, url=<AM URL>))
