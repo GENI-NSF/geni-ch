@@ -30,13 +30,15 @@ import amsoil.core.pluginmanager as pm
 from tools.dbutils import *
 import ext.sfa.trust.credential as sfa_cred
 import ext.sfa.trust.gid as sfa_gid
+import ext.geni.util.cert_util as cert_util
 
 # Utility functions for morphing from native schema to public-facing
 # schema
 
 def urn_to_user_credential(urn):
     cred = sfa_cred.Credential()
-    gid = sfa_gid.GID(urn = urn, create = True)
+#    gid = sfa_gid.GID(urn = urn, create = True)
+    gid, keys = cert_util.create_cert(str(urn))
     cred.set_gid_object(gid)
     cred.set_gid_caller(gid)
     return cred.save_to_string()
@@ -107,11 +109,13 @@ class MAv1Implementation(MAv1DelegateBase):
                         "FIELDS": self.optional_fields}
         return self._successReturn(version_info)
 
+    # ensure that all of a set of entries are attributes
     def check_attributes(self, attrs):
         for attr in attrs:
             if attr not in self.attributes:
                 raise CHAPIv1ArgumentError('Unknown attribute ' + attr)
 
+    # filter out all the users that have a particular value of an attribute
     def get_uids_for_attribute(self, session, attr, value):
         q = session.query(self.db.MEMBER_ATTRIBUTE_TABLE.c.member_id)
         q = q.filter(self.db.MEMBER_ATTRIBUTE_TABLE.c.name == \
@@ -123,6 +127,7 @@ class MAv1Implementation(MAv1DelegateBase):
         rows = q.all()
         return [row.member_id for row in rows]
 
+    # find the value of an attribute for a given user
     def get_attr_for_uid(self, session, attr, uid):
         q = session.query(self.db.MEMBER_ATTRIBUTE_TABLE.c.value)
         q = q.filter(self.db.MEMBER_ATTRIBUTE_TABLE.c.name == \
@@ -131,6 +136,7 @@ class MAv1Implementation(MAv1DelegateBase):
         rows = q.all()
         return [row.value for row in rows]
 
+    # find the value for a column in a table
     def get_val_for_uid(self, session, table, field, uid):
         q = session.query(table.c[field])
         q = q.filter(table.c.member_id == uid)
@@ -164,15 +170,12 @@ class MAv1Implementation(MAv1DelegateBase):
                 else:
                     if col in self.attributes:
                         vals = self.get_attr_for_uid(session, col, uid)
-                    elif col in ["MEMBER_SSH_PUBLIC_KEY", "MEMBER_SSH_PRIVATE_KEY"]:
-                        vals = self.get_val_for_uid(session, \
-                            self.db.SSH_KEY_TABLE, self.field_mapping[col], uid)
-                    else:
+                    elif col in ["MEMBER_SSL_PUBLIC_KEY", "MEMBER_SSL_PRIVATE_KEY"]:
                         vals = self.get_val_for_uid(session, \
                             self.db.OUTSIDE_CERT_TABLE, self.field_mapping[col], uid)
-                        if not vals:
-                            vals = self.get_val_for_uid(session, \
-                                self.db.INSIDE_KEY_TABLE, self.field_mapping[col], uid)
+                    else:
+                        vals = self.get_val_for_uid(session, \
+                            self.db.SSH_KEY_TABLE, self.field_mapping[col], uid)
                     if vals:
                         values[col] = vals[0]
                     elif 'filter' in options:
@@ -203,6 +206,13 @@ class MAv1Implementation(MAv1DelegateBase):
         if not isinstance(new_attrs, types.DictType):
             raise CHAPIv1ArgumentError('update value should be dictionary')
 
+        # determine whether self_asserted
+        try:
+            gid = sfa_gid.GID(string = client_cert)
+            self_asserted = ['f', 't'][gid.get_urn() == member_urn]
+        except:
+            self_asserted = 'f'
+
         # find member to update
         session = self.db.getSession()
         uids = self.get_uids_for_attribute(session, "MEMBER_URN", member_urn)
@@ -218,13 +228,14 @@ class MAv1Implementation(MAv1DelegateBase):
             if attr in self.attributes:
                 if len(self.get_attr_for_uid(session, attr, uid)) > 0:
                     sql = "update " + self.db.MEMBER_ATTRIBUTE_TABLE.name + \
-                          " set value='" + value + "' where name='" + \
+                          " set value='" + value + "', self_asserted='" + \
+                          self_asserted + "' where name='" + \
                           self.field_mapping[attr] + "' and member_id='" + uid + "';"
                 else:
                     sql = "insert into " + self.db.MEMBER_ATTRIBUTE_TABLE.name + \
                           " (name, value, member_id, self_asserted) values ('" + \
                           self.field_mapping[attr] + "', '" + value + "', '" + \
-                          uid + "', 'f');"
+                          uid + "', '" + self_asserted + "');"
                 print 'sql = ', sql
                 res = session.execute(sql)
                 session.commit()
@@ -232,28 +243,9 @@ class MAv1Implementation(MAv1DelegateBase):
                 ssh_keys[attr] = value
             elif attr in ["MEMBER_SSL_PUBLIC_KEY", "MEMBER_SSL_PRIVATE_KEY"]:
                 ssl_keys[attr] = value
-        if ssh_keys:
-            if self.get_val_for_uid(session, self.db.SSH_KEY_TABLE, "public_key", uid):
-                text = ""
-                for attr, value in ssh_keys.iteritems():
-                    if text: text += ", "
-                    text += self.field_mapping[attr] + "='" + value + "'"
-                sql = "update " + self.db.SSH_KEY_TABLE.name + " set " + text + \
-                      " where member_id='" + uid + "';"
-            else:
-                if "MEMBER_SSH_PUBLIC_KEY" not in ssh_keys:
-                    raise CHAPIv1ArgumentError('Cannot insert just private key')
-                text1, text2 = "", ""
-                if "MEMBER_SSH_PRIVATE_KEY" in ssh_keys:
-                    text1 = ", private_key"
-                    text2 = "', '" + ssh_keys["MEMBER_SSH_PRIVATE_KEY"]
-                sql = "insert into " + self.db.SSH_KEY_TABLE.name + \
-                      " (member_id, public_key" + text1 + ") values ('" + uid + \
-                      "', '" + ssh_keys["MEMBER_SSH_PUBLIC_KEY"] + text2 + "');"
-            print 'sql = ', sql
-            res = session.execute(sql)
-            session.commit()
-            
+        if ssl_keys:
+            self.update_ssl_keys(session, ssl_keys, uid)
+
             # couldn't get this to work
 #            q = session.query(self.db.MEMBER_ATTRIBUTE_TABLE)
 #            q = q.filter(self.db.MEMBER_ATTRIBUTE_TABLE.c.name == \
@@ -263,3 +255,26 @@ class MAv1Implementation(MAv1DelegateBase):
             
         session.close()
         return self._successReturn(True)
+
+    def update_ssl_keys(self, session, ssl_keys, uid):
+        if self.get_val_for_uid(session, self.db.OUTSIDE_CERT_TABLE, \
+                                "certificate", uid):
+            text = ""
+            for attr, value in ssl_keys.iteritems():
+                if text: text += ", "
+                text += self.field_mapping[attr] + "='" + value + "'"
+            sql = "update " + self.db.OUTSIDE_CERT_TABLE.name + " set " + text + \
+                  " where member_id='" + uid + "';"
+        else:
+            if "MEMBER_SSL_PUBLIC_KEY" not in ssl_keys:
+                raise CHAPIv1ArgumentError('Cannot insert just private key')
+            text1, text2 = "", ""
+            if "MEMBER_SSL_PRIVATE_KEY" in ssl_keys:
+                text1 = ", private_key"
+                text2 = "', '" + ssl_keys["MEMBER_SSL_PRIVATE_KEY"]
+            sql = "insert into " + self.db.OUTSIDE_CERT_TABLE.name + \
+                  " (member_id, certificate" + text1 + ") values ('" + uid + \
+                  "', '" + ssl_keys["MEMBER_SSL_PUBLIC_KEY"] + text2 + "');"
+        print 'sql = ', sql
+        res = session.execute(sql)
+        session.commit()
