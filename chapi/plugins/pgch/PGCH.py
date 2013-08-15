@@ -225,19 +225,51 @@ class PGCHv1Delegate(DelegateBase):
             raise Exception("No UUID, URN or HRN identifier provided")
 
         if hrn and not urn:
-            # Turn hrn into urn
-            # ***
-            pass
+            urn = sfa.util.xrn.hrn_to_urn(hrn, type)
 
         if type == 'user':
             # User
-            lookup_members_return = self._sa_handler.lookup_members(creds, options)
+            match_clause = {'MEMBER_URN' : urn}
+            if not urn:
+                match_clause = {'MEMBER_UID' : uuid}
+            filter_clause = \
+                ['MEMBER_UID', 'MEMBER_URN', 'MEMBER_USERNAME', 'MEMBER_EMAIL', \
+                     'USER_CREDENTIAL']
+            identifying_filter_clause = \
+                ['MEMBER_UID', 'MEMBER_URN', 'MEMBER_USERNAME', 'MEMBER_EMAIL']
+            options = {"match" : match_clause, "filter" : filter_clause}
+            creds = []
+            lookup_public_return = \
+                self._ma_handler.lookup_public_member_info(creds, options)
+            if lookup_public_return['code'] != NO_ERROR:
+                return lookup_public_return
+            public_info = lookup_public_return['value']
+            this_urn = public_info.keys()[0]
+            public_info = public_info[this_urn]
+
+            lookup_identifying_return = \
+                self._ma_handler.lookup_identifying_member_info(creds, options)
+            if lookup_identifying_return['code'] != NO_ERROR:
+                return lookup_identifying_return
+            identifying_info = lookup_identifying_return['value']
+            identifying_info = identifying_info[this_urn]
+            
+
+            print "LPR = " + str(lookup_public_return)
+            print "LIR = " + str(lookup_identifying_return)
+
+            member_uuid = public_info['MEMBER_UID']
+            member_hrn = sfa.util.xrn.urn_to_hrn(public_info['MEMBER_URN'])[0]
+            member_uuid = public_info['MEMBER_UID']
+            member_email = identifying_info['MEMBER_EMAIL']
+            user_gid = gid.GID(public_info['USER_CREDENTIAL'])
+            member_name = public_info['MEMBER_USERNAME']
 
             resolve = {'uid' : member_uuid,  # login(Emulab) ID of user \
                            'hrn' : member_hrn, \
                            'uuid' : member_uuid, \
                            'email' : member_email, \
-                           'gid' : gid, # *** ??? PG Identifier (an x509 cert)
+                           'gid' : user_gid.save_to_string(), # user_cred
                            'name' : member_name  # Common Name
                        }
                        
@@ -274,7 +306,7 @@ class PGCHv1Delegate(DelegateBase):
             lookup_member_return = self._ma_handler.lookup_public_member_info(creds, options)
             if lookup_member_return['code'] != NO_ERROR:
                 return lookup_member_return
-            creator_urn = lookup_member_info['value'].keys()[0]
+            creator_urn = lookup_member_return['value'].keys()[0]
 
             slice_cred_return = self.GetCredential(client_cert, \
                                                        {'type' : 'slice', \
