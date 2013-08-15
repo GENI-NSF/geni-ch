@@ -72,6 +72,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         }
 
     slice_supplemental_fields = {
+        "SLICE_OWNER" : {"TYPE" : "UUID", "UPDATE" : True},
         "SLICE_EMAIL": {"TYPE": "EMAIL", "CREATE": "REQUIRED", "UPDATE": True},
         "PROJECT_URN": {"TYPE": "URN", "CREATE": "REQUIRED", "UPDATE": False}
     }
@@ -90,8 +91,8 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         "PROJECT_EMAIL": {"TYPE": "EMAIL", "CREATE": "REQUIRED", "UPDATE": True, "OBJECT" : "PROJECT"}
         }
 
-    # Mapping from external to internal data schema
-    field_mapping = {
+    # Mapping from external to internal data schema (SLICE)
+    slice_field_mapping = {
         "SLICE_URN" : "slice_urn",
         "SLICE_UID" : "slice_id",
         "SLICE_NAME" : "slice_name",
@@ -100,7 +101,20 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         "SLICE_EXPIRED" :  "expired",
         "SLICE_CREATION" :  "creation",
         "SLICE_EMAIL" : "slice_email",
+        "SLICE_OWNER" : "owner_id", 
         "PROJECT_URN" : row_to_project_urn
+        }
+
+    # Mapping from external to internal data schema (PROJECT)
+    project_field_mapping = {
+        "PROJECT_URN" : row_to_project_urn,
+        "PROJECT_UID" : "project_id",
+        "PROJECT_NAME" : "project_name",
+        "PROJECT_DESCRPTION" : "project_purpose",
+        "PROJECT_EXPIRATION" : "expiration",
+        "PROJECT_EXPIRED" : "expired",
+        "PROJECT_CREATION" : "creation",
+        "PROJECT_EMAIL" : "project_email"
         }
 
 
@@ -121,7 +135,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
             [os.path.join(self.trusted_root, f) \
                  for f in os.listdir(self.trusted_root) if not f.startswith('CAT')]
 
-        print "TR = " + str(self.trusted_root_files)
+#        print "TR = " + str(self.trusted_root_files)
 
     def get_version(self):
         version_info = {"VERSION" : self.version_number, 
@@ -133,11 +147,11 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
     def lookup_slices(self, client_cert, credentials, options):
 
         selected_columns, match_criteria = \
-            unpack_query_options(options, self.field_mapping)
+            unpack_query_options(options, self.slice_field_mapping)
         session = self.db.getSession()
         q = session.query(self.db.SLICE_TABLE, self.db.PROJECT_TABLE.c.project_id, self.db.PROJECT_TABLE.c.project_name)
         q = q.filter(self.db.SLICE_TABLE.c.project_id == self.db.PROJECT_TABLE.c.project_id)
-        q = add_filters(q, match_criteria, self.db.SLICE_TABLE, self.field_mapping)
+        q = add_filters(q, match_criteria, self.db.SLICE_TABLE, self.slice_field_mapping)
 #        print "Q = " + str(q)
         rows = q.all()
         session.close()
@@ -146,8 +160,9 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         for row in rows:
             slice_urn = row.slice_urn
             result_row = \
-                construct_result_row(row, selected_columns, self.field_mapping)
+                construct_result_row(row, selected_columns, self.slice_field_mapping)
             slices[slice_urn] = result_row
+#        print "SLICES = " + str(slices)
         return self._successReturn(slices)
 
 

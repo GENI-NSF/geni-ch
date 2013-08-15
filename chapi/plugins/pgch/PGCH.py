@@ -29,6 +29,7 @@ from chapi.DelegateBase import DelegateBase
 from chapi.HandlerBase import HandlerBase
 from chapi.Exceptions import *
 from ABACGuard import extract_user_urn
+import sfa.trust.gid as gid
 
 pgch_logger = amsoil.core.log.getLogger('pgchv1')
 
@@ -130,8 +131,48 @@ class PGCHv1Delegate(DelegateBase):
         #    where omni always uses the urn
         # return is slice credential
         #args: credential, type, uuid, urn
-        # *** WRITE ME ***
-        return self._successReturn("GetCredential" + str(args))
+
+
+        cred_type = None
+        if 'type' in args:
+            cred_type = args['type']
+        if cred_type and cred_type.lower() != 'slice':
+            raise Exception("PGCH.GetCredential called with type that isn't slice: %s" % \
+                                cred_type)
+
+        slice_uuid = None
+        if 'uuid' in args:
+            slice_uuid = args['uuid']
+
+        slice_urn = None
+        if 'urn' in args:
+            slice_urn = args['urn']
+            
+        credentials = []
+        if 'credential' in args:
+            credential = args['credential']
+            credentials = [credential]
+
+        if slice_uuid and not slice_urn:
+            # Lookup slice_urn from slice_uuid
+            match_clause = {'SLICE_UID' : slice_uuid}
+            filter_clause = ["SLICE_URN"]
+            creds = []
+            options = {'match' : match_clause, 'filter' : filter_clause}
+            lookup_slices_return = self._sa_handler.lookup_slices(creds, options)
+            if lookup_slices_return['code'] != NO_ERROR:
+                return lookup_slices_return
+            slice_urn = lookup_slices_return ['value'].keys()[0]
+
+
+        options = {}
+        get_credentials_return = \
+            self._sa_handler.get_credentials(slice_urn, credentials, options)
+        if get_credentials_return['code'] != NO_ERROR:
+            return get_credentials_return
+
+        slice_credential = get_credentials_return['value'][0]['geni_value']
+        return self._successReturn(slice_credential)
 
     def Resolve(self, client_cert, args):
         # Omni uses this, Flack may not need it
@@ -161,8 +202,99 @@ class PGCHv1Delegate(DelegateBase):
 #  "gid"  : "ProtoGENI Identifier (an x509 certificate)",
 #  "name" : "common name",
 #}
-        # *** WRITE ME ***
-        return self._successReturn("Resolve" + str(args))
+
+        type = None
+        if 'type' in args:
+            type = args['type'].lower()
+        if type not in ('slice', 'user'):
+            raise Exception("Unknown type for PGH.Resolve: %s" % str(type))
+
+        uuid = None
+        if 'uuid' in args:
+            uuid = args['uuid']
+
+        urn = None
+        if 'urn' in args:
+            urn = args['urn']
+
+        hrn = None
+        if 'hrn' in args:
+            hrn = args['hrn']
+
+        if not hrn and not urn and not uuid:
+            raise Exception("No UUID, URN or HRN identifier provided")
+
+        if hrn and not urn:
+            # Turn hrn into urn
+            # ***
+            pass
+
+        if type == 'user':
+            # User
+            lookup_members_return = self._sa_handler.lookup_members(creds, options)
+
+            resolve = {'uid' : member_uuid,  # login(Emulab) ID of user \
+                           'hrn' : member_hrn, \
+                           'uuid' : member_uuid, \
+                           'email' : member_email, \
+                           'gid' : gid, # *** ??? PG Identifier (an x509 cert)
+                           'name' : member_name  # Common Name
+                       }
+                       
+            pass
+        else:
+            # Slice
+            match_clause = {'SLICE_URN' : urn, 'SLICE_EXPIRED' : 'f'} 
+            if not urn:
+                match_clause = {'SLICE_UID' : uuid}
+            filter_clause = ["SLICE_UID", "SLICE_URN", "SLICE_NAME", \
+                                 "SLICE_OWNER"]
+            options = {'match' : match_clause, 'filter' : filter_clause}
+            creds = []
+            lookup_slices_return = self._sa_handler.lookup_slices(creds, options)
+
+            if lookup_slices_return['code'] != NO_ERROR:
+                return lookup_slices_return
+            slice_info_dict = lookup_slices_return['value']
+            
+            if len(slice_info_dict.keys()) == 0:
+                raise Exception("No slice found URN %s UUID %s" % (str(urn), str(uuid)))
+
+            slice_key = slice_info_dict.keys()[0]
+            slice_info = slice_info_dict[slice_key]
+            slice_name = slice_info['SLICE_NAME']
+            slice_urn = slice_info['SLICE_URN']
+            slice_uuid = slice_info['SLICE_UID']
+            creator_uuid = slice_info['SLICE_OWNER']
+
+            creator_urn = None # *** Lookup from MA
+            match_clause = {'MEMBER_UID' : creator_uuid}
+            filter_clause = ['MEMBER_URN']
+            options = {'match' : match_clause, 'filter' : filter_clause}
+            lookup_member_return = self._ma_handler.lookup_public_member_info(creds, options)
+            if lookup_member_return['code'] != NO_ERROR:
+                return lookup_member_return
+            creator_urn = lookup_member_info['value'].keys()[0]
+
+            slice_cred_return = self.GetCredential(client_cert, \
+                                                       {'type' : 'slice', \
+                                                            'uuid' : slice_uuid})
+            if slice_cred_return['code'] != NO_ERROR:
+                return slice_cred_return
+            slice_cred = slice_cred_return['value']
+            slice_gid = gid.GID(slice_cred)
+
+            resolve = {'urn' : slice_urn, \
+                           'uuid' : slice_uuid, \
+                           'creator_uuid' : creator_uuid, \
+                           'creator_urn' : creator_urn,  \
+                           # PG Identifier (an x509 cert) **** What is this? \
+                           'gid' : slice_gid.save_to_string(),   \
+                           'component_managers' : []
+                       }
+                             
+
+        return self._successReturn(resolve)
 
     def Register(self, client_cert, args):
         # Omni uses this, Flack should not for our purposes
@@ -188,7 +320,6 @@ class PGCHv1Delegate(DelegateBase):
         if update_slice_return['code'] != NO_ERROR:
             return update_slice_return
 
-        # *** Need to support get_credentials  in SA
         get_credentials_return = \
             self._sa_handler.get_credentials(slice_urn, credentials, options)
         if get_credentials_return['code'] != NO_ERROR:
