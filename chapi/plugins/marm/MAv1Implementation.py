@@ -28,22 +28,15 @@ from chapi.Exceptions import *
 from ext.geni.util.urn_util import URN
 import amsoil.core.pluginmanager as pm
 from tools.dbutils import *
-import ext.sfa.trust.credential as sfa_cred
 import ext.sfa.trust.gid as sfa_gid
-import ext.geni.util.cert_util as cert_util
+import geni.util.cred_util as cred_util
 from sqlalchemy.orm import mapper
+from datetime import *
+import os
 
-# Utility functions for morphing from native schema to public-facing
-# schema
-
-def urn_to_user_credential(urn):
-    cred = sfa_cred.Credential()
-    gid, keys = cert_util.create_cert(str(urn))
-    cred.set_gid_object(gid)
-    cred.set_gid_caller(gid)
-    return cred.save_to_string()
 
 # classes for mapping to sql tables
+
 class MemberAttribute(object):
     def __init__(self, name, value, member_id, self_asserted):
         self.name = name
@@ -98,8 +91,8 @@ class MAv1Implementation(MAv1DelegateBase):
         "MEMBER_SSL_PRIVATE_KEY": "private_key",
         "MEMBER_INSIDE_PUBLIC_KEY": "certificate",
         "MEMBER_INSIDE_PRIVATE_KEY": "private_key",
-        "USER_CREDENTIAL": urn_to_user_credential,
-        "MEMBER_SSH_KEYS": "urn_to_ssh_keys"
+        "USER_CREDENTIAL": "foo",
+        "MEMBER_SSH_KEYS": "foo"
         }
 
     attributes = ["MEMBER_URN", "MEMBER_UID", "MEMBER_FIRSTNAME", \
@@ -131,6 +124,11 @@ class MAv1Implementation(MAv1DelegateBase):
             "MEMBER_INSIDE_PUBLIC_KEY": InsideKey,
             "MEMBER_INSIDE_PRIVATE_KEY": InsideKey
             }
+        self.cert = '/usr/share/geni-ch/ma/ma-cert.pem'
+        self.key = '/usr/share/geni-ch/ma/ma-key.pem'
+        trusted_root = '/usr/share/geni-ch/portal/gcf.d/trusted_roots'
+        self.trusted_roots = [os.path.join(trusted_root, f) \
+            for f in os.listdir(trusted_root) if not f.startswith('CAT')]
 
     # This call is unprotected: no checking of credentials
     def get_version(self):
@@ -203,7 +201,7 @@ class MAv1Implementation(MAv1DelegateBase):
             values = {}
             for col in selected_columns:
                 if col == "USER_CREDENTIAL":
-                    values[col] = urn_to_user_credential(urn)
+                    values[col] = self.get_user_credential(session, uid)
                 elif col == "MEMBER_SSH_KEYS":
                     values[col] = self.get_ssh_keys_for_uid(session, uid, \
                                     allowed_fields == self.private_fields)
@@ -314,3 +312,14 @@ class MAv1Implementation(MAv1DelegateBase):
                 setattr(obj, col, val)
             session.add(obj)
         session.commit()
+
+    def get_user_credential(self, session, uid):
+        certs = self.get_val_for_uid(session, OutsideCert, "certificate", uid)
+        if not certs:
+            certs = self.get_val_for_uid(session, InsideKey, "certificate", uid)
+        if not certs:
+            return None
+        gid = sfa_gid.GID(string = certs[0])
+        expires = datetime.now() + timedelta(365)
+        cred = cred_util.create_credential(gid, gid, expires, "user", self.key, self.cert, self.trusted_roots)
+        return cred.save_to_string()
