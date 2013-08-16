@@ -30,6 +30,7 @@ from chapi.HandlerBase import HandlerBase
 from chapi.Exceptions import *
 from ABACGuard import extract_user_urn
 import sfa.trust.gid as gid
+import geni.util.urn_util as urn_util
 
 pgch_logger = amsoil.core.log.getLogger('pgchv1')
 
@@ -159,7 +160,8 @@ class PGCHv1Delegate(DelegateBase):
             filter_clause = ["SLICE_URN"]
             creds = []
             options = {'match' : match_clause, 'filter' : filter_clause}
-            lookup_slices_return = self._sa_handler.lookup_slices(creds, options)
+            lookup_slices_return = \
+                self._sa_handler._delegate.lookup_slices(client_cert, creds, options)
             if lookup_slices_return['code'] != NO_ERROR:
                 return lookup_slices_return
             slice_urn = lookup_slices_return ['value'].keys()[0]
@@ -167,7 +169,8 @@ class PGCHv1Delegate(DelegateBase):
 
         options = {}
         get_credentials_return = \
-            self._sa_handler.get_credentials(slice_urn, credentials, options)
+            self._sa_handler._delegate.get_credentials(client_cert, slice_urn, \
+                                                           credentials, options)
         if get_credentials_return['code'] != NO_ERROR:
             return get_credentials_return
 
@@ -240,7 +243,8 @@ class PGCHv1Delegate(DelegateBase):
             options = {"match" : match_clause, "filter" : filter_clause}
             creds = []
             lookup_public_return = \
-                self._ma_handler.lookup_public_member_info(creds, options)
+                self._ma_handler._delegate.lookup_public_member_info(client_cert, \
+                                                                         creds, options)
             if lookup_public_return['code'] != NO_ERROR:
                 return lookup_public_return
             public_info = lookup_public_return['value']
@@ -248,7 +252,8 @@ class PGCHv1Delegate(DelegateBase):
             public_info = public_info[this_urn]
 
             lookup_identifying_return = \
-                self._ma_handler.lookup_identifying_member_info(creds, options)
+                self._ma_handler._delegate.lookup_identifying_member_info(client_cert, \
+                                                                              creds, options)
             if lookup_identifying_return['code'] != NO_ERROR:
                 return lookup_identifying_return
             identifying_info = lookup_identifying_return['value']
@@ -283,7 +288,8 @@ class PGCHv1Delegate(DelegateBase):
                                  "SLICE_OWNER"]
             options = {'match' : match_clause, 'filter' : filter_clause}
             creds = []
-            lookup_slices_return = self._sa_handler.lookup_slices(creds, options)
+            lookup_slices_return = \
+                self._sa_handler._delegate.lookup_slices(client_cert, creds, options)
 
             if lookup_slices_return['code'] != NO_ERROR:
                 return lookup_slices_return
@@ -299,11 +305,12 @@ class PGCHv1Delegate(DelegateBase):
             slice_uuid = slice_info['SLICE_UID']
             creator_uuid = slice_info['SLICE_OWNER']
 
-            creator_urn = None # *** Lookup from MA
-            match_clause = {'MEMBER_UID' : creator_uuid}
+             match_clause = {'MEMBER_UID' : creator_uuid}
             filter_clause = ['MEMBER_URN']
             options = {'match' : match_clause, 'filter' : filter_clause}
-            lookup_member_return = self._ma_handler.lookup_public_member_info(creds, options)
+            lookup_member_return = \
+                self._ma_handler._delegate.lookup_public_member_info(client_cert, \
+                                                                         creds, options)
             if lookup_member_return['code'] != NO_ERROR:
                 return lookup_member_return
             creator_urn = lookup_member_return['value'].keys()[0]
@@ -320,7 +327,7 @@ class PGCHv1Delegate(DelegateBase):
                            'uuid' : slice_uuid, \
                            'creator_uuid' : creator_uuid, \
                            'creator_urn' : creator_urn,  \
-                           # PG Identifier (an x509 cert) **** What is this? \
+                           # PG Identifier (an x509 cert) 
                            'gid' : slice_gid.save_to_string(),   \
                            'component_managers' : []
                        }
@@ -333,8 +340,63 @@ class PGCHv1Delegate(DelegateBase):
         # args are credential, hrn, urn, type
         # cred is user cred, type must be Slice
         # returns slice cred
-        # *** WRITE ME ***
-        return self._successReturn("Register"  + str(args))
+
+        type = None
+        if 'type' in args:
+            type = args['type']
+        if type and type.lower() != 'slice':
+            raise Exception("PGCH.Register called with non-slice type : %s" % type)
+
+        cred = None
+        creds = []
+        if 'credential' in args:
+            cred = args['credential']
+            creds =[cred]
+
+        hrn = None
+        if 'hrn' in args: 
+            hrn = args['hrn']
+
+        urn = None
+        if 'urn' in args:
+            urn = args['urn']
+
+        if not urn and not hrn:
+            raise Exception("URN or HRN required for PGCH.Register")
+
+        if hrn and not urn:
+            urn = sfa.util.xrn.hrn_to_urn(hrn, type)
+
+        # Pull out slice name and project_name
+        urn_parts = urn.split('+')
+        slice_name = urn_parts[len(urn_parts)-1]
+        authority = urn_parts[1]
+        authority_parts = authority.split(':')
+        if len(authority_parts) != 2:
+            raise Exception("No project specified in slice urn: " + urn)
+        authority = authority_parts[0]
+        project_name = authority_parts[1]
+
+        # Get the project_urn
+        project_urn = \
+            urn_util.URN(authority = authority, type = 'project', \
+                             name = project_name).urn_string()
+
+        # Set the slice email name (Bogus but consistent with current CH)
+        slice_email = 'slice-%s@example.com' % slice_name
+
+        options = {'PROJECT_URN' : project_urn, 'SLICE_NAME' : slice_name, 
+                   'SLICE_EMAIL' : slice_email }
+
+        print "OPTS = " + str(options)
+
+        create_slice_return = \
+            self._sa_handler._delegate.create_slice(client_cert, creds, options)
+        if create_slice_return['code'] != NO_ERROR:
+            return create_slice_return
+        slice_cred = slice_create_return['value']['SLICE_CREDENTIAL']
+
+        return self._successReturn(slice_cred)
 
     def RenewSlice(self, client_cert, args):
         # args are credential, expiration
@@ -348,12 +410,14 @@ class PGCHv1Delegate(DelegateBase):
         credentials [slice_credential]
         options = {'fields' : {'SLICE_EXPIRATION' : expiration}}
         update_slice_return = \
-            self._sa_handler.update_slice(slice_urn, credentials, options)
+            self._sa_handler._delegate.update_slice(client_cert, slice_urn, \
+                                                        credentials, options)
         if update_slice_return['code'] != NO_ERROR:
             return update_slice_return
 
         get_credentials_return = \
-            self._sa_handler.get_credentials(slice_urn, credentials, options)
+            self._sa_handler._delegate.get_credentials(client_cert, slice_urn, \
+                                                           credentials, options)
         if get_credentials_return['code'] != NO_ERROR:
             return get_credentials_return
         renewed_slice_credentials = get_credentials_return['value']
@@ -374,7 +438,7 @@ class PGCHv1Delegate(DelegateBase):
 
         options = {'match' : {'MEMBER_URN' : member_urn}}
         member_info_result = \
-            self._ma_handler.lookup_public_member_info(creds, options)
+            self._ma_handler._delegate.lookup_public_member_info(client_cert, creds, options)
         if member_info_result['code'] != NO_ERROR:
             return member_info_result
         member_info = member_info_result['value']
