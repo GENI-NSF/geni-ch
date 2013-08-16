@@ -248,6 +248,8 @@ class MAv1Implementation(MAv1DelegateBase):
                 if table not in all_keys:
                     all_keys[table] = {}
                 all_keys[table][self.field_mapping[attr]] = value
+            elif attr == "MEMBER_SSH_KEYS":
+                self.update_ssh_keys(session, value, uid)
         for table, keys in all_keys.iteritems():
             self.update_keys(session, table, keys, uid)
             
@@ -297,3 +299,20 @@ class MAv1Implementation(MAv1DelegateBase):
         print 'sql = ', sql
         res = session.execute(sql)
         session.commit()
+
+    def update_ssh_keys(self, session, keys, uid):
+        sql = "delete from " + self.db.SSH_KEY_TABLE.name + \
+              " where member_id='" + uid + "';"
+        print 'sql =', sql
+        session.execute(sql)
+        session.commit()
+        for key in keys:
+            text1 = "insert into " + self.db.SSH_KEY_TABLE.name + " (member_id"
+            text2 = ") values ('" + uid
+            for col, val in key.iteritems():
+                text1 += ", " + col
+                text2 += "', '" + val
+            sql = text1 + text2 + "');"
+            print 'sql =', sql
+            session.execute(sql)
+            session.commit()
