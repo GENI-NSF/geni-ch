@@ -37,7 +37,6 @@ import ext.geni.util.cert_util as cert_util
 
 def urn_to_user_credential(urn):
     cred = sfa_cred.Credential()
-#    gid = sfa_gid.GID(urn = urn, create = True)
     gid, keys = cert_util.create_cert(str(urn))
     cred.set_gid_object(gid)
     cred.set_gid_caller(gid)
@@ -61,8 +60,7 @@ class MAv1Implementation(MAv1DelegateBase):
         "MEMBER_SSL_PRIVATE_KEY": {"TYPE": "SSL_KEY", "PROTECT": "PRIVATE"},
         "MEMBER_INSIDE_PUBLIC_KEY": {"TYPE": "SSL_KEY"},
         "MEMBER_INSIDE_PRIVATE_KEY": {"TYPE": "SSL_KEY", "PROTECT": "PRIVATE"},
-        "MEMBER_SSH_PUBLIC_KEY": {"TYPE": "SSH_KEY"},
-        "MEMBER_SSH_PRIVATE_KEY": {"TYPE": "SSH_KEY", "PROTECT": "PRIVATE"},
+        "MEMBER_SSH_KEYS": {"TYPE": "SSH_KEYS"},
         "USER_CREDENTIAL": {"TYPE": "CREDENTIAL"}
 	}
 
@@ -78,13 +76,12 @@ class MAv1Implementation(MAv1DelegateBase):
         "MEMBER_PHONE_NUMBER": "telephone_number",
         "MEMBER_AFFILIATION": "affiliation",
         "MEMBER_EPPN": "eppn",
-        "MEMBER_SSH_PUBLIC_KEY": "public_key",
-        "MEMBER_SSH_PRIVATE_KEY": "private_key",
         "MEMBER_SSL_PUBLIC_KEY": "certificate",
         "MEMBER_SSL_PRIVATE_KEY": "private_key",
         "MEMBER_INSIDE_PUBLIC_KEY": "certificate",
         "MEMBER_INSIDE_PRIVATE_KEY": "private_key",
-        "USER_CREDENTIAL": urn_to_user_credential
+        "USER_CREDENTIAL": urn_to_user_credential,
+        "MEMBER_SSH_KEYS": "urn_to_ssh_keys"
         }
 
     attributes = ["MEMBER_URN", "MEMBER_UID", "MEMBER_FIRSTNAME", \
@@ -94,21 +91,19 @@ class MAv1Implementation(MAv1DelegateBase):
 
     public_fields = ["MEMBER_URN", "MEMBER_UID", "MEMBER_USERNAME", \
                      "MEMBER_SSL_PUBLIC_KEY", "MEMBER_INSIDE_PUBLIC_KEY", \
-                     "MEMBER_SSH_PUBLIC_KEY", "USER_CREDENTIAL"]
+                     "USER_CREDENTIAL", "MEMBER_SSH_KEYS"]
 
     identifying_fields = ["MEMBER_FIRSTNAME", "MEMBER_LASTNAME", "MEMBER_EMAIL", \
                           "MEMBER_DISPLAYNAME", "MEMBER_PHONE_NUMBER", \
                           "MEMBER_AFFILIATION", "MEMBER_EPPN"]
 
-    private_fields = ["MEMBER_SSH_PRIVATE_KEY", "MEMBER_SSL_PRIVATE_KEY", \
-                      "MEMBER_INSIDE_PRIVATE_KEY"]
+    private_fields = ["MEMBER_SSL_PRIVATE_KEY", "MEMBER_INSIDE_PRIVATE_KEY", \
+                      "MEMBER_SSH_KEYS"]
 
 
     def __init__(self):
         self.db = pm.getService('chdbengine')
         self.table_mapping = {
-            "MEMBER_SSH_PUBLIC_KEY": self.db.SSH_KEY_TABLE,
-            "MEMBER_SSH_PRIVATE_KEY": self.db.SSH_KEY_TABLE,
             "MEMBER_SSL_PUBLIC_KEY": self.db.OUTSIDE_CERT_TABLE,
             "MEMBER_SSL_PRIVATE_KEY": self.db.OUTSIDE_CERT_TABLE,
             "MEMBER_INSIDE_PUBLIC_KEY": self.db.INSIDE_KEY_TABLE,
@@ -154,7 +149,16 @@ class MAv1Implementation(MAv1DelegateBase):
         q = session.query(table.c[field])
         q = q.filter(table.c.member_id == uid)
         rows = q.all()
-        return [eval("row.%s" % field) for row in rows]
+        return [getattr(row, field) for row in rows]
+
+    # construct a list of ssh keys
+    def get_ssh_keys_for_uid(self, session, uid, include_private):
+        q = session.query(self.db.SSH_KEY_TABLE)
+        q = q.filter(self.db.SSH_KEY_TABLE.c.member_id == uid)
+        rows = q.all()
+        excluded = ['id', 'member_id'] + [['private_key'], []][include_private]
+        return [{key: getattr(row, key) for key in row.keys() if key \
+                  not in excluded } for row in rows]
 
     # Common code for answering query
     def lookup_member_info(self, options, allowed_fields):
@@ -180,6 +184,9 @@ class MAv1Implementation(MAv1DelegateBase):
             for col in selected_columns:
                 if col == "USER_CREDENTIAL":
                     values[col] = urn_to_user_credential(urn)
+                elif col == "MEMBER_SSH_KEYS":
+                    values[col] = self.get_ssh_keys_for_uid(session, uid, \
+                                    allowed_fields == self.private_fields)
                 else:
                     if col in self.attributes:
                         vals = self.get_attr_for_uid(session, col, uid)
