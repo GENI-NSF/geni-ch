@@ -31,6 +31,7 @@ from tools.dbutils import *
 import ext.sfa.trust.credential as sfa_cred
 import ext.sfa.trust.gid as sfa_gid
 import ext.geni.util.cert_util as cert_util
+from sqlalchemy.orm import mapper
 
 # Utility functions for morphing from native schema to public-facing
 # schema
@@ -41,6 +42,14 @@ def urn_to_user_credential(urn):
     cred.set_gid_object(gid)
     cred.set_gid_caller(gid)
     return cred.save_to_string()
+
+# classes for mapping to sql tables
+class MemberAttribute(object):
+    def __init__(self, name, value, member_id, self_asserted):
+        self.name = name
+        self.value = value
+        self.member_id = member_id
+        self.self_asserted = self_asserted
 
 
 class MAv1Implementation(MAv1DelegateBase):
@@ -109,6 +118,7 @@ class MAv1Implementation(MAv1DelegateBase):
             "MEMBER_INSIDE_PUBLIC_KEY": self.db.INSIDE_KEY_TABLE,
             "MEMBER_INSIDE_PRIVATE_KEY": self.db.INSIDE_KEY_TABLE,
             }
+        mapper(MemberAttribute, self.db.MEMBER_ATTRIBUTE_TABLE)
 
     # This call is unprotected: no checking of credentials
     def get_version(self):
@@ -125,22 +135,21 @@ class MAv1Implementation(MAv1DelegateBase):
 
     # filter out all the users that have a particular value of an attribute
     def get_uids_for_attribute(self, session, attr, value):
-        q = session.query(self.db.MEMBER_ATTRIBUTE_TABLE.c.member_id)
-        q = q.filter(self.db.MEMBER_ATTRIBUTE_TABLE.c.name == \
-                     self.field_mapping[attr])
+        q = session.query(MemberAttribute.member_id)
+        q = q.filter(MemberAttribute.name == self.field_mapping[attr])
         if isinstance(value, types.ListType):
-            q = q.filter(self.db.MEMBER_ATTRIBUTE_TABLE.c.value._in(value))
+            q = q.filter(MemberAttribute.value._in(value))
         else:
-            q = q.filter(self.db.MEMBER_ATTRIBUTE_TABLE.c.value == value)
+            q = q.filter(MemberAttribute.value == value)
         rows = q.all()
         return [row.member_id for row in rows]
 
     # find the value of an attribute for a given user
     def get_attr_for_uid(self, session, attr, uid):
-        q = session.query(self.db.MEMBER_ATTRIBUTE_TABLE.c.value)
-        q = q.filter(self.db.MEMBER_ATTRIBUTE_TABLE.c.name == \
+        q = session.query(MemberAttribute.value)
+        q = q.filter(MemberAttribute.name == \
                      self.field_mapping[attr])
-        q = q.filter(self.db.MEMBER_ATTRIBUTE_TABLE.c.member_id == uid)
+        q = q.filter(MemberAttribute.member_id == uid)
         rows = q.all()
         return [row.value for row in rows]
 
@@ -258,25 +267,15 @@ class MAv1Implementation(MAv1DelegateBase):
 
     def update_attr(self, session, attr, value, uid, self_asserted):
         if len(self.get_attr_for_uid(session, attr, uid)) > 0:
-            sql = "update " + self.db.MEMBER_ATTRIBUTE_TABLE.name + \
-                  " set value='" + value + "', self_asserted='" + \
-                  self_asserted + "' where name='" + \
-                  self.field_mapping[attr] + "' and member_id='" + uid + "';"
+            q = session.query(MemberAttribute)
+            q = q.filter(MemberAttribute.name == self.field_mapping[attr])
+            q = q.filter(MemberAttribute.member_id == uid)
+            q.update({"value": value})
         else:
-            sql = "insert into " + self.db.MEMBER_ATTRIBUTE_TABLE.name + \
-                  " (name, value, member_id, self_asserted) values ('" + \
-                  self.field_mapping[attr] + "', '" + value + "', '" + \
-                  uid + "', '" + self_asserted + "');"
-        print 'sql = ', sql
-        res = session.execute(sql)
+            obj = MemberAttribute(self.field_mapping[attr], value, \
+                                  uid, self_asserted)
+            session.add(obj)
         session.commit()
-
-        # couldn't get this to work for update
-#        q = session.query(self.db.MEMBER_ATTRIBUTE_TABLE)
-#        q = q.filter(self.db.MEMBER_ATTRIBUTE_TABLE.c.name == \
-#                     self.field_mapping[attr])
-#        q = q.filter(self.db.MEMBER_ATTRIBUTE_TABLE.c.member_id == uid)
-#        q.update({self.db.MEMBER_ATTRIBUTE_TABLE.c.value: value})
 
     def update_keys(self, session, table, keys, uid):
         if self.get_val_for_uid(session, table, "certificate", uid):
