@@ -74,11 +74,10 @@ class FieldsArgumentCheck(ArgumentCheck):
                            
     # Take a list of {field : value} dictionaries
     # Make sure all field name/value pairs are recognized and of proper type
-    def validateFieldValueList(self, field_values):
+    def validateFieldValueDictionary(self, field_values):
 
-        for field_value in field_values:
-            field = field_value.keys()[0]
-            value = field_value[field]
+        for field in field_values.keys():
+            value = field_values[field]
             if not field in self._mandatory_fields and \
                     not field in self._supplemental_fields:
                 raise CHAPIv1ArgumentError("Unrecognized field : " + field)
@@ -139,7 +138,7 @@ class LookupArgumentCheck(FieldsArgumentCheck):
         FieldsArgumentCheck.validate(self, options, arguments)
 
         if 'match' in options:
-            self.validateFieldValueList(options['match'])
+            self.validateFieldValueDictionary(options['match'])
 
         if 'filter' in options:
             self.validateFieldList(options['filter'])

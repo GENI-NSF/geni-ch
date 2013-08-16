@@ -39,7 +39,7 @@ class CHGetServicesCheck(FieldsArgumentCheck):
         FieldsArgumentCheck.validate(self, options, arguments)
 
         if 'match' in options:
-            self.validateFieldValueList(options['match'])
+            self.validateFieldValueDictionary(options['match'])
 
         if 'filter' in options:
             self.validateFieldList(options['filter'])

@@ -51,10 +51,9 @@ def convert_to_external(internal_field, mapping):
 # Add filter clauses to a query based on given match criteria
 # Return updated query
 def add_filters(query, match_criteria, table, mapping):
-    for match_criterion in match_criteria:
-        external_match_field = match_criterion.keys()[0]
+    for external_match_field in match_criteria.keys():
         internal_match_field = convert_to_internal(external_match_field, mapping)
-        match_value = match_criterion[external_match_field]
+        match_value = match_criteria[external_match_field]
         column = table.c[internal_match_field]
         if isinstance(match_value, types.ListType):
             query = query.filter(column.in_(match_value))
