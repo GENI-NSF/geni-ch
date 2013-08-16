@@ -57,6 +57,9 @@ class OutsideCert(object):
 class InsideKey(object):
     pass
 
+class SshKey(object):
+    pass
+
 
 class MAv1Implementation(MAv1DelegateBase):
 
@@ -121,6 +124,7 @@ class MAv1Implementation(MAv1DelegateBase):
         mapper(MemberAttribute, self.db.MEMBER_ATTRIBUTE_TABLE)
         mapper(OutsideCert, self.db.OUTSIDE_CERT_TABLE)
         mapper(InsideKey, self.db.INSIDE_KEY_TABLE)
+        mapper(SshKey, self.db.SSH_KEY_TABLE)
         self.table_mapping = {
             "MEMBER_SSL_PUBLIC_KEY": OutsideCert,
             "MEMBER_SSL_PRIVATE_KEY": OutsideCert,
@@ -169,8 +173,8 @@ class MAv1Implementation(MAv1DelegateBase):
 
     # construct a list of ssh keys
     def get_ssh_keys_for_uid(self, session, uid, include_private):
-        q = session.query(self.db.SSH_KEY_TABLE)
-        q = q.filter(self.db.SSH_KEY_TABLE.c.member_id == uid)
+        q = session.query(SshKey)
+        q = q.filter(SshKey.member_id == uid)
         rows = q.all()
         excluded = ['id', 'member_id'] + [['private_key'], []][include_private]
         return [{key: getattr(row, key) for key in row.keys() if key \
@@ -300,16 +304,13 @@ class MAv1Implementation(MAv1DelegateBase):
         session.commit()
 
     def update_ssh_keys(self, session, keys, uid):
-        sql = "delete from " + self.db.SSH_KEY_TABLE.name + \
-              " where member_id='" + uid + "';"
-        session.execute(sql)
-        session.commit()
+        q = session.query(SshKey)
+        q = q.filter(SshKey.member_id == uid)
+        q.delete()
         for key in keys:
-            text1 = "insert into " + self.db.SSH_KEY_TABLE.name + " (member_id"
-            text2 = ") values ('" + uid
+            obj = SshKey()
+            obj.member_id = uid
             for col, val in key.iteritems():
-                text1 += ", " + col
-                text2 += "', '" + val
-            sql = text1 + text2 + "');"
-            session.execute(sql)
-            session.commit()
+                setattr(obj, col, val)
+            session.add(obj)
+        session.commit()
