@@ -277,7 +277,7 @@ class ABACGuardBase(GuardBase):
             protected_results = {}
             for urn in results.keys():
                 urn_result = results[urn]
-                print "URN = " + urn + " RES = " + str(urn_result)
+#                print "URN = " + urn + " RES = " + str(urn_result)
                 if row_check.permit(client_cert, credentials, urn):
                     protected_results[urn] = urn_result
         return protected_results

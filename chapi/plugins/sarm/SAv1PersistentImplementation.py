@@ -21,11 +21,15 @@
 # IN THE WORK.
 #----------------------------------------------------------------------
 
+import os
 from sqlalchemy import *
 from chapi.Exceptions import *
 import amsoil.core.pluginmanager as pm
 from tools.dbutils import *
 from chapi.SliceAuthority import SAv1DelegateBase
+import sfa.trust.gid as gid
+import geni.util.cred_util as cred_util
+import geni.util.cert_util as cert_util
 
 # Utility functions for morphing from native schema to public-facing
 # schema
@@ -68,6 +72,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         }
 
     slice_supplemental_fields = {
+        "SLICE_OWNER" : {"TYPE" : "UUID", "UPDATE" : True},
         "SLICE_EMAIL": {"TYPE": "EMAIL", "CREATE": "REQUIRED", "UPDATE": True},
         "PROJECT_URN": {"TYPE": "URN", "CREATE": "REQUIRED", "UPDATE": False}
     }
@@ -86,8 +91,8 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         "PROJECT_EMAIL": {"TYPE": "EMAIL", "CREATE": "REQUIRED", "UPDATE": True, "OBJECT" : "PROJECT"}
         }
 
-    # Mapping from external to internal data schema
-    field_mapping = {
+    # Mapping from external to internal data schema (SLICE)
+    slice_field_mapping = {
         "SLICE_URN" : "slice_urn",
         "SLICE_UID" : "slice_id",
         "SLICE_NAME" : "slice_name",
@@ -96,13 +101,41 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         "SLICE_EXPIRED" :  "expired",
         "SLICE_CREATION" :  "creation",
         "SLICE_EMAIL" : "slice_email",
+        "SLICE_OWNER" : "owner_id", 
         "PROJECT_URN" : row_to_project_urn
+        }
+
+    # Mapping from external to internal data schema (PROJECT)
+    project_field_mapping = {
+        "PROJECT_URN" : row_to_project_urn,
+        "PROJECT_UID" : "project_id",
+        "PROJECT_NAME" : "project_name",
+        "PROJECT_DESCRPTION" : "project_purpose",
+        "PROJECT_EXPIRATION" : "expiration",
+        "PROJECT_EXPIRED" : "expired",
+        "PROJECT_CREATION" : "creation",
+        "PROJECT_EMAIL" : "project_email"
         }
 
 
 
     def __init__(self):
         self.db = pm.getService('chdbengine')
+        self.config = pm.getService('config')
+        self.cert = self.config.get('chapiv1rpc.ch_cert')
+        self.key = self.config.get('chapiv1rpc.ch_key')
+
+        self.cert = '/usr/share/geni-ch/sa/sa-cert.pem'
+        self.key = '/usr/share/geni-ch/sa/sa-key.pem'
+
+        self.trusted_root = self.config.get('chapiv1rpc.ch_cert_root')
+
+        self.trusted_root = '/usr/share/geni-ch/portal/gcf.d/trusted_roots'
+        self.trusted_root_files = \
+            [os.path.join(self.trusted_root, f) \
+                 for f in os.listdir(self.trusted_root) if not f.startswith('CAT')]
+
+#        print "TR = " + str(self.trusted_root_files)
 
     def get_version(self):
         version_info = {"VERSION" : self.version_number, 
@@ -114,11 +147,11 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
     def lookup_slices(self, client_cert, credentials, options):
 
         selected_columns, match_criteria = \
-            unpack_query_options(options, self.field_mapping)
+            unpack_query_options(options, self.slice_field_mapping)
         session = self.db.getSession()
         q = session.query(self.db.SLICE_TABLE, self.db.PROJECT_TABLE.c.project_id, self.db.PROJECT_TABLE.c.project_name)
         q = q.filter(self.db.SLICE_TABLE.c.project_id == self.db.PROJECT_TABLE.c.project_id)
-        q = add_filters(q, match_criteria, self.db.SLICE_TABLE, self.field_mapping)
+        q = add_filters(q, match_criteria, self.db.SLICE_TABLE, self.slice_field_mapping)
 #        print "Q = " + str(q)
         rows = q.all()
         session.close()
@@ -127,8 +160,9 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         for row in rows:
             slice_urn = row.slice_urn
             result_row = \
-                construct_result_row(row, selected_columns, self.field_mapping)
+                construct_result_row(row, selected_columns, self.slice_field_mapping)
             slices[slice_urn] = result_row
+#        print "SLICES = " + str(slices)
         return self._successReturn(slices)
 
 
@@ -182,6 +216,44 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
             slices.append(slice)
 
         return self._successReturn(slices)
+
+    def get_credentials(self, client_cert, slice_urn, credentials, options):
+
+        session = self.db.getSession()
+        q = session.query(self.db.SLICE_TABLE.c.expiration, \
+                              self.db.SLICE_TABLE.c.certificate)
+        q = q.filter(self.db.SLICE_TABLE.c.slice_urn == slice_urn)
+        q = q.filter(self.db.SLICE_TABLE.c.expired == 'f')
+        rows = q.all()
+        if len(rows) == 0:
+            return self._errorReturn("Can't get slice credential " + \
+                                         "on expired or non-existent slice %s"\
+                                         % slice_urn)
+
+        
+        row = rows[0]
+        expiration = row.expiration
+        user_gid = gid.GID(string=client_cert)
+        slice_gid = gid.GID(string=row.certificate)
+        delegatable = False
+        slice_cred = cred_util.create_credential(user_gid, slice_gid, \
+                                                     expiration, 'slice', \
+                                                     self.key, self.cert, \
+                                                     self.trusted_root_files, \
+                                                     delegatable)
+
+        slice_cred_xml = slice_cred.xml
+
+        slice_cred_tuple = \
+            {'geni_type' : 'SFA', 'geni_version' : '1', \
+                 'geni_value' : slice_cred_xml}
+        slice_creds = [slice_cred_tuple]
+        return self._successReturn(slice_creds)
+
+    def update_slice(self, slice_urn, credentials, options):
+        # *** WRITE ME
+        raise CHAPIv1NotImplementedError('')
+
 
 
 
