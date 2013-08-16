@@ -51,6 +51,12 @@ class MemberAttribute(object):
         self.member_id = member_id
         self.self_asserted = self_asserted
 
+class OutsideCert(object):
+    pass
+
+class InsideKey(object):
+    pass
+
 
 class MAv1Implementation(MAv1DelegateBase):
 
@@ -112,13 +118,15 @@ class MAv1Implementation(MAv1DelegateBase):
 
     def __init__(self):
         self.db = pm.getService('chdbengine')
-        self.table_mapping = {
-            "MEMBER_SSL_PUBLIC_KEY": self.db.OUTSIDE_CERT_TABLE,
-            "MEMBER_SSL_PRIVATE_KEY": self.db.OUTSIDE_CERT_TABLE,
-            "MEMBER_INSIDE_PUBLIC_KEY": self.db.INSIDE_KEY_TABLE,
-            "MEMBER_INSIDE_PRIVATE_KEY": self.db.INSIDE_KEY_TABLE,
-            }
         mapper(MemberAttribute, self.db.MEMBER_ATTRIBUTE_TABLE)
+        mapper(OutsideCert, self.db.OUTSIDE_CERT_TABLE)
+        mapper(InsideKey, self.db.INSIDE_KEY_TABLE)
+        self.table_mapping = {
+            "MEMBER_SSL_PUBLIC_KEY": OutsideCert,
+            "MEMBER_SSL_PRIVATE_KEY": OutsideCert,
+            "MEMBER_INSIDE_PUBLIC_KEY": InsideKey,
+            "MEMBER_INSIDE_PRIVATE_KEY": InsideKey
+            }
 
     # This call is unprotected: no checking of credentials
     def get_version(self):
@@ -147,16 +155,15 @@ class MAv1Implementation(MAv1DelegateBase):
     # find the value of an attribute for a given user
     def get_attr_for_uid(self, session, attr, uid):
         q = session.query(MemberAttribute.value)
-        q = q.filter(MemberAttribute.name == \
-                     self.field_mapping[attr])
+        q = q.filter(MemberAttribute.name == self.field_mapping[attr])
         q = q.filter(MemberAttribute.member_id == uid)
         rows = q.all()
         return [row.value for row in rows]
 
     # find the value for a column in a table
     def get_val_for_uid(self, session, table, field, uid):
-        q = session.query(table.c[field])
-        q = q.filter(table.c.member_id == uid)
+        q = session.query(getattr(table, field))
+        q = q.filter(table.member_id == uid)
         rows = q.all()
         return [getattr(row, field) for row in rows]
 
@@ -279,24 +286,17 @@ class MAv1Implementation(MAv1DelegateBase):
 
     def update_keys(self, session, table, keys, uid):
         if self.get_val_for_uid(session, table, "certificate", uid):
-            text = ""
-            for field, value in keys.iteritems():
-                if text: text += ", "
-                text += field + "='" + value + "'"
-            sql = "update " + table.name + " set " + text + \
-                  " where member_id='" + uid + "';"
+            q = session.query(table)
+            q = q.filter(MemberAttribute.member_id == uid)
+            q.update(keys)
         else:
             if "certificate" not in keys:
                 raise CHAPIv1ArgumentError('Cannot insert just private key')
-            text1, text2 = "", ""
-            if "private_key" in keys:
-                text1 = ", private_key"
-                text2 = "', '" + keys["private_key"]
-            sql = "insert into " + self.db.OUTSIDE_CERT_TABLE.name + \
-                  " (member_id, certificate" + text1 + ") values ('" + uid + \
-                  "', '" + keys["certificate"] + text2 + "');"
-        print 'sql = ', sql
-        res = session.execute(sql)
+            obj = table()
+            obj.member_id = uid
+            for key, val in keys.iteritems():
+                 setattr(obj, key, val)
+            session.add(obj)
         session.commit()
 
     def update_ssh_keys(self, session, keys, uid):
