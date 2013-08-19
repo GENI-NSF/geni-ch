@@ -30,6 +30,8 @@ from chapi.SliceAuthority import SAv1DelegateBase
 import sfa.trust.gid as gid
 import geni.util.cred_util as cred_util
 import geni.util.cert_util as cert_util
+from sqlalchemy.orm import mapper
+from datetime import *
 
 # Utility functions for morphing from native schema to public-facing
 # schema
@@ -49,6 +51,21 @@ def row_to_project_urn(row):
     config = pm.getService('config')
     authority = config.get("chrm.authority")
     return to_project_urn(authority, row.project_name)
+
+
+# classes for mapping to sql tables
+
+class Slice(object):
+    pass
+
+class Project(object):
+    pass
+
+class SliceMember(object):
+    pass
+
+class ProjectMember(object):
+    pass
 
 
 # Implementation of SA that speaks to GPO Slice and projects table schema
@@ -134,8 +151,13 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         self.trusted_root_files = \
             [os.path.join(self.trusted_root, f) \
                  for f in os.listdir(self.trusted_root) if not f.startswith('CAT')]
-
 #        print "TR = " + str(self.trusted_root_files)
+
+        mapper(Slice, self.db.SLICE_TABLE)
+        mapper(SliceMember, self.db.SLICE_MEMBER_TABLE)
+        mapper(Project, self.db.PROJECT_TABLE)
+        mapper(ProjectMember, self.db.PROJECT_MEMBER_TABLE)
+
 
     def get_version(self):
         version_info = {"VERSION" : self.version_number, 
@@ -250,16 +272,33 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         slice_creds = [slice_cred_tuple]
         return self._successReturn(slice_creds)
 
+
+    # create a new slice
+    def create_slice(self, client_cert, credentials, options):
+        # first, check that does not already exist unexpired slice with name
+        session = self.db.getSession()
+        q = session.query(Slice)
+        q = q.filter(Slice.slice_name == options["fields"]["SLICE_NAME"])
+        q = q.filter(Slice.expired == "f")
+        if len(q.all()) > 0:
+            raise CHAPIv1ArgumentError('Already exists a slice named' + \
+                                       Slice.name)
+        # now, add the new slice to the database
+        slice = Slice()
+        for key, value in options["fields"].iteritems():
+            if key == "PROJECT_URN":
+                project_name = from_project_urn(value)
+                # ?????????? get project id ??????????
+            else:
+                setattr(slice, self.slice_field_mapping[key], value)
+        slice.creation = datetime.now()
+        if not hasattr(slice, "expiration"):
+            slice.expiration = slice.creation + timedelta(30)
+        session.add(slice)
+        session.commit()
+        session.close()
+        return self._successReturn(True)
+
     def update_slice(self, slice_urn, credentials, options):
         # *** WRITE ME
         raise CHAPIv1NotImplementedError('')
-
-
-
-
-
-
-
-
-
-    

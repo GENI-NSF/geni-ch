@@ -145,9 +145,6 @@ class MAv1DelegateBase(DelegateBase):
 
     # This call is unprotected: no checking of credentials
     def lookup_public_member_info(self, credentials, options):
-        print "MAv1DelegateBase.lookup_public_member_info " + \
-            "CREDS = %s OPTIONS = %s" % \
-            (str(credentials), str(options))
         raise CHAPIv1NotImplementedError('')
 
     # This call is protected
@@ -161,6 +158,4 @@ class MAv1DelegateBase(DelegateBase):
     # This call is protected
     def update_member_info(self, client_cert, member_urn, credentials, options):
         raise CHAPIv1NotImplementedError('')
-
-
 

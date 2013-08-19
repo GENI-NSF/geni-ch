@@ -1,7 +1,7 @@
 {
-  "name" : "RM (test) Clearinghouse",
-  "author" : "Tom Rothe",
-  "author-email" : "tom.rothe@eict.de",
+  "name" : "RM (test) Member Authority",
+  "author" : "David Montana",
+  "author-email" : "dmontana@bbn.com",
   "version" : 1,
   "implements" : [],
   "loads-after" : ["chv1handler", "mav1handler", "chdbengine"],
