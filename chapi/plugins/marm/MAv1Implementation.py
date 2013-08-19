@@ -274,6 +274,7 @@ class MAv1Implementation(MAv1DelegateBase):
         session.close()
         return self._successReturn(True)
 
+    # update or insert value of attribute attr for user uid
     def update_attr(self, session, attr, value, uid, self_asserted):
         if len(self.get_attr_for_uid(session, attr, uid)) > 0:
             q = session.query(MemberAttribute)
@@ -286,6 +287,7 @@ class MAv1Implementation(MAv1DelegateBase):
             session.add(obj)
         session.commit()
 
+    # update or insert into one of the two SSL key tables
     def update_keys(self, session, table, keys, uid):
         if self.get_val_for_uid(session, table, "certificate", uid):
             q = session.query(table)
@@ -301,6 +303,7 @@ class MAv1Implementation(MAv1DelegateBase):
             session.add(obj)
         session.commit()
 
+    # delete all existing ssl keys, and replace them with specified ones
     def update_ssh_keys(self, session, keys, uid):
         q = session.query(SshKey)
         q = q.filter(SshKey.member_id == uid)
@@ -313,6 +316,7 @@ class MAv1Implementation(MAv1DelegateBase):
             session.add(obj)
         session.commit()
 
+    # build a user credential based on the user's cert
     def get_user_credential(self, session, uid):
         certs = self.get_val_for_uid(session, OutsideCert, "certificate", uid)
         if not certs:
@@ -321,5 +325,6 @@ class MAv1Implementation(MAv1DelegateBase):
             return None
         gid = sfa_gid.GID(string = certs[0])
         expires = datetime.now() + timedelta(365)
-        cred = cred_util.create_credential(gid, gid, expires, "user", self.key, self.cert, self.trusted_roots)
+        cred = cred_util.create_credential(gid, gid, expires, "user", \
+                  self.key, self.cert, self.trusted_roots)
         return cred.save_to_string()
