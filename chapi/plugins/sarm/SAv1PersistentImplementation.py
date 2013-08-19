@@ -281,18 +281,23 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         q = q.filter(Slice.slice_name == options["fields"]["SLICE_NAME"])
         q = q.filter(Slice.expired == "f")
         if len(q.all()) > 0:
-            raise CHAPIv1ArgumentError('Already exists a slice named' + \
-                                       Slice.name)
+            raise CHAPIv1ArgumentError('Already exists a slice named ' + \
+                                       options["fields"]["SLICE_NAME"])
         # now, add the new slice to the database
         slice = Slice()
         for key, value in options["fields"].iteritems():
             if key == "PROJECT_URN":
                 project_name = from_project_urn(value)
-                # ?????????? get project id ??????????
+                q = session.query(Project.project_id)
+                q = q.filter(Project.project_name == project_name)
+                rows = q.all()
+                if (len(rows) == 0):
+                    raise CHAPIv1ArgumentError('No project with urn ' + value)
+                slice.project_id = rows[0].project_id
             else:
                 setattr(slice, self.slice_field_mapping[key], value)
         slice.creation = datetime.now()
-        if not hasattr(slice, "expiration"):
+        if not slice.expiration:
             slice.expiration = slice.creation + timedelta(30)
         session.add(slice)
         session.commit()
