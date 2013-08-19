@@ -32,6 +32,9 @@ import geni.util.cred_util as cred_util
 import geni.util.cert_util as cert_util
 from sqlalchemy.orm import mapper
 from datetime import *
+from dateutil.relativedelta import relativedelta
+import uuid
+
 
 # Utility functions for morphing from native schema to public-facing
 # schema
@@ -52,6 +55,11 @@ def row_to_project_urn(row):
     authority = config.get("chrm.authority")
     return to_project_urn(authority, row.project_name)
 
+def urn_for_slice(slice_name, project_name):
+    config = pm.getService('config')
+    authority = config.get("chrm.authority")
+    return "urn:publicid:IDN+%s:%s+project+%s" % \
+        (authority, project_name, slice_name)
 
 # classes for mapping to sql tables
 
@@ -287,6 +295,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         slice = Slice()
         for key, value in options["fields"].iteritems():
             if key == "PROJECT_URN":
+                # need to convert urn first to name and then to id
                 project_name = from_project_urn(value)
                 q = session.query(Project.project_id)
                 q = q.filter(Project.project_name == project_name)
@@ -298,7 +307,10 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                 setattr(slice, self.slice_field_mapping[key], value)
         slice.creation = datetime.now()
         if not slice.expiration:
-            slice.expiration = slice.creation + timedelta(30)
+            slice.expiration = slice.creation + relativedelta(days=7)
+        slice.slice_id = str(uuid.uuid4())
+        slice.slice_urn = urn_for_slice(slice.slice_name, project_name)
+        # ????????? slice.owner_id =
         session.add(slice)
         session.commit()
         session.close()

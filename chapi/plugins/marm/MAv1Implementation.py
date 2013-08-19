@@ -32,6 +32,7 @@ import ext.sfa.trust.gid as sfa_gid
 import geni.util.cred_util as cred_util
 from sqlalchemy.orm import mapper
 from datetime import *
+from dateutil.relativedelta import relativedelta
 import os
 
 
@@ -324,7 +325,7 @@ class MAv1Implementation(MAv1DelegateBase):
         if not certs:
             return None
         gid = sfa_gid.GID(string = certs[0])
-        expires = datetime.now() + timedelta(365)
+        expires = datetime.now() + relativedelta(years=1)
         cred = cred_util.create_credential(gid, gid, expires, "user", \
                   self.key, self.cert, self.trusted_roots)
         return cred.save_to_string()
