@@ -289,7 +289,7 @@ class MAv1Implementation(MAv1DelegateBase):
     def update_keys(self, session, table, keys, uid):
         if self.get_val_for_uid(session, table, "certificate", uid):
             q = session.query(table)
-            q = q.filter(MemberAttribute.member_id == uid)
+            q = q.filter(getattr(table, "member_id") == uid)
             q.update(keys)
         else:
             if "certificate" not in keys:
