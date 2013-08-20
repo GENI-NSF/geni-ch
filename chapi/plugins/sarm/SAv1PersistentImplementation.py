@@ -113,6 +113,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         }
 
     project_supplemental_fields = {
+        "PROJECT_OWNER" : {"TYPE" : "UUID", "UPDATE" : True},
         "PROJECT_EMAIL": {"TYPE": "EMAIL", "CREATE": "REQUIRED", "UPDATE": True, "OBJECT" : "PROJECT"}
         }
 
@@ -135,11 +136,12 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         "PROJECT_URN" : row_to_project_urn,
         "PROJECT_UID" : "project_id",
         "PROJECT_NAME" : "project_name",
-        "PROJECT_DESCRPTION" : "project_purpose",
+        "PROJECT_DESCRIPTION" : "project_purpose",
         "PROJECT_EXPIRATION" : "expiration",
         "PROJECT_EXPIRED" : "expired",
         "PROJECT_CREATION" : "creation",
-        "PROJECT_EMAIL" : "project_email"
+        "PROJECT_EMAIL" : "project_email",
+        "PROJECT_OWNER" : "lead_id"
         }
 
 
@@ -299,11 +301,18 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
             return None
         return rows[0].project_id
 
+    def finish_create(self, session, object):
+        session.add(object)
+        session.commit()
+        session.close()
+        # ????????????????????? return something better ??????????????
+        return self._successReturn(True)
+
     # create a new slice
     def create_slice(self, client_cert, credentials, options):
         session = self.db.getSession()
 
-        # check that slice does not already exists
+        # check that slice does not already exist
         name = options["fields"]["SLICE_NAME"]
         if self.get_slice_id(session, "slice_name", name):
             session.close()
@@ -333,10 +342,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         slice.certificate = cert.save_to_string()
 
         # do the database write
-        session.add(slice)
-        session.commit()
-        session.close()
-        return self._successReturn(True)
+        return self.finish_create(session, slice)
 
     # update an existing slice
     def update_slice(self, client_cert, slice_urn, credentials, options):
@@ -346,10 +352,30 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
             raise CHAPIv1ArgumentError('No slice with urn ' + slice_urn)
         q = session.query(Slice)
         q = q.filter(getattr(Slice, "slice_urn") == slice_urn)
-        print '!!!=', {self.slice_field_mapping[field]: value for field, value in options['fields'].iteritems()}
         q = q.update({self.slice_field_mapping[field] : value \
                       for field, value in options['fields'].iteritems()})
         session.commit()
         session.close()
         return self._successReturn(True)
 
+    # create a new project
+    def create_project(self, client_cert, credentials, options):
+        session = self.db.getSession()
+
+        # check that project does not already exist
+        name = options["fields"]["PROJECT_NAME"]
+        if self.get_project_id(session, "project_name", name):
+            session.close()
+            raise CHAPIv1ArgumentError('Already exists a project named ' + name)
+
+        # fill in the fields of the object
+        project = Project()
+        for key, value in options["fields"].iteritems():
+            setattr(project, self.project_field_mapping[key], value)
+        project.creation = datetime.now()
+        if not project.expiration:
+            project.expiration = project.creation + relativedelta(days=7)
+        project.project_id = str(uuid.uuid4())
+
+        # do the database write
+        return self.finish_create(session, project)
