@@ -235,13 +235,6 @@ class MAv1Implementation(MAv1DelegateBase):
 
     # This call is protected
     def update_member_info(self, client_cert, member_urn, credentials, options):
-        # preliminary error checking
-        if 'update' not in options:
-            raise CHAPIv1ArgumentError('Missing an update key')
-        new_attrs = options['update']
-        if not isinstance(new_attrs, types.DictType):
-            raise CHAPIv1ArgumentError('update value should be dictionary')
-
         # determine whether self_asserted
         try:
             gid = sfa_gid.GID(string = client_cert)
@@ -259,7 +252,7 @@ class MAv1Implementation(MAv1DelegateBase):
         
         # do the update
         all_keys = {}
-        for attr, value in new_attrs.iteritems():
+        for attr, value in options['update'].iteritems():
             if attr in self.attributes:
                 self.update_attr(session, attr, value, uid, self_asserted)
             elif attr in self.table_mapping:

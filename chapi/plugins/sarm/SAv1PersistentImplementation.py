@@ -280,17 +280,20 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         slice_creds = [slice_cred_tuple]
         return self._successReturn(slice_creds)
 
-    # check whether a slice exists
-    def slice_exists(self, session, name):
-        q = session.query(Slice)
-        q = q.filter(Slice.slice_name == name)
+    # check whether a current slice exists, and if so return its id
+    def get_slice_id(self, session, field, value):
+        q = session.query(Slice.slice_id)
+        q = q.filter(getattr(Slice, field) == value)
         q = q.filter(Slice.expired == "f")
-        return len(q.all()) > 0
+        rows = q.all()
+        if (len(rows) == 0):
+            return None
+        return rows[0].slice_id
 
-    # check whether a project exists
-    def get_project_id(self, session, project_name):
+    # check whether a project exists, and if so return its id
+    def get_project_id(self, session, field, value):
         q = session.query(Project.project_id)
-        q = q.filter(Project.project_name == project_name)
+        q = q.filter(getattr(Project, field) == value)
         rows = q.all()
         if (len(rows) == 0):
             return None
@@ -299,16 +302,21 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
     # create a new slice
     def create_slice(self, client_cert, credentials, options):
         session = self.db.getSession()
-        if self.slice_exists(session, options["fields"]["SLICE_NAME"]):
+
+        # check that slice does not already exists
+        name = options["fields"]["SLICE_NAME"]
+        if self.get_slice_id(session, "slice_name", name):
             session.close()
-            raise CHAPIv1ArgumentError('Already exists a slice named ' + \
-                                       options["fields"]["SLICE_NAME"])
+            raise CHAPIv1ArgumentError('Already exists a slice named ' + name)
+
+        # fill in the fields of the object
         slice = Slice()
         for key, value in options["fields"].iteritems():
             if key == "PROJECT_URN":
                 project_name = from_project_urn(value)
-                slice.project_id = self.get_project_id(session, project_name)
-                if (slice.project_id == None):
+                slice.project_id = self.get_project_id(session, \
+                                      "project_name", project_name)
+                if not slice.project_id:
                     session.close()
                     raise CHAPIv1ArgumentError('No project with urn ' + value)
             else:
@@ -320,14 +328,28 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         slice.slice_urn = urn_for_slice(slice.slice_name, project_name)
         cert, k = cert_util.create_cert(slice.slice_urn, \
             issuer_key = self.key, issuer_cert = self.cert, \
-            lifeDays = (slice.expiration - slice.creation).days, \
+            lifeDays = (slice.expiration - slice.creation).days + 1, \
             email = slice.slice_email, uuidarg=slice.slice_id)
         slice.certificate = cert.save_to_string()
+
+        # do the database write
         session.add(slice)
         session.commit()
         session.close()
         return self._successReturn(True)
 
-    def update_slice(self, slice_urn, credentials, options):
-        # *** WRITE ME
-        raise CHAPIv1NotImplementedError('')
+    # update an existing slice
+    def update_slice(self, client_cert, slice_urn, credentials, options):
+        session = self.db.getSession()
+        if not self.get_slice_id(session, "slice_urn", slice_urn):
+            session.close()
+            raise CHAPIv1ArgumentError('No slice with urn ' + slice_urn)
+        q = session.query(Slice)
+        q = q.filter(getattr(Slice, "slice_urn") == slice_urn)
+        print '!!!=', {self.slice_field_mapping[field]: value for field, value in options['fields'].iteritems()}
+        q = q.update({self.slice_field_mapping[field] : value \
+                      for field, value in options['fields'].iteritems()})
+        session.commit()
+        session.close()
+        return self._successReturn(True)
+
