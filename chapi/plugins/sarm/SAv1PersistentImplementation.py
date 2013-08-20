@@ -301,12 +301,13 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
             return None
         return rows[0].project_id
 
-    def finish_create(self, session, object, field_mapping):
+    def finish_create(self, session, object, field_mapping, extra = {}):
         ret = {k: getattr(object, v) for k, v in field_mapping.iteritems() \
              if not isinstance(v, types.FunctionType) and getattr(object, v)}
         session.add(object)
         session.commit()
         session.close()
+        ret.update(extra)
         return self._successReturn(ret)
 
     # create a new slice
@@ -379,4 +380,20 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         project.project_id = str(uuid.uuid4())
 
         # do the database write
-        return self.finish_create(session, project, self.project_field_mapping)
+        return self.finish_create(session, project,  self.project_field_mapping, \
+                        {"PROJECT_URN": row_to_project_urn(project)})
+
+    # update an existing project
+    def update_project(self, client_cert, project_urn, credentials, options):
+        session = self.db.getSession()
+        name = from_project_urn(project_urn)
+        if not self.get_project_id(session, "project_name", name):
+            session.close()
+            raise CHAPIv1ArgumentError('No project with urn ' + project_urn)
+        q = session.query(Project)
+        q = q.filter(getattr(Project, "project_name") == name)
+        q = q.update({self.project_field_mapping[field] : value \
+                      for field, value in options['fields'].iteritems()})
+        session.commit()
+        session.close()
+        return self._successReturn(True)
