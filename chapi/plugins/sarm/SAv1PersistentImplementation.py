@@ -301,12 +301,13 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
             return None
         return rows[0].project_id
 
-    def finish_create(self, session, object):
+    def finish_create(self, session, object, field_mapping):
+        ret = {k: getattr(object, v) for k, v in field_mapping.iteritems() \
+             if not isinstance(v, types.FunctionType) and getattr(object, v)}
         session.add(object)
         session.commit()
         session.close()
-        # ????????????????????? return something better ??????????????
-        return self._successReturn(True)
+        return self._successReturn(ret)
 
     # create a new slice
     def create_slice(self, client_cert, credentials, options):
@@ -342,7 +343,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         slice.certificate = cert.save_to_string()
 
         # do the database write
-        return self.finish_create(session, slice)
+        return self.finish_create(session, slice, self.slice_field_mapping)
 
     # update an existing slice
     def update_slice(self, client_cert, slice_urn, credentials, options):
@@ -378,4 +379,4 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         project.project_id = str(uuid.uuid4())
 
         # do the database write
-        return self.finish_create(session, project)
+        return self.finish_create(session, project, self.project_field_mapping)
