@@ -252,7 +252,7 @@ class MAv1Implementation(MAv1DelegateBase):
         
         # do the update
         all_keys = {}
-        for attr, value in options['update'].iteritems():
+        for attr, value in options['fields'].iteritems():
             if attr in self.attributes:
                 self.update_attr(session, attr, value, uid, self_asserted)
             elif attr in self.table_mapping:
