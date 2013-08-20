@@ -310,7 +310,11 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
             slice.expiration = slice.creation + relativedelta(days=7)
         slice.slice_id = str(uuid.uuid4())
         slice.slice_urn = urn_for_slice(slice.slice_name, project_name)
-        # ????????? slice.owner_id =
+        cert, k = cert_util.create_cert(slice.slice_urn, \
+            issuer_key = self.key, issuer_cert = self.cert, \
+            lifeDays = (slice.expiration - slice.creation).days, \
+            email = slice.slice_email, uuidarg=slice.slice_id)
+        slice.certificate = cert.save_to_string()
         session.add(slice)
         session.commit()
         session.close()
