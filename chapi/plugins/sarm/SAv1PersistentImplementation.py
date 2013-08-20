@@ -280,29 +280,37 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         slice_creds = [slice_cred_tuple]
         return self._successReturn(slice_creds)
 
+    # check whether a slice exists
+    def slice_exists(self, session, name):
+        q = session.query(Slice)
+        q = q.filter(Slice.slice_name == name)
+        q = q.filter(Slice.expired == "f")
+        return len(q.all()) > 0
+
+    # check whether a project exists
+    def get_project_id(self, session, project_name):
+        q = session.query(Project.project_id)
+        q = q.filter(Project.project_name == project_name)
+        rows = q.all()
+        if (len(rows) == 0):
+            return None
+        return rows[0].project_id
 
     # create a new slice
     def create_slice(self, client_cert, credentials, options):
-        # first, check that does not already exist unexpired slice with name
         session = self.db.getSession()
-        q = session.query(Slice)
-        q = q.filter(Slice.slice_name == options["fields"]["SLICE_NAME"])
-        q = q.filter(Slice.expired == "f")
-        if len(q.all()) > 0:
+        if self.slice_exists(session, options["fields"]["SLICE_NAME"]):
+            session.close()
             raise CHAPIv1ArgumentError('Already exists a slice named ' + \
                                        options["fields"]["SLICE_NAME"])
-        # now, add the new slice to the database
         slice = Slice()
         for key, value in options["fields"].iteritems():
             if key == "PROJECT_URN":
-                # need to convert urn first to name and then to id
                 project_name = from_project_urn(value)
-                q = session.query(Project.project_id)
-                q = q.filter(Project.project_name == project_name)
-                rows = q.all()
-                if (len(rows) == 0):
+                slice.project_id = self.get_project_id(session, project_name)
+                if (slice.project_id == None):
+                    session.close()
                     raise CHAPIv1ArgumentError('No project with urn ' + value)
-                slice.project_id = rows[0].project_id
             else:
                 setattr(slice, self.slice_field_mapping[key], value)
         slice.creation = datetime.now()
