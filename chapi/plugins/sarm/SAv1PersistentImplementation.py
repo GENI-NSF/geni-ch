@@ -243,11 +243,8 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         rows = q.all()
         session.close()
 
-        slices = []
-        for row in rows:
-            slice = {"SLICE_ROLE" : row.name, "SLICE_URN": row.slice_urn}
-            slices.append(slice)
-
+        slices = [{"SLICE_ROLE" : row.name, "SLICE_URN": row.slice_urn} \
+                  for row in rows]
         return self._successReturn(slices)
 
     def get_credentials(self, client_cert, slice_urn, credentials, options):
@@ -438,3 +435,38 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         projects = [{"PROJECT_ROLE" : row.name, \
                      "PROJECT_URN": row_to_project_urn(row)} for row in rows]
         return self._successReturn(projects)
+
+    def modify_project_membership(self, client_cert, project_urn, \
+                                  credentials, options):
+        session = self.db.getSession()
+        name = from_project_urn(project_urn)
+        project_id = self.get_project_id(session, "project_name", name)
+        if 'members_to_add' in options:
+            for member in options['members_to_add']:
+                proj_member = ProjectMember()
+                proj_member.project_id = project_id
+                proj_member.member_id = self.get_member_id_for_urn \
+                                   (session, member['PROJECT_MEMBER'])
+                proj_member.role = \
+                    self.get_role_id(session, member['PROJECT_ROLE'])
+                session.add(proj_member)
+        session.commit()
+        session.close()
+        return self._successReturn(None)
+
+    def get_member_id_for_urn(self, session, urn):
+        q = session.query(self.db.MEMBER_ATTRIBUTE_TABLE.c.member_id)
+        q = q.filter(self.db.MEMBER_ATTRIBUTE_TABLE.c.name == "urn")
+        q = q.filter(self.db.MEMBER_ATTRIBUTE_TABLE.c.value == urn)
+        rows = q.all()
+        if len(rows) > 0:
+           return rows[0]
+        return None
+
+    def get_role_id(self, session, role):
+        q = session.query(self.db.ROLE_TABLE.c.id)
+        q = q.filter(self.db.ROLE_TABLE.c.name == role)
+        rows = q.all()
+        if len(rows) > 0:
+           return rows[0]
+        return None
