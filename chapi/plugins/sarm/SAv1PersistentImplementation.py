@@ -241,6 +241,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
 
 #        print "Q = " + str(q)
         rows = q.all()
+        session.close()
 
         slices = []
         for row in rows:
@@ -411,4 +412,29 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         projects = {row_to_project_urn(row) : \
             construct_result_row(row, columns, self.project_field_mapping) \
             for row in rows}
+        return self._successReturn(projects)
+
+    # get the projects associated with a member
+    def lookup_projects_for_member(self, client_cert, member_urn, \
+                                   credentials, options):
+        session = self.db.getSession()
+        q = session.query(self.db.PROJECT_MEMBER_TABLE, 
+                          self.db.MEMBER_ATTRIBUTE_TABLE,
+                          self.db.PROJECT_TABLE.c.project_name,
+                          self.db.ROLE_TABLE.c.name)
+        q = q.filter(self.db.PROJECT_TABLE.c.expired == 'f')
+        q = q.filter(self.db.MEMBER_ATTRIBUTE_TABLE.c.name == 'urn')
+        q = q.filter(self.db.MEMBER_ATTRIBUTE_TABLE.c.value == member_urn)
+        q = q.filter(self.db.PROJECT_MEMBER_TABLE.c.member_id == \
+                     self.db.MEMBER_ATTRIBUTE_TABLE.c.member_id)
+        q = q.filter(self.db.PROJECT_TABLE.c.project_id == \
+                     self.db.PROJECT_MEMBER_TABLE.c.project_id)
+        q = q.filter(self.db.PROJECT_MEMBER_TABLE.c.role == \
+                     self.db.ROLE_TABLE.c.id)
+
+        rows = q.all()
+        session.close()
+
+        projects = [{"PROJECT_ROLE" : row.name, \
+                     "PROJECT_URN": row_to_project_urn(row)} for row in rows]
         return self._successReturn(projects)
