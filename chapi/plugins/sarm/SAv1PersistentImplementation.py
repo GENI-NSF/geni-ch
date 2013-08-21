@@ -397,3 +397,18 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         session.commit()
         session.close()
         return self._successReturn(True)
+
+    # get info on a set of projects
+    def lookup_projects(self, client_cert, credentials, options):
+        columns, match_criteria = \
+            unpack_query_options(options, self.project_field_mapping)
+        session = self.db.getSession()
+        q = session.query(self.db.PROJECT_TABLE)
+        q = add_filters(q, match_criteria, self.db.PROJECT_TABLE, \
+                        self.project_field_mapping)
+        rows = q.all()
+        session.close()
+        projects = {row_to_project_urn(row) : \
+            construct_result_row(row, columns, self.project_field_mapping) \
+            for row in rows}
+        return self._successReturn(projects)
