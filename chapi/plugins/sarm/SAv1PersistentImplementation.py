@@ -550,6 +550,5 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         q = q.filter(Aggregate.slice_urn == slice_urn)
         rows = q.all()
         aggs = [row.aggregate_url for row in rows]
-        session.commit()
         session.close()
         return self._successReturn(aggs)
