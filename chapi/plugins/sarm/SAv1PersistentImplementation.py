@@ -441,6 +441,17 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         session = self.db.getSession()
         name = from_project_urn(project_urn)
         project_id = self.get_project_id(session, "project_name", name)
+
+        # first, do the removes
+        if 'members_to_remove' in options:
+            q = session.query(ProjectMember)
+            ids = [self.get_member_id_for_urn(session, urn) \
+                   for urn in options['members_to_remove']]
+            q = q.filter(ProjectMember.member_id.in_(ids))
+            q = q.filter(ProjectMember.project_id == project_id)
+            q.delete(synchronize_session='fetch')
+
+        # then, do the additions
         if 'members_to_add' in options:
             for member in options['members_to_add']:
                 proj_member = ProjectMember()
@@ -450,14 +461,28 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                 proj_member.role = \
                     self.get_role_id(session, member['PROJECT_ROLE'])
                 session.add(proj_member)
-        if 'members_to_remove' in options:
-            q = session.query(ProjectMember)
-            ids = [self.get_member_id_for_urn(session, urn) \
-                   for urn in options['members_to_remove']]
-            q = q.filter(ProjectMember.member_id.in_(ids))
-            q = q.filter(ProjectMember.project_id == project_id)
-            rows = q.all()
-            q.delete(synchronize_session='fetch')
+                # check that this is not a duplicate
+                q = session.query(ProjectMember)
+                q = q.filter(ProjectMember.project_id == project_id)
+                q = q.filter(ProjectMember.member_id == proj_member.member_id)
+                if len(q.all()) > 1:
+                    session.close()
+                    raise CHAPIv1ArgumentError('Member ' + \
+                        member['PROJECT_MEMBER'] + ' already in project')
+
+        # then, the updates
+
+        # before committing, check that there is exactly one lead
+        q = session.query(ProjectMember)
+        q = q.filter(ProjectMember.project_id == project_id)
+        q = q.filter(ProjectMember.role == self.get_role_id(session, "LEAD"))
+        num_leads = len(q.all())
+        if num_leads != 1:
+            session.close()
+            raise CHAPIv1ArgumentError('This would result in ' + \
+                                str(num_leads) + ' leads for the project')
+
+        # finish up
         session.commit()
         session.close()
         return self._successReturn(None)
