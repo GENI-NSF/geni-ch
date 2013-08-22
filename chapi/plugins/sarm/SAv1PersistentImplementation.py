@@ -203,6 +203,14 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
             self.db.SLICE_MEMBER_TABLE, slice_urn, "slice_urn", \
             "slice_id", "SLICE_ROLE", "SLICE_MEMBER")
 
+    # members in a project
+    def lookup_project_members(self, client_cert, project_urn, \
+                               credentials, options):
+        project_name = from_project_urn(project_urn)
+        return self.lookup_members(self.db.PROJECT_TABLE, \
+            self.db.PROJECT_MEMBER_TABLE, project_name, "project_name", \
+            "project_id", "PROJECT_ROLE", "PROJECT_MEMBER")
+
     # shared code for lookup_slice_members() and lookup_project_members()
     def lookup_members(self, table, member_table, name, name_field, \
                        id_field, role_txt, member_txt):
