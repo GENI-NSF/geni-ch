@@ -471,6 +471,18 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                         member['PROJECT_MEMBER'] + ' already in project')
 
         # then, the updates
+        if 'members_to_change' in options:
+            for member in options['members_to_change']:
+                q = session.query(ProjectMember)
+                q = q.filter(ProjectMember.project_id == project_id)
+                q = q.filter(ProjectMember.member_id == \
+                    self.get_member_id_for_urn(session, member['PROJECT_MEMBER']))
+                if len(q.all()) == 0:
+                    session.close()
+                    raise CHAPIv1ArgumentError('Cannot change member ' + \
+                        member['PROJECT_MEMBER'] + ' not in project')
+                q.update({"role" : \
+                          self.get_role_id(session, member['PROJECT_ROLE'])})
 
         # before committing, check that there is exactly one lead
         q = session.query(ProjectMember)
