@@ -58,7 +58,7 @@ def row_to_project_urn(row):
 def urn_for_slice(slice_name, project_name):
     config = pm.getService('config')
     authority = config.get("chrm.authority")
-    return "urn:publicid:IDN+%s:%s+project+%s" % \
+    return "urn:publicid:IDN+%s:%s+slice+%s" % \
         (authority, project_name, slice_name)
 
 # classes for mapping to sql tables
@@ -197,30 +197,29 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
 #        print "SLICES = " + str(slices)
         return self._successReturn(slices)
 
+    # members in a slice
+    def lookup_slice_members(self, client_cert, slice_urn, credentials, options):
+        return self.lookup_members(self.db.SLICE_TABLE, \
+            self.db.SLICE_MEMBER_TABLE, slice_urn, "slice_urn", \
+            "slice_id", "SLICE_ROLE", "SLICE_MEMBER")
 
-    def lookup_slice_members(self, \
-                                 client_cert, slice_urn, credentials, options):
-
+    # shared code for lookup_slice_members() and lookup_project_members()
+    def lookup_members(self, table, member_table, name, name_field, \
+                       id_field, role_txt, member_txt):
         session = self.db.getSession()
-        q = session.query(self.db.SLICE_MEMBER_TABLE, 
-                          self.db.SLICE_TABLE.c.slice_urn,
+        q = session.query(member_table, table.c[name_field],
                           self.db.MEMBER_ATTRIBUTE_TABLE.c.value,
                           self.db.ROLE_TABLE.c.name)
-        q = q.filter(self.db.SLICE_TABLE.c.expired == 'f')
-        q = q.filter(self.db.SLICE_TABLE.c.slice_urn == slice_urn)
-        q = q.filter(self.db.SLICE_MEMBER_TABLE.c.slice_id == self.db.SLICE_TABLE.c.slice_id)
-        q = q.filter(self.db.MEMBER_ATTRIBUTE_TABLE.c.name=='urn')
-        q = q.filter(self.db.SLICE_MEMBER_TABLE.c.member_id == self.db.MEMBER_ATTRIBUTE_TABLE.c.member_id)
-        q = q.filter(self.db.SLICE_MEMBER_TABLE.c.role == self.db.ROLE_TABLE.c.id)
-
-#        print "Q = " + str(q)
+        q = q.filter(table.c.expired == 'f')
+        q = q.filter(table.c[name_field] == name)
+        q = q.filter(member_table.c[id_field] == table.c[id_field])
+        q = q.filter(self.db.MEMBER_ATTRIBUTE_TABLE.c.name == 'urn')
+        q = q.filter(member_table.c.member_id == \
+                     self.db.MEMBER_ATTRIBUTE_TABLE.c.member_id)
+        q = q.filter(member_table.c.role == self.db.ROLE_TABLE.c.id)
         rows = q.all()
-
-        members = []
-        for row in rows:
-            member = {"SLICE_ROLE" : row.name, "SLICE_MEMBER": row.value}
-            members.append(member)
-
+        session.close()
+        members = [{role_txt: row.name, member_txt: row.value} for row in rows]
         return self._successReturn(members)
 
     def lookup_slices_for_member(self, client_cert, member_urn, \
