@@ -524,7 +524,9 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
     def register_aggregate(self, client_cert, \
                                slice_urn, aggregate_url, credentials, options):
         session = self.db.getSession()
-        agg = Aggregate(slice_urn, aggregate_url)
+        agg = Aggregate()
+        agg.slice_urn = slice_urn
+        agg.aggregate_url = aggregate_url
         session.add(agg)
         session.commit()
         session.close()

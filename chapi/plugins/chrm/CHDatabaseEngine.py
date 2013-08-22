@@ -35,10 +35,6 @@ class Aggregate(Base):
     slice_urn = Column(String)
     aggregate_url = Column(String)
 
-    def __init__(self, slice_urn, agg_url):
-        self.slice_urn = slice_urn
-        self.aggregate_url = agg_url
-
 # Simple class to hold the basis of DB queries against GPO CH Database
 # Loads the database table schemas
 class CHDatabaseEngine:
