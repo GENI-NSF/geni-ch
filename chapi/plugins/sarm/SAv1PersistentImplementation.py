@@ -531,8 +531,15 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         return self._successReturn(None)
 
     def remove_aggregate(self, client_cert, \
-                             slice_urn, aggregate_urn, credentials, options):
-        raise CHAPIv1NotImplementedError('')
+                             slice_urn, aggregate_url, credentials, options):
+        session = self.db.getSession()
+        q = session.query(Aggregate)
+        q = q.filter(Aggregate.slice_urn == slice_urn)
+        q = q.filter(Aggregate.aggregate_url == aggregate_url)
+        q.delete()
+        session.commit()
+        session.close()
+        return self._successReturn(None)
 
     def get_slice_aggregates(self, client_cert, \
                            slice_urn, credentials, options):
