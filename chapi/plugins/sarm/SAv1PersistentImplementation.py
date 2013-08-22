@@ -545,4 +545,11 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
 
     def get_slice_aggregates(self, client_cert, \
                            slice_urn, credentials, options):
-        raise CHAPIv1NotImplementedError('')
+        session = self.db.getSession()
+        q = session.query(Aggregate.aggregate_url)
+        q = q.filter(Aggregate.slice_urn == slice_urn)
+        rows = q.all()
+        aggs = [row.aggregate_url for row in rows]
+        session.commit()
+        session.close()
+        return self._successReturn(aggs)
