@@ -450,6 +450,14 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                 proj_member.role = \
                     self.get_role_id(session, member['PROJECT_ROLE'])
                 session.add(proj_member)
+        if 'members_to_remove' in options:
+            q = session.query(ProjectMember)
+            ids = [self.get_member_id_for_urn(session, urn) \
+                   for urn in options['members_to_remove']]
+            q = q.filter(ProjectMember.member_id.in_(ids))
+            q = q.filter(ProjectMember.project_id == project_id)
+            rows = q.all()
+            q.delete(synchronize_session='fetch')
         session.commit()
         session.close()
         return self._successReturn(None)
@@ -460,7 +468,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         q = q.filter(self.db.MEMBER_ATTRIBUTE_TABLE.c.value == urn)
         rows = q.all()
         if len(rows) > 0:
-           return rows[0]
+           return rows[0].member_id
         return None
 
     def get_role_id(self, session, role):
@@ -468,5 +476,5 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         q = q.filter(self.db.ROLE_TABLE.c.name == role)
         rows = q.all()
         if len(rows) > 0:
-           return rows[0]
+           return rows[0].id
         return None
