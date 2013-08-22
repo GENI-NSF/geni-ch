@@ -34,6 +34,7 @@ from sqlalchemy.orm import mapper
 from datetime import *
 from dateutil.relativedelta import relativedelta
 import uuid
+from CHDatabaseEngine import Aggregate
 
 
 # Utility functions for morphing from native schema to public-facing
@@ -518,3 +519,21 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         if len(rows) > 0:
            return rows[0].id
         return None
+
+        
+    def register_aggregate(self, client_cert, \
+                               slice_urn, aggregate_url, credentials, options):
+        session = self.db.getSession()
+        agg = Aggregate(slice_urn, aggregate_url)
+        session.add(agg)
+        session.commit()
+        session.close()
+        return self._successReturn(None)
+
+    def remove_aggregate(self, client_cert, \
+                             slice_urn, aggregate_urn, credentials, options):
+        raise CHAPIv1NotImplementedError('')
+
+    def get_slice_aggregates(self, client_cert, \
+                           slice_urn, credentials, options):
+        raise CHAPIv1NotImplementedError('')

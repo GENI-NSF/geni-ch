@@ -24,6 +24,20 @@
 import amsoil.core.pluginmanager as pm
 from sqlalchemy import *
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy.ext.declarative import declarative_base
+
+Base = declarative_base()
+
+class Aggregate(Base):
+    __tablename__ = 'sa_aggregate'
+
+    id = Column(Integer, primary_key=True)
+    slice_urn = Column(String)
+    aggregate_url = Column(String)
+
+    def __init__(self, slice_urn, agg_url):
+        self.slice_urn = slice_urn
+        self.aggregate_url = agg_url
 
 # Simple class to hold the basis of DB queries against GPO CH Database
 # Loads the database table schemas
@@ -37,6 +51,7 @@ class CHDatabaseEngine:
         self.db = create_engine(self.db_url)
         self.session_class = sessionmaker(bind=self.db)
         self.metadata = MetaData(self.db)
+        Base.metadata.create_all(self.db)
 
         self.SLICE_TABLE = Table('sa_slice', self.metadata, autoload=True)
         self.SLICE_MEMBER_TABLE = \
