@@ -223,26 +223,10 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
 
         return self._successReturn(members)
 
-    def lookup_slices_for_member(self, \
-                                     client_cert, member_urn, \
-                                     credentials, options):
-
-        session = self.db.getSession()
-        q = session.query(self.db.SLICE_MEMBER_TABLE, 
-                          self.db.MEMBER_ATTRIBUTE_TABLE,
-                          self.db.SLICE_TABLE.c.slice_urn,
-                          self.db.ROLE_TABLE.c.name)
-        q = q.filter(self.db.SLICE_TABLE.c.expired == 'f')
-        q = q.filter(self.db.MEMBER_ATTRIBUTE_TABLE.c.name == 'urn')
-        q = q.filter(self.db.MEMBER_ATTRIBUTE_TABLE.c.value == member_urn)
-        q = q.filter(self.db.SLICE_MEMBER_TABLE.c.member_id == self.db.MEMBER_ATTRIBUTE_TABLE.c.member_id)
-        q = q.filter(self.db.SLICE_TABLE.c.slice_id == self.db.SLICE_MEMBER_TABLE.c.slice_id)
-        q = q.filter(self.db.SLICE_MEMBER_TABLE.c.role == self.db.ROLE_TABLE.c.id)
-
-#        print "Q = " + str(q)
-        rows = q.all()
-        session.close()
-
+    def lookup_slices_for_member(self, client_cert, member_urn, \
+                                 credentials, options):
+        rows = self.lookup_for_member(member_urn, self.db.SLICE_TABLE, \
+                  self.db.SLICE_MEMBER_TABLE, "slice_urn", "slice_id")
         slices = [{"SLICE_ROLE" : row.name, "SLICE_URN": row.slice_urn} \
                   for row in rows]
         return self._successReturn(slices)
@@ -414,28 +398,30 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
     # get the projects associated with a member
     def lookup_projects_for_member(self, client_cert, member_urn, \
                                    credentials, options):
-        session = self.db.getSession()
-        q = session.query(self.db.PROJECT_MEMBER_TABLE, 
-                          self.db.MEMBER_ATTRIBUTE_TABLE,
-                          self.db.PROJECT_TABLE.c.project_name,
-                          self.db.ROLE_TABLE.c.name)
-        q = q.filter(self.db.PROJECT_TABLE.c.expired == 'f')
-        q = q.filter(self.db.MEMBER_ATTRIBUTE_TABLE.c.name == 'urn')
-        q = q.filter(self.db.MEMBER_ATTRIBUTE_TABLE.c.value == member_urn)
-        q = q.filter(self.db.PROJECT_MEMBER_TABLE.c.member_id == \
-                     self.db.MEMBER_ATTRIBUTE_TABLE.c.member_id)
-        q = q.filter(self.db.PROJECT_TABLE.c.project_id == \
-                     self.db.PROJECT_MEMBER_TABLE.c.project_id)
-        q = q.filter(self.db.PROJECT_MEMBER_TABLE.c.role == \
-                     self.db.ROLE_TABLE.c.id)
-
-        rows = q.all()
-        session.close()
-
+        rows = self.lookup_for_member(member_urn, self.db.PROJECT_TABLE, \
+                  self.db.PROJECT_MEMBER_TABLE, "project_name", "project_id")
         projects = [{"PROJECT_ROLE" : row.name, \
                      "PROJECT_URN": row_to_project_urn(row)} for row in rows]
         return self._successReturn(projects)
 
+    # shared code between projects and slices
+    def lookup_for_member(self, member_urn, table, member_table, \
+                          name_field, id_field):
+        session = self.db.getSession()
+        q = session.query(member_table, self.db.MEMBER_ATTRIBUTE_TABLE,
+                          table.c[name_field], self.db.ROLE_TABLE.c.name)
+        q = q.filter(table.c.expired == 'f')
+        q = q.filter(self.db.MEMBER_ATTRIBUTE_TABLE.c.name == 'urn')
+        q = q.filter(self.db.MEMBER_ATTRIBUTE_TABLE.c.value == member_urn)
+        q = q.filter(member_table.c.member_id == \
+                     self.db.MEMBER_ATTRIBUTE_TABLE.c.member_id)
+        q = q.filter(table.c[id_field] == member_table.c[id_field])
+        q = q.filter(member_table.c.role == self.db.ROLE_TABLE.c.id)
+        rows = q.all()
+        session.close()
+        return rows
+
+    # change the membership in a project
     def modify_project_membership(self, client_cert, project_urn, \
                                   credentials, options):
         session = self.db.getSession()
