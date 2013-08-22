@@ -188,13 +188,9 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         rows = q.all()
         session.close()
 
-        slices = {}
-        for row in rows:
-            slice_urn = row.slice_urn
-            result_row = \
-                construct_result_row(row, selected_columns, self.slice_field_mapping)
-            slices[slice_urn] = result_row
-#        print "SLICES = " + str(slices)
+        slices = {row.slice_urn : \
+            construct_result_row(row, selected_columns, self.slice_field_mapping) \
+            for row in rows}
         return self._successReturn(slices)
 
     # members in a slice
