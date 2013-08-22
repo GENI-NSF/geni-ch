@@ -283,6 +283,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
             return None
         return rows[0].project_id
 
+    # shared by create_slice() and create_project()
     def finish_create(self, session, object, field_mapping, extra = {}):
         ret = {k: getattr(object, v) for k, v in field_mapping.iteritems() \
              if not isinstance(v, types.FunctionType) and getattr(object, v)}
@@ -427,58 +428,71 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         session = self.db.getSession()
         name = from_project_urn(project_urn)
         project_id = self.get_project_id(session, "project_name", name)
+        return self.modify_membership(session, ProjectMember, project_id, \
+            options, 'project_id', 'PROJECT_MEMBER', 'PROJECT_ROLE', 'project')
+
+    # change the membership in a project
+    def modify_slice_membership(self, client_cert, slice_urn, \
+                                credentials, options):
+        session = self.db.getSession()
+        slice_id = self.get_slice_id(session, "slice_urn", slice_urn)
+        return self.modify_membership(session, SliceMember, slice_id, \
+            options, 'slice_id', 'SLICE_MEMBER', 'SLICE_ROLE', 'slice')
+
+    # shared between modify_slice_membership and modify_project_membership
+    def modify_membership(self, session, member_class, id, options, id_field,
+                          member_str, role_str, text_str):
+        id_str = '%s.%s' % (member_class.__name__, id_field)
 
         # first, do the removes
         if 'members_to_remove' in options:
-            q = session.query(ProjectMember)
+            q = session.query(member_class)
             ids = [self.get_member_id_for_urn(session, urn) \
                    for urn in options['members_to_remove']]
-            q = q.filter(ProjectMember.member_id.in_(ids))
-            q = q.filter(ProjectMember.project_id == project_id)
+            q = q.filter(member_class.member_id.in_(ids))
+            q = q.filter(eval(id_str) == id)
             q.delete(synchronize_session='fetch')
 
         # then, do the additions
         if 'members_to_add' in options:
             for member in options['members_to_add']:
-                proj_member = ProjectMember()
-                proj_member.project_id = project_id
-                proj_member.member_id = self.get_member_id_for_urn \
-                                   (session, member['PROJECT_MEMBER'])
-                proj_member.role = \
-                    self.get_role_id(session, member['PROJECT_ROLE'])
-                session.add(proj_member)
+                member_obj = member_class()
+                setattr(member_obj, id_field, id)
+                member_obj.member_id = self.get_member_id_for_urn \
+                                   (session, member[member_str])
+                member_obj.role = self.get_role_id(session, member[role_str])
+                session.add(member_obj)
                 # check that this is not a duplicate
-                q = session.query(ProjectMember)
-                q = q.filter(ProjectMember.project_id == project_id)
-                q = q.filter(ProjectMember.member_id == proj_member.member_id)
+                q = session.query(member_class)
+                q = q.filter(eval(id_str) == id)
+                q = q.filter(member_class.member_id == member_obj.member_id)
                 if len(q.all()) > 1:
                     session.close()
                     raise CHAPIv1ArgumentError('Member ' + \
-                        member['PROJECT_MEMBER'] + ' already in project')
+                        member[member_str] + ' already in ' + text_str)
 
         # then, the updates
         if 'members_to_change' in options:
             for member in options['members_to_change']:
-                q = session.query(ProjectMember)
-                q = q.filter(ProjectMember.project_id == project_id)
-                q = q.filter(ProjectMember.member_id == \
-                    self.get_member_id_for_urn(session, member['PROJECT_MEMBER']))
+                q = session.query(member_class)
+                q = q.filter(eval(id_str) == id)
+                q = q.filter(member_class.member_id == \
+                    self.get_member_id_for_urn(session, member[member_str]))
                 if len(q.all()) == 0:
                     session.close()
                     raise CHAPIv1ArgumentError('Cannot change member ' + \
-                        member['PROJECT_MEMBER'] + ' not in project')
-                q.update({"role" : \
-                          self.get_role_id(session, member['PROJECT_ROLE'])})
+                             member[member_str] + ' not in ' + text_str)
+                q.update({"role" : self.get_role_id(session, member[role_str])})
 
         # before committing, check that there is exactly one lead
-        q = session.query(ProjectMember)
-        q = q.filter(ProjectMember.project_id == project_id)
-        q = q.filter(ProjectMember.role == self.get_role_id(session, "LEAD"))
+        q = session.query(member_class)
+        q = q.filter(eval(id_str) == id)
+        q = q.filter(member_class.role == self.get_role_id(session, "LEAD"))
         num_leads = len(q.all())
         if num_leads != 1:
             session.close()
             raise CHAPIv1ArgumentError('This would result in ' + \
-                                str(num_leads) + ' leads for the project')
+                          str(num_leads) + ' leads for the ' + text_str)
 
         # finish up
         session.commit()
