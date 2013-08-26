@@ -305,7 +305,7 @@ class PGCHv1Delegate(DelegateBase):
             slice_uuid = slice_info['SLICE_UID']
             creator_uuid = slice_info['SLICE_OWNER']
 
-             match_clause = {'MEMBER_UID' : creator_uuid}
+            match_clause = {'MEMBER_UID' : creator_uuid}
             filter_clause = ['MEMBER_URN']
             options = {'match' : match_clause, 'filter' : filter_clause}
             lookup_member_return = \
