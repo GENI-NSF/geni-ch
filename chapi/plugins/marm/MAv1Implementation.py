@@ -172,12 +172,15 @@ class MAv1Implementation(MAv1DelegateBase):
 
     # construct a list of ssh keys
     def get_ssh_keys_for_uid(self, session, uid, include_private):
-        q = session.query(SshKey)
-        q = q.filter(SshKey.member_id == uid)
+        q = session.query(self.db.SSH_KEY_TABLE)
+        q = q.filter(self.db.SSH_KEY_TABLE.c.member_id == uid)
         rows = q.all()
         excluded = ['id', 'member_id'] + [['private_key'], []][include_private]
-        return [{key: getattr(row, key) for key in row.keys() if key \
-                  not in excluded } for row in rows]
+        ret = [{} for i in range(len(rows))]
+        for i, row in enumerate(rows):
+            for key in set(row.keys()) - set(excluded):
+                ret[i][key] = getattr(row, key)
+        return ret
 
     # Common code for answering query
     def lookup_member_info(self, options, allowed_fields):
