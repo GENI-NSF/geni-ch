@@ -344,8 +344,10 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
             raise CHAPIv1ArgumentError('No slice with urn ' + slice_urn)
         q = session.query(Slice)
         q = q.filter(getattr(Slice, "slice_urn") == slice_urn)
-        q = q.update({self.slice_field_mapping[field] : value \
-                      for field, value in options['fields'].iteritems()})
+        updates = {}
+        for field, value in options['fields'].iteritems():
+            updates[self.slice_field_mapping[field]] = value
+        q = q.update(updates)
         session.commit()
         session.close()
         return self._successReturn(True)
@@ -382,8 +384,10 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
             raise CHAPIv1ArgumentError('No project with urn ' + project_urn)
         q = session.query(Project)
         q = q.filter(getattr(Project, "project_name") == name)
-        q = q.update({self.project_field_mapping[field] : value \
-                      for field, value in options['fields'].iteritems()})
+        updates = {}
+        for field, value in options['fields'].iteritems():
+            updates[self.project_field_mapping[field]] = value
+        q = q.update(updates)
         session.commit()
         session.close()
         return self._successReturn(True)
