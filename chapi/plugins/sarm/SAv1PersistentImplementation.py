@@ -189,9 +189,11 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         rows = q.all()
         session.close()
 
-        slices = {row.slice_urn : \
-            construct_result_row(row, selected_columns, self.slice_field_mapping) \
-            for row in rows}
+        # in python 2.7, could do dictionary comprehension !!!!!!!!
+        slices = {}
+        for row in rows:
+            slices[row.slice_urn] = construct_result_row(row, \
+                selected_columns, self.slice_field_mapping)
         return self._successReturn(slices)
 
     # members in a slice
@@ -289,12 +291,13 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
 
     # shared by create_slice() and create_project()
     def finish_create(self, session, object, field_mapping, extra = {}):
-        ret = {k: getattr(object, v) for k, v in field_mapping.iteritems() \
-             if not isinstance(v, types.FunctionType) and getattr(object, v)}
+        ret = extra.copy()
+        for k, v in field_mapping.iteritems():
+            if not isinstance(v, types.FunctionType) and getattr(object, v):
+                ret[k] = getattr(object, v)
         session.add(object)
         session.commit()
         session.close()
-        ret.update(extra)
         return self._successReturn(ret)
 
     # create a new slice
@@ -395,9 +398,10 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                         self.project_field_mapping)
         rows = q.all()
         session.close()
-        projects = {row_to_project_urn(row) : \
-            construct_result_row(row, columns, self.project_field_mapping) \
-            for row in rows}
+        projects = {}
+        for row in rows:
+            projects[row_to_project_urn(row)] = \
+                construct_result_row(row, columns, self.project_field_mapping)
         return self._successReturn(projects)
 
     # get the projects associated with a member
