@@ -118,6 +118,10 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         "PROJECT_EMAIL": {"TYPE": "EMAIL", "CREATE": "REQUIRED", "UPDATE": True, "OBJECT" : "PROJECT"}
         }
 
+    # Total set of supplemental fields
+    supplemental_fields = dict(slice_supplemental_fields.items() + \
+                                        project_supplemental_fields.items())
+
     # Mapping from external to internal data schema (SLICE)
     slice_field_mapping = {
         "SLICE_URN" : "slice_urn",
