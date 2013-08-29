@@ -110,6 +110,43 @@ def main():
         (result, msg) = _do_ssl(framework, suppress_errors, reason, fcn, \
                                     opts.urn, \
                                     opts.credentials, client_options)
+    # Logging methods (test)
+    elif opts.method in ['log_event']:
+        message = "Now is the time"
+        type1 = 'SLICE'
+        id1 = '848e4a11-55eb-45df-a0e8-b79109fb0a88'
+        type2 = 'PROJECT'
+        id2 = '8c042cf0-8389-48e0-aca1-782fd7a20794'
+        attributes = [{type1 : id1}, {type2 : id2}]
+        user_id = '8e405a75-3ff7-4288-bfa5-111552fa53ce'
+        (result, msg) = _do_ssl(framework, suppress_errors, reason, fcn, \
+                                    message, attributes, user_id)
+    elif opts.method in [ 'get_log_entries_by_author']:
+        num_hours = 15*24
+        user_id = '8e405a75-3ff7-4288-bfa5-111552fa53ce'
+        (result, msg) = _do_ssl(framework, suppress_errors, reason, fcn, \
+                                    user_id, num_hours)
+    elif opts.method in ['get_log_entries_for_context']:
+        context_type = 'SLICE'
+        context_id = '848e4a11-55eb-45df-a0e8-b79109fb0a88'
+        num_hours = 15*24
+        (result, msg) = _do_ssl(framework, suppress_errors, reason, fcn, \
+                                    context_type, context_id, num_hours)
+    elif opts.method in ['get_log_entries_by_attributes']:
+        type1 = 'SLICE'
+        id1 = '848e4a11-55eb-45df-a0e8-b79109fb0a88'
+        type2 = 'PROJECT'
+        id2 = '8c042cf0-8389-48e0-aca1-782fd7a20794'
+        num_hours = 15*24
+        attribute_sets = [{type1 : id1}, {type2 : id2}]
+        (result, msg) = _do_ssl(framework, suppress_errors, reason, fcn, \
+                                    attribute_sets, num_hours)
+
+    elif opts.method in ['get_attributes_for_log_entry']:
+        event_id = '20360';
+        (result, msg) = _do_ssl(framework, suppress_errors, reason, fcn, \
+                                    event_id)
+                             
     # Methods that take credentials and options (and no urn) arguments
     else:
         (result, msg) = _do_ssl(framework, suppress_errors, reason, fcn, \

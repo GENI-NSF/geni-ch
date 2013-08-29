@@ -69,6 +69,11 @@ class CHDatabaseEngine:
         self.SERVICES_TABLE = \
             Table('service_registry', self.metadata, autoload=True)
         self.ROLE_TABLE = Table('cs_attribute', self.metadata, autoload=True)
+        self.LOGGING_ENTRY_TABLE = Table('logging_entry', \
+                                             self.metadata, autoload=True)
+        self.LOGGING_ENTRY_ATTRIBUTE_TABLE = \
+            Table('logging_entry_attribute', \
+                      self.metadata, autoload=True)
 
     # Get a new session on the database engine
     def getSession(self):
