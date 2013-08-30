@@ -31,6 +31,7 @@ import sfa.trust.gid as gid
 import geni.util.cred_util as cred_util
 import geni.util.cert_util as cert_util
 from sqlalchemy.orm import mapper
+from tools.cert_utils import *
 from datetime import *
 from dateutil.relativedelta import relativedelta
 import uuid
@@ -159,6 +160,8 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
 
         self.cert = '/usr/share/geni-ch/sa/sa-cert.pem'
         self.key = '/usr/share/geni-ch/sa/sa-key.pem'
+
+        self.logging_service = pm.getService('loggingv1handler')
 
         self.trusted_root = self.config.get('chapiv1rpc.ch_cert_root')
 
@@ -306,6 +309,8 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
 
     # create a new slice
     def create_slice(self, client_cert, credentials, options):
+
+        client_uuid = get_uuid_from_cert(client_cert)
         session = self.db.getSession()
 
         # check that slice does not already exist
@@ -336,6 +341,10 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
             lifeDays = (slice.expiration - slice.creation).days + 1, \
             email = slice.slice_email, uuidarg=slice.slice_id)
         slice.certificate = cert.save_to_string()
+
+        attribs = [{"SLICE" : slice.slice_id}, {"PROJECT" : slice.project_id}]
+        self.logging_service.log_event("Creates slice " + name, 
+                                       attribs, client_uuid)
 
         # do the database write
         return self.finish_create(session, slice, self.slice_field_mapping)

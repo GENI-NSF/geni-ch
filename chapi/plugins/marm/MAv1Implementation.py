@@ -44,6 +44,7 @@ class MemberAttribute(object):
         self.value = value
         self.member_id = member_id
         self.self_asserted = self_asserted
+        self.logging_service = pm.getService('loggingv1handler')
 
 class OutsideCert(object):
     pass
