@@ -41,6 +41,7 @@ AUTENTICATION_ERROR = 1
 AUTHORIZATION_ERROR = 2
 ARGUMENT_ERROR = 3
 DATABASE_ERROR = 4
+DUPLICATE_ERROR = 5
 NOT_IMPLEMENTED_ERROR = 100
 SERVER_ERROR = 101
 
@@ -71,6 +72,13 @@ class CHAPIv1DatabseError(CHAPIv1BaseError):
         super(self.__class__, self).__init__(DATABASE_ERROR, \
                                                  'DATABASE', 'DATABASE_ERROR', \
                                                  comment)
+
+# Exception for a database error (should return the database details)
+class CHAPIv1DuplicateError(CHAPIv1BaseError):
+    def __init__(self, comment):
+        super(self.__class__, self).__init__(DATABASE_ERROR, \
+                                             'DUPLICATE', 'DUPLICATE_ERROR', \
+                                             comment)
 
 # Exception for invoking a method that is not implemented at given service
 class CHAPIv1NotImplementedError(CHAPIv1BaseError):

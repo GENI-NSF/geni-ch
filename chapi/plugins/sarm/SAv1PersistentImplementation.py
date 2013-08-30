@@ -312,7 +312,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         name = options["fields"]["SLICE_NAME"]
         if self.get_slice_id(session, "slice_name", name):
             session.close()
-            raise CHAPIv1ArgumentError('Already exists a slice named ' + name)
+            raise CHAPIv1DuplicateError('Already exists a slice named ' + name)
 
         # fill in the fields of the object
         slice = Slice()
@@ -364,7 +364,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         name = options["fields"]["PROJECT_NAME"]
         if self.get_project_id(session, "project_name", name):
             session.close()
-            raise CHAPIv1ArgumentError('Already exists a project named ' + name)
+            raise CHAPIv1DuplicateError('Already exists a project named ' + name)
 
         # fill in the fields of the object
         project = Project()
@@ -484,7 +484,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                 q = q.filter(member_class.member_id == member_obj.member_id)
                 if len(q.all()) > 1:
                     session.close()
-                    raise CHAPIv1ArgumentError('Member ' + \
+                    raise CHAPIv1DuplicateError('Member ' + \
                         member[member_str] + ' already in ' + text_str)
 
         # then, the updates
