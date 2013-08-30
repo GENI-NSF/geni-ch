@@ -99,9 +99,11 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         }
 
     slice_supplemental_fields = {
-        "SLICE_OWNER" : {"TYPE" : "UUID", "UPDATE" : True},
-        "SLICE_EMAIL": {"TYPE": "EMAIL", "CREATE": "REQUIRED", "UPDATE": True},
-        "PROJECT_URN": {"TYPE": "URN", "CREATE": "REQUIRED", "UPDATE": False}
+        "_GENI_SLICE_OWNER" : {"TYPE" : "UUID", "UPDATE" : True},
+        "_GENI_SLICE_EMAIL": {"TYPE": "EMAIL", \
+                   "CREATE": "REQUIRED", "UPDATE": True},
+        "_GENI_PROJECT_URN": {"TYPE": "URN", \
+                   "CREATE": "REQUIRED", "UPDATE": False}
     }
 
     project_mandatory_fields = {
@@ -115,8 +117,8 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         }
 
     project_supplemental_fields = {
-        "PROJECT_OWNER" : {"TYPE" : "UUID", "UPDATE" : True},
-        "PROJECT_EMAIL": {"TYPE": "EMAIL", "CREATE": "REQUIRED", "UPDATE": True, "OBJECT" : "PROJECT"}
+        "_GENI_PROJECT_OWNER" : {"TYPE" : "UUID", "UPDATE" : True},
+        "_GENI_PROJECT_EMAIL": {"TYPE": "EMAIL", "CREATE": "REQUIRED", "UPDATE": True, "OBJECT" : "PROJECT"}
         }
 
     # Total set of supplemental fields
@@ -132,9 +134,9 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         "SLICE_EXPIRATION" :  "expiration",
         "SLICE_EXPIRED" :  "expired",
         "SLICE_CREATION" :  "creation",
-        "SLICE_EMAIL" : "slice_email",
-        "SLICE_OWNER" : "owner_id", 
-        "PROJECT_URN" : row_to_project_urn
+        "_GENI_SLICE_EMAIL" : "slice_email",
+        "_GENI_SLICE_OWNER" : "owner_id", 
+        "_GENI_PROJECT_URN" : row_to_project_urn
         }
 
     # Mapping from external to internal data schema (PROJECT)
@@ -146,8 +148,8 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         "PROJECT_EXPIRATION" : "expiration",
         "PROJECT_EXPIRED" : "expired",
         "PROJECT_CREATION" : "creation",
-        "PROJECT_EMAIL" : "project_email",
-        "PROJECT_OWNER" : "lead_id"
+        "_GENI_PROJECT_EMAIL" : "project_email",
+        "_GENI_PROJECT_OWNER" : "lead_id"
         }
 
 
@@ -322,7 +324,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         # fill in the fields of the object
         slice = Slice()
         for key, value in options["fields"].iteritems():
-            if key == "PROJECT_URN":
+            if key == "_GENI_PROJECT_URN":
                 project_name = from_project_urn(value)
                 slice.project_id = self.get_project_id(session, \
                                       "project_name", project_name)

@@ -61,20 +61,22 @@ class MAv1Implementation(MAv1DelegateBase):
     version_number = "1.0"
     credential_types = ["SFA", "ABAC"]
     optional_fields = {
-        "MEMBER_DISPLAYNAME": {"TYPE": "STRING", "CREATE": "ALLOWED", \
+        "_GENI_MEMBER_DISPLAYNAME": {"TYPE": "STRING", "CREATE": "ALLOWED", \
                                "UPDATE": True, "PROTECT": "IDENTIFYING"},
-        "MEMBER_PHONE_NUMBER": {"TYPE": "STRING", "CREATE": "ALLOWED", \
+        "_GENI_MEMBER_PHONE_NUMBER": {"TYPE": "STRING", "CREATE": "ALLOWED", \
                                 "UPDATE": True, "PROTECT": "IDENTIFYING"},
-        "MEMBER_AFFILIATION": {"TYPE": "STRING", "CREATE": "ALLOWED", \
+        "_GENI_MEMBER_AFFILIATION": {"TYPE": "STRING", "CREATE": "ALLOWED", \
                                "UPDATE": True, "PROTECT": "IDENTIFYING"},
-        "MEMBER_EPPN": {"TYPE": "STRING", "CREATE": "ALLOWED", \
+        "_GENI_MEMBER_EPPN": {"TYPE": "STRING", "CREATE": "ALLOWED", \
                         "UPDATE": True, "PROTECT": "IDENTIFYING"},
-        "MEMBER_SSL_PUBLIC_KEY": {"TYPE": "SSL_KEY"},
-        "MEMBER_SSL_PRIVATE_KEY": {"TYPE": "SSL_KEY", "PROTECT": "PRIVATE"},
-        "MEMBER_INSIDE_PUBLIC_KEY": {"TYPE": "SSL_KEY"},
-        "MEMBER_INSIDE_PRIVATE_KEY": {"TYPE": "SSL_KEY", "PROTECT": "PRIVATE"},
-        "MEMBER_SSH_KEYS": {"TYPE": "SSH_KEYS"},
-        "USER_CREDENTIAL": {"TYPE": "CREDENTIAL"}
+        "_GENI_MEMBER_SSL_PUBLIC_KEY": {"TYPE": "SSL_KEY"},
+        "_GENI_MEMBER_SSL_PRIVATE_KEY": \
+                      {"TYPE": "SSL_KEY", "PROTECT": "PRIVATE"},
+        "_GENI_MEMBER_INSIDE_PUBLIC_KEY": {"TYPE": "SSL_KEY"},
+        "_GENI_MEMBER_INSIDE_PRIVATE_KEY": \
+                      {"TYPE": "SSL_KEY", "PROTECT": "PRIVATE"},
+        "_GENI_MEMBER_SSH_KEYS": {"TYPE": "SSH_KEYS"},
+        "_GENI_USER_CREDENTIAL": {"TYPE": "CREDENTIAL"}
 	}
 
     # Mapping from external to internal data schema
@@ -85,33 +87,33 @@ class MAv1Implementation(MAv1DelegateBase):
         "MEMBER_LASTNAME": "last_name",
         "MEMBER_USERNAME": "username",
         "MEMBER_EMAIL": "email_address",
-        "MEMBER_DISPLAYNAME": "displayName",
-        "MEMBER_PHONE_NUMBER": "telephone_number",
-        "MEMBER_AFFILIATION": "affiliation",
-        "MEMBER_EPPN": "eppn",
-        "MEMBER_SSL_PUBLIC_KEY": "certificate",
-        "MEMBER_SSL_PRIVATE_KEY": "private_key",
-        "MEMBER_INSIDE_PUBLIC_KEY": "certificate",
-        "MEMBER_INSIDE_PRIVATE_KEY": "private_key",
-        "USER_CREDENTIAL": "foo",
-        "MEMBER_SSH_KEYS": "foo"
+        "_GENI_MEMBER_DISPLAYNAME": "displayName",
+        "_GENI_MEMBER_PHONE_NUMBER": "telephone_number",
+        "_GENI_MEMBER_AFFILIATION": "affiliation",
+        "_GENI_MEMBER_EPPN": "eppn",
+        "_GENI_MEMBER_SSL_PUBLIC_KEY": "certificate",
+        "_GENI_MEMBER_SSL_PRIVATE_KEY": "private_key",
+        "_GENI_MEMBER_INSIDE_PUBLIC_KEY": "certificate",
+        "_GENI_MEMBER_INSIDE_PRIVATE_KEY": "private_key",
+        "_GENI_USER_CREDENTIAL": "foo",
+        "_GENI_MEMBER_SSH_KEYS": "foo"
         }
 
     attributes = ["MEMBER_URN", "MEMBER_UID", "MEMBER_FIRSTNAME", \
                   "MEMBER_LASTNAME", "MEMBER_USERNAME", "MEMBER_EMAIL", \
-                  "MEMBER_DISPLAYNAME", "MEMBER_PHONE_NUMBER", \
-                  "MEMBER_AFFILIATION", "MEMBER_EPPN"]
+                  "_GENI_MEMBER_DISPLAYNAME", "_GENI_MEMBER_PHONE_NUMBER", \
+                  "_GENI_MEMBER_AFFILIATION", "_GENI_MEMBER_EPPN"]
 
     public_fields = ["MEMBER_URN", "MEMBER_UID", "MEMBER_USERNAME", \
-                     "MEMBER_SSL_PUBLIC_KEY", "MEMBER_INSIDE_PUBLIC_KEY", \
-                     "USER_CREDENTIAL", "MEMBER_SSH_KEYS"]
+             "_GENI_MEMBER_SSL_PUBLIC_KEY", "_GENI_MEMBER_INSIDE_PUBLIC_KEY", \
+             "_GENI_USER_CREDENTIAL", "_GENI_MEMBER_SSH_KEYS"]
 
     identifying_fields = ["MEMBER_FIRSTNAME", "MEMBER_LASTNAME", "MEMBER_EMAIL", \
-                          "MEMBER_DISPLAYNAME", "MEMBER_PHONE_NUMBER", \
-                          "MEMBER_AFFILIATION", "MEMBER_EPPN"]
+                     "_GENI_MEMBER_DISPLAYNAME", "_GENI_MEMBER_PHONE_NUMBER", \
+                     "_GENI_MEMBER_AFFILIATION", "_GENI_MEMBER_EPPN"]
 
-    private_fields = ["MEMBER_SSL_PRIVATE_KEY", "MEMBER_INSIDE_PRIVATE_KEY", \
-                      "MEMBER_SSH_KEYS"]
+    private_fields = ["_GENI_MEMBER_SSL_PRIVATE_KEY", \
+                "_GENI_MEMBER_INSIDE_PRIVATE_KEY", "_GENI_MEMBER_SSH_KEYS"]
 
 
     def __init__(self):
@@ -121,10 +123,10 @@ class MAv1Implementation(MAv1DelegateBase):
         mapper(InsideKey, self.db.INSIDE_KEY_TABLE)
         mapper(SshKey, self.db.SSH_KEY_TABLE)
         self.table_mapping = {
-            "MEMBER_SSL_PUBLIC_KEY": OutsideCert,
-            "MEMBER_SSL_PRIVATE_KEY": OutsideCert,
-            "MEMBER_INSIDE_PUBLIC_KEY": InsideKey,
-            "MEMBER_INSIDE_PRIVATE_KEY": InsideKey
+            "_GENI_MEMBER_SSL_PUBLIC_KEY": OutsideCert,
+            "_GENI_MEMBER_SSL_PRIVATE_KEY": OutsideCert,
+            "_GENI_MEMBER_INSIDE_PUBLIC_KEY": InsideKey,
+            "_GENI_MEMBER_INSIDE_PRIVATE_KEY": InsideKey
             }
         self.cert = '/usr/share/geni-ch/ma/ma-cert.pem'
         self.key = '/usr/share/geni-ch/ma/ma-key.pem'
@@ -205,9 +207,9 @@ class MAv1Implementation(MAv1DelegateBase):
             urn = self.get_attr_for_uid(session, "MEMBER_URN", uid)[0]
             values = {}
             for col in selected_columns:
-                if col == "USER_CREDENTIAL":
+                if col == "_GENI_USER_CREDENTIAL":
                     values[col] = self.get_user_credential(session, uid)
-                elif col == "MEMBER_SSH_KEYS":
+                elif col == "_GENI_MEMBER_SSH_KEYS":
                     values[col] = self.get_ssh_keys_for_uid(session, uid, \
                                     allowed_fields == self.private_fields)
                 else:
@@ -264,7 +266,7 @@ class MAv1Implementation(MAv1DelegateBase):
                 if table not in all_keys:
                     all_keys[table] = {}
                 all_keys[table][self.field_mapping[attr]] = value
-            elif attr == "MEMBER_SSH_KEYS":
+            elif attr == "_GENI_MEMBER_SSH_KEYS":
                 self.update_ssh_keys(session, value, uid)
         for table, keys in all_keys.iteritems():
             self.update_keys(session, table, keys, uid)
