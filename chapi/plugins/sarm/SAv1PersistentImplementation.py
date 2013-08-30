@@ -555,7 +555,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         session.close()
         return self._successReturn(None)
 
-    def get_slice_aggregates(self, client_cert, \
+    def lookup_slice_aggregates(self, client_cert, \
                            slice_urn, credentials, options):
         session = self.db.getSession()
         q = session.query(Aggregate.aggregate_url)

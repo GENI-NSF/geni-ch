@@ -283,9 +283,9 @@ class SAv1Handler(HandlerBase):
     # be at that aggregate. But it is provided as a convenience for tools to 
     # know where to go for sliver information (rather than querying 
     # every aggregate in the CH)
-    def get_slice_aggregates(self, slice_urn, credentials, options):
+    def lookup_slice_aggregates(self, slice_urn, credentials, options):
         client_cert = self.requestCertificate()
-        method = 'get_slice_aggregates'
+        method = 'lookup_slice_aggregates'
         try:
             self._guard.validate_call(client_cert, method, \
                                           credentials, options, \
@@ -293,7 +293,7 @@ class SAv1Handler(HandlerBase):
             client_cert, options = \
                 self._guard.adjust_client_identity(client_cert, \
                                                        credentials, options)
-            results = self._delegate.get_slice_aggregates(client_cert, \
+            results = self._delegate.lookup_slice_aggregates(client_cert, \
                                                               slice_urn, \
                                                               credentials, \
                                                               options)
@@ -519,7 +519,7 @@ class SAv1DelegateBase(DelegateBase):
                              slice_urn, aggregate_url, credentials, options):
         raise CHAPIv1NotImplementedError('')
 
-    def get_slice_aggregates(self, client_cert, \
+    def lookup_slice_aggregates(self, client_cert, \
                            slice_urn, credentials, options):
         raise CHAPIv1NotImplementedError('')
 
