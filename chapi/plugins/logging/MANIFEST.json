@@ -3,7 +3,7 @@
   "author" : "Marshall Brinn",
   "author-email" : "mbrinn@bbn.com",
   "version" : 1,
-  "implements" : [],
-  "loads-after" : ["loggingv1handler", "sav1handler", "chdbengine"],
+  "implements" : ["loggingv1handler"],
+  "loads-after" : ["chdbengine"],
   "requires" : []
 }

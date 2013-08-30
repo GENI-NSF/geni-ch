@@ -24,30 +24,9 @@
 import optparse
 import os, sys
 import sfa.trust.certificate
+from cert_utils import *
 from ABACManager import ABACManager
 
-# Pull the certificate from the speaks-for credential
-def get_cert_from_credential(cred):
-    start_tag = '<X509Certificate>'
-    end_tag = '</X509Certificate>'
-    start_index = cred.find(start_tag)
-    end_index = cred.find(end_tag)
-    raw_cert = cred[start_index+len(start_tag):end_index]
-    cert_string = '-----BEGIN CERTIFICATE-----\n%s\n-----END CERTIFICATE-----' % raw_cert
-    return cert_string
-
-# Pull out the URN from the certificate
-def get_urn_from_cert(cert):
-    cert_object = sfa.trust.certificate.Certificate(string=cert)
-    subject_alt_names = cert_object.get_extension('subjectAltName')
-    san_parts = subject_alt_names.split(',')
-    urn = None
-    for san_part in san_parts:
-        san_part = san_part.strip()
-        if san_part.startswith('URI:urn:publicid'):
-            urn = san_part[4:]
-            break
-    return urn
 
 # Determine if the given method context is 'speaks-for'
 # That is:

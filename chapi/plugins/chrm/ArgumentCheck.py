@@ -90,6 +90,7 @@ class FieldsArgumentCheck(ArgumentCheck):
 
         for field in field_values:
             value = field_values[field]
+            field_details = None
             if self._mandatory_fields.has_key(field):
                 field_details = self._mandatory_fields[field]
             if not field_details and \
