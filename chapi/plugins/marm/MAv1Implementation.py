@@ -75,8 +75,9 @@ class MAv1Implementation(MAv1DelegateBase):
         "_GENI_MEMBER_INSIDE_PUBLIC_KEY": {"TYPE": "SSL_KEY"},
         "_GENI_MEMBER_INSIDE_PRIVATE_KEY": \
                       {"TYPE": "SSL_KEY", "PROTECT": "PRIVATE"},
-        "_GENI_MEMBER_SSH_KEYS": {"TYPE": "SSH_KEYS"},
-        "_GENI_USER_CREDENTIAL": {"TYPE": "CREDENTIAL"}
+        "_GENI_USER_CREDENTIAL": {"TYPE": "CREDENTIAL"},
+        "_GENI_KEY_FILENAME" : {"TYPE" : "STRING", "UPDATE" : True, \
+                                    "CREATE" : "ALLOWED"}
 	}
 
     # Mapping from external to internal data schema
@@ -96,8 +97,11 @@ class MAv1Implementation(MAv1DelegateBase):
         "_GENI_MEMBER_INSIDE_PUBLIC_KEY": "certificate",
         "_GENI_MEMBER_INSIDE_PRIVATE_KEY": "private_key",
         "_GENI_USER_CREDENTIAL": "foo",
-        "_GENI_MEMBER_SSH_KEYS": "foo"
+        "_GENI_KEY_FILENAME" : "foo"
         }
+
+    objects = ["MEMBER", "KEY"]
+    services = ["MEMBER", "KEY"]
 
     attributes = ["MEMBER_URN", "MEMBER_UID", "MEMBER_FIRSTNAME", \
                   "MEMBER_LASTNAME", "MEMBER_USERNAME", "MEMBER_EMAIL", \
@@ -106,14 +110,17 @@ class MAv1Implementation(MAv1DelegateBase):
 
     public_fields = ["MEMBER_URN", "MEMBER_UID", "MEMBER_USERNAME", \
              "_GENI_MEMBER_SSL_PUBLIC_KEY", "_GENI_MEMBER_INSIDE_PUBLIC_KEY", \
-             "_GENI_USER_CREDENTIAL", "_GENI_MEMBER_SSH_KEYS"]
+             "_GENI_USER_CREDENTIAL"]
 
     identifying_fields = ["MEMBER_FIRSTNAME", "MEMBER_LASTNAME", "MEMBER_EMAIL", \
                      "_GENI_MEMBER_DISPLAYNAME", "_GENI_MEMBER_PHONE_NUMBER", \
                      "_GENI_MEMBER_AFFILIATION", "_GENI_MEMBER_EPPN"]
 
     private_fields = ["_GENI_MEMBER_SSL_PRIVATE_KEY", \
-                "_GENI_MEMBER_INSIDE_PRIVATE_KEY", "_GENI_MEMBER_SSH_KEYS"]
+                "_GENI_MEMBER_INSIDE_PRIVATE_KEY"]
+
+    key_fields = ["KEY_MEMBER", "KEY_ID", "KEY_PUBLIC", "KEY_PRIVATE", 
+                  "KEY_DESCRIPTION", "_GENI_KEY_FILENAME" ]
 
 
     def __init__(self):
@@ -138,6 +145,8 @@ class MAv1Implementation(MAv1DelegateBase):
     def get_version(self):
         version_info = {"VERSION": self.version_number,
                         "CREDENTIAL_TYPES": self.credential_types,
+                        "OBJECTS" : self.objects,
+                        "SERVICES" : self.services,
                         "FIELDS": self.optional_fields}
         return self._successReturn(version_info)
 
@@ -209,9 +218,6 @@ class MAv1Implementation(MAv1DelegateBase):
             for col in selected_columns:
                 if col == "_GENI_USER_CREDENTIAL":
                     values[col] = self.get_user_credential(session, uid)
-                elif col == "_GENI_MEMBER_SSH_KEYS":
-                    values[col] = self.get_ssh_keys_for_uid(session, uid, \
-                                    allowed_fields == self.private_fields)
                 else:
                     if col in self.attributes:
                         vals = self.get_attr_for_uid(session, col, uid)
@@ -266,8 +272,6 @@ class MAv1Implementation(MAv1DelegateBase):
                 if table not in all_keys:
                     all_keys[table] = {}
                 all_keys[table][self.field_mapping[attr]] = value
-            elif attr == "_GENI_MEMBER_SSH_KEYS":
-                self.update_ssh_keys(session, value, uid)
         for table, keys in all_keys.iteritems():
             self.update_keys(session, table, keys, uid)
             
@@ -328,3 +332,19 @@ class MAv1Implementation(MAv1DelegateBase):
         cred = cred_util.create_credential(gid, gid, expires, "user", \
                   self.key, self.cert, self.trusted_roots)
         return cred.save_to_string()
+
+    # Implementation of KEY Service methods
+
+    def create_key(client_cert, member_urn, credentials, options):
+        pass
+
+    def delete_key(client_cert, member_urn, key_id, credentials, options):
+        pass
+
+    def update_key(client_cert, member_urn, key_id, credentials, options):
+        pass
+
+    def lookup_keys(client_cert, credentials, options):
+        pass
+
+
