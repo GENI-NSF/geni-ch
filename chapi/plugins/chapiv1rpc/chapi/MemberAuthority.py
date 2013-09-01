@@ -44,6 +44,8 @@ class MAv1Handler(HandlerBase):
         except Exception as e:
             return self._errorReturn(e)
 
+    # MEMBER service methods
+
     # This call is unprotected: no checking of credentials
     # Return public information about members specified in options
     # filter and query fields
@@ -130,6 +132,129 @@ class MAv1Handler(HandlerBase):
         except Exception as e:
             return self._errorReturn(e)
 
+    # KEY service methods
+
+    # Create a record for a key pair for given member
+    # Arguments:
+    # member_urn: URN of member for which to retrieve credentials
+    # options: 'fields' containing the fields for the key pair being stored
+    # Return:
+    # Dictionary of name/value pairs for created key record 
+    #   including the KEY_ID
+    # Should return DUPLICATE_ERROR if a key with the same KEY_ID is 
+    #  already stored for given user
+    def create_key(member_urn, credentials, options):
+        client_cert = self.requestCertificate()
+        method = 'create_key'
+        try:
+            self._guard.validate_call(client_cert, method,
+                                      credentials, options, \
+                                          {'member_urn' : member_urn})
+            client_cert, options = \
+                self._guard.adjust_client_identity(client_cert, \
+                                                       credentials, options)
+            results = self._delegate.create_key(client_cert, member_urn, \
+                                                    credentials, options)
+            if results['code'] == NO_ERROR:
+                results_value = results['value']
+                new_results_value = self._guard.protect_results(client_cert, method, credentials, results_value)
+                results = self._successReturn(new_results_value)
+                
+            return results
+        except Exception as e:
+            return self._errorReturn(e)
+
+    # Delete a key pair for given member
+    #
+    # Arguments:
+    # member_urn: urn of member for which to delete key pair
+    # key_id: KEY_ID (fingerprint) of key pair to be deleted
+    # Return:
+    # True if succeeded
+    # Should return ARGUMENT_ERROR if no such key is found for user
+    def delete_key(member_urn, key_id, credentials, options):
+        client_cert = self.requestCertificate()
+        method = 'delete_key'
+        try:
+            self._guard.validate_call(client_cert, method,
+                                      credentials, options, \
+                                          {'member_urn' : member_urn, 
+                                           'key_id' : key_id})
+            client_cert, options = \
+                self._guard.adjust_client_identity(client_cert, \
+                                                       credentials, options)
+            results = self._delegate.delete_key(client_cert, member_urn, \
+                                                    key_id, \
+                                                    credentials, options)
+            if results['code'] == NO_ERROR:
+                results_value = results['value']
+                new_results_value = self._guard.protect_results(client_cert, method, credentials, results_value)
+                results = self._successReturn(new_results_value)
+                
+            return results
+        except Exception as e:
+            return self._errorReturn(e)
+
+    # Update the details of a key pair for given member
+    #
+    # Arguments:
+    # member_urn: urn of member for which to delete key pair
+    # key_id: KEY_ID (fingerprint) of key pair to be deleted
+    # options: 'fields' containing fields for key pairs that are permitted 
+    #   for update
+    # Return:
+    # True if succeeded
+    # Should return ARGUMENT_ERROR if no such key is found for user
+    def update_key(member_urn, key_id, credentials, options):
+        client_cert = self.requestCertificate()
+        method = 'update_key'
+        try:
+            self._guard.validate_call(client_cert, method,
+                                      credentials, options, \
+                                          {'member_urn' : member_urn,
+                                           'key_id' : key_id})
+            client_cert, options = \
+                self._guard.adjust_client_identity(client_cert, \
+                                                       credentials, options)
+            results = self._delegate.update_key(client_cert, member_urn, \
+                                                    credentials, options)
+            if results['code'] == NO_ERROR:
+                results_value = results['value']
+                new_results_value = self._guard.protect_results(client_cert, method, credentials, results_value)
+                results = self._successReturn(new_results_value)
+                
+            return results
+        except Exception as e:
+            return self._errorReturn(e)
+
+    # Lookup keys for given match criteria return fields in given 
+    #  filter criteria
+    #
+    # Arguments:
+    # options: 'match' for query match criteria, 'filter' for fields 
+    #    to be returned
+    # Return:
+    #  Dictionary (indexed by member_urn) of dictionaries containing 
+    #     name/value pairs for all keys registered for that given user.
+    def lookup_keys(credentials, options):
+        client_cert = self.requestCertificate()
+        method = 'lookup_keys'
+        try:
+            self._guard.validate_call(client_cert, method,
+                                      credentials, options)
+            client_cert, options = \
+                self._guard.adjust_client_identity(client_cert, \
+                                                       credentials, options)
+            results = self._delegate.lookup_keys(client_cert, \
+                                                    credentials, options)
+            if results['code'] == NO_ERROR:
+                results_value = results['value']
+                new_results_value = self._guard.protect_results(client_cert, method, credentials, results_value)
+                results = self._successReturn(new_results_value)
+                
+            return results
+        except Exception as e:
+            return self._errorReturn(e)
 
 # Base class for implementations of MA API
 # Must be  implemented in a derived class, and that derived class
@@ -142,6 +267,8 @@ class MAv1DelegateBase(DelegateBase):
     # This call is unprotected: no checking of credentials
     def get_version(self):
         raise CHAPIv1NotImplementedError('')
+
+    # MEMBER service methods
 
     # This call is unprotected: no checking of credentials
     def lookup_public_member_info(self, credentials, options):
@@ -158,4 +285,19 @@ class MAv1DelegateBase(DelegateBase):
     # This call is protected
     def update_member_info(self, client_cert, member_urn, credentials, options):
         raise CHAPIv1NotImplementedError('')
+
+    # KEY service methods
+
+    def create_key(client_cert, member_urn, credentials, options):
+        raise CHAPIv1NotImplementedError('')
+
+    def delete_key(client_cert, member_urn, key_id, credentials, options):
+        raise CHAPIv1NotImplementedError('')
+
+    def update_key(client_cert, member_urn, key_id, credentials, options):
+        raise CHAPIv1NotImplementedError('')
+
+    def lookup_keys(client_cert, credentials, options):
+        raise CHAPIv1NotImplementedError('')
+
 
