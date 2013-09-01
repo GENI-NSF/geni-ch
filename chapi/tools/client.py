@@ -107,11 +107,6 @@ def main():
     elif opts.method in ['register_aggregate', 'remove_aggregate'] and opts.agg_url:
         (result, msg) = _do_ssl(framework, suppress_errors, reason, fcn, \
                                     opts.urn, opts.agg_url, opts.credentials, client_options)
-    # Methods that take credentials and options and urn arguments
-    elif opts.urn:
-        (result, msg) = _do_ssl(framework, suppress_errors, reason, fcn, \
-                                    opts.urn, \
-                                    opts.credentials, client_options)
     elif opts.int_arg and opts.method in ['get_services_of_type', 'get_first_service_of_type', 'get_service_by_id']:
         (result, msg) = _do_ssl(framework, suppress_errors, reason, fcn, \
                                     int(opts.int_arg))
@@ -153,7 +148,18 @@ def main():
         event_id = '20360';
         (result, msg) = _do_ssl(framework, suppress_errors, reason, fcn, \
                                     event_id)
+
+    elif opts.method in ['delete_key', 'update_key'] \
+            and opts.int_arg and opts.urn:
+        (result, msg) = _do_ssl(framework, suppress_errors, reason, fcn, \
+                                    opts.urn, opts.int_arg, 
+                                    opts.credentials, client_options)
                              
+    # Methods that take credentials and options and urn arguments
+    elif opts.urn:
+        (result, msg) = _do_ssl(framework, suppress_errors, reason, fcn, \
+                                    opts.urn, \
+                                    opts.credentials, client_options)
     # Methods that take credentials and options (and no urn) arguments
     else:
         (result, msg) = _do_ssl(framework, suppress_errors, reason, fcn, \
