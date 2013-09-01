@@ -134,6 +134,7 @@ class MAv1Implementation(MAv1DelegateBase):
     key_fields = ["KEY_MEMBER", "KEY_ID", "KEY_PUBLIC", "KEY_PRIVATE", 
                   "KEY_DESCRIPTION", "_GENI_KEY_FILENAME" ]
 
+    updatable_key_fields = ["KEY_DESCRIPTION"]
 
     def __init__(self):
         super(MAv1Implementation, self).__init__()
@@ -365,6 +366,32 @@ class MAv1Implementation(MAv1DelegateBase):
 
     def update_key(self, client_cert, member_urn, key_id, \
                        credentials, options):
+
+        # Check that all the fields are allowed to be updated
+        if 'fields' not in options:
+            return self._errorReturn(CHAPIv1ArgumentError("No fields in update_key"))
+        fields = options['fields']
+        unallowed_update_fields = []
+        update_fields = {}
+        for field_name in fields:
+            if field_name not in self.updatable_key_fields:
+                unallowed_update_fields.append(field_name)
+            else:
+                mapped_field = \
+                    convert_to_internal(field_name, self.key_field_mapping)
+                update_fields[mapped_field]=fields[field_name]
+        if len(unallowed_update_fields) != 0:
+            return self._errorReturn(CHAPIv1ArgumentError("Cannot update key on fields %s" % unallowed_update_fields))
+
+        session = self.db.getSession()
+        q = session.query(SshKey)
+        q = q.filter(SshKey.id == key_id)
+        print "UPDATE_FIELDS = " + str(update_fields)
+        num_upd = q.update(update_fields)
+
+        if num_upd == 0:
+            return self._errorReturn(CHAPIv1DatabaseError("No key with id %s" % key_id))
+        session.commit()
         return self._successReturn(True)
 
     def lookup_keys(self, client_cert, credentials, options):
