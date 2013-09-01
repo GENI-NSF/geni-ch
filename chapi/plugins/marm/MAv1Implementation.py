@@ -96,8 +96,18 @@ class MAv1Implementation(MAv1DelegateBase):
         "_GENI_MEMBER_SSL_PRIVATE_KEY": "private_key",
         "_GENI_MEMBER_INSIDE_PUBLIC_KEY": "certificate",
         "_GENI_MEMBER_INSIDE_PRIVATE_KEY": "private_key",
-        "_GENI_USER_CREDENTIAL": "foo",
-        "_GENI_KEY_FILENAME" : "foo"
+        "_GENI_USER_CREDENTIAL": "foo"
+        }
+
+    key_fields = ["KEY_MEMBER", "KEY_ID", "KEY_PUBLIC", "KEY_PRIVATE", 
+                  "KEY_DESCRIPTION", "_GENI_KEY_FILENAME" ]
+    key_field_mapping = {
+        "KEY_MEMBER": 'value',
+        "KEY_ID": 'id',
+        "KEY_PUBLIC": "public_key",
+        "KEY_PRIVATE": "private_key",
+        "KEY_DESCRIPTION":  "description",
+        "_GENI_KEY_FILENAME": "filename"
         }
 
     objects = ["MEMBER", "KEY"]
@@ -106,7 +116,9 @@ class MAv1Implementation(MAv1DelegateBase):
     attributes = ["MEMBER_URN", "MEMBER_UID", "MEMBER_FIRSTNAME", \
                   "MEMBER_LASTNAME", "MEMBER_USERNAME", "MEMBER_EMAIL", \
                   "_GENI_MEMBER_DISPLAYNAME", "_GENI_MEMBER_PHONE_NUMBER", \
-                  "_GENI_MEMBER_AFFILIATION", "_GENI_MEMBER_EPPN"]
+                  "_GENI_MEMBER_AFFILIATION", "_GENI_MEMBER_EPPN", \
+                      "KEY_MEMBER", "KEY_ID", "KEY_PUBLIC", "KEY_PRIVATE", \
+                      "KEY_DESCRIPTION", "_GENI_KEY_FILENAME"]
 
     public_fields = ["MEMBER_URN", "MEMBER_UID", "MEMBER_USERNAME", \
              "_GENI_MEMBER_SSL_PUBLIC_KEY", "_GENI_MEMBER_INSIDE_PUBLIC_KEY", \
@@ -124,6 +136,7 @@ class MAv1Implementation(MAv1DelegateBase):
 
 
     def __init__(self):
+        super(MAv1Implementation, self).__init__()
         self.db = pm.getService('chdbengine')
         mapper(MemberAttribute, self.db.MEMBER_ATTRIBUTE_TABLE)
         mapper(OutsideCert, self.db.OUTSIDE_CERT_TABLE)
@@ -335,16 +348,52 @@ class MAv1Implementation(MAv1DelegateBase):
 
     # Implementation of KEY Service methods
 
-    def create_key(client_cert, member_urn, credentials, options):
-        pass
+    def create_key(self, client_cert, member_urn, credentials, options):
+        return self._successReturn({})
 
-    def delete_key(client_cert, member_urn, key_id, credentials, options):
-        pass
+    def delete_key(self, client_cert, member_urn, key_id, \
+                       credentials, options):
 
-    def update_key(client_cert, member_urn, key_id, credentials, options):
-        pass
+        session = self.db.getSession()
+        q = session.query(SshKey)
+        q = q.filter(SshKey.id == key_id)
+        num_del = q.delete()
+        if num_del == 0:
+            return self._errorReturn(CHAPIv1DatabaseError("No key with id  %s" % key_id))
+        session.commit()
+        return self._successReturn(True)
 
-    def lookup_keys(client_cert, credentials, options):
-        pass
+    def update_key(self, client_cert, member_urn, key_id, \
+                       credentials, options):
+        return self._successReturn(True)
+
+    def lookup_keys(self, client_cert, credentials, options):
+        selected_columns, match_criteria = \
+            unpack_query_options(options, self.key_field_mapping)
+        if not match_criteria:
+            raise CHAPIv1ArgumentError('Missing a "match" option')
+        self.check_attributes(match_criteria)
+
+        session = self.db.getSession()
+
+        q = session.query(self.db.SSH_KEY_TABLE, \
+                              self.db.MEMBER_ATTRIBUTE_TABLE.c.value)
+        q = q.filter(self.db.SSH_KEY_TABLE.c.member_id == self.db.MEMBER_ATTRIBUTE_TABLE.c.member_id)
+        q = q.filter(self.db.MEMBER_ATTRIBUTE_TABLE.c.name=='urn')
+
+        # Handle key_member specially : it is not part of the SSH key table
+        if 'KEY_MEMBER' in match_criteria.keys():
+            member_urn = match_criteria['KEY_MEMBER']
+            q = q.filter(self.db.MEMBER_ATTRIBUTE_TABLE.c.value == member_urn)
+            del match_criteria['KEY_MEMBER']
+
+        q = add_filters(q, match_criteria, self.db.SSH_KEY_TABLE, self.key_field_mapping)
+        rows = q.all()
+        session.close()
+
+        keys = [construct_result_row(row, selected_columns, \
+                                         self.key_field_mapping) \
+                    for row in rows]
+        return self._successReturn(keys)
 
 
