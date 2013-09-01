@@ -54,6 +54,8 @@ def parseOptions():
                       default="get_version")
     parser.add_option("--agg_url",  help="URL of aggregate in some API calls",
                       default = None)
+    parser.add_option("--int_arg", help="Integer argument for some calls",
+                      default = None)
     parser.add_option("--options", help="JSON of options argument", default="{}")
     parser.add_option("--options_file", help="File containing JSON of options argument", default=None)
     parser.add_option("--credentials", \
@@ -110,6 +112,11 @@ def main():
         (result, msg) = _do_ssl(framework, suppress_errors, reason, fcn, \
                                     opts.urn, \
                                     opts.credentials, client_options)
+    elif opts.int_arg and opts.method in ['get_services_of_type', 'get_first_service_of_type', 'get_service_by_id']:
+        (result, msg) = _do_ssl(framework, suppress_errors, reason, fcn, \
+                                    int(opts.int_arg))
+    elif opts.method in ['get_services']:
+        (result, msg) = _do_ssl(framework, suppress_errors, reason, fcn)
     # Logging methods (test)
     elif opts.method in ['log_event']:
         message = "Now is the time"

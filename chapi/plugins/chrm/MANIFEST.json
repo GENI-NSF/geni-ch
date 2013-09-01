@@ -3,7 +3,7 @@
   "author" : "Narshall Brinn",
   "author-email" : "mbrinn@bbn.com",
   "version" : 1,
-  "implements" : ["chdbengine"],
+  "implements" : ["chdbengine", "srv1handler"],
   "loads-after" : ["chv1handler"],
   "requires" : []
 }

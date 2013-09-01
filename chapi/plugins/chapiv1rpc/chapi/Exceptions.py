@@ -67,7 +67,7 @@ class CHAPIv1ArgumentError(CHAPIv1BaseError):
                                                  comment)
 
 # Exception for a database error (should return the database details)
-class CHAPIv1DatabseError(CHAPIv1BaseError):
+class CHAPIv1DatabaseError(CHAPIv1BaseError):
     def __init__(self, comment):
         super(self.__class__, self).__init__(DATABASE_ERROR, \
                                                  'DATABASE', 'DATABASE_ERROR', \

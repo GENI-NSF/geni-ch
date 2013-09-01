@@ -22,7 +22,8 @@
 #----------------------------------------------------------------------
 
 import amsoil.core.pluginmanager as pm
-from CHv1Implementation import CHv1Implementation
+from ServiceRegistry import SRv1Handler, SRv1Delegate
+#from CHv1Implementation import CHv1Implementation
 from CHv1PersistentImplementation import CHv1PersistentImplementation
 from CHDatabaseEngine import CHDatabaseEngine
 from CHv1Guard import CHv1Guard
@@ -44,10 +45,18 @@ def setup():
     pm.registerService('chdbengine', db_engine)
 
 #    delegate = CHv1Implementation()
+
     delegate = CHv1PersistentImplementation()
     guard = CHv1Guard()
     handler = pm.getService('chv1handler')
-    handler.setDelegate(delegate)
-    handler.setGuard(guard)
+
+
+    sr_handler = SRv1Handler()
+    pm.registerService('srv1handler', sr_handler)
+    sr_delegate = SRv1Delegate()
+    sr_handler.setDelegate(sr_delegate)
+
+    xmlrpc = pm.getService('xmlrpc')
+    xmlrpc.registerXMLRPC('sr1', sr_handler, '/SR')
 
 
