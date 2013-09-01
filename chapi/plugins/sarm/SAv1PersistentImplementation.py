@@ -155,6 +155,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
 
 
     def __init__(self):
+        super(SAv1PersistentImplementation, self).__init__()
         self.db = pm.getService('chdbengine')
         self.config = pm.getService('config')
         self.cert = self.config.get('chapiv1rpc.ch_cert')
