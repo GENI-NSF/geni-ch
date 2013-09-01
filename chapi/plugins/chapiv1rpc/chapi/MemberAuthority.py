@@ -143,7 +143,7 @@ class MAv1Handler(HandlerBase):
     #   including the KEY_ID
     # Should return DUPLICATE_ERROR if a key with the same KEY_ID is 
     #  already stored for given user
-    def create_key(member_urn, credentials, options):
+    def create_key(self, member_urn, credentials, options):
         client_cert = self.requestCertificate()
         method = 'create_key'
         try:
@@ -172,7 +172,7 @@ class MAv1Handler(HandlerBase):
     # Return:
     # True if succeeded
     # Should return ARGUMENT_ERROR if no such key is found for user
-    def delete_key(member_urn, key_id, credentials, options):
+    def delete_key(self, member_urn, key_id, credentials, options):
         client_cert = self.requestCertificate()
         method = 'delete_key'
         try:
@@ -205,7 +205,7 @@ class MAv1Handler(HandlerBase):
     # Return:
     # True if succeeded
     # Should return ARGUMENT_ERROR if no such key is found for user
-    def update_key(member_urn, key_id, credentials, options):
+    def update_key(self, member_urn, key_id, credentials, options):
         client_cert = self.requestCertificate()
         method = 'update_key'
         try:
@@ -236,7 +236,7 @@ class MAv1Handler(HandlerBase):
     # Return:
     #  Dictionary (indexed by member_urn) of dictionaries containing 
     #     name/value pairs for all keys registered for that given user.
-    def lookup_keys(credentials, options):
+    def lookup_keys(self, credentials, options):
         client_cert = self.requestCertificate()
         method = 'lookup_keys'
         try:
@@ -288,16 +288,16 @@ class MAv1DelegateBase(DelegateBase):
 
     # KEY service methods
 
-    def create_key(client_cert, member_urn, credentials, options):
+    def create_key(self, client_cert, member_urn, credentials, options):
         raise CHAPIv1NotImplementedError('')
 
-    def delete_key(client_cert, member_urn, key_id, credentials, options):
+    def delete_key(self, client_cert, member_urn, key_id, credentials, options):
         raise CHAPIv1NotImplementedError('')
 
-    def update_key(client_cert, member_urn, key_id, credentials, options):
+    def update_key(self, client_cert, member_urn, key_id, credentials, options):
         raise CHAPIv1NotImplementedError('')
 
-    def lookup_keys(client_cert, credentials, options):
+    def lookup_keys(self, client_cert, credentials, options):
         raise CHAPIv1NotImplementedError('')
 
 
