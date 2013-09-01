@@ -217,6 +217,7 @@ class MAv1Handler(HandlerBase):
                 self._guard.adjust_client_identity(client_cert, \
                                                        credentials, options)
             results = self._delegate.update_key(client_cert, member_urn, \
+                                                    key_id, \
                                                     credentials, options)
             if results['code'] == NO_ERROR:
                 results_value = results['value']
