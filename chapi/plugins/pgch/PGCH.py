@@ -436,18 +436,15 @@ class PGCHv1Delegate(DelegateBase):
 
         member_urn = extract_user_urn(client_cert)
 
-        options = {'match' : {'MEMBER_URN' : member_urn}}
-        member_info_result = \
-            self._ma_handler._delegate.lookup_public_member_info(client_cert, creds, options)
-        if member_info_result['code'] != NO_ERROR:
-            return member_info_result
-        member_info = member_info_result['value']
-        keys = []
-        for member_urn in member_info.keys():
-            member = member_info[member_urn]
-            ssh_key = member['MEMBER_SSH_PUBLIC_KEY']
-            ssh_key_dict = {'type' : 'ssh', 'key' : ssh_key}
-            keys.append(ssh_key_dict)
+        options = {'match' : {'KEY_MEMBER' : member_urn}}
+        ssh_keys_result = \
+            self._ma_handler._delegate.lookup_keys(client_cert, creds, options)
+#        print "SSH_KEYS_RESULT = " + str(ssh_keys_result)
+        if ssh_keys_result['code'] != NO_ERROR:
+            return ssh_keys_result
+
+        keys = [{'type' : 'ssh' , 'key' : ssh_key['KEY_PUBLIC']} \
+                    for ssh_key in ssh_keys_result['value']]
         
         return self._successReturn(keys)
 
