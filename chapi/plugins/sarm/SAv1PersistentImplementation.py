@@ -36,6 +36,7 @@ from datetime import *
 from dateutil.relativedelta import relativedelta
 import uuid
 from CHDatabaseEngine import Aggregate
+from geni_constants import *
 
 
 # Utility functions for morphing from native schema to public-facing
@@ -345,6 +346,14 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
             email = slice.slice_email, uuidarg=slice.slice_id)
         slice.certificate = cert.save_to_string()
 
+        # Add slice lead member
+        ins = self.db.SLICE_MEMBER_TABLE.insert().values(slice_id=slice.slice_id, member_id = client_uuid, role = LEAD_ATTRIBUTE) 
+        result = session.execute(ins)
+
+        # Add project lead as member (if not same)
+        # *** WRITE ME
+        # *** Also, possibly add row to CS_ASSERTION table
+
         attribs = [{"SLICE" : slice.slice_id}, {"PROJECT" : slice.project_id}]
         self.logging_service.log_event("Created slice " + name, 
                                        attribs, client_uuid)
@@ -387,6 +396,30 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         if not project.expiration:
             project.expiration = project.creation + relativedelta(days=7)
         project.project_id = str(uuid.uuid4())
+
+        if not hasattr(project, 'project_email') or not project.project_email:
+            email = "project-%s@example.com" % name
+            setattr(project, 'project_email', email)
+
+        # Set the project lead (the creator)
+        if not hasattr(project, 'lead_id') or not project.lead_id:
+            setattr(project, 'lead_id', client_uuid)
+
+        # Add project lead member to member table and assertion table
+        ins = self.db.PROJECT_MEMBER_TABLE.insert().values(\
+            project_id=project.project_id, \
+                member_id = client_uuid, \
+                role = LEAD_ATTRIBUTE) 
+        result = session.execute(ins)
+
+        # *** Do we still need this? ***
+        ins = self.db.ASSERTION_TABLE.insert().values(\
+            signer=client_uuid, \
+                principal=client_uuid, \
+                attribute = LEAD_ATTRIBUTE, \
+                context_type = PROJECT_CONTEXT, \
+                context = project.project_id)
+        result = session.execute(ins)
 
         attribs = [{"PROJECT" : project.project_id}]
         self.logging_service.log_event("Created project " + name, 
