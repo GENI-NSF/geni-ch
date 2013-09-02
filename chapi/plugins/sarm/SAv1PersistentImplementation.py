@@ -346,7 +346,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         slice.certificate = cert.save_to_string()
 
         attribs = [{"SLICE" : slice.slice_id}, {"PROJECT" : slice.project_id}]
-        self.logging_service.log_event("Creates slice " + name, 
+        self.logging_service.log_event("Created slice " + name, 
                                        attribs, client_uuid)
 
         # do the database write
@@ -370,6 +370,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
 
     # create a new project
     def create_project(self, client_cert, credentials, options):
+        client_uuid = get_uuid_from_cert(client_cert)
         session = self.db.getSession()
 
         # check that project does not already exist
@@ -386,6 +387,11 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         if not project.expiration:
             project.expiration = project.creation + relativedelta(days=7)
         project.project_id = str(uuid.uuid4())
+
+        attribs = [{"PROJECT" : project.project_id}]
+        self.logging_service.log_event("Created project " + name, 
+                                       attribs, client_uuid)
+
 
         # do the database write
         return self.finish_create(session, project,  self.project_field_mapping, \
