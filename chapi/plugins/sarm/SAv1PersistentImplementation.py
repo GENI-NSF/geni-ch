@@ -211,7 +211,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
     def lookup_slice_members(self, client_cert, slice_urn, credentials, options):
         return self.lookup_members(self.db.SLICE_TABLE, \
             self.db.SLICE_MEMBER_TABLE, slice_urn, "slice_urn", \
-            "slice_id", "SLICE_ROLE", "SLICE_MEMBER")
+            "slice_id", "SLICE_ROLE", "SLICE_MEMBER", "SLICE_MEMBER_UID")
 
     # members in a project
     def lookup_project_members(self, client_cert, project_urn, \
@@ -219,11 +219,12 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         project_name = from_project_urn(project_urn)
         return self.lookup_members(self.db.PROJECT_TABLE, \
             self.db.PROJECT_MEMBER_TABLE, project_name, "project_name", \
-            "project_id", "PROJECT_ROLE", "PROJECT_MEMBER")
+            "project_id", "PROJECT_ROLE", "PROJECT_MEMBER", \
+                                       "PROJECT_MEMBER_UID")
 
     # shared code for lookup_slice_members() and lookup_project_members()
     def lookup_members(self, table, member_table, name, name_field, \
-                       id_field, role_txt, member_txt):
+                       id_field, role_txt, member_txt, member_uid_txt):
         session = self.db.getSession()
         q = session.query(member_table, table.c[name_field],
                           self.db.MEMBER_ATTRIBUTE_TABLE.c.value,
@@ -237,7 +238,8 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         q = q.filter(member_table.c.role == self.db.ROLE_TABLE.c.id)
         rows = q.all()
         session.close()
-        members = [{role_txt: row.name, member_txt: row.value} for row in rows]
+        members = [{role_txt: row.name, member_txt: row.value, \
+                        member_uid_txt : row.member_id} for row in rows]
         return self._successReturn(members)
 
     def lookup_slices_for_member(self, client_cert, member_urn, \
@@ -325,8 +327,10 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
 
         # fill in the fields of the object
         slice = Slice()
+        project_urn = None
         for key, value in options["fields"].iteritems():
             if key == "_GENI_PROJECT_URN":
+                project_urn = value
                 project_name = from_project_urn(value)
                 slice.project_id = self.get_project_id(session, \
                                       "project_name", project_name)
@@ -349,10 +353,42 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         # Add slice lead member
         ins = self.db.SLICE_MEMBER_TABLE.insert().values(slice_id=slice.slice_id, member_id = client_uuid, role = LEAD_ATTRIBUTE) 
         result = session.execute(ins)
+        # *** Do we still need this?
+        ins = self.db.ASSERTION_TABLE.insert().values(\
+            signer=client_uuid, \
+                principal=client_uuid,
+                attribute = LEAD_ATTRIBUTE, \
+                context_type = SLICE_CONTEXT, \
+                context = slice.slice_id)
+        result = session.execute(ins)
+
 
         # Add project lead as member (if not same)
-        # *** WRITE ME
-        # *** Also, possibly add row to CS_ASSERTION table
+        project_lead_uuid = None
+        lookup_result = self.lookup_project_members(client_cert, \
+                                                        project_urn, \
+                                                        credentials, \
+                                                        {})
+        if lookup_result['code'] != NO_ERROR:
+            return lookup_result
+        for row in lookup_result['value']:
+            if row['PROJECT_ROLE'] == LEAD_ATTRIBUTE:
+                project_lead_uuid = row['MEMBER_UID']
+                break
+
+        if project_lead_uuid != client_uuid:
+            ins = self.db.SLICE_MEMBER_TABLE.insert().values(slice_id=slice.slice_id, member_id = project_lead_uuid, role=MEMBER_ATTRIBUTE)
+            result = session.execute(ins)
+            # *** Do we still need this?
+            ins = self.db.ASSERTION_TABLE.insert().values(\
+                signer=client_uuid, \
+                    principal=project_lead_uuid, \
+                    attribute = MEMBER_ATTRIBUTE, \
+                    context_type = SLICE_CONTEXT, \
+                    context = slice.slice_id)
+            result = session.execute(ins)
+                
+
 
         attribs = [{"SLICE" : slice.slice_id}, {"PROJECT" : slice.project_id}]
         self.logging_service.log_event("Created slice " + name, 
