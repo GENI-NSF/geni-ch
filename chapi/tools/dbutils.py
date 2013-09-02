@@ -34,6 +34,40 @@ def convert_to_internal(external_field, mapping):
         raise CHAPIv1ArgumentError("No such field in schema : " + external_field)
     return mapping[external_field]
 
+# Convert the keys name/value dictionary  from external to internal
+def convert_dict_to_internal(external_dict, mapping):
+    internal_dict = {}
+    for external_key in external_dict.keys():
+        value = external_dict[external_key]
+        internal_key = convert_to_internal(external_key, mapping)
+        internal_dict[internal_key] = value
+    return internal_dict
+
+# Make sure all required fields are in dictionary keys
+# And only allowwable fields are in dictionary keys
+def validate_fields(fields_dict, required_keys, allowed_keys):
+    # Are all required keys in fields_dict key
+    missing_required_keys = []
+    if required_keys:
+        for required_key in required_keys:
+            if not required_key in fields_dict:
+                missing_required_keys.append(required_key)
+
+    if len(missing_required_keys) > 0:
+        raise CHAPIv1ArgumentError("Missing required key" +  \
+                                       "for DB transaction : %s" \
+                                       % missing_required_keys)
+
+    # Are all field_dict_keys allowed?
+    unallowed_keys = []
+    for key in fields_dict.keys():
+        if not key in allowed_keys:
+            unallowed_keys.append(key)
+
+    if len(unallowed_keys) > 0:
+        raise CHAPIv1ArgumentError("Unallowed keys for DB transaction : %s" \
+                                       % unallowed_keys)
+
 
 # Convert internal field name to external field name based on given mapping
 def convert_to_external(internal_field, mapping):
