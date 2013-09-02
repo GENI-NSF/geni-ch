@@ -134,8 +134,10 @@ class MAv1Implementation(MAv1DelegateBase):
     key_fields = ["KEY_MEMBER", "KEY_ID", "KEY_PUBLIC", "KEY_PRIVATE", 
                   "KEY_DESCRIPTION", "_GENI_KEY_FILENAME" ]
 
+    required_create_key_fields = ["KEY_PUBLIC"]
+    allowed_create_key_fields = ["KEY_PUBLIC", "KEY_PRIVATE", "KEY_DESCRIPTION", "_GENI_KEY_FILENAME"]
     updatable_key_fields = ["KEY_DESCRIPTION"]
-
+    
     def __init__(self):
         super(MAv1Implementation, self).__init__()
         self.db = pm.getService('chdbengine')
@@ -232,6 +234,8 @@ class MAv1Implementation(MAv1DelegateBase):
             for col in selected_columns:
                 if col == "_GENI_USER_CREDENTIAL":
                     values[col] = self.get_user_credential(session, uid)
+                elif col == "MEMBER_UID":
+                    values[col] = uid
                 else:
                     if col in self.attributes:
                         vals = self.get_attr_for_uid(session, col, uid)
@@ -350,7 +354,39 @@ class MAv1Implementation(MAv1DelegateBase):
     # Implementation of KEY Service methods
 
     def create_key(self, client_cert, member_urn, credentials, options):
-        return self._successReturn({})
+
+       # Check that all the fields are allowed to be updated
+        if 'fields' not in options:
+            return self._errorReturn(CHAPIv1ArgumentError("No fields in update_key"))
+        fields = options['fields']
+        validate_fields(fields, self.required_create_key_fields, \
+                            self.allowed_create_key_fields)
+        create_fields = \
+            convert_dict_to_internal(fields, self.key_field_mapping)
+
+        # Add member_id to create_fields
+        lookup_member_id_options = {'match' : {'MEMBER_URN' : member_urn},
+                                    'filter' : ['MEMBER_UID']}
+        result = \
+            self.lookup_public_member_info(credentials, \
+                                               lookup_member_id_options)
+        if result['code'] != NO_ERROR:
+            return result
+#        print "RESULT = " + str(result)
+#        print "RESULT_KEYS = " + str(result['value'].keys())
+#        print "RESULT_KEYS = " + str(result['value'][member_urn].keys())
+        member_id = result['value'][member_urn]['MEMBER_UID']
+        create_fields['member_id'] = member_id
+
+        session = self.db.getSession()
+        ins = self.db.SSH_KEY_TABLE.insert().values(create_fields)
+        result = session.execute(ins)
+        key_id = result.inserted_primary_key[0]
+        fields["KEY_ID"] = key_id
+        fields["KEY_MEMBER"] = member_urn
+
+        session.commit()
+        return self._successReturn(fields)
 
     def delete_key(self, client_cert, member_urn, key_id, \
                        credentials, options):
@@ -371,22 +407,13 @@ class MAv1Implementation(MAv1DelegateBase):
         if 'fields' not in options:
             return self._errorReturn(CHAPIv1ArgumentError("No fields in update_key"))
         fields = options['fields']
-        unallowed_update_fields = []
-        update_fields = {}
-        for field_name in fields:
-            if field_name not in self.updatable_key_fields:
-                unallowed_update_fields.append(field_name)
-            else:
-                mapped_field = \
-                    convert_to_internal(field_name, self.key_field_mapping)
-                update_fields[mapped_field]=fields[field_name]
-        if len(unallowed_update_fields) != 0:
-            return self._errorReturn(CHAPIv1ArgumentError("Cannot update key on fields %s" % unallowed_update_fields))
-
+        validate_fields(fields, None, self.updatable_key_fields)
+        update_fields = \
+            convert_dict_to_internal(fields, self.key_field_mapping)
         session = self.db.getSession()
         q = session.query(SshKey)
         q = q.filter(SshKey.id == key_id)
-        print "UPDATE_FIELDS = " + str(update_fields)
+#        print "UPDATE_FIELDS = " + str(update_fields)
         num_upd = q.update(update_fields)
 
         if num_upd == 0:
