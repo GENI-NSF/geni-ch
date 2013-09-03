@@ -40,7 +40,9 @@ class CHv1Handler(HandlerBase):
     # Return version of CH API including object model
     def get_version(self):
         try:
-            return self._delegate.get_version()
+            gv_return = self._delegate.get_version()
+            print "GV_RETURN = " + str(gv_return)
+            return gv_return
         except Exception as e:
             return self._errorReturn(e)
     
@@ -49,9 +51,6 @@ class CHv1Handler(HandlerBase):
     # specified in options
     def get_member_authorities(self, options):
         try:
-            self._guard.validate_call(self.requestCertificate(), \
-                                          'get_member_authorities', \
-                                          [], options)
             return self._delegate.get_member_authorities(options)
         except Exception as e:
             return self._errorReturn(e)
@@ -61,9 +60,6 @@ class CHv1Handler(HandlerBase):
     # specified in options
     def get_slice_authorities(self, options):
         try:
-            self._guard.validate_call(self.requestCertificate(), \
-                                          'get_slice_authorities', \
-                                          [], options)
             return self._delegate.get_slice_authorities(options)
         except Exception as e:
             return self._errorReturn(e)
@@ -73,9 +69,6 @@ class CHv1Handler(HandlerBase):
     # specified in options
     def get_aggregates(self, options):
         try:
-            self._guard.validate_call(self.requestCertificate(), \
-                                          'get_aggregates', \
-                                          [], options)
             return self._delegate.get_aggregates(options)
         except Exception as e:
             return self._errorReturn(e)
@@ -84,9 +77,6 @@ class CHv1Handler(HandlerBase):
     # Return URL of authority (slice or member) for given URN
     def lookup_authorities_for_urns(self, options):
         try:
-            self._guard.validate_call(self.requestCertificate(), \
-                                          'lookup_authorities_for_urns', \
-                                          [], options)
             return self._delegate.lookup_authorities_for_urns(options)
         except Exception as e:
             return self._errorReturn(e)
