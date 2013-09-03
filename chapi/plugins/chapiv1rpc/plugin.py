@@ -32,8 +32,9 @@ def setup():
     # setup config keys
     config = pm.getService("config")
 
-    home = os.getenv('HOME')
-    gcf_root = os.path.join(home, '.gcf')
+    gcf_root = "/usr/share/geni-ch/portal/gcf"
+    config.install('chapiv1rpc.gcf_root', gcf_root, \
+                       "Location of local GCF install")
     config.install("chapiv1rpc.ch_cert_root", \
                        os.path.join(gcf_root, 'trusted_roots'), \
                        "Folder which includes trusted clearinghouse certificates for GENI API v3 (in .pem format). If relative path, the root is assumed to be git repo root.")
