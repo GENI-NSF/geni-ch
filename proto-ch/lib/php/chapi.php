@@ -27,11 +27,9 @@ require_once('util.php');
 require_once('guard.php');
 require_once 'geni_syslog.php';
 
-$CHBASE = 'https://marilac.gpolab.bbn.com:8001';
-
-$SRURL = $CHBASE . '/CH';
-$SAURL = $CHBASE . '/SA';
-$MRURL = $CHBASE . '/MA';
+//
+// requires php5-xmlrpc (as a .deb).
+//
 
 // CH API XML/RPC client abstraction.
 // If $signer (also called user) is supplied, will use private key and cert to sign 
@@ -54,6 +52,53 @@ class XMLRPCClient
   }
 
   public function call($fun, $args)
+  {
+    $request = xmlrpc_encode_request($fun, $args);
+    $ch = curl_init();
+    $headers = array("Content-Type: text/xml",
+		     "Content-Length: ".strlen($request),
+		     "\r\n");
+    curl_setopt($ch, CURLOPT_URL, $this->url);
+    curl_setopt($ch, CURLOPT_POST, true);
+    curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, $query);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false); // enable this
+    // CURLOPT_CAPATH, /path/to/CA/dir
+    //
+
+    $pemf = null;
+    if ($this->signer) {
+      $cert = $this->signer->certificate();
+      //$key = $this->signer->privateKey();
+      if ($cert) {
+	$pemf = $this->signer->write();
+	curl_setopt($ch, CURLOPT_SSLKEY, $pemf);
+	curl_setopt($ch, CURLOPT_SSLKEYTYPE, "PEM");
+	curl_setopt($ch, CURLOPT_SSLCERT, $pemf);
+      }
+    }
+    $ret = curl_exec($ch);
+    if ($ret === FALSE) {
+      error_log("CHAPI: CURL_ERROR = " . curl_error($ch));
+    }
+
+    if (! is_null($pemf)) {
+      unlink($pemf);
+    }
+
+    if ($this->rawreturn) {
+      return $result;
+    }
+
+    $result = xmlrpc_decode($ret);
+
+    // TODO: restore compatibility with old put_message_handler API
+    return $this->default_put_message_result_handler($result);
+  }
+
+  public function call_old($fun, $args)
   {
     $request = xmlrpc_encode_request($fun, $args);
     //print_r($request);
