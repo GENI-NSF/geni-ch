@@ -84,6 +84,8 @@ class XMLRPCClient
       error_log("CHAPI: CURL_ERROR = " . curl_error($ch));
     }
 
+    curl_close($ch);
+
     if (! is_null($pemf)) {
       unlink($pemf);
     }
@@ -93,6 +95,7 @@ class XMLRPCClient
     }
 
     $result = xmlrpc_decode($ret);
+
 
     // TODO: restore compatibility with old put_message_handler API
     return $this->default_put_message_result_handler($result);
