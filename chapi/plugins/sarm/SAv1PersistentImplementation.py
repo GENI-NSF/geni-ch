@@ -37,6 +37,7 @@ from dateutil.relativedelta import relativedelta
 import uuid
 from CHDatabaseEngine import Aggregate
 from geni_constants import *
+from tools.cs_utils import *
 
 
 # Utility functions for morphing from native schema to public-facing
@@ -353,15 +354,10 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         # Add slice lead member
         ins = self.db.SLICE_MEMBER_TABLE.insert().values(slice_id=slice.slice_id, member_id = client_uuid, role = LEAD_ATTRIBUTE) 
         result = session.execute(ins)
-        # *** Do we still need this?
-        ins = self.db.ASSERTION_TABLE.insert().values(\
-            signer=client_uuid, \
-                principal=client_uuid,
-                attribute = LEAD_ATTRIBUTE, \
-                context_type = SLICE_CONTEXT, \
-                context = slice.slice_id)
-        result = session.execute(ins)
 
+        # Keep assertions synchronized with membership
+        add_attribute(self.db, session, client_uuid, client_uuid, \
+                          LEAD_ATTRIBUTE, SLICE_CONTEXT, slice.slice_id)
 
         # Add project lead as member (if not same)
         project_lead_uuid = None
@@ -379,15 +375,9 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         if project_lead_uuid != client_uuid:
             ins = self.db.SLICE_MEMBER_TABLE.insert().values(slice_id=slice.slice_id, member_id = project_lead_uuid, role=MEMBER_ATTRIBUTE)
             result = session.execute(ins)
-            # *** Do we still need this?
-            ins = self.db.ASSERTION_TABLE.insert().values(\
-                signer=client_uuid, \
-                    principal=project_lead_uuid, \
-                    attribute = MEMBER_ATTRIBUTE, \
-                    context_type = SLICE_CONTEXT, \
-                    context = slice.slice_id)
-            result = session.execute(ins)
-                
+            # Keep assertions synchronized with membership
+            add_attribute(self.db, session, client_uuid, project_lead_uuid, \
+                              MEMBER_ATTRIBUTE, SLICE_CONTEXT, slice.slice_id)
 
 
         attribs = [{"SLICE" : slice.slice_id}, {"PROJECT" : slice.project_id}]
@@ -448,14 +438,10 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                 role = LEAD_ATTRIBUTE) 
         result = session.execute(ins)
 
-        # *** Do we still need this? ***
-        ins = self.db.ASSERTION_TABLE.insert().values(\
-            signer=client_uuid, \
-                principal=client_uuid, \
-                attribute = LEAD_ATTRIBUTE, \
-                context_type = PROJECT_CONTEXT, \
-                context = project.project_id)
-        result = session.execute(ins)
+        # Keep assertions synchronized with membership
+        add_attribute(self.db, session, client_uuid, client_uuid, \
+                          LEAD_ATTRIBUTE, \
+                          PROJECT_CONTEXT, project.project_id)
 
         attribs = [{"PROJECT" : project.project_id}]
         self.logging_service.log_event("Created project " + name, 
