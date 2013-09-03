@@ -148,7 +148,12 @@ def main():
         event_id = '20360';
         (result, msg) = _do_ssl(framework, suppress_errors, reason, fcn, \
                                     event_id)
-
+    # Credential store methods
+    elif opts.method in ['get_permissions']:
+        (result, msg) = _do_ssl(framework, suppress_errors, reason, fcn)
+    elif opts.method in ['get_attributes']:
+        (result, msg) = _do_ssl(framework, suppress_errors, reason, fcn, \
+                                    opts.int_arg)
     elif opts.method in ['delete_key', 'update_key'] \
             and opts.int_arg and opts.urn:
         (result, msg) = _do_ssl(framework, suppress_errors, reason, fcn, \
