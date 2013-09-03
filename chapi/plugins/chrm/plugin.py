@@ -49,7 +49,7 @@ def setup():
     delegate = CHv1PersistentImplementation()
     guard = CHv1Guard()
     handler = pm.getService('chv1handler')
-
+    handler.setDelegate(delegate)
 
     sr_handler = SRv1Handler()
     pm.registerService('srv1handler', sr_handler)
