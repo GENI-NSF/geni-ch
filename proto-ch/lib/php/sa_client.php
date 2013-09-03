@@ -302,12 +302,12 @@ function get_slice_members_for_project($sa_url, $signer, $project_id, $role=null
   if (!is_null($role)) {
     $moptions['match'] = array('SLICE_ROLE'=>$role);
   }
-  for ($tuples as $stup) {
+  foreach ($tuples as $stup) {
     $surn = $stup['SLICE_URN'];
     $sid = $stup['SLICE_UID'];
     
     $mems = $client->lookup_slice_members($surn, $cert, $moptions);
-    for ($mems as $mtup) {
+    foreach ($mems as $mtup) {
       $results[] = array($sid, $mtup['SLICE_MEMBER'], $mtup['SLICE_ROLE']);
     }
   }
@@ -350,13 +350,13 @@ function lookup_slice_details($sa_url, $signer, $slice_uuids)
   $client = new XMLRCPClient($sa_url, $signer);
   
   $result = array();
-  for ($slice_uuids as $slice_uuid) {
+  foreach ($slice_uuids as $slice_uuid) {
     $options = array('match' => array('SLICE_UID'=>$slice_uid),
 		     //'filter' => array(...)
 		     );
     $tuples = $client->lookup_slices($cert, $options);
     $s = $tuples[0];
-    $result[$s['SLICE_UID']) = array($s['SLICE_UID'],
+    $result[$s['SLICE_UID']] = array($s['SLICE_UID'],
 				     $s['SLICE_NAME'],
 				     $s['SLICE_CREATION'],
 				     $s['SLICE_EXPRIATION'],
@@ -381,7 +381,7 @@ function get_slices_for_projects($sa_url, $signer, $project_uuids, $allow_expire
   $cert = $signer->certificate();
   $client = new XMLRCPClient($sa_url, $signer);
   $projects = array();
-  for ($project_uuids as $project_urn) {
+  foreach ($project_uuids as $project_urn) {
     $options = array('match' => array('PROJECT_URN' => $project_id),
 		     'filter' => array('SLICE_URN'));
     $slices = $client->lookup_slice_members($slice_id, $cert, $options);
