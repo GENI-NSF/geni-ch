@@ -60,7 +60,7 @@ function get_slice_credential($sa_url, $signer, $slice_id, $cert=NULL)
     error_log("Cannot get_slice_cred without a user cert");
     throw new Exception("Cannot get_slice_cred without a user cert");
   }
-  $client = new XMLRCPClient($sa_url, $signer);
+  $client = new XMLRPCClient($sa_url, $signer);
   $options = array();
 
   $result = $client->get_credentials($slice_urn, $cert, $options);
@@ -72,7 +72,7 @@ function get_slice_credential($sa_url, $signer, $slice_id, $cert=NULL)
 function create_slice($sa_url, $signer, $project_id, $project_name, $slice_name,
                       $owner_id, $description='')
 {
-  $client = new XMLRCPClient($sa_url, $signer);
+  $client = new XMLRPCClient($sa_url, $signer);
   $options = array('SLICE_NAME' => $slice_name,
 		   'SLICE_DESCRIPTION' => $description,
 		   'SLICE_EMAIL' => null,       // MIK: required for the api, but not passed through (controller was null)
@@ -91,7 +91,7 @@ function create_slice($sa_url, $signer, $project_id, $project_name, $slice_name,
 //CHAPI: ok
 function lookup_slice_ids($sa_url, $signer, $project_id)
 {
-  $client = new XMLRCPClient($sa_url, $signer);
+  $client = new XMLRPCClient($sa_url, $signer);
   $options = array('match' => array('PROJECT_URN' => $project_id),
 		   'filter' => array('SLICE_UID'));
   $cert = $signer->certificate();
@@ -136,7 +136,7 @@ function lookup_slice_ids($sa_url, $signer, $project_id)
 function lookup_slices($sa_url, $signer, $project_id, $member_id)  // project_id= project_urn, member_id=member_urn
 {
   $member_urn = get_member_urn($member_id);
-  $client = new XMLRCPClient($sa_url, $signer);
+  $client = new XMLRPCClient($sa_url, $signer);
   $options = array(
 		   'match' => array('PROJECT_URN' => $project_id),
 		   'filter' => array('SLICE_UID')
@@ -155,7 +155,7 @@ function lookup_slices($sa_url, $signer, $project_id, $member_id)  // project_id
 //CHAPI: ok, but assumes slice_id means slice_uid (to disambiguate from lookup_slice_by_urn)
 function lookup_slice($sa_url, $signer, $slice_id)
 {
-  $client = new XMLRCPClient($sa_url, $signer);
+  $client = new XMLRPCClient($sa_url, $signer);
   $options = array('match' => array('SLICE_UID' => $slice_id),
 		   // 'filter' => array('SLICE_URN')  // MIK: do we get everything if no filter specified?
 		   );
@@ -177,7 +177,7 @@ function lookup_slice($sa_url, $signer, $slice_id)
 //CHAPI: ok, but assumes slice_id means slice_uid (to disambiguate from lookup_slice_by_urn)
 function lookup_slice_by_urn($sa_url, $signer, $slice_urn)
 {
-  $client = new XMLRCPClient($sa_url, $signer);
+  $client = new XMLRPCClient($sa_url, $signer);
   $options = array('match' => array('SLICE_URN' => $slice_urn),
 		   // 'filter' => array('SLICE_URN')  // MIK: do we get everything if no filter specified?
 		   );
@@ -204,7 +204,7 @@ function renew_slice($sa_url, $signer, $slice_id, $expiration)
 {
   $slice_urn = get_slice_urn($sa_url, $signer, $slice_id);
 
-  $client = new XMLRCPClient($sa_url, $signer);
+  $client = new XMLCRPClient($sa_url, $signer);
   $options = array('update' => array('SLICE_EXPIRATION' => $expiration),
 		   );
   // MIK: maybe needs speaks-for support
@@ -225,7 +225,7 @@ function modify_slice_membership($sa_url, $signer, $slice_id,
 {
   $slice_urn = get_slice_urn($sa_url, $signer, $slice_id);
 
-  $client = new XMLRCPClient($sa_url, $signer);
+  $client = new XMLCRPClient($sa_url, $signer);
   $options = array('members_to_add' => $members_to_add,
 		   'members_to_remove' => $members_to_remove,
 		   'members_to_change' => $members_to_change,
@@ -271,7 +271,7 @@ function get_slice_members($sa_url, $signer, $slice_id, $role=null)
 {
   $slice_urn = get_slice_urn($sa_url, $signer, $slice_id);
 
-  $client = new XMLRCPClient($sa_url, $signer);
+  $client = new XMLCRPClient($sa_url, $signer);
   $options = array();
   if (! is_null($role)) {
     $options['match'] = array('SLICE_ROLE' => $role);
@@ -291,7 +291,7 @@ function get_slice_members($sa_url, $signer, $slice_id, $role=null)
 function get_slice_members_for_project($sa_url, $signer, $project_id, $role=null)
 {
   $cert = $signer->certificate();
-  $client = new XMLRCPClient($sa_url, $signer);
+  $client = new XMLCRPClient($sa_url, $signer);
 
   // get all slices of project
   $options = array('match' => array('PROJECT_UID'=>$slice_uid));
@@ -326,7 +326,7 @@ function get_slices_for_member($sa_url, $signer, $member_id, $is_member, $role=n
 {
   $member_urn = get_member_urn($member_id);
   $cert = $signer->certificate();
-  $client = new XMLRCPClient($sa_url, $signer);
+  $client = new XMLCRPClient($sa_url, $signer);
 
   if ($is_member) {
     $options = array();
@@ -347,7 +347,7 @@ function get_slices_for_member($sa_url, $signer, $member_id, $is_member, $role=n
 function lookup_slice_details($sa_url, $signer, $slice_uuids)
 {
   $cert = $signer->certificate();
-  $client = new XMLRCPClient($sa_url, $signer);
+  $client = new XMLCRPClient($sa_url, $signer);
   
   $result = array();
   foreach ($slice_uuids as $slice_uuid) {
@@ -379,7 +379,7 @@ function lookup_slice_details($sa_url, $signer, $slice_uuids)
 function get_slices_for_projects($sa_url, $signer, $project_uuids, $allow_expired=false)
 {
   $cert = $signer->certificate();
-  $client = new XMLRCPClient($sa_url, $signer);
+  $client = new XMLCRPClient($sa_url, $signer);
   $projects = array();
   foreach ($project_uuids as $project_urn) {
     $options = array('match' => array('PROJECT_URN' => $project_id),
@@ -394,7 +394,7 @@ function get_slices_for_projects($sa_url, $signer, $project_uuids, $allow_expire
 //CHAPI: new
 function get_slice_urn($sa_url, $signer, $slice_uid) {
   $cert = $signer->certificate();
-  $client = new XMLRCPClient($sa_url, $signer);
+  $client = new XMLCRPClient($sa_url, $signer);
   $options = array('match' => array('SLICE_UID'=>$slice_uid),
 		   'filter' => array('SLICE_URN'));
   $result = $client->lookup_slices($cert, $options);
