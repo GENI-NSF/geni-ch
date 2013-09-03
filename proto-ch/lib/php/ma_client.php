@@ -184,43 +184,22 @@ function lookup_keys_and_certs($ma_url, $signer, $member_uuid)
 }
 
 // CHAPI: unsupported
-function ma_create_account($ma_url, $signer, $attrs,
-        $self_asserted_attrs)
+function ma_create_account($ma_url, $signer, $attrs, $self_asserted_attrs)
 {
   $msg = "create_account is unimplemented";
   error_log($msg);
   throw new Exception($msg);
-  /*
-  $all_attrs = array();
-  foreach (array_keys($attrs) as $attr_name) {
-    $all_attrs[] = array(MA_ATTRIBUTE::NAME => $attr_name,
-            MA_ATTRIBUTE::VALUE => $attrs[$attr_name],
-            MA_ATTRIBUTE::SELF_ASSERTED => FALSE);
-  }
-  foreach (array_keys($self_asserted_attrs) as $attr_name) {
-    $all_attrs[] = array(MA_ATTRIBUTE::NAME => $attr_name,
-            MA_ATTRIBUTE::VALUE => $self_asserted_attrs[$attr_name],
-            MA_ATTRIBUTE::SELF_ASSERTED => TRUE);
-  }
-  $msg['operation'] = 'create_account';
-  $msg[MA_ARGUMENT::ATTRIBUTES] = $all_attrs;
-  $result = put_message($ma_url, $msg,
-          $signer->certificate(), $signer->privateKey());
-  return $result;
-  */
 }
 
 // CHAPI: ok
 class Member {
-  function __construct() {
+  function __construct($id) {
+    $this->member_id = $id;
   }
-  function init_from_record($record) {
-    $this->member_id = $record[MA_ARGUMENT::MEMBER_ID];
-    $attrs = $record[MA_ARGUMENT::ATTRIBUTES];
-    foreach ($attrs as $attr) {
-      $aname = $attr[MA_ATTRIBUTE::NAME];
-      $aval = $attr[MA_ATTRIBUTE::VALUE];
-      $this->{$aname} = $aval;
+  
+  function init_from_record($attrs) {
+    foreach ($attrs as $k => $v) {
+      $this->{$k} = $v;
     }
   }
   function prettyName() {
@@ -234,130 +213,122 @@ class Member {
   }
 }
 
-function ma_lookup_members($ma_url, $signer, $lookup_attrs)
+// lookup a member by EPPN.
+//   return a member object or null
+// CHAPI: new replaced all external uses of ma_lookup_members
+function ma_lookup_member_by_eppn($ma_url, $signer, $eppn)
+{
+  $res =  ma_lookup_member_by_identifying($ma_url, $signer, 'MEMBER_EPPN', $eppn);
+  if ($res) {
+    return $res[0];
+  } else {
+    return null;
+  }
+}
+
+// lookup one or more members by some identifying key/value.
+//   return an array of members (possibly empty)
+// replaces uses of ma_lookup_members
+// CHAPI: new
+function ma_lookup_members_by_identifying($ma_url, $singer, $identifying_key, $identifying_value)
 {
   global $member_cache;
   global $member_by_attribute_cache;
 
-  $cache_key = '';
-  if (count($lookup_attrs) == 1) {
-    $keys = array_keys($lookup_attrs);
-    $attr_key = $keys[0];
-    $attr_value = $lookup_attrs[$attr_key];
-    $cache_key = $attr_key . "." . $attr_value;
-      if (array_key_exists($cache_key, $member_by_attribute_cache)) {
-	//	error_log("CACHE HIT lookup_members : " . $cache_key);
-	return $member_by_attribute_cache[$cache_key];
-      }
-  }
-  $attrs = array();
-  foreach (array_keys($lookup_attrs) as $attr_name) {
-    $attrs[] = array(MA_ATTRIBUTE::NAME => $attr_name,
-            MA_ATTRIBUTE::VALUE => $lookup_attrs[$attr_name]);
-  }
-  $msg['operation'] = 'lookup_members';
-  $msg[MA_ARGUMENT::ATTRIBUTES] = $attrs;
-  $members = put_message($ma_url, $msg,
-          $signer->certificate(), $signer->privateKey());
-  // Somegtimes we get the whole record, not just value, 
-  // depending on the controller
-  if (array_key_exists(RESPONSE_ARGUMENT::CODE, $members)) {
-    if ($members[RESPONSE_ARGUMENT::CODE] != RESPONSE_ERROR::NONE)
-      return array();
-    $members = $members[RESPONSE_ARGUMENT::VALUE];
-  }
-  $result = array();
-  foreach ($members as $member_info) {
-    $member = new Member();
-    $member->init_from_record($member_info);
-    $member_id = $member_info[MA_ARGUMENT::MEMBER_ID];
-    $member_cache[$member_id] = $member;
-    $result[] = $member;
+  $cache_key = $identifying_key.'.'.$identifying_value;
+  if (array_key_exists($cache_key, $member_attribute_cache)) {
+    return $member_by_attribute_cache[$cache_key];
   }
 
-  if (count($lookup_attrs) == 1) {
-    $member_by_attribute_cache[$cache_key] = $result;
+  $members = array();
+
+  $client = new XMLRCPClient($ma_url, $signer);
+  $options = array('match'=> array($identifying_key=>$identifying_value));
+  $idres = $client->lookup_identifying_member_info($cert, $options);
+  foreach ($ires as $idrow) {
+    $id = $idrow['MEMBER_UID'];
+    $prow = $client->lookup_public_member_info($cert, array('match' => array('MEMBER_UID'=>$id)));
+    $m = Member($id);
+    $m->init_from_record($ires);
+    $m->init_from_record($prow[0]);
+    $members[] = $m;
+    $member_cache[$id] = $m;
   }
-  return $result;
+  $member_by_attribute_cache[$cache_key] = $members;
+
+  return $members;
 }
 
+
+//CHAPI:  deleted ma_lookup_members
+// $lookup_attrs will = ['eppn' => something]  -> change to ma_lookup_by_eppn
+// cache identifying and public
+//function ma_lookup_members($ma_url, $signer, $lookup_attrs)
+
+
+function client_url($ma_url) {
+  return preg_replace("/MA$/", "CLIENT", $ma_url);
+}
+
+// List all clients
+//CHAPI: done
 function ma_list_clients($ma_url, $signer)
 {
-  $list_clients_message['operation'] = "ma_list_clients";
-  $result = put_message($ma_url, 
-			 $list_clients_message, 
-			 $signer->certificate(), 
-			 $signer->privateKey());
-  return $result;
+  $client = new XMLRCPClient(client_url($ma_url), $signer);
+  $res = $client->list_clients();
+  return $res;
 }
 
+// list all clients authorized by the member
+//CHAPI: done
 function ma_list_authorized_clients($ma_url, $signer, $member_id)
 {
-  $list_authorized_clients_message['operation'] = "ma_list_authorized_clients";
-  $list_authorized_clients_message[MA_ARGUMENT::MEMBER_ID] = $member_id;
-  $result = put_message($ma_url, 
-			 $list_authorized_clients_message, 
-			 $signer->certificate(), 
-			 $signer->privateKey());
-  return $result;
+  $client = new XMLRCPClient(client_url($ma_url), $signer);
+  $res = $client->list_authorized_clients($member_id);
+  return $res;
 }
 
+// authorize a client
+//CHAPI: done
 function ma_authorize_client($ma_url, $signer, $member_id, $client_urn,
 			     $authorize_sense)
 {
-  //  error_log("MAAC = " . print_r($authorize_sense, true));
-
-  $authorize_client_message['operation'] = "ma_authorize_client";
-  $authorize_client_message[MA_ARGUMENT::MEMBER_ID] = $member_id;
-  $authorize_client_message[MA_ARGUMENT::CLIENT_URN] = $client_urn;
-  $authorize_client_message[MA_ARGUMENT::AUTHORIZE_SENSE] = $authorize_sense;
-  $result = put_message($ma_url, 
-			 $authorize_client_message, 
-			 $signer->certificate(), 
-			 $signer->privateKey());
-
-  //  error_log("MAAC.result = " . print_r($result, true));
-
-  return $result;
+  $client = new XMLRCPClient(client_url($ma_url), $signer);
+  $res = $client->list_authorize_client($member_id, $client_urn, $authorize_sense);
+  return $res;
 }
 
-// Use ma_lookup_members interface
+// 
+//CHAPI: Now an pseudo-alias for ma_lookup_members_by_identifying(...)[0]
 function ma_lookup_member_id($ma_url, $signer, $member_id_key, $member_id_value)
 {
-
-  $lookup_attrs[$member_id_key] = $member_id_value;
-  $result = ma_lookup_members($ma_url, $signer, $lookup_attrs);
-
-  //  error_log("MALI.RES = " . print_r($result, true));
-  return $result;
+  $res = ma_lookup_members_by_identifying($ma_url, $signer, $member_id_key, $member_id_value);
+  if (count($res) > 0) {
+    return $res[0];
+  } else {
+    return null;
+  }
 }
 
+// get the one member (or null) that matches the specified id
+// CHAPI: ok
 function ma_lookup_member_by_id($ma_url, $signer, $member_id)
 {
-  global $member_cache;
-  if (array_key_exists($member_id, $member_cache)) {
-    //    error_log("CACHE HIT lookup_member_by_id: " . $member_id);
-    return $member_cache[$member_id];
+  $res = ma_lookup_members_by_identifying($ma_url, $signer, 'MEMBER_ID', $member_id);
+  if (count($res) > 0) {
+    return $res[0];
+  } else {
+    return null;
   }
-  $msg['operation'] = 'lookup_member_by_id';
-  $msg[MA_ARGUMENT::MEMBER_ID] = $member_id;
-  $result = put_message($ma_url, $msg,
-          $signer->certificate(), $signer->privateKey());
-  // Somegtimes we get the whole record, not just value, 
-  // depending on the controller
-  if(array_key_exists(RESPONSE_ARGUMENT::CODE, $result)) {
-    if ($result[RESPONSE_ARGUMENT::CODE] != RESPONSE_ERROR::NONE)
-      return null;
-    $result = $result[RESPONSE_ARGUMENT::VALUE];
-  }
-  $member = new Member();
-  $member->init_from_record($result);
-  $member_cache[$member_id]=$member;
-  return $member;
 }
 
+//CHAPI: todo
 function ma_create_certificate($ma_url, $signer, $member_id, $csr=NULL)
 {
+  $msg = "ma_create_certificate is unimplemented";
+  error_log($msg);
+  throw new Exception($msg);
+  /*
   $cert = NULL;
   $private_key = NULL;
   $msg['operation'] = 'ma_create_certificate';
@@ -368,8 +339,11 @@ function ma_create_certificate($ma_url, $signer, $member_id, $csr=NULL)
   $result = put_message($ma_url, $msg,
           $signer->certificate(), $signer->privateKey());
   return $result;
+  */
 }
 
+//CHAPI: todo
+// mik
 function ma_lookup_certificate($ma_url, $signer, $member_id)
 {
   $msg['operation'] = 'ma_lookup_certificate';
@@ -380,6 +354,7 @@ function ma_lookup_certificate($ma_url, $signer, $member_id)
 }
 
 // Lookup all details all members whose ID's are specified
+//CHAPI: todo
 function lookup_member_details($ma_url, $signer, $member_uuids)
 {
   $msg['operation'] = 'lookup_member_details';
