@@ -38,7 +38,7 @@ if(!isset($member_cache)) {
 // CHAPI: ignores $self_asserted
 function add_member_attribute($ma_url, $signer, $member_id, $name, $value, $self_asserted)
 {
-  $member_urn = get_member_urn($member_id);
+  $member_urn = get_member_urn($ma_url, $signer, $member_id);
 
   $client = new XMLRPCClient($ma_url, $signer);
   $pairs = array(_portalkey_to_attkey($name)=>$value);
@@ -61,7 +61,7 @@ function register_ssh_key($ma_url, $signer, $member_id, $filename,
         $description, $ssh_public_key, $ssh_private_key = NULL)
 {
   $client = new XMLRPCClient($ma_url, $signer);
-  $member_urn = get_member_urn($member_id);
+  $member_urn = get_member_urn($ma_url, $signer, $member_id);
   $pairs = array('SSH_FILENAME' => $filename,
 		 'SSH_DESCRIPTION' => $description,
 		 'SSH_PUBLIC_KEY' => $ssh_public_key);
@@ -113,7 +113,7 @@ function update_ssh_key($ma_url, $signer, $member_id, $ssh_key_id,
         $filename, $description)
 {
   $client = new XMLRPCClient($ma_url, $signer);
-  $member_urn = get_member_urn($member_id);
+  $member_urn = get_member_urn($ma_url, $signer, $member_id);
   $pairs = array('SSH_KEY_ID' => $ssh_key_id);
   if ($filename) {
     $pairs['SSH_FILENAME'] = $filename;
