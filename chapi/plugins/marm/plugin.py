@@ -23,6 +23,7 @@
 
 import amsoil.core.pluginmanager as pm
 from MAv1Implementation import MAv1Implementation
+from MAv1Guard import MAv1Guard
 
 # Implementation of MA that works against GPO database. Replace
 # Default delegate with MAv1Implementation delegate
@@ -30,5 +31,12 @@ from MAv1Implementation import MAv1Implementation
 def setup():
 
     delegate = MAv1Implementation()
+
+    guard = MAv1Guard()
+
     handler = pm.getService('mav1handler')
     handler.setDelegate(delegate)
+
+    handler.setGuard(guard)
+
+
