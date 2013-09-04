@@ -25,6 +25,15 @@ from chapi.Exceptions import *
 from geni.util.urn_util import is_valid_urn
 import types
 
+# Create a subset 'fields' dictionary with only fields in given list
+def select_fields(field_definitions, field_list):
+    subset = {}
+    for key in field_definitions.keys():
+        if key in field_list:
+            subset[key] = field_definitions[key]
+    return subset
+
+
 # Base class for checking validity of call arguments
 class ArgumentCheck:
     def validate(self, options, arguments):

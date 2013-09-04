@@ -29,6 +29,25 @@ from SAv1PersistentImplementation import *
 # Provide a set of invocation checks and row checks per method
 class SAv1Guard(ABACGuardBase):
 
+# Methods
+#    def create_slice(self, credentials, options):
+#    def lookup_slices(self, credentials, options):
+#    def update_slice(self, slice_urn, credentials, options):
+#    def get_credentials(self, slice_urn, credentials, options):
+#    def modify_slice_membership(self, slice_urn, 
+#    def lookup_slice_members(self, slice_urn, credentials, options):
+#    def lookup_slices_for_member(self, member_urn, credentials, options):
+#    def register_aggregate(self, slice_urn, aggregate_url, credentials, opts):
+#    def remove_aggregate(self, slice_urn, aggregate_url, credentials, opts):
+#    def lookup_slice_aggregates(self, slice_urn, credentials, options):
+#    def create_project(self, credentials, options):
+#    def lookup_projects(self, credentials, options):
+#    def update_project(self, project_urn, credentials, options):
+#    def modify_project_membership(self, project_urn, 
+#    def lookup_project_members(self, project_urn, credentials, options):
+#    def lookup_projects_for_member(self, member_urn, credentials, options):
+
+
     # Set of argument checks indexed by method name
     # *** FINISH
     ARGUMENT_CHECK_FOR_METHOD = \

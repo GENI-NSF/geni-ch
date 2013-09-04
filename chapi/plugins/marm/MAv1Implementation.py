@@ -62,6 +62,18 @@ class MAv1Implementation(MAv1DelegateBase):
 
     version_number = "1.0"
     credential_types = ["SFA", "ABAC"]
+
+    standard_fields = {
+        "MEMBER_URN" : { "TYPE" : " URN" , 
+                             "UPDATE" : False, "PROTECT" : "PUBLIC"},
+        "MEMBER_UID": { "TYPE" : "UID", "UPDATE" : False, \
+                            "PROTECT" : "PUBLIC"},
+        "MEMBER_FIRSTNAME" : {"TYPE" : "STRING", "PROTECT" : "IDENTIFYING"},
+        "MEMBER_LASTNAME" : {"TYPE" : "STRING", "PROTECT" : "IDENTIFYING"},
+        "MEMBER_USERNAME" : {"TYPE" : "STRING", "PROTECT" : "PUBLIC"},
+        "MEMBER_EMAIL" : {"TYPE" : "STRING", "PROTECT" : "IDENTIFYING"}
+        }
+
     optional_fields = {
         "_GENI_MEMBER_DISPLAYNAME": {"TYPE": "STRING", "CREATE": "ALLOWED", \
                                "UPDATE": True, "PROTECT": "IDENTIFYING"},
@@ -77,11 +89,26 @@ class MAv1Implementation(MAv1DelegateBase):
         "_GENI_MEMBER_INSIDE_PUBLIC_KEY": {"TYPE": "SSL_KEY"},
         "_GENI_MEMBER_INSIDE_PRIVATE_KEY": \
                       {"TYPE": "SSL_KEY", "PROTECT": "PRIVATE"},
-        "_GENI_USER_CREDENTIAL": {"TYPE": "CREDENTIAL"},
+        "_GENI_USER_CREDENTIAL": {"TYPE": "CREDENTIAL"}
+        }
+
+    standard_key_fields = { 
+        "KEY_MEMBER" : \
+            {"TYPE" : "URN", "CREATE" : "REQUIRED"}, \
+            "KEY_ID" : {"TYPE" : "UID"}, \
+            "KEY_PUBLIC_KEY" : \
+            {"TYPE" : "SSL_KEY", "CREATE" : "REQUIRED"},  \
+            "KEY_PRIVATE_KEY" : \
+            {"TYPE" : "SSL_KEY", "CREATE" : "ALLOWED"}, \
+            "KEY_DESCRIPTION" : \
+            {"TYPE" : "STRING", "CREATE" : "ALLOWED", "UPDATE" : True} 
+    }
+
+    optional_key_fields = {
         "_GENI_KEY_FILENAME" : {"TYPE" : "STRING", "UPDATE" : True, \
                                     "CREATE" : "ALLOWED"}
 	}
-
+    
     # Mapping from external to internal data schema
     field_mapping = {
         "MEMBER_URN": "urn",
@@ -126,12 +153,15 @@ class MAv1Implementation(MAv1DelegateBase):
              "_GENI_MEMBER_SSL_PUBLIC_KEY", "_GENI_MEMBER_INSIDE_PUBLIC_KEY", \
              "_GENI_USER_CREDENTIAL"]
 
-    identifying_fields = ["MEMBER_FIRSTNAME", "MEMBER_LASTNAME", "MEMBER_EMAIL", \
-                     "_GENI_MEMBER_DISPLAYNAME", "_GENI_MEMBER_PHONE_NUMBER", \
+    identifying_fields = ["MEMBER_FIRSTNAME", "MEMBER_LASTNAME", \
+                              "MEMBER_EMAIL", \
+                              "MEMBER_URN", "MEMBER_UID", \
+                              "_GENI_MEMBER_DISPLAYNAME", "_GENI_MEMBER_PHONE_NUMBER", \
                      "_GENI_MEMBER_AFFILIATION", "_GENI_MEMBER_EPPN"]
 
     private_fields = ["_GENI_MEMBER_SSL_PRIVATE_KEY", \
-                "_GENI_MEMBER_INSIDE_PRIVATE_KEY"]
+                          "MEMBER_URN", "MEMBER_UID", \
+                          "_GENI_MEMBER_INSIDE_PRIVATE_KEY"]
 
     key_fields = ["KEY_MEMBER", "KEY_ID", "KEY_PUBLIC", "KEY_PRIVATE", 
                   "KEY_DESCRIPTION", "_GENI_KEY_FILENAME" ]
@@ -161,11 +191,13 @@ class MAv1Implementation(MAv1DelegateBase):
 
     # This call is unprotected: no checking of credentials
     def get_version(self):
+        all_optional_fields = \
+            dict(optional_fields.items() + optional_key_fields.items())
         version_info = {"VERSION": self.version_number,
                         "CREDENTIAL_TYPES": self.credential_types,
                         "OBJECTS" : self.objects,
                         "SERVICES" : self.services,
-                        "FIELDS": self.optional_fields}
+                        "FIELDS": self.all_optional_fields}
         return self._successReturn(version_info)
 
     # ensure that all of a set of entries are attributes
