@@ -79,10 +79,10 @@ def lookup_operator_privilege(user_urn):
     OPERATOR_ATTRIBUTE = 5
     SLICE_CONTEXT = 2
 
-    q = session.query(db.ASSERTION_TABLE, db.MEMBER_ATTRIBUTE_TABLE)
-    q = q.filter(db.ASSERTION_TABLE.c.attribute == OPERATOR_ATTRIBUTE)
-    q = q.filter(db.ASSERTION_TABLE.c.context_type == SLICE_CONTEXT)
-    q = q.filter(db.MEMBER_ATTRIBUTE_TABLE.c.member_id == db.ASSERTION_TABLE.c.principal)
+    q = session.query(db.CS_ASSERTION_TABLE, db.MEMBER_ATTRIBUTE_TABLE)
+    q = q.filter(db.CS_ASSERTION_TABLE.c.attribute == OPERATOR_ATTRIBUTE)
+    q = q.filter(db.CS_ASSERTION_TABLE.c.context_type == SLICE_CONTEXT)
+    q = q.filter(db.MEMBER_ATTRIBUTE_TABLE.c.member_id == db.CS_ASSERTION_TABLE.c.principal)
     q = q.filter(db.MEMBER_ATTRIBUTE_TABLE.c.name == 'urn')
     q = q.filter(db.MEMBER_ATTRIBUTE_TABLE.c.value == user_urn)
 
