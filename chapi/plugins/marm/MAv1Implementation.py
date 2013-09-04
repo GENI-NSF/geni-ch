@@ -455,8 +455,8 @@ class MAv1Implementation(MAv1DelegateBase):
     # Member certificate methods
     def create_certificate(self, client_cert, member_urn, \
                                credentials, options):
-        print "In MAv1Implementation.create_cert : " + \
-            str(member_urn) + " " + str(options)
+#        print "In MAv1Implementation.create_cert : " + \
+#            str(member_urn) + " " + str(options)
 
         # Grab the CSR or make CSR/KEY
         if 'csr' in options:
@@ -529,18 +529,27 @@ class MAv1Implementation(MAv1DelegateBase):
                              '-cert', self.cert,\
                              '-keyfile', self.key, \
                              '-subj', subject ]
-        print " ".join(sign_csr_args)
+#        print " ".join(sign_csr_args)
 
         # Grab cert from cert_file
         cert_pem = open(cert_file).read()
-        print "CERT_PEM = " + cert_pem
+#        print "CERT_PEM = " + cert_pem
 
         # Grab signer pem
         signer_pem = open(self.cert).read()
         
         # This is the aggregate cert
         # Need to return it somehow
-        cert = cert_pem + signer_pem
+        cert_chain = cert_pem + signer_pem
+
+        # Store cert and key in outside_cert table
+        session = self.db.getSession()
+        insert_fields={'certificate' : cert_chain, 'member_id' : member_id}
+        if private_key:
+            insert_fields['private_key'] = private_key
+        ins = self.db.OUTSIDE_CERT_TABLE().values(insert_fields)
+        result = session.execute(ins)
+        session.commit()
 
         return self._successReturn(True)
 
