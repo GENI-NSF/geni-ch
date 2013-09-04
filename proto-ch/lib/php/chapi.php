@@ -46,6 +46,8 @@ class XMLRPCClient
     $this->signer = $signer;
     $this->rawreturn = $rawreturn;
   }
+
+  // magic calls.  $this->foo(arg1, arg2) turns into $this->__call("foo", array(arg1, arg2))
   public function __call($fun, $args)
   {
     return $this->call($fun, $args);
@@ -54,6 +56,14 @@ class XMLRPCClient
   public function call($fun, $args)
   {
     $request = xmlrpc_encode_request($fun, $args);
+
+    // mik: I would have liked to use the following, but it
+    // had problems dealing with HTTPS+POST in some situations
+    // Note: It *might* have been that it wanted the content-length header
+    // added, but CURL works, so we'll go with it.
+    //$context = stream_context_create(array('http' => $opts));
+    //$file = file_get_contents($this->url, false, $context);
+
     $ch = curl_init();
     $headers = array("Content-Type: text/xml",
 		     "Content-Length: ".strlen($request),
@@ -96,65 +106,25 @@ class XMLRPCClient
 
     $result = xmlrpc_decode($ret);
 
-
-    // TODO: restore compatibility with old put_message_handler API
-    return $this->default_put_message_result_handler($result);
+    return $this->result_handler($result);
   }
 
-  public function call_old($fun, $args)
+  // unpack the CHAPI results, retaining compatibilty with the 
+  // old put_message functionality:  If $put_message_result_handler
+  // is defined (and not null), invoke it to process the results
+  // otherwise do the default thing.
+  //
+  function result_handler($result)
   {
-    $request = xmlrpc_encode_request($fun, $args);
-    //print_r($request);
-    //    'verify_peer' => TRUE, // enable verificatin of SSL cert
-    //    'allow_self_signed' => TRUE, // accept self-signed certs, reqires verify_peer
-    //    'cafile' => "/path/to/CA/file.pem",
-    //    'capath' => "/path/to/CA/directory",
-    //    'local_cert' => "/path/to/cert.pem",
-    //    'passphrase' => "passphrasetounlocklocal_cert",
-    // maybe also consider capture_peer_cert, SNI_enabled, etc: see http://www.php.net/manual/en/context.ssl.php
-    $opts = array('method' => "POST",
-		  'header' => "Content-Type: text/xml",
-		  'content' => $request,
-		  'verify_peer' => TRUE);
-    $pemf = null;
-    if ($this->signer) {
-      //$cert = $this->signer->certificate();
-      //$key = $this->signer->privateKey();
-      $pemf = $this->signer->write();
-      if ($cert) {
-	$opts['local_cert']=$pemf;
+    // support the old functionality
+    global $put_message_result_handler;
+    if (is_set($put_message_result_handler)) {
+      if ($put_message_result_handler != null) {
+	return $put_message_result_handler($result);
       }
     }
-    $context = stream_context_create(array('http' => $opts));
-    $file = file_get_contents($this->url, false, $context);
-    $result = xmlrpc_decode($file);
-
-    if (! is_null($pemf)) {
-      unlink($pemf);
-    }
-
-    if ($this->rawreturn) {
-      return $result;
-    }
-
-    // compatibility with old put_message_handler API
-
-    // If a custom handler is set, use it.
-    global $put_message_result_handler;
-    //  error_log("PUT_MESSAGE:PUT_MESSAGE_RESULT_HANDLER = " . $put_message_result_handler);
-    //    if($put_message_result_handler != null) {
-    //      return $put_message_result_handler($result);
-    //    } else {
-    // Otherwise, here's the default handler
-    return $this->default_put_message_result_handler($result);
-    //    }
-  }
-
-  function default_put_message_result_handler($result)
-  {
-    //  error_log("Decoded raw result : " . $result);
-    
-    //  error_log("MH.RESULT = " . print_r($result, true));
+   
+    // default handling
     if (isset($result['faultString'])) {
       error_log("SCRIPT_NAME = " . $_SERVER['SCRIPT_NAME']);
       error_log("ERROR.OUTPUT " . print_r($result['faultString'], true));
@@ -169,19 +139,13 @@ class XMLRPCClient
       
       relative_redirect('error-text.php' . "?error=" . urlencode($result[RESPONSE_ARGUMENT::OUTPUT]));
     }
-
-    //     error_log("ERROR.OUTPUT " . print_r($result[RESPONSE_ARGUMENT::OUTPUT], true));
-    
     return $result[RESPONSE_ARGUMENT::VALUE];
   }
 
+  // get the "credentials" blob needed for various CHAPI service calls,
+  // mainly in support of SPEAKS-FOR functionality.
+  // Some future use will likely want to use $this->signer
+  function get_credentials() {
+    return array();
+  }
 }
-
-// $client = new XMLRPCClient('https://marilac.gpolab.bbn.com:8001/MA');
-// $response = $client->get_version();
-
-//if ($response && xmlrpc_is_fault($response)) {
-//  trigger_error("xmlrpc: $response[faultString] ($response[faultCode])");
-//} else {
-//  print_r($response);
-//}
