@@ -48,18 +48,5 @@ class Signer
     }
     return $this->private_key;
   }
-
-  function write($file=null) {
-    if (is_null($this->combined)) {
-      openssl_pkey_export($this->privateKey(), $pkx);
-      openssl_x509_export($this->certificate(), $cx);
-      $this->combined = $pkx . $cx;
-    }
-    if (is_null($file)) {
-      $file = tempnam(sys_get_temp_dir(), "signer");
-    }
-    file_put_contents($file, $this->combined);
-    return $file;
-  }
 }
 ?>

@@ -37,15 +37,19 @@ require_once 'geni_syslog.php';
 class XMLRPCClient
 {
   private $url;
-  private $signer;
   private $rawreturn = FALSE;
+  private $combined = null;
 
+  // arguments:
+  //  
   public function __construct($url, $signer=null, $rawreturn=FALSE)
   {
     $this->url = $url;
     $this->signer = $signer;
-    $this->private_key = $signer->private_key();
-    $this->certificate = $signer->certificate();
+    if (!is_null($signer)) {
+      $this->private_key = $signer->private_key();
+      $this->certificate = $signer->certificate();
+    }
     $this->rawreturn = $rawreturn;
   }
 
@@ -81,16 +85,12 @@ class XMLRPCClient
     //
 
     $pemf = null;
-    if ($this->signer) {
+    if (!is_null($this->signer)) {
       error_log("SIGNER = " . print_r($this->signer, true));
-      $cert = $this->certificate;
-      //$key = $this-private_key;
-      if ($cert) {
-	$pemf = $this->signer->write();
-	curl_setopt($ch, CURLOPT_SSLKEY, $pemf);
-	curl_setopt($ch, CURLOPT_SSLKEYTYPE, "PEM");
-	curl_setopt($ch, CURLOPT_SSLCERT, $pemf);
-      }
+      $pemf = $this->_write_combined_credentials();
+      curl_setopt($ch, CURLOPT_SSLKEY, $pemf);
+      curl_setopt($ch, CURLOPT_SSLKEYTYPE, "PEM");
+      curl_setopt($ch, CURLOPT_SSLCERT, $pemf);
     }
     $ret = curl_exec($ch);
     if ($ret === FALSE) {
@@ -111,6 +111,26 @@ class XMLRPCClient
 
     return $this->result_handler($result);
   }
+
+  // Write the combined cert to a file.
+  // arguments:
+  //   $file: if null, will create a temporary file, returning the name.  Otherwise, writes to the file
+  // return:
+  //   the name of the file written to.
+  function write_combined_credentials($file=null) {
+    if (is_null($this->combined)) {
+      openssl_pkey_export($this->privateKey(), $pkx);
+      openssl_x509_export($this->certificate(), $cx);
+      $this->combined = $pkx . $cx;
+    }
+    if (is_null($file)) {
+      $file = tempnam(sys_get_temp_dir(), "signer");
+    }
+    file_put_contents($file, $this->combined);
+    return $file;
+  }
+
+
 
   // unpack the CHAPI results, retaining compatibilty with the 
   // old put_message functionality:  If $put_message_result_handler
