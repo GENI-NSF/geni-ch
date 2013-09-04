@@ -34,6 +34,8 @@ from sqlalchemy.orm import mapper
 from datetime import *
 from dateutil.relativedelta import relativedelta
 import os
+import tempfile
+import subprocess
 
 
 # classes for mapping to sql tables
@@ -449,5 +451,109 @@ class MAv1Implementation(MAv1DelegateBase):
                                          self.key_field_mapping) \
                     for row in rows]
         return self._successReturn(keys)
+
+    # Member certificate methods
+    def create_certificate(self, client_cert, member_urn, \
+                               credentials, options):
+#        print "In MAv1Implementation.create_cert : " + \
+#            str(member_urn) + " " + str(options)
+
+        # Grab the CSR or make CSR/KEY
+        if 'csr' in options:
+            # CSR provided: Generate cert but no private key
+            private_key = None
+            csr_data = options['csr']
+            (csr_fd, csr_file) = tempfile.mkstemp()
+            os.close(csr_fd)
+            open(csr_file, 'w').write(csr_data)
+        else:
+            # No CSR provided: Generate cert and private key
+            (csr_fd, csr_file) = tempfile.mkstemp()
+            os.close(csr_fd)
+            (key_fd, key_file) = tempfile.mkstemp()
+            os.close(key_fd)
+            csr_request_args = ['/usr/bin/openssl', 'req', '-new', \
+                                    '-newkey', 'rsa:1024', \
+                                    '-nodes', \
+                                    '-keyout', key_file, \
+                                    '-out', csr_file, '-batch']
+            subprocess.call(csr_request_args)
+            private_key = open(key_file).read()
+#            print "KEY = " + private_key
+
+        # Lookup UID and email from URN
+        match = {'MEMBER_URN' : member_urn}
+        lookup_options = {'match' : match}
+        lookup_response = \
+            self.lookup_member_info(lookup_options, \
+                                        ['MEMBER_EMAIL', 'MEMBER_UID'])
+        member_info = lookup_response['value'][member_urn]
+        urn = member_urn
+        email = str(member_info['MEMBER_EMAIL'])
+        uuid = str(member_info['MEMBER_UID'])
+
+        # sign the csr to create cert
+        extname = 'v3_user'
+        extdata_template = "[ %s ]\n" + \
+            "subjectKeyIdentifier=hash\n" + \
+            "authorityKeyIdentifier=keyid:always,issuer:always\n" + \
+            "basicConstraints = CA:false\n"
+        extdata = extdata_template % extname
+        
+        if email:
+            extdata = extdata + \
+                "subjectAltName=email:copy,URI:%s,URI:urn:uuid:%s\n" \
+                % (urn, uuid);
+            subject = "/CN=%s/emailAddress=%s" % (uuid, email)
+        else:
+            extdata = extdata + \
+                "subjectAltName=URI:%s,URI:urn:uuid:%s\n" % (urn, uuid)
+            subject = "/CN=%s" % uuid;
+
+        (ext_fd, ext_file) = tempfile.mkstemp()
+        os.close(ext_fd)
+        open(ext_file, 'w').write(extdata)
+
+        (cert_fd, cert_file) = tempfile.mkstemp()
+        os.close(cert_fd)
+
+        sign_csr_args = ['/usr/bin/openssl', 'ca', \
+                             '-config', '/usr/share/geni-ch/CA/openssl.cnf', \
+                             '-extfile', ext_file, \
+                             '-policy', 'policy_anything', \
+                             '-out', cert_file, \
+                             '-in', csr_file, \
+                             '-extensions', extname, \
+                             '-batch', \
+                             '-notext', \
+                             '-cert', self.cert,\
+                             '-keyfile', self.key, \
+                             '-subj', subject ]
+#        print " ".join(sign_csr_args)
+
+        # Grab cert from cert_file
+        cert_pem = open(cert_file).read()
+#        print "CERT_PEM = " + cert_pem
+
+        # Grab signer pem
+        signer_pem = open(self.cert).read()
+        
+        # This is the aggregate cert
+        # Need to return it somehow
+        cert_chain = cert_pem + signer_pem
+
+        # Store cert and key in outside_cert table
+        session = self.db.getSession()
+        insert_fields={'certificate' : cert_chain, 'member_id' : member_id}
+        if private_key:
+            insert_fields['private_key'] = private_key
+        ins = self.db.OUTSIDE_CERT_TABLE().values(insert_fields)
+        result = session.execute(ins)
+        session.commit()
+
+        return self._successReturn(True)
+
+
+
 
 

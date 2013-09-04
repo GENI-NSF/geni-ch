@@ -23,25 +23,15 @@
 
 from ABACGuard import *
 from ArgumentCheck import *
-from SAv1PersistentImplementation import *
 
-# Specific guard for GPO SA
+# Specific guard for GPO MA
 # Provide a set of invocation checks and row checks per method
-class SAv1Guard(ABACGuardBase):
+class MAv1Guard(ABACGuardBase):
 
     # Set of argument checks indexed by method name
     # *** FINISH
     ARGUMENT_CHECK_FOR_METHOD = \
         {
-        'create_slice' : \
-            CreateArgumentCheck(SAv1PersistentImplementation.slice_mandatory_fields,\
-                                   SAv1PersistentImplementation.slice_supplemental_fields),
-        'update_slice' : \
-            UpdateArgumentCheck(SAv1PersistentImplementation.slice_mandatory_fields,\
-                                    SAv1PersistentImplementation.slice_supplemental_fields),
-        'lookup_slices' : \
-            LookupArgumentCheck(SAv1PersistentImplementation.slice_mandatory_fields,\
-                                    SAv1PersistentImplementation.slice_supplemental_fields)
         }
     
 
@@ -49,29 +39,11 @@ class SAv1Guard(ABACGuardBase):
     # *** FINISH
     INVOCATION_CHECK_FOR_METHOD = \
         { 
-        # lookup_slice_members can be called by anyone who is either
-        #   - a member of the project to which the slice belongs
-        #   - an operator
-        'lookup_slice_members' : 
-        ABACInvocationCheck(asserters= [
-                OperatorAsserter(), 
-                ProjectMemberAsserterByCert()
-                ],
-                            queries = [["C", "is_operator"], QueryProjectMemberBySliceURN()])
-    }
+        }
 
-    # Set of row checks indexed by method name
     # *** FINISH
     ROW_CHECK_FOR_METHOD = \
         { 
-        # Rows returned from lookup_slices must belong to a project that the caller belongs to
-        # Unless the requester is an operator, in which case all rows are okay to return
-        'lookup_slices' : 
-        ABACRowCheck(asserters = [
-                OperatorAsserter(), 
-                ProjectMemberAsserterByCert()
-                ],
-                     queries = [["C", "is_operator"], QueryProjectMemberBySliceURN()]) 
         }
 
     # Lookup argument check per method (or None if none registered)

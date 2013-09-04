@@ -257,6 +257,27 @@ class MAv1Handler(HandlerBase):
         except Exception as e:
             return self._errorReturn(e)
 
+    # Methods for managing user certs
+    # options: 
+    # 'csr' => certificate signing request (if null, create cert/key)
+    def create_certificate(self, member_urn, credentials, options):
+        client_cert = self.requestCertificate()
+        method = 'create_certificate'
+        try:
+            self._guard.validate_call(client_cert, method, \
+                                          credentials, options, \
+                                          {'member_urn': member_urn})
+            client_cert, options = \
+                self._guard.adjust_client_identity(client_cert, \
+                                                       credentials, options)
+            results = self._delegate.create_certificate(client_cert, \
+                                                            member_urn, 
+                                                            credentials, \
+                                                            options)
+            return results
+        except Exception as e:
+            return self._errorReturn(e)
+
 # Base class for implementations of MA API
 # Must be  implemented in a derived class, and that derived class
 # must call setDelegate on the handler
@@ -300,5 +321,12 @@ class MAv1DelegateBase(DelegateBase):
 
     def lookup_keys(self, client_cert, credentials, options):
         raise CHAPIv1NotImplementedError('')
+
+    # Member certificate methods
+    def create_certificate(self, client_cert, member_urn, \
+                               credentials, options):
+        raise CHAPIv1NotImplementedError('')
+
+
 
 
