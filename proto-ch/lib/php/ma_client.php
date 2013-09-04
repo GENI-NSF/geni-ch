@@ -35,24 +35,22 @@ if(!isset($member_cache)) {
 }
 
 // Add member attribute
-// CHAPI: TODO
+// CHAPI: ignores $self_asserted
 function add_member_attribute($ma_url, $signer, $member_id, $name, $value, $self_asserted)
 {
-  $add_member_attribute_message['operation'] = 'add_member_attribute';
-  $add_member_attribute_message[MA_MEMBER_ATTRIBUTE_TABLE_FIELDNAME::MEMBER_ID] = $member_id;
-  $add_member_attribute_message[MA_MEMBER_ATTRIBUTE_TABLE_FIELDNAME::NAME] = $name;
-  $add_member_attribute_message[MA_MEMBER_ATTRIBUTE_TABLE_FIELDNAME::VALUE] = $value;
-  $add_member_attribute_message[MA_MEMBER_ATTRIBUTE_TABLE_FIELDNAME::SELF_ASSERTED] = $self_asserted;
-  $results = put_message($ma_url, $add_member_attribute_message, 
-			 $signer->certificate(), $signer->privateKey());
-  return $results;
+  $member_urn = get_member_urn($member_id);
+
+  $client = new XMLRPCClient($ma_url, $signer);
+  $pairs = array(_portalkey_to_attkey($name)=>$value);
+  $results = $client->update_member_info($member_urn, $signer->certificate(), $pairs);
+  return $results;  // probably ignored
 }
 
 // Get list of all member_ids in repository
 // CHAPI: ok
 function get_member_ids($ma_url, $signer)
 {
-  $client = new XMLRCPClient($ma_url, $signer);
+  $client = new XMLRPCClient($ma_url, $signer);
   $options = array('filter' => array('MEMBER_UID', 'MEMBER_URN')); // match everything, select UID and URN
   $recs = $client->lookup_public_member_info($options);
   $result = array_map(function($x) { return $x['MEMBER_UID']; }, $recs);
@@ -74,7 +72,7 @@ function register_ssh_key($ma_url, $signer, $member_id, $filename,
     throw new Exception("Cannot register_ssh_key without a user cert");
   }
 
-  $client = new XMLRCPClient($ma_url, $signer);
+  $client = new XMLRPCClient($ma_url, $signer);
   $member_urn = get_member_urn($member_id);
   $pairs = array('SSH_FILENAME' => $filename,
 		 'SSH_DESCRIPTION' => $description,
@@ -89,11 +87,11 @@ function register_ssh_key($ma_url, $signer, $member_id, $filename,
 // Lookup public SSH keys associated with user
 function lookup_public_ssh_keys($ma_url, $signer, $member_id)
 {
-  $client = new XMLRCPClient($ma_url, $signer);
+  $client = new XMLRPCClient($ma_url, $signer);
   $options = array('match'=> array('MEMBER_UID'=>$member_id),
-		   'filter'=>array('SSH_PUBLIC_KEY'));
+		   'filter'=>array('_GENI_MEMBER_SSH_PUBLIC_KEY'));
   $res = $client->lookup_public_member_info($options);
-  $ssh_keys = array_map(function($x) { return $x['SSH_PUBLIC_KEY']; }, $res);
+  $ssh_keys = array_map(function($x) { return $x['_GENI_MEMBER_SSH_PUBLIC_KEY']; }, $res);
   return $ssh_keys;
 }
 
@@ -106,11 +104,11 @@ function lookup_private_ssh_keys($ma_url, $signer, $member_id)
     $cert = $signer_cert;
   }
 
-  $client = new XMLRCPClient($ma_url, $signer);
+  $client = new XMLRPCClient($ma_url, $signer);
   $options = array('match'=> array('MEMBER_UID'=>$member_id),
-		   'filter'=>array('SSH_PRIVATE_KEY'));
+		   'filter'=>array('_GENI_MEMBER_SSH_PRIVATE_KEY'));
   $res = $client->lookup_private_member_info($cert, $options);
-  $ssh_keys = array_map(function($x) { return $x['SSH_PRIVATE_KEY']; }, $res);
+  $ssh_keys = array_map(function($x) { return $x['_GENI_MEMBER_SSH_PRIVATE_KEY']; }, $res);
   return $ssh_keys;
 }
 
@@ -142,7 +140,7 @@ function update_ssh_key($ma_url, $signer, $member_id, $ssh_key_id,
     throw new Exception("Cannot update_ssh_key without a user cert");
   }
   
-  $client = new XMLRCPClient($ma_url, $signer);
+  $client = new XMLRPCClient($ma_url, $signer);
   $member_urn = get_member_urn($member_id);
   $pairs = array('SSH_KEY_ID' => $ssh_key_id);
   if ($filename) {
@@ -175,12 +173,21 @@ function lookup_keys_and_certs($ma_url, $signer, $member_uuid)
     $cert = $signer_cert;
   }
 
-  $client = new XMLRCPClient($ma_url, $signer);
+  $client = new XMLRPCClient($ma_url, $signer);
   $options = array('match'=> array('MEMBER_UID'=>$member_uuid),
-		   'filter'=>array('SSH_PRIVATE_KEY'));
-  $res = $client->lookup_private_member_info($cert, $options);
-  //$ssh_keys = array_map(function($x) { return $x['SSH_PRIVATE_KEY']; }, $res);
-  return $res;
+		   'filter'=>array('_GENI_MEMBER_SSH_PRIVATE_KEY'));
+  $prires = $client->lookup_private_member_info($cert, $options);
+  if (size($prires)>0) {
+    $private_key = $prires[0]['_GENI_MEMBER_SSH_PRIVATE_KEY'];
+    $puboptions = array('match'=> array('MEMBER_UID'=>$member_uuid),
+			'filter'=>array('_GENI_MEMBER_SSH_PUBLIC_KEY'));
+    $pubres = $client->lookup_public_member_info($cert, $puboptions);
+    if (size($pubres)>0) {
+      $public_key = $pubres[0]['_GENI_MEMBER_SSH_PUBLIC_KEY'];
+      return array($private_key, $public_key);
+    }
+  }
+  return null;
 }
 
 // CHAPI: unsupported
@@ -191,6 +198,49 @@ function ma_create_account($ma_url, $signer, $attrs, $self_asserted_attrs)
   throw new Exception($msg);
 }
 
+// map from CHAPI MA attributes to portal attribute keys
+$MEMBERALTKEYS = array("MEMBER_URN"=> "urn",
+		       "MEMBER_UID"=> "member_id",
+		       "MEMBER_FIRSTNAME"=> "first_name",
+		       "MEMBER_LASTNAME"=> "last_name",
+		       "MEMBER_USERNAME"=> "username",
+		       "MEMBER_EMAIL"=> "email_address",
+		       "_GENI_MEMBER_DISPLAYNAME"=> "displayName",
+		       "_GENI_MEMBER_PHONE_NUMBER"=> "telephone_number",
+		       "_GENI_MEMBER_AFFILIATION"=> "affiliation",
+		       "_GENI_MEMBER_EPPN"=> "eppn",
+		       "_GENI_MEMBER_SSL_PUBLIC_KEY"=> "certificate",
+		       "_GENI_MEMBER_SSL_PRIVATE_KEY"=> "private_key",
+		       "_GENI_MEMBER_INSIDE_PUBLIC_KEY"=> "certificate",
+		       "_GENI_MEMBER_INSIDE_PRIVATE_KEY"=> "private_key",
+		       );
+function invert_array($ar) {
+  $ra = array();
+  foreach ($ar as $k => $v) {
+    $ra[$v] = $k;
+  }
+  return $ra;
+}
+// map that inverts $MEMBERALTKEYS
+$MEMBERKEYALTS = invert_array($MEMBERALTKEYS);
+
+function _portalkey_to_attkey($k) {
+  if (array_key_exists($k, $MEMBERKEYALTS)) {
+    return $MEMBERKEYALTSS[$k];
+  } else {
+    return $k;
+  }
+}  
+
+function _attkey_to_portalkey($k) {
+  if (array_key_exists($k, $MEMBERALTKEYS)) {
+    return $MEMBERALTKEYS[$k];
+  } else {
+    return $k;
+  }
+}
+
+
 // CHAPI: ok
 class Member {
   function __construct($id) {
@@ -200,6 +250,7 @@ class Member {
   function init_from_record($attrs) {
     foreach ($attrs as $k => $v) {
       $this->{$k} = $v;
+      $this->{_attkey_to_portalkey($k)} = $v;
     }
   }
   function prettyName() {
@@ -218,7 +269,7 @@ class Member {
 // CHAPI: new replaced all external uses of ma_lookup_members
 function ma_lookup_member_by_eppn($ma_url, $signer, $eppn)
 {
-  $res =  ma_lookup_member_by_identifying($ma_url, $signer, 'MEMBER_EPPN', $eppn);
+  $res =  ma_lookup_member_by_identifying($ma_url, $signer, '_GENI_MEMBER_EPPN', $eppn);
   if ($res) {
     return $res[0];
   } else {
@@ -242,7 +293,7 @@ function ma_lookup_members_by_identifying($ma_url, $singer, $identifying_key, $i
 
   $members = array();
 
-  $client = new XMLRCPClient($ma_url, $signer);
+  $client = new XMLRPCClient($ma_url, $signer);
   $options = array('match'=> array($identifying_key=>$identifying_value));
   $idres = $client->lookup_identifying_member_info($cert, $options);
   foreach ($ires as $idrow) {
@@ -265,16 +316,16 @@ function ma_lookup_members_by_identifying($ma_url, $singer, $identifying_key, $i
 // cache identifying and public
 //function ma_lookup_members($ma_url, $signer, $lookup_attrs)
 
-
+// CHAPI: use CLIENTAUTH as the tail instead of MA
 function client_url($ma_url) {
-  return preg_replace("/MA$/", "CLIENT", $ma_url);
+  return preg_replace("/MA$/", "CLIENTAUTH", $ma_url);
 }
 
 // List all clients
 //CHAPI: done
 function ma_list_clients($ma_url, $signer)
 {
-  $client = new XMLRCPClient(client_url($ma_url), $signer);
+  $client = new XMLRPCClient(client_url($ma_url), $signer);
   $res = $client->list_clients();
   return $res;
 }
@@ -283,7 +334,7 @@ function ma_list_clients($ma_url, $signer)
 //CHAPI: done
 function ma_list_authorized_clients($ma_url, $signer, $member_id)
 {
-  $client = new XMLRCPClient(client_url($ma_url), $signer);
+  $client = new XMLRPCClient(client_url($ma_url), $signer);
   $res = $client->list_authorized_clients($member_id);
   return $res;
 }
@@ -293,7 +344,7 @@ function ma_list_authorized_clients($ma_url, $signer, $member_id)
 function ma_authorize_client($ma_url, $signer, $member_id, $client_urn,
 			     $authorize_sense)
 {
-  $client = new XMLRCPClient(client_url($ma_url), $signer);
+  $client = new XMLRPCClient(client_url($ma_url), $signer);
   $res = $client->list_authorize_client($member_id, $client_urn, $authorize_sense);
   return $res;
 }
@@ -322,7 +373,7 @@ function ma_lookup_member_by_id($ma_url, $signer, $member_id)
   }
 }
 
-//CHAPI: todo
+//CHAPI: error
 function ma_create_certificate($ma_url, $signer, $member_id, $csr=NULL)
 {
   $msg = "ma_create_certificate is unimplemented";
@@ -342,26 +393,79 @@ function ma_create_certificate($ma_url, $signer, $member_id, $csr=NULL)
   */
 }
 
-//CHAPI: todo
-// mik
+// get '_GENI_MEMBER_SSL_PUBLIC_KEY' (which means certificate)
 function ma_lookup_certificate($ma_url, $signer, $member_id)
 {
-  $msg['operation'] = 'ma_lookup_certificate';
-  $msg[MA_ARGUMENT::MEMBER_ID] = $member_id;
-  $result = put_message($ma_url, $msg,
-          $signer->certificate(), $signer->privateKey());
+  $client = new XMLRPCClient($ma_url, $signer);
+  $options = array('match'=> array('MEMBER_UID'=>$member_id),
+		   'filter'=>array('_GENI_MEMBER_SSL_PUBLIC_KEY'));
+  $res = $client->lookup_public_member_info($options);
+  $ssh_keys = array_map(function($x) { return $x['_GENI_MEMBER_SSL_PUBLIC_KEY']; }, $res);
+  return $ssh_keys;
+}
+
+
+// Lookup all details for all members whose ID's are specified
+// details will be [memberid => attributes, ...]
+// attributes is [at1=>v1, ...]
+// where atN is one of DETAILS_PUBLIC, DETAILS_IDENT
+//CHAPI: 
+function lookup_member_details($ma_url, $signer, $member_uuids)
+{
+  $client = new XMLRPCClient($ma_url, $signer);
+  $result = array();
+  foreach ($member_uuids as $uid) {
+    $pubdet = _lookup_public_member_details($client, $signer, $uid);
+    $iddet = _lookup_identifying_member_details($client, $signer, $uid);
+    $attrs = array();
+    foreach (array_merge($pubdet,$iddet) as $k => $v) {
+      $ak = _attkey_to_portalkey($k);
+      $attrs[$k] = $v;
+    }
+    $result[$uid] = $attrs;
+  }
   return $result;
 }
 
-// Lookup all details all members whose ID's are specified
-//CHAPI: todo
-function lookup_member_details($ma_url, $signer, $member_uuids)
+$DETAILS_PUBLIC = array(
+			"MEMBER_URN",
+			"MEMBER_UID",
+			"MEMBER_USERNAME",
+			"_GENI_MEMBER_SSL_PUBLIC_KEY",
+			"_GENI_MEMBER_INSIDE_PUBLIC_KEY",
+			"_GENI_USER_CREDENTIAL",
+			);
+
+function _lookup_public_member_details($client, $signer, $uid)
 {
-  $msg['operation'] = 'lookup_member_details';
-  $msg[MA_ARGUMENT::MEMBER_UUIDS] = $member_uuids;
-  $result = put_message($ma_url, $msg, 
-			$signer->certificate(), $signer->privateKey());
-  return $result;
+  $r = $client->lookup_public_member_info(array('match'=>array('MEMBER_UID'=>$uid),
+						'filter'=>$DETAILS_PUBLIC));
+  if (size($r)>0) {
+    return $r[0];
+  } else {
+    return array();
+  }
+}
+
+$DETAILS_IDENTIFYING = array(
+			     "MEMBER_FIRSTNAME",
+			     "MEMBER_LASTNAME",
+			     "MEMBER_EMAIL",
+			     "_GENI_MEMBER_DISPLAYNAME",
+			     "_GENI_MEMBER_PHONE_NUMBER",
+			     "_GENI_MEMBER_AFFILIATION",
+			     "_GENI_MEMBER_EPPN",
+			     );
+
+function _lookup_identifying_member_details($client, $signer, $uid)
+{
+  $r = $client->lookup_identifying_member_info(array('match'=>array('MEMBER_UID'=>$uid),
+						     'filter'=>$DETAILS_IDENTIFYING));
+  if (size($r)>0) {
+    return $r[0];
+  } else {
+    return array();
+  }
 }
 
 
@@ -399,7 +503,7 @@ function lookup_member_names($ma_url, $signer, $member_uuids)
     $cert = $signer_cert;
   }
 
-  $client = new XMLRCPClient($ma_url, $signer);
+  $client = new XMLRPCClient($ma_url, $signer);
   $options = array('match'=> array('MEMBER_UID'=>$member_emails),
 		   'filter'=>array('MEMBER_FIRSTNAME', 'MEMBER_LASTNAME', 'MEMBER_USERNAME'));
   $res = $client->lookup_identifying_member_info($cert, $options);
@@ -418,7 +522,7 @@ function lookup_members_by_email($ma_url, $signer, $member_emails)
     $cert = $signer_cert;
   }
 
-  $client = new XMLRCPClient($ma_url, $signer);
+  $client = new XMLRPCClient($ma_url, $signer);
   $options = array('match'=> array('MEMBER_EMAIL'=>$member_emails),
 		   'filter'=>array('MEMBER_UID'));
   $res = $client->lookup_identifying_member_info($cert, $options);
