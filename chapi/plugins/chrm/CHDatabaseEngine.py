@@ -81,6 +81,7 @@ class CHDatabaseEngine:
         self.LOGGING_ENTRY_ATTRIBUTE_TABLE = \
             Table('logging_entry_attribute', \
                       self.metadata, autoload=True)
+        self.MA_CLIENT_TABLE = Table('ma_client', self.metadata, autoload=True)
 
     # Get a new session on the database engine
     def getSession(self):

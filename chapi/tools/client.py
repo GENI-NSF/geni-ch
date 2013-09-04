@@ -56,6 +56,8 @@ def parseOptions():
                       default = None)
     parser.add_option("--int_arg", help="Integer argument for some calls",
                       default = None)
+    parser.add_option("--uuid_arg", help="UUID argument for some calls",
+                      default = None)
     parser.add_option("--options", help="JSON of options argument", default="{}")
     parser.add_option("--options_file", help="File containing JSON of options argument", default=None)
     parser.add_option("--credentials", \
@@ -159,6 +161,17 @@ def main():
         (result, msg) = _do_ssl(framework, suppress_errors, reason, fcn, \
                                     opts.urn, opts.int_arg, 
                                     opts.credentials, client_options)
+
+    # Client AUthorization methods
+    elif opts.method in ['list_clients']:
+        (result, msg) = _do_ssl(framework, suppress_errors, reason, fcn)
+    elif opts.method in ['list_authorized_clients']:
+        (result, msg) = \
+            _do_ssl(framework, suppress_errors, reason, fcn, opts.uuid_arg)
+    elif opts.method in ['authorize_client']:
+        (result, msg) = \
+            _do_ssl(framework, suppress_errors, reason, fcn, opts.uuid_arg,
+                    opts.urn, opts.int_arg)
                              
     # Methods that take credentials and options and urn arguments
     elif opts.urn:
