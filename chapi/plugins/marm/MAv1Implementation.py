@@ -208,6 +208,8 @@ class MAv1Implementation(MAv1DelegateBase):
 
     # filter out all the users that have a particular value of an attribute
     def get_uids_for_attribute(self, session, attr, value):
+        if attr == 'MEMBER_UID':  # If we already have the UID, return it
+            return [value];
         q = session.query(MemberAttribute.member_id)
         q = q.filter(MemberAttribute.name == self.field_mapping[attr])
         if isinstance(value, types.ListType):

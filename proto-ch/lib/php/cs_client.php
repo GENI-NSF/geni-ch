@@ -44,14 +44,17 @@ function get_attributes($cs_url, $signer, $principal, $context_type, $context)
 
 function get_permissions($cs_url, $signer, $principal)
 {
+  error_log("In get_permissions " . $cs_url . " " . $principal);
   global $permission_cache;
 
   if (array_key_exists($principal, $permission_cache)) {
-    //    error_log("CACHE HIT get_permissions : " . $principal);
+    error_log("CACHE HIT get_permissions : " . $principal);
     return $permission_cache[$principal];
+  }
 
   $client = new XMLRPCClient($cs_url, $signer);
-  $result =  $client->get_attributes($principal, $context_type, $context);
+  $result =  $client->get_permissions($principal);
+  error_log("RESULT = " . print_r($result, true));
   if($result[RESPONSE_ARGUMENT::CODE] == RESPONSE_ERROR::NONE) {
     $rows = $result[RESPONSE_ARGUMENT::VALUE];
     $pm = compute_permission_manager($rows);
@@ -61,10 +64,6 @@ function get_permissions($cs_url, $signer, $principal)
 
   error_log("No permissions for principal " . $principal);
   return array();
-
-
-}
-
 
 }
 

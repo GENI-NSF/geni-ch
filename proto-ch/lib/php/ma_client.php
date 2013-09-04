@@ -140,16 +140,24 @@ function lookup_keys_and_certs($ma_url, $signer, $member_uuid)
 {
   $client = new XMLRPCClient($ma_url, $signer);
   $options = array('match'=> array('MEMBER_UID'=>$member_uuid),
-		   'filter'=>array('_GENI_MEMBER_SSL_PRIVATE_KEY'));
+		   'filter'=>array('_GENI_MEMBER_INSIDE_PRIVATE_KEY'));
   $prires = $client->lookup_private_member_info($client->get_credentials(), $options);
+  //  error_log("PRIRES_OPTS = " . print_r($options, true));
+  //  error_log("PRIRES = " . print_r($prires, true));
   if (sizeof($prires)>0) {
-    $private_key = $prires[0]['_GENI_MEMBER_SSL_PRIVATE_KEY'];
+    $all_urns = array_keys($prires);
+    $urn = $all_urns[0];
+    $private_key = $prires[$urn]['_GENI_MEMBER_INSIDE_PRIVATE_KEY'];
     $puboptions = array('match'=> array('MEMBER_UID'=>$member_uuid),
-			'filter'=>array('_GENI_MEMBER_SSL_PUBLIC_KEY'));
-    $pubres = $client->lookup_public_member_info($puboptions);
+			'filter'=>array('_GENI_MEMBER_INSIDE_PUBLIC_KEY'));
+    $pubres = $client->lookup_public_member_info($client->get_credentials(), 
+						 $puboptions);
     if (sizeof($pubres)>0) {
-      $public_key = $pubres[0]['_GENI_MEMBER_SSL_PUBLIC_KEY'];
-      return array($private_key, $public_key);
+      $public_key = $pubres[$urn]['_GENI_MEMBER_INSIDE_PUBLIC_KEY'];
+      // *** The 'public_key' is really the cert ***
+      // *** FIX ME ***
+      return array(MA_INSIDE_KEY_TABLE_FIELDNAME::CERTIFICATE => $public_key,
+		   MA_INSIDE_KEY_TABLE_FIELDNAME::PRIVATE_KEY=> $private_key);
     }
   }
   return null;
@@ -174,8 +182,6 @@ $MEMBERALTKEYS = array("MEMBER_URN"=> "urn",
 		       "_GENI_MEMBER_PHONE_NUMBER"=> "telephone_number",
 		       "_GENI_MEMBER_AFFILIATION"=> "affiliation",
 		       "_GENI_MEMBER_EPPN"=> "eppn",
-		       "_GENI_MEMBER_SSL_PUBLIC_KEY"=> "certificate",
-		       "_GENI_MEMBER_SSL_PRIVATE_KEY"=> "private_key",
 		       "_GENI_MEMBER_INSIDE_PUBLIC_KEY"=> "certificate",
 		       "_GENI_MEMBER_INSIDE_PRIVATE_KEY"=> "private_key",
 		       );
@@ -264,15 +270,15 @@ function ma_lookup_members_by_identifying($ma_url, $signer, $identifying_key, $i
   $pubres = $client->lookup_public_member_info($client->get_credentials(), $options);
   //  error_log( " PUBRES = " . print_r($pubres, true));
   foreach ($pubres as $urn => $pubrow) {
-    error_log("   URN = " . $urn);
-    error_log("   PUBROW = " . print_r($pubrow, true));
+    //    error_log("   URN = " . $urn);
+    //    error_log("   PUBROW = " . print_r($pubrow, true));
       $id = $pubrow['MEMBER_UID'];
     $idrow = $client->lookup_identifying_member_info($client->get_credentials(), array('match' => array('MEMBER_UID'=>$id)));
-    error_log("   ID = " . print_r($id, true));
-    error_log("   IDROW = " . print_r($idrow, true));
+    //    error_log("   ID = " . print_r($id, true));
+    //    error_log("   IDROW = " . print_r($idrow, true));
     $m = new Member($id);
-    $m->init_from_record($pubres);
-    $m->init_from_record($idrow[0]);
+    $m->init_from_record($pubrow);
+    $m->init_from_record($idrow[$urn]);
     $members[] = $m;
     $member_cache[$id] = $m;
   }
@@ -475,7 +481,7 @@ $MEMBER_ID2URN = array();
 
 function get_member_urn($ma_url, $signer, $id) {
   global $MEMBER_ID2URN;
-  if (array_key_exists($id, $MEMBER_ID2URN) {
+  if (array_key_exists($id, $MEMBER_ID2URN)) {
       return $MEMBER_ID2URN[$id];
     } else {
       $r = $client->lookup_public_member_info(array('match'=>array('MEMBER_UID'=>$uid),
