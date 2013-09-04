@@ -118,7 +118,7 @@ class XMLRPCClient
   {
     // support the old functionality
     global $put_message_result_handler;
-    if (is_set($put_message_result_handler)) {
+    if (isset($put_message_result_handler)) {
       if ($put_message_result_handler != null) {
 	return $put_message_result_handler($result);
       }

@@ -23,16 +23,62 @@
 
 from ABACGuard import *
 from ArgumentCheck import *
+from MAv1Implementation import MAv1Implementation as MA
 
 # Specific guard for GPO MA
 # Provide a set of invocation checks and row checks per method
 class MAv1Guard(ABACGuardBase):
 
+# Methods
+#   def get_version(self):
+#    def lookup_public_member_info(self, credentials, options):
+#    def lookup_private_member_info(self, credentials, options):
+#    def lookup_identifying_member_info(self, credentials, options):
+#    def update_member_info(self, member_urn, credentials, options):
+#    def create_key(self, member_urn, credentials, options):
+#    def delete_key(self, member_urn, key_id, credentials, options):
+#    def update_key(self, member_urn, key_id, credentials, options):
+#    def lookup_keys(self, credentials, options):
+#    def create_certificate(self, member_urn, credentials, options):
+
+
     # Set of argument checks indexed by method name
     # *** FINISH
     ARGUMENT_CHECK_FOR_METHOD = \
         {
-        }
+        'lookup_public_member_info' : \
+            LookupArgumentCheck(select_fields(MA.standard_fields, \
+                                                  MA.public_fields), \
+                                    select_fields(MA.optional_fields, \
+                                                      MA.public_fields)), 
+        'lookup_private_member_info' : \
+            LookupArgumentCheck(select_fields(MA.standard_fields, \
+                                                  MA.private_fields), \
+                                    select_fields(MA.optional_fields, \
+                                                      MA.private_fields)), 
+        'lookup_identifying_member_info' : \
+            LookupArgumentCheck(select_fields(MA.standard_fields, \
+                                                  MA.identifying_fields), \
+                                    select_fields(MA.optional_fields, \
+                                                      MA.identifying_fields)), 
+        'update_member_info' :  \
+            UpdateArgumentCheck({}, {}),
+        
+        'create_key' : \
+            CreateArgumentCheck(MA.standard_fields, MA.private_fields), 
+        'delete_key' : \
+            None,
+        'update_key' : \
+            UpdateArgumentCheck(select_fields(MA.standard_key_fields, \
+                                                  MA.updatable_key_fields), \
+                                    select_fields(MA.optional_key_fields, \
+                                                      MA.updatable_key_fields)),
+        'lookup_key' : \
+            LookupArgumentCheck(MA.standard_key_fields, \
+                                    MA.optional_key_fields),
+        'create_certificate' : \
+            None
+}
     
 
     # Set of invocation checks indexed by method name
