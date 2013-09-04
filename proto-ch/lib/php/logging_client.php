@@ -22,6 +22,8 @@
 // IN THE WORK.
 //----------------------------------------------------------------------
 
+require_once('chapi.php');
+
 // Client side services for Logging of events within GENI clearinghouse
 
 // Log an event to the logging service
