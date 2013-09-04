@@ -142,12 +142,12 @@ function lookup_keys_and_certs($ma_url, $signer, $member_uuid)
   $options = array('match'=> array('MEMBER_UID'=>$member_uuid),
 		   'filter'=>array('_GENI_MEMBER_SSH_PRIVATE_KEY'));
   $prires = $client->lookup_private_member_info($client->get_credentials(), $options);
-  if (size($prires)>0) {
+  if (sizeof($prires)>0) {
     $private_key = $prires[0]['_GENI_MEMBER_SSH_PRIVATE_KEY'];
     $puboptions = array('match'=> array('MEMBER_UID'=>$member_uuid),
 			'filter'=>array('_GENI_MEMBER_SSH_PUBLIC_KEY'));
     $pubres = $client->lookup_public_member_info($puboptions);
-    if (size($pubres)>0) {
+    if (sizeof($pubres)>0) {
       $public_key = $pubres[0]['_GENI_MEMBER_SSH_PUBLIC_KEY'];
       return array($private_key, $public_key);
     }
@@ -179,6 +179,7 @@ $MEMBERALTKEYS = array("MEMBER_URN"=> "urn",
 		       "_GENI_MEMBER_INSIDE_PUBLIC_KEY"=> "certificate",
 		       "_GENI_MEMBER_INSIDE_PRIVATE_KEY"=> "private_key",
 		       );
+
 function invert_array($ar) {
   $ra = array();
   foreach ($ar as $k => $v) {
@@ -386,7 +387,7 @@ function _lookup_public_member_details($client, $signer, $uid)
 {
   $r = $client->lookup_public_member_info(array('match'=>array('MEMBER_UID'=>$uid),
 						'filter'=>$DETAILS_PUBLIC));
-  if (size($r)>0) {
+  if (sizeof($r)>0) {
     return $r[0];
   } else {
     return array();
@@ -408,7 +409,7 @@ function _lookup_identifying_member_details($client, $signer, $uid)
   $r = $client->lookup_identifying_member_info($client->get_credentials(),
 					       array('match'=>array('MEMBER_UID'=>$uid),
 						     'filter'=>$DETAILS_IDENTIFYING));
-  if (size($r)>0) {
+  if (sizeof($r)>0) {
     return $r[0];
   } else {
     return array();
@@ -460,6 +461,26 @@ function lookup_members_by_email($ma_url, $signer, $member_emails)
   $res = $client->lookup_identifying_member_info($client->get_credentials(), $options);
   $ids = array_map(function($x) { return $x['MEMBER_UID']; }, $res);
   return array($member_emails => $ids);
+}
+
+
+$MEMBER_ID2URN = array();
+
+function get_member_urn($ma_url, $signer, $id) {
+  global $MEMBER_ID2URN;
+  if (array_key_exists($id, $MEMBER_ID2URN) {
+      return $MEMBER_ID2URN[$id];
+    } else {
+      $r = $client->lookup_public_member_info(array('match'=>array('MEMBER_UID'=>$uid),
+						    'filter'=>array('MEMBER_URN')));
+      if (sizeof($r)>0) {
+	$urn = $r[0]['MEMBER_URN'];
+      } else {
+	$urn = null;  // cache failures
+      }
+      $MEMBER_ID2URN[$id] = $urn;
+      return $urn;
+    }
 }
 
 ?>
