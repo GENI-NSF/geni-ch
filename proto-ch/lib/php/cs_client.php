@@ -53,20 +53,13 @@ function get_permissions($cs_url, $signer, $principal)
   }
 
   $client = new XMLRPCClient($cs_url, $signer);
-  $result =  $client->get_permissions($principal);
-  error_log("RESULT = " . print_r($result, true));
-  if($result[RESPONSE_ARGUMENT::CODE] == RESPONSE_ERROR::NONE) {
-    $rows = $result[RESPONSE_ARGUMENT::VALUE];
-    $pm = compute_permission_manager($rows);
-    $permission_cache[$principal] = $pm;
-    return $pm;
-  }
-
-  error_log("No permissions for principal " . $principal);
-  return array();
-
+  //  $result =  $client->get_permissions($principal);
+  $result =  $client->get_permissions(); // TODO: currently get_permissions takes no args
+  //error_log("RESULT = " . print_r($result, true));
+  
+  $pm = compute_permission_manager($result);
+  $permission_cache[$principal] = $pm;
+  return $pm;
 }
-
-
 
 ?>
