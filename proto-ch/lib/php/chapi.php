@@ -117,10 +117,10 @@ class XMLRPCClient
   //   $file: if null, will create a temporary file, returning the name.  Otherwise, writes to the file
   // return:
   //   the name of the file written to.
-  function write_combined_credentials($file=null) {
+  function _write_combined_credentials($file=null) {
     if (is_null($this->combined)) {
-      openssl_pkey_export($this->privateKey(), $pkx);
-      openssl_x509_export($this->certificate(), $cx);
+      openssl_pkey_export($this->private_key, $pkx);
+      openssl_x509_export($this->certificate, $cx);
       $this->combined = $pkx . $cx;
     }
     if (is_null($file)) {
