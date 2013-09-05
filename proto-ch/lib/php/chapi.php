@@ -47,7 +47,7 @@ class XMLRPCClient
     $this->url = $url;
     $this->signer = $signer;
     if (!is_null($signer)) {
-      $this->private_key = $signer->private_key();
+      $this->private_key = $signer->privateKey();
       $this->certificate = $signer->certificate();
     }
     $this->rawreturn = $rawreturn;
@@ -86,7 +86,7 @@ class XMLRPCClient
 
     $pemf = null;
     if (!is_null($this->signer)) {
-      error_log("SIGNER = " . print_r($this->signer, true));
+      //error_log("SIGNER = " . print_r($this->signer, true));
       $pemf = $this->_write_combined_credentials();
       curl_setopt($ch, CURLOPT_SSLKEY, $pemf);
       curl_setopt($ch, CURLOPT_SSLKEYTYPE, "PEM");
