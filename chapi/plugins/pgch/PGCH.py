@@ -405,7 +405,7 @@ class PGCHv1Delegate(DelegateBase):
         slice_credential = args['credential']
         expiration = args['expiration']
 
-        # *** Need to support update_slice in SA
+        # Renew via update_slice in SA
         slice_urn = None
         credentials [slice_credential]
         options = {'fields' : {'SLICE_EXPIRATION' : expiration}}

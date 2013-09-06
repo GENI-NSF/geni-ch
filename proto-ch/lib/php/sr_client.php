@@ -35,10 +35,18 @@ const SERVICE_REGISTRY_CACHE_TIMEOUT = 300;
 //CHAPI: ok
 function get_services()
 {
+
   $sr_url = get_sr_url();
+  //  error_log("SR_URL = " . $sr_url);
   $ver = session_cache_lookup(SERVICE_REGISTRY_CACHE_TAG, SERVICE_REGISTRY_CACHE_TIMEOUT, $sr_url, 'get_version', null);
   $fields = $ver['FIELDS'];
   $client = new XMLRPCClient($sr_url);
+  $services = $client->get_services();
+  //  error_log("SERVICES = " . print_r($services, true));
+  return $services;
+
+  /*
+
   $fields = array('SERVICE_URN', 'SERVICE_URL','SERVICE_NAME','SERVICE_DESCRIPTION');  // 'SERVICE_CERT' breaks it
   $options = array('filter' => $fields); 
   $services = array();
@@ -64,6 +72,7 @@ function get_services()
      $services = array_merge($services, $ags);
   }
   return $services;
+  */
 }
 
 // Return all services in registry of given type

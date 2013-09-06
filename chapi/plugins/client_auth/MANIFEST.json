@@ -1,9 +1,9 @@
 {
-  "name" : "Logging service",
+  "name" : "Client Authorization service",
   "author" : "Marshall Brinn",
   "author-email" : "mbrinn@bbn.com",
   "version" : 1,
-  "implements" : ["loggingv1handler"],
+  "implements" : ["clientauthv1handler"],
   "loads-after" : ["chdbengine"],
   "requires" : []
 }

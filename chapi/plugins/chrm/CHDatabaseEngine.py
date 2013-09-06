@@ -57,8 +57,6 @@ class CHDatabaseEngine:
             Table('pa_project_member', self.metadata, autoload=True)
         self.MEMBER_TABLE = \
             Table('ma_member', self.metadata, autoload=True)
-        self.ASSERTION_TABLE = \
-            Table('cs_assertion', self.metadata, autoload=True)
         self.MEMBER_ATTRIBUTE_TABLE = \
             Table('ma_member_attribute', self.metadata, autoload=True)
         self.SSH_KEY_TABLE = \
@@ -83,6 +81,7 @@ class CHDatabaseEngine:
         self.LOGGING_ENTRY_ATTRIBUTE_TABLE = \
             Table('logging_entry_attribute', \
                       self.metadata, autoload=True)
+        self.MA_CLIENT_TABLE = Table('ma_client', self.metadata, autoload=True)
 
     # Get a new session on the database engine
     def getSession(self):

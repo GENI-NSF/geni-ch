@@ -25,15 +25,18 @@
 
 from chapi.MemberAuthority import MAv1DelegateBase
 from chapi.Exceptions import *
-from ext.geni.util.urn_util import URN
+from geni.util.urn_util import URN
 import amsoil.core.pluginmanager as pm
 from tools.dbutils import *
-import ext.sfa.trust.gid as sfa_gid
+import sfa.trust.gid as sfa_gid
+import sfa.trust.certificate as cert
 import geni.util.cred_util as cred_util
 from sqlalchemy.orm import mapper
 from datetime import *
 from dateutil.relativedelta import relativedelta
 import os
+import tempfile
+import subprocess
 
 
 # classes for mapping to sql tables
@@ -55,11 +58,28 @@ class InsideKey(object):
 class SshKey(object):
     pass
 
+def row_cert_to_public_key(row):
+    raw_certificate = row.certificate
+    cert_obj = cert.Certificate(string=raw_certificate)
+    public_key = cert_obj.get_pubkey()
+    return public_key.get_pubkey_string()
 
 class MAv1Implementation(MAv1DelegateBase):
 
     version_number = "1.0"
     credential_types = ["SFA", "ABAC"]
+
+    standard_fields = {
+        "MEMBER_URN" : { "TYPE" : " URN" , 
+                             "UPDATE" : False, "PROTECT" : "PUBLIC"},
+        "MEMBER_UID": { "TYPE" : "UID", "UPDATE" : False, \
+                            "PROTECT" : "PUBLIC"},
+        "MEMBER_FIRSTNAME" : {"TYPE" : "STRING", "PROTECT" : "IDENTIFYING"},
+        "MEMBER_LASTNAME" : {"TYPE" : "STRING", "PROTECT" : "IDENTIFYING"},
+        "MEMBER_USERNAME" : {"TYPE" : "STRING", "PROTECT" : "PUBLIC"},
+        "MEMBER_EMAIL" : {"TYPE" : "STRING", "PROTECT" : "IDENTIFYING"}
+        }
+
     optional_fields = {
         "_GENI_MEMBER_DISPLAYNAME": {"TYPE": "STRING", "CREATE": "ALLOWED", \
                                "UPDATE": True, "PROTECT": "IDENTIFYING"},
@@ -69,17 +89,34 @@ class MAv1Implementation(MAv1DelegateBase):
                                "UPDATE": True, "PROTECT": "IDENTIFYING"},
         "_GENI_MEMBER_EPPN": {"TYPE": "STRING", "CREATE": "ALLOWED", \
                         "UPDATE": True, "PROTECT": "IDENTIFYING"},
-        "_GENI_MEMBER_SSL_PUBLIC_KEY": {"TYPE": "SSL_KEY"},
+        "_GENI_MEMBER_SSL_PUBLIC_KEY": {"TYPE": "KEY"},
+        "_GENI_MEMBER_SSL_CERTIFICATE": {"TYPE": "CERTIFICATE"},
         "_GENI_MEMBER_SSL_PRIVATE_KEY": \
-                      {"TYPE": "SSL_KEY", "PROTECT": "PRIVATE"},
-        "_GENI_MEMBER_INSIDE_PUBLIC_KEY": {"TYPE": "SSL_KEY"},
+                      {"TYPE": "KEY", "PROTECT": "PRIVATE"},
+        "_GENI_MEMBER_INSIDE_PUBLIC_KEY": {"TYPE": "KEY"},
+        "_GENI_MEMBER_INSIDE_CERTIFICATE": {"TYPE": "CERTIFICATE"},
         "_GENI_MEMBER_INSIDE_PRIVATE_KEY": \
-                      {"TYPE": "SSL_KEY", "PROTECT": "PRIVATE"},
-        "_GENI_USER_CREDENTIAL": {"TYPE": "CREDENTIAL"},
+                      {"TYPE": "KEY", "PROTECT": "PRIVATE"},
+        "_GENI_USER_CREDENTIAL": {"TYPE": "CREDENTIAL"}
+        }
+
+    standard_key_fields = { 
+        "KEY_MEMBER" : \
+            {"TYPE" : "URN", "CREATE" : "REQUIRED"}, \
+            "KEY_ID" : {"TYPE" : "UID"}, \
+            "KEY_PUBLIC_KEY" : \
+            {"TYPE" : "KEY", "CREATE" : "REQUIRED"},  \
+            "KEY_PRIVATE_KEY" : \
+            {"TYPE" : "KEY", "CREATE" : "ALLOWED"}, \
+            "KEY_DESCRIPTION" : \
+            {"TYPE" : "STRING", "CREATE" : "ALLOWED", "UPDATE" : True} 
+    }
+
+    optional_key_fields = {
         "_GENI_KEY_FILENAME" : {"TYPE" : "STRING", "UPDATE" : True, \
                                     "CREATE" : "ALLOWED"}
 	}
-
+    
     # Mapping from external to internal data schema
     field_mapping = {
         "MEMBER_URN": "urn",
@@ -92,9 +129,11 @@ class MAv1Implementation(MAv1DelegateBase):
         "_GENI_MEMBER_PHONE_NUMBER": "telephone_number",
         "_GENI_MEMBER_AFFILIATION": "affiliation",
         "_GENI_MEMBER_EPPN": "eppn",
-        "_GENI_MEMBER_SSL_PUBLIC_KEY": "certificate",
+        "_GENI_MEMBER_SSL_CERTIFICATE": "certificate",
+        "_GENI_MEMBER_SSL_PUBLIC_KEY": row_cert_to_public_key, 
         "_GENI_MEMBER_SSL_PRIVATE_KEY": "private_key",
-        "_GENI_MEMBER_INSIDE_PUBLIC_KEY": "certificate",
+        "_GENI_MEMBER_INSIDE_PUBLIC_KEY": row_cert_to_public_key,
+        "_GENI_MEMBER_INSIDE_CERTIFICATE": "certificate",
         "_GENI_MEMBER_INSIDE_PRIVATE_KEY": "private_key",
         "_GENI_USER_CREDENTIAL": "foo"
         }
@@ -121,15 +160,19 @@ class MAv1Implementation(MAv1DelegateBase):
                       "KEY_DESCRIPTION", "_GENI_KEY_FILENAME"]
 
     public_fields = ["MEMBER_URN", "MEMBER_UID", "MEMBER_USERNAME", \
-             "_GENI_MEMBER_SSL_PUBLIC_KEY", "_GENI_MEMBER_INSIDE_PUBLIC_KEY", \
-             "_GENI_USER_CREDENTIAL"]
+                         "_GENI_MEMBER_SSL_PUBLIC_KEY", "_GENI_MEMBER_SSL_CERTIFICATE", \
+                         "_GENI_MEMBER_INSIDE_PUBLIC_KEY", "_GENI_MEMBER_INSIDE_CERTIFICATE", \
+                         "_GENI_USER_CREDENTIAL"]
 
-    identifying_fields = ["MEMBER_FIRSTNAME", "MEMBER_LASTNAME", "MEMBER_EMAIL", \
-                     "_GENI_MEMBER_DISPLAYNAME", "_GENI_MEMBER_PHONE_NUMBER", \
+    identifying_fields = ["MEMBER_FIRSTNAME", "MEMBER_LASTNAME", \
+                              "MEMBER_EMAIL", \
+                              "MEMBER_URN", "MEMBER_UID", \
+                              "_GENI_MEMBER_DISPLAYNAME", "_GENI_MEMBER_PHONE_NUMBER", \
                      "_GENI_MEMBER_AFFILIATION", "_GENI_MEMBER_EPPN"]
 
     private_fields = ["_GENI_MEMBER_SSL_PRIVATE_KEY", \
-                "_GENI_MEMBER_INSIDE_PRIVATE_KEY"]
+                          "MEMBER_URN", "MEMBER_UID", \
+                          "_GENI_MEMBER_INSIDE_PRIVATE_KEY"]
 
     key_fields = ["KEY_MEMBER", "KEY_ID", "KEY_PUBLIC", "KEY_PRIVATE", 
                   "KEY_DESCRIPTION", "_GENI_KEY_FILENAME" ]
@@ -146,8 +189,10 @@ class MAv1Implementation(MAv1DelegateBase):
         mapper(InsideKey, self.db.INSIDE_KEY_TABLE)
         mapper(SshKey, self.db.SSH_KEY_TABLE)
         self.table_mapping = {
+            "_GENI_MEMBER_SSL_CERTIFICATE": OutsideCert,
             "_GENI_MEMBER_SSL_PUBLIC_KEY": OutsideCert,
             "_GENI_MEMBER_SSL_PRIVATE_KEY": OutsideCert,
+            "_GENI_MEMBER_INSIDE_CERTIFICATE": InsideKey,
             "_GENI_MEMBER_INSIDE_PUBLIC_KEY": InsideKey,
             "_GENI_MEMBER_INSIDE_PRIVATE_KEY": InsideKey
             }
@@ -159,11 +204,13 @@ class MAv1Implementation(MAv1DelegateBase):
 
     # This call is unprotected: no checking of credentials
     def get_version(self):
+        all_optional_fields = \
+            dict(optional_fields.items() + optional_key_fields.items())
         version_info = {"VERSION": self.version_number,
                         "CREDENTIAL_TYPES": self.credential_types,
                         "OBJECTS" : self.objects,
                         "SERVICES" : self.services,
-                        "FIELDS": self.optional_fields}
+                        "FIELDS": self.all_optional_fields}
         return self._successReturn(version_info)
 
     # ensure that all of a set of entries are attributes
@@ -174,6 +221,8 @@ class MAv1Implementation(MAv1DelegateBase):
 
     # filter out all the users that have a particular value of an attribute
     def get_uids_for_attribute(self, session, attr, value):
+        if attr == 'MEMBER_UID':  # If we already have the UID, return it
+            return [value];
         q = session.query(MemberAttribute.member_id)
         q = q.filter(MemberAttribute.name == self.field_mapping[attr])
         if isinstance(value, types.ListType):
@@ -193,10 +242,20 @@ class MAv1Implementation(MAv1DelegateBase):
 
     # find the value for a column in a table
     def get_val_for_uid(self, session, table, field, uid):
-        q = session.query(getattr(table, field))
+        if hasattr(field, '__call__'):
+            q = session.query(table)
+        else:
+            q = session.query(getattr(table, field))
         q = q.filter(table.member_id == uid)
         rows = q.all()
-        return [getattr(row, field) for row in rows]
+        result = []
+        for row in rows:
+            if hasattr(field, '__call__'):
+                value = field(row)
+            else:
+                value = getattr(row, field)
+            result.append(value)
+        return result
 
     # construct a list of ssh keys
     def get_ssh_keys_for_uid(self, session, uid, include_private):
@@ -237,6 +296,7 @@ class MAv1Implementation(MAv1DelegateBase):
                 elif col == "MEMBER_UID":
                     values[col] = uid
                 else:
+                    vals = None
                     if col in self.attributes:
                         vals = self.get_attr_for_uid(session, col, uid)
                     elif col in self.table_mapping:
@@ -449,5 +509,109 @@ class MAv1Implementation(MAv1DelegateBase):
                                          self.key_field_mapping) \
                     for row in rows]
         return self._successReturn(keys)
+
+    # Member certificate methods
+    def create_certificate(self, client_cert, member_urn, \
+                               credentials, options):
+#        print "In MAv1Implementation.create_cert : " + \
+#            str(member_urn) + " " + str(options)
+
+        # Grab the CSR or make CSR/KEY
+        if 'csr' in options:
+            # CSR provided: Generate cert but no private key
+            private_key = None
+            csr_data = options['csr']
+            (csr_fd, csr_file) = tempfile.mkstemp()
+            os.close(csr_fd)
+            open(csr_file, 'w').write(csr_data)
+        else:
+            # No CSR provided: Generate cert and private key
+            (csr_fd, csr_file) = tempfile.mkstemp()
+            os.close(csr_fd)
+            (key_fd, key_file) = tempfile.mkstemp()
+            os.close(key_fd)
+            csr_request_args = ['/usr/bin/openssl', 'req', '-new', \
+                                    '-newkey', 'rsa:1024', \
+                                    '-nodes', \
+                                    '-keyout', key_file, \
+                                    '-out', csr_file, '-batch']
+            subprocess.call(csr_request_args)
+            private_key = open(key_file).read()
+#            print "KEY = " + private_key
+
+        # Lookup UID and email from URN
+        match = {'MEMBER_URN' : member_urn}
+        lookup_options = {'match' : match}
+        lookup_response = \
+            self.lookup_member_info(lookup_options, \
+                                        ['MEMBER_EMAIL', 'MEMBER_UID'])
+        member_info = lookup_response['value'][member_urn]
+        urn = member_urn
+        email = str(member_info['MEMBER_EMAIL'])
+        uuid = str(member_info['MEMBER_UID'])
+
+        # sign the csr to create cert
+        extname = 'v3_user'
+        extdata_template = "[ %s ]\n" + \
+            "subjectKeyIdentifier=hash\n" + \
+            "authorityKeyIdentifier=keyid:always,issuer:always\n" + \
+            "basicConstraints = CA:false\n"
+        extdata = extdata_template % extname
+        
+        if email:
+            extdata = extdata + \
+                "subjectAltName=email:copy,URI:%s,URI:urn:uuid:%s\n" \
+                % (urn, uuid);
+            subject = "/CN=%s/emailAddress=%s" % (uuid, email)
+        else:
+            extdata = extdata + \
+                "subjectAltName=URI:%s,URI:urn:uuid:%s\n" % (urn, uuid)
+            subject = "/CN=%s" % uuid;
+
+        (ext_fd, ext_file) = tempfile.mkstemp()
+        os.close(ext_fd)
+        open(ext_file, 'w').write(extdata)
+
+        (cert_fd, cert_file) = tempfile.mkstemp()
+        os.close(cert_fd)
+
+        sign_csr_args = ['/usr/bin/openssl', 'ca', \
+                             '-config', '/usr/share/geni-ch/CA/openssl.cnf', \
+                             '-extfile', ext_file, \
+                             '-policy', 'policy_anything', \
+                             '-out', cert_file, \
+                             '-in', csr_file, \
+                             '-extensions', extname, \
+                             '-batch', \
+                             '-notext', \
+                             '-cert', self.cert,\
+                             '-keyfile', self.key, \
+                             '-subj', subject ]
+#        print " ".join(sign_csr_args)
+
+        # Grab cert from cert_file
+        cert_pem = open(cert_file).read()
+#        print "CERT_PEM = " + cert_pem
+
+        # Grab signer pem
+        signer_pem = open(self.cert).read()
+        
+        # This is the aggregate cert
+        # Need to return it somehow
+        cert_chain = cert_pem + signer_pem
+
+        # Store cert and key in outside_cert table
+        session = self.db.getSession()
+        insert_fields={'certificate' : cert_chain, 'member_id' : member_id}
+        if private_key:
+            insert_fields['private_key'] = private_key
+        ins = self.db.OUTSIDE_CERT_TABLE().values(insert_fields)
+        result = session.execute(ins)
+        session.commit()
+
+        return self._successReturn(True)
+
+
+
 
 

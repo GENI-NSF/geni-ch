@@ -56,6 +56,12 @@ def parseOptions():
                       default = None)
     parser.add_option("--int_arg", help="Integer argument for some calls",
                       default = None)
+    parser.add_option("--uuid_arg", help="UUID argument for some calls",
+                      default = None)
+    parser.add_option("--uuid2_arg", help="second UUID argument for some calls",
+                      default = None)
+    parser.add_option("--file_arg", help="FILE argument for some calls",
+                      default = None)
     parser.add_option("--options", help="JSON of options argument", default="{}")
     parser.add_option("--options_file", help="File containing JSON of options argument", default=None)
     parser.add_option("--credentials", \
@@ -150,15 +156,40 @@ def main():
                                     event_id)
     # Credential store methods
     elif opts.method in ['get_permissions']:
-        (result, msg) = _do_ssl(framework, suppress_errors, reason, fcn)
+        (result, msg) = _do_ssl(framework, suppress_errors, reason, fcn, \
+                                    opts.uuid_arg, \
+                                    opts.credentials, client_options)
     elif opts.method in ['get_attributes']:
         (result, msg) = _do_ssl(framework, suppress_errors, reason, fcn, \
-                                    opts.int_arg)
+                                    opts.uuid_arg, \
+                                    opts.int_arg, opts.uuid2_arg, \
+                                    opts.credentials, client_options)
     elif opts.method in ['delete_key', 'update_key'] \
             and opts.int_arg and opts.urn:
         (result, msg) = _do_ssl(framework, suppress_errors, reason, fcn, \
                                     opts.urn, opts.int_arg, 
                                     opts.credentials, client_options)
+
+    # Client Authorization methods
+    elif opts.method in ['list_clients']:
+        (result, msg) = _do_ssl(framework, suppress_errors, reason, fcn)
+    elif opts.method in ['list_authorized_clients']:
+        (result, msg) = \
+            _do_ssl(framework, suppress_errors, reason, fcn, opts.uuid_arg)
+    elif opts.method in ['authorize_client']:
+        (result, msg) = \
+            _do_ssl(framework, suppress_errors, reason, fcn, opts.uuid_arg,
+                    opts.urn, opts.int_arg)
+
+    # MA certificate methods
+    elif opts.method in ['create_certificate']:
+        options = {}
+        if opts.file_arg:
+            csr = open(opts.file_arg).read()
+            options = {'csr' : csr}
+        (result, msg) = \
+            _do_ssl(framework, suppress_errors, reason, fcn, opts.urn,
+                    opts.credentials, options)
                              
     # Methods that take credentials and options and urn arguments
     elif opts.urn:
