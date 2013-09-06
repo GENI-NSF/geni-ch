@@ -92,13 +92,23 @@ function get_projects_by_lead($sa_url, $signer, $lead_id)
 
 $PACHAPI2PORTAL = array('PROJECT_UID'=>PA_PROJECT_TABLE_FIELDNAME::PROJECT_ID,
 			'PROJECT_NAME'=>PA_PROJECT_TABLE_FIELDNAME::PROJECT_NAME,
-			'_GENI_PROJECT_LEAD_ID'=>PA_PROJECT_TABLE_FIELDNAME::LEAD_ID,
+			'_GENI_PROJECT_OWNER'=>PA_PROJECT_TABLE_FIELDNAME::LEAD_ID,
 			'_GENI_PROJECT_EMAIL'=>PA_PROJECT_TABLE_FIELDNAME::PROJECT_EMAIL,
 			'PROJECT_CREATION'=>PA_PROJECT_TABLE_FIELDNAME::CREATION,
-			'_GENI_PROJECT_PURPOSE'=>PA_PROJECT_TABLE_FIELDNAME::PROJECT_PURPOSE,
+			'PROJECT_DESCRIPTION'=>PA_PROJECT_TABLE_FIELDNAME::PROJECT_PURPOSE,
 			'PROJECT_EXPIRATION'=>PA_PROJECT_TABLE_FIELDNAME::EXPIRATION,
 			'_GENI_PROJECT_EXPIRED'=>PA_PROJECT_TABLE_FIELDNAME::EXPIRED);
 
+
+function details_chapi2portal($row)
+{
+  global $PACHAPI2PORTAL;
+  $nrow = array();
+  foreach ($row as $k=>$v) {
+    $nrow[$PACHAPI2PORTAL[$k]] = $v;
+  }
+  return $nrow;
+}
 
 // Return project details
 function lookup_projects($sa_url, $signer, $lead_id=null)
@@ -111,27 +121,22 @@ function lookup_projects($sa_url, $signer, $lead_id=null)
   $options = array('match'=>$match,
 		   'filter'=>array('PROJECT_UID',
 				   'PROJECT_NAME',
-				   '_GENI_PROJECT_LEAD_ID',
+				   '_GENI_PROJECT_OWNER',
 				   '_GENI_PROJECT_EMAIL',
 				   'PROJECT_CREATION',
-				   '_GENI_PROJECT_PURPOSE',
+				   'PROJECT_DESCRIPTION',
 				   'PROJECT_EXPIRATION',
 				   '_GENI_PROJECT_EXPIRED'));
   $res = $client->lookup_projects($client->get_credentials(), $options);
   $results = array();
 
-  global $PACHAPI2PORTAL;
   foreach ($res as $row) {
-    $nrow = array();
-    foreach ($row as $k=>$v) {
-      $nrow[$PACHAPI2PORTAL[$k]] = $v;
-    }
-    $results[] = $nrow;
+    $results[] = details_chapi2portal($row);
   }
 
   return $results;
 }
-// MIK was here
+
 // Return project details
 function lookup_project($sa_url, $signer, $project_id)
 {
@@ -144,6 +149,10 @@ function lookup_project($sa_url, $signer, $project_id)
     //    error_log("CACHE HIT lookup_project " . $project_id);
     return $project_cache[$project_id];
   }
+
+  $client = new XMLRPCClient($sa_url, $signer);
+  $res = $client->lookup_project($client->get_credentials(), $options);
+
   $cert = $signer->certificate();
   $key = $signer->privateKey();
   //  error_log("LP.start " . $project_id . " " . time());
