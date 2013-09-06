@@ -46,7 +46,6 @@ function get_attributes($cs_url, $signer, $principal, $context_type, $context)
 
 function get_permissions($cs_url, $signer, $principal)
 {
-  error_log("In get_permissions " . $cs_url . " " . $principal);
   global $permission_cache;
 
   if (array_key_exists($principal, $permission_cache)) {
