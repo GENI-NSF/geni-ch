@@ -49,6 +49,7 @@ class CSv1Handler(HandlerBase):
     def get_attributes(self, principal, context_type, context, \
                            credentials, options):
         client_cert = self.requestCertificate()
+        method = 'get_attributes'
         try:
             self._guard.validate_call(client_cert, method, \
                                           credentials, options,  \
@@ -66,6 +67,7 @@ class CSv1Handler(HandlerBase):
 
     def get_permissions(self, principal, credentials, options):
         client_cert = self.requestCertificate()
+        method = 'get_permissions'
         try:
             self._guard.validate_call(client_cert, method, \
                                           credentials, options,  \
@@ -126,12 +128,12 @@ class CSv1Guard(ABACGuardBase):
         ABACGuardBase.__init__(self)
 
     def get_argument_check(self, method):
-        return True
+        return None
 
     def get_invocation_check(self, method):
-        return True
+        return None
 
     def get_row_check(self, method):
-        return True
+        return None
 
 
