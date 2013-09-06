@@ -1,0 +1,5 @@
+#!/bin/bash
+
+wget --output-document abac.tar.gz http://abac.deterlab.net/src/abac-0.1.5.tar.gz
+wget --output-document gcf.tar.gz --post-data "software=gcf-2.3.3.tar.gz&accept=I+have+read+and+accept+the+GPO+terms+of+service+and+disclaimer" http://software.geni.net/local-sw/real_download
+
