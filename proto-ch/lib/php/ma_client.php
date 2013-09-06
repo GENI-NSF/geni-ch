@@ -149,14 +149,12 @@ function lookup_keys_and_certs($ma_url, $signer, $member_uuid)
     $urn = $all_urns[0];
     $private_key = $prires[$urn]['_GENI_MEMBER_INSIDE_PRIVATE_KEY'];
     $puboptions = array('match'=> array('MEMBER_UID'=>$member_uuid),
-			'filter'=>array('_GENI_MEMBER_INSIDE_PUBLIC_KEY'));
+			'filter'=>array('_GENI_MEMBER_INSIDE_CERTIFICATE'));
     $pubres = $client->lookup_public_member_info($client->get_credentials(), 
 						 $puboptions);
     if (sizeof($pubres)>0) {
-      $public_key = $pubres[$urn]['_GENI_MEMBER_INSIDE_PUBLIC_KEY'];
-      // *** The 'public_key' is really the cert ***
-      // *** FIX ME ***
-      return array(MA_INSIDE_KEY_TABLE_FIELDNAME::CERTIFICATE => $public_key,
+      $certificate = $pubres[$urn]['_GENI_MEMBER_INSIDE_CERTIFICATE'];
+      return array(MA_INSIDE_KEY_TABLE_FIELDNAME::CERTIFICATE => $certificate,
 		   MA_INSIDE_KEY_TABLE_FIELDNAME::PRIVATE_KEY=> $private_key);
     }
   }
