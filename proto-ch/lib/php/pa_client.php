@@ -91,14 +91,34 @@ function get_projects_by_lead($sa_url, $signer, $lead_id)
 }
 
 $PACHAPI2PORTAL = array('PROJECT_UID'=>PA_PROJECT_TABLE_FIELDNAME::PROJECT_ID,
+			'PROJECT_URN'=>PA_PROJECT_TABLE_FIELDNAME::PROJECT_URN,
 			'PROJECT_NAME'=>PA_PROJECT_TABLE_FIELDNAME::PROJECT_NAME,
-			'_GENI_PROJECT_LEAD_ID'=>PA_PROJECT_TABLE_FIELDNAME::LEAD_ID,
+			'_GENI_PROJECT_OWNER'=>PA_PROJECT_TABLE_FIELDNAME::LEAD_ID,
 			'_GENI_PROJECT_EMAIL'=>PA_PROJECT_TABLE_FIELDNAME::PROJECT_EMAIL,
 			'PROJECT_CREATION'=>PA_PROJECT_TABLE_FIELDNAME::CREATION,
-			'_GENI_PROJECT_PURPOSE'=>PA_PROJECT_TABLE_FIELDNAME::PROJECT_PURPOSE,
+			'PROJECT_DESCRIPTION'=>PA_PROJECT_TABLE_FIELDNAME::PROJECT_PURPOSE,
 			'PROJECT_EXPIRATION'=>PA_PROJECT_TABLE_FIELDNAME::EXPIRATION,
 			'_GENI_PROJECT_EXPIRED'=>PA_PROJECT_TABLE_FIELDNAME::EXPIRED);
 
+$DETAILSKEYS = array('PROJECT_UID',
+		     'PROJECT_URN',
+		     'PROJECT_NAME',
+		     '_GENI_PROJECT_OWNER',
+		     '_GENI_PROJECT_EMAIL',
+		     'PROJECT_CREATION',
+		     'PROJECT_DESCRIPTION',
+		     'PROJECT_EXPIRATION',
+		     '_GENI_PROJECT_EXPIRED');
+
+function details_chapi2portal($row)
+{
+  global $PACHAPI2PORTAL;
+  $nrow = array();
+  foreach ($row as $k=>$v) {
+    $nrow[$PACHAPI2PORTAL[$k]] = $v;
+  }
+  return $nrow;
+}
 
 // Return project details
 function lookup_projects($sa_url, $signer, $lead_id=null)
@@ -108,30 +128,24 @@ function lookup_projects($sa_url, $signer, $lead_id=null)
   if ($lead_id <> null) {
     $match['_GENI_PROJECT_LEAD']=$lead_id;
   }
+  global $DETAILSKEYS;
   $options = array('match'=>$match,
-		   'filter'=>array('PROJECT_UID',
-				   'PROJECT_NAME',
-				   '_GENI_PROJECT_LEAD_ID',
-				   '_GENI_PROJECT_EMAIL',
-				   'PROJECT_CREATION',
-				   '_GENI_PROJECT_PURPOSE',
-				   'PROJECT_EXPIRATION',
-				   '_GENI_PROJECT_EXPIRED'));
+		   'filter'=>$DETAILSKEYS);
   $res = $client->lookup_projects($client->get_credentials(), $options);
   $results = array();
 
-  global $PACHAPI2PORTAL;
   foreach ($res as $row) {
-    $nrow = array();
-    foreach ($row as $k=>$v) {
-      $nrow[$PACHAPI2PORTAL[$k]] = $v;
-    }
-    $results[] = $nrow;
+    $results[] = details_chapi2portal($row);
   }
 
   return $results;
 }
-// MIK was here
+
+function get_project_urn($sa_url, $signer, $project_id) {
+  $details = lookup_project($sa_url, $signer, $project_id);
+  return $details[PA_PROJECT_TABLE_FIELDNAME::PROJECT_URN];
+}
+
 // Return project details
 function lookup_project($sa_url, $signer, $project_id)
 {
@@ -144,16 +158,24 @@ function lookup_project($sa_url, $signer, $project_id)
     //    error_log("CACHE HIT lookup_project " . $project_id);
     return $project_cache[$project_id];
   }
-  $cert = $signer->certificate();
-  $key = $signer->privateKey();
-  //  error_log("LP.start " . $project_id . " " . time());
-  $lookup_project_message['operation'] = 'lookup_project';
-  $lookup_project_message[PA_ARGUMENT::PROJECT_ID] = $project_id;
-  $details = put_message($sa_url, $lookup_project_message,
-			 $cert, $key, 
-			 $signer->certificate(), $signer->privateKey());
+
+  $client = new XMLRPCClient($sa_url, $signer);
+  $options = array('match'=>array('PROJECT_UID'=>$project_id),
+		   'filter'=>$DETAILSKEYS);
+  $res = $client->lookup_projects($client->get_credentials(), $options);
+  $details = array();
+
+  foreach ($res as $row) {
+    $details[] = details_chapi2portal($row);
+  }
   //  error_log("LP.end " . $project_id . " " . time());
-  // FIXME: Could be >1?
+  // return null if empty
+  if (sizeof($details)==0) {
+    return null;
+  }
+
+  // FIXME: Could be >1? 
+  $details = $details[0];  // just take the first match
   $project_cache[$project_id] = $details;
   
   return $details;
@@ -162,19 +184,29 @@ function lookup_project($sa_url, $signer, $project_id)
 // Return project details
 function lookup_project_by_name($sa_url, $signer, $project_name)
 {
+  global $project_cache;
   if (! is_object($signer)) {
     throw new InvalidArgumentException('Null signer');
   }
-  $cert = $signer->certificate();
-  $key = $signer->privateKey();
-  //  error_log("LP.start " . $project_name . " " . time());
-  $lookup_project_message['operation'] = 'lookup_project';
-  $lookup_project_message[PA_ARGUMENT::PROJECT_NAME] = $project_name;
-  $details = put_message($sa_url, $lookup_project_message,
-			 $cert, $key, 
-			 $signer->certificate(), $signer->privateKey());
+
+  $client = new XMLRPCClient($sa_url, $signer);
+  $options = array('match'=>array('PROJECT_NAME'=>$project_name),
+		   'filter'=>$DETAILSKEYS);
+  $res = $client->lookup_projects($client->get_credentials(), $options);
+  $details = array();
+
+  foreach ($res as $row) {
+    $details[] = details_chapi2portal($row);
+  }
   //  error_log("LP.end " . $project_id . " " . time());
-  // FIXME: Could be >1?
+  // return null if empty
+  if (sizeof($details)==0) {
+    return null;
+  }
+
+  // FIXME: Could be >1? 
+  $details = $details[0];  // just take the first match
+  
   return $details;
 }
 
@@ -182,16 +214,34 @@ function lookup_project_by_name($sa_url, $signer, $project_name)
 // FIXME: lookup_projects_ids(sa_url, project_ids_list)
 
 function update_project($sa_url, $signer, $project_id, $project_name,
-        $project_purpose, $expiration)
+			$project_purpose, $expiration)
 {
-  $update_project_message['operation'] = 'update_project';
-  $update_project_message[PA_ARGUMENT::PROJECT_ID] = $project_id;
-  $update_project_message[PA_ARGUMENT::PROJECT_NAME] = $project_name;
-  $update_project_message[PA_ARGUMENT::PROJECT_PURPOSE] = $project_purpose;
-  $update_project_message[PA_ARGUMENT::EXPIRATION] = $expiration;
-  $results = put_message($sa_url, $update_project_message, 
-			 $signer->certificate(), $signer->privateKey());
+  $project_urn = get_project_urn($sa_url, $signer, $project_id);
+
+  $client = new XMLRPCClient($sa_url, $signer);
+  $options = array('fields'=>array('PROJECT_NAME'=>$project_name,
+				   'PROJECT_DESCRIPTION'=>$project_purpose,
+				   'PROJECT_EXPIRATION'=>$project_expiration));
+
+  $res = $client->update_projects($project_urn, $client->get_credentials(), $options);
+  $results = array();
   return $results;
+}
+
+
+function _conv_mid2urn($sa_url, $signer, $alist)
+{
+  return array_map(function ($mid) { return get_member_urn(sa_to_ma_url($sa_url), $signer, $mid); }, $alist);
+}
+
+function _conv_mid2urn_map($sa_url, $signer, $amap)
+{
+  $nmap = array();
+  foreach ($amap as $mid => $v) {
+    $murn = get_member_urn(sa_to_ma_url($sa_url), $signer, $mid);
+    $nmap[$murn] = $v;
+  }
+  return $nmap;
 }
 
 // Modify project membership according to given lists to add/change_role/remove
@@ -199,20 +249,23 @@ function update_project($sa_url, $signer, $project_id, $project_name,
 //     dictionaries of {member_id => role, ....}
 // $members_to_delete is a list of member_ids
 function modify_project_membership($sa_url, $signer, $project_id, 
-				 $members_to_add, 
-				 $members_to_change_role, 
-				 $members_to_remove)
+				   $members_to_add, 
+				   $members_to_change, 
+				   $members_to_remove)
 {
-  $modify_project_membership_msg['operation'] = 'modify_project_membership';
-  $modify_project_membership_msg[PA_ARGUMENT::PROJECT_ID] = $project_id;
-  $modify_project_membership_msg[SA_ARGUMENT::MEMBERS_TO_ADD] = $members_to_add;
-  $modify_project_membership_msg[SA_ARGUMENT::MEMBERS_TO_CHANGE_ROLE] = $members_to_change_role;
-  $modify_project_membership_msg[SA_ARGUMENT::MEMBERS_TO_REMOVE] = $members_to_remove;
-  $result = put_message($sa_url, $modify_project_membership_msg,
-                       $signer->certificate(), $signer->privateKey());
-  return $result;
+  $members_to_add = _conv_mid2urn_map($sa_url, $signer, $members_to_add);
+  $members_to_change = _conv_mid2urn_map($sa_url, $signer, $members_to_change);
+  $members_to_remove = _conv_mid2urn($sa_url, $signer, $members_to_remove);
   
+  $options = array();
+  if (sizeof($members_to_add)>0)    { $options['members_to_add']    = $members_to_add; }
+  if (sizeof($members_to_change)>0) { $options['members_to_change'] = $members_to_change; }
+  if (sizeof($members_to_remove)>0) { $options['members_to_remove'] = $members_to_remove; }
+  modify_project_membership($project_urn, $client->get_credentials(), $options);
 }
+
+
+// mik was here
 
 // Modify project lead, make previous into an admin
 // Assumes lead is already a member
