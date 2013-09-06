@@ -299,6 +299,24 @@ function get_projects_for_member($sa_url, $signer, $member_id, $is_member, $role
   return $project_uuids;
 }
 
+// Convert slice details from external (CH API compliant) names
+// to internal (database field) names
+function convert_project_to_internal($project)
+{
+  return array(
+	       PA_PROJECT_TABLE_FIELDNAME::PROJECT_ID => $project['PROJECT_UID'],
+	       PA_PROJECT_TABLE_FIELDNAME::PROJECT_NAME => $project['PROJECT_NAME'],
+	       PA_PROJECT_TABLE_FIELDNAME::PROJECT_PURPOSE => $project['PROJECT_DESCRIPTION'],
+	       PA_PROJECT_TABLE_FIELDNAME::EXPIRATION => $project['PROJECT_EXPIRATION'],
+	       PA_PROJECT_TABLE_FIELDNAME::EXPIRED => $project['PROJECT_EXPIRED'],
+	       PA_PROJECT_TABLE_FIELDNAME::CREATION => $project['PROJECT_EXPIRED'],
+	       PA_PROJECT_TABLE_FIELDNAME::PROJECT_EMAIL => $project['_GENI_PROJECT_EMAIL'],
+	       PA_PROJECT_TABLE_FIELDNAME::LEAD_ID => $project['_GENI_PROJECT_OWNER']);
+	       
+}
+
+
+
 function lookup_project_details($sa_url, $signer, $project_uuids)
 {
   //  $cert = $signer->certificate;
@@ -321,6 +339,14 @@ function lookup_project_details($sa_url, $signer, $project_uuids)
   $client = new XMLRPCClient($sa_url, $signer);
   $options = array('match' => array('PROJECT_UID' => $project_uuids));
   $results = $client->lookup_projects($client->get_credentials(), $options);
+  //  error_log("LPD.RESULTS = " . print_r($results, true));
+  $converted_projects = array();
+  foreach($results as $project) {
+    $converted_projects[] = convert_project_to_internal($project);
+  }
+  $results = $converted_projects;
+  //  error_log("LPD.RESULTS = " . print_r($results, true));
+
   return $results;
 
 }

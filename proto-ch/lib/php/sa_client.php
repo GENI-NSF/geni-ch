@@ -312,33 +312,50 @@ function get_slices_for_member($sa_url, $signer, $member_id, $is_member, $role=n
     return array();
   }
 
+  // Convert columns from 'external' to 'internal' format
+  $converted_results = array();
+  foreach($results as $row) {
+    $row[SA_SLICE_MEMBER_TABLE_FIELDNAME::SLICE_ID] = $row['SLICE_UID'];
+    $converted_results[] = $row;
+  }
+  $results = $converted_results;
+  //  error_log("GSFM.RESULTS = " . print_r($results, true));
+
   return $results;
 }
 
 function lookup_slice_details($sa_url, $signer, $slice_uuids)
 {
   $client = new XMLRPCClient($sa_url, $signer);
-  
-  $result = array();
-  foreach ($slice_uuids as $slice_uuid) {
-    $options = array('match' => array('SLICE_UID'=>$slice_uid),
-		     //'filter' => array(...)
-		     );
-    $tuples = $client->lookup_slices($client->get_credentials(), $options);
-    $s = $tuples[0];
-    $result[$s['SLICE_UID']] = array($s['SLICE_UID'],
-				     $s['SLICE_NAME'],
-				     $s['SLICE_CREATION'],
-				     $s['SLICE_EXPRIATION'],
-				     $s['SLICE_EXPIRED'],
-				     $s['PROJECT_UID'],  // was PROJECT_ID
-				     $s['OWNER_UID'],    // was OWNER_ID
-				     $s['SLICE_DESCRIPTION'],
-				     $s['SLICE_EMAIL'],
-				     $s['SLICE_URN']
-				     );
+  $options = array('match' => array('SLICE_UID'=>$slice_uuids));
+  $result = $client->lookup_slices($client->get_credentials(), $options);
+  $converted_slices = array();
+  foreach ($result as $slice_uuid => $slice) {
+    $converted_slices[$slice_uuid] = convert_slice_to_internal($slice);
   }
+  $result = $converted_slices;
+  //  error_log("LSD.result = " . print_r($result, true));
   return $result;
+}
+
+// Convert slice details from external (CH API compliant) names
+// to internal (database field) names
+function convert_slice_to_internal($slice)
+{
+  return array(
+	       SA_SLICE_TABLE_FIELDNAME::SLICE_ID => $slice['SLICE_UID'],
+	       SA_SLICE_TABLE_FIELDNAME::SLICE_NAME =>  $slice['SLICE_NAME'],
+	       SA_SLICE_TABLE_FIELDNAME::PROJECT_ID => 
+	       $slice['_GENI_PROJECT_UID'],
+	       SA_SLICE_TABLE_FIELDNAME::EXPIRATION => $slice['SLICE_EXPIRATION'],
+	       SA_SLICE_TABLE_FIELDNAME::OWNER_ID => 
+	       $slice['_GENI_SLICE_OWNER'],
+	       SA_SLICE_TABLE_FIELDNAME::SLICE_URN => $slice['SLICE_URN'],
+	       SA_SLICE_TABLE_FIELDNAME::SLICE_EMAIL =>
+	       $slice['_GENI_SLICE_EMAIL'],
+	       SA_SLICE_TABLE_FIELDNAME::EXPIRED => $slice['SLICE_EXPIRED'],
+	       SA_SLICE_TABLE_FIELDNAME::SLICE_DESCRIPTION => $slice['SLICE_DESCRIPTION']);
+
 }
 
 // Return a dictionary of the list of slices (details) for a give
@@ -349,19 +366,28 @@ function get_slices_for_projects($sa_url, $signer, $project_uuids, $allow_expire
 {
   $client = new XMLRPCClient($sa_url, $signer);
   $projects = array();
-  error_log("GSFP.PROJECT_UUIDS = " . print_r($project_uuids, true));
-  foreach ($project_uuids as $project_uuid) {
-    error_log("GSFP.PROJECT_ID " . $project_uuid);
-    $options = array('match' => array('_GENI_PROJECT_UID' => $project_uuid),
-		     'filter' => array('SLICE_URN', '_GENI_PROJECT_URN'));
-    $slices = $client->lookup_slices($client->get_credentials(), $options);
-    foreach($slices as $slice) {
-      $project_urn = $slice['_GENI_PROJECT_URN'];
-      $slice_urn = $slice['SLICE_URN'];
-      $projects[$project_urn] = $slice_urn;
-    }      
+  foreach($project_uuids as $project_uuid) { 
+    $projects[$project_uuid] = array();
   }
-  return $projects;  // return map of (project_urn_1 => (slice_urn1, slice_urn1, ...), project_urn_2 => (slice_urn3, ..), ..)
+  //  error_log("GSFP.PROJECT_UUIDS = " . print_r($project_uuids, true));
+  $options = array('match' => array('_GENI_PROJECT_UID' => $project_uuids));
+  $slices = $client->lookup_slices($client->get_credentials(), $options);
+  $converted_slices = array();
+  foreach( $slices as $slice) {
+    $converted_slices[] = convert_slice_to_internal($slice);
+  }
+  $slices = $converted_slices;
+  //  error_log("GSFP.SLICES = " . print_r($slices, true));
+  foreach($slices as $slice_urn => $slice) {
+    $project_uid = $slice[SA_SLICE_TABLE_FIELDNAME::PROJECT_ID];
+    $projects[$project_uid][] = $slice;
+  }
+
+  // Convert from external to internal field names
+  //  error_log("GSFP.PROJECTS = " . print_r($projects, true));
+// return map of (project_uid_1 => (slice_data_1, ...), 
+//                project_uid_2 => (slice_data_2, ..), ..)
+  return $projects;  
 }
 
 // find the slice URN, given a slice UID
