@@ -128,7 +128,7 @@ function lookup_slice_ids($sa_url, $signer, $project_id)
 /* That is, the set of slices for which this member_id is a member */
 function lookup_slices($sa_url, $signer, $project_id, $member_id)  // project_id= project_urn, member_id=member_urn
 {
-  $member_urn = get_member_urn(sa_to_ma_url($sa_url, $signer, $member_id));
+  $member_urn = get_member_urn(sa_to_ma_url($sa_url), $signer, $member_id);
   $client = new XMLRPCClient($sa_url, $signer);
   $options = array(
 		   'match' => array('PROJECT_URN' => $project_id),
@@ -187,7 +187,7 @@ function renew_slice($sa_url, $signer, $slice_id, $expiration)
 {
   $slice_urn = get_slice_urn($sa_url, $signer, $slice_id);
 
-  $client = new XMLCRPClient($sa_url, $signer);
+  $client = new XMLRPCClient($sa_url, $signer);
   $options = array('update' => array('SLICE_EXPIRATION' => $expiration),
 		   );
   $client->update_slice($slice_urn, $client->get_credentials(), $options);
@@ -205,7 +205,7 @@ function modify_slice_membership($sa_url, $signer, $slice_id,
 {
   $slice_urn = get_slice_urn($sa_url, $signer, $slice_id);
 
-  $client = new XMLCRPClient($sa_url, $signer);
+  $client = new XMLRPCClient($sa_url, $signer);
   $options = array('members_to_add' => $members_to_add,
 		   'members_to_remove' => $members_to_remove,
 		   'members_to_change' => $members_to_change,
@@ -246,7 +246,7 @@ function get_slice_members($sa_url, $signer, $slice_id, $role=null)
 {
   $slice_urn = get_slice_urn($sa_url, $signer, $slice_id);
 
-  $client = new XMLCRPClient($sa_url, $signer);
+  $client = new XMLRPCClient($sa_url, $signer);
   $options = array();
   if (! is_null($role)) {
     $options['match'] = array('SLICE_ROLE' => $role);
@@ -264,7 +264,7 @@ function get_slice_members($sa_url, $signer, $slice_id, $role=null)
 // 
 function get_slice_members_for_project($sa_url, $signer, $project_id, $role=null)
 {
-  $client = new XMLCRPClient($sa_url, $signer);
+  $client = new XMLRPCClient($sa_url, $signer);
 
   // get all slices of project
   $options = array('match' => array('PROJECT_UID'=>$slice_uid));
@@ -297,11 +297,11 @@ function get_slice_members_for_project($sa_url, $signer, $project_id, $role=null
 // CHAPI: okay (except for is_member=false)
 function get_slices_for_member($sa_url, $signer, $member_id, $is_member, $role=null)
 {
-  $member_urn = get_member_urn(sa_to_ma_url($sa_url, $signer, $member_id));
-  $client = new XMLCRPClient($sa_url, $signer);
+  $member_urn = get_member_urn(sa_to_ma_url($sa_url), $signer, $member_id);
+  $client = new XMLRPCClient($sa_url, $signer);
 
   if ($is_member) {
-    $options = array();
+    $options = array('_dummy' => null);
     if (!is_null($role)) {
       $options = array('match'=>array('SLICE_ROLE'=>$role));
     }
@@ -317,7 +317,7 @@ function get_slices_for_member($sa_url, $signer, $member_id, $is_member, $role=n
 
 function lookup_slice_details($sa_url, $signer, $slice_uuids)
 {
-  $client = new XMLCRPClient($sa_url, $signer);
+  $client = new XMLRPCClient($sa_url, $signer);
   
   $result = array();
   foreach ($slice_uuids as $slice_uuid) {
@@ -347,20 +347,26 @@ function lookup_slice_details($sa_url, $signer, $slice_uuids)
 // Optinonally, allow expired slices (default=false)
 function get_slices_for_projects($sa_url, $signer, $project_uuids, $allow_expired=false)
 {
-  $client = new XMLCRPClient($sa_url, $signer);
+  $client = new XMLRPCClient($sa_url, $signer);
   $projects = array();
-  foreach ($project_uuids as $project_urn) {
-    $options = array('match' => array('PROJECT_URN' => $project_id),
-		     'filter' => array('SLICE_URN'));
-    $slices = $client->lookup_slice_members($slice_id, $client->get_credentials(), $options);
-    $projects[$project_urn] = array_map(function($x) { return $x['SLICE_URN']; }, $slices);
-  }      
+  error_log("GSFP.PROJECT_UUIDS = " . print_r($project_uuids, true));
+  foreach ($project_uuids as $project_uuid) {
+    error_log("GSFP.PROJECT_ID " . $project_uuid);
+    $options = array('match' => array('_GENI_PROJECT_UID' => $project_uuid),
+		     'filter' => array('SLICE_URN', '_GENI_PROJECT_URN'));
+    $slices = $client->lookup_slices($client->get_credentials(), $options);
+    foreach($slices as $slice) {
+      $project_urn = $slice['_GENI_PROJECT_URN'];
+      $slice_urn = $slice['SLICE_URN'];
+      $projects[$project_urn] = $slice_urn;
+    }      
+  }
   return $projects;  // return map of (project_urn_1 => (slice_urn1, slice_urn1, ...), project_urn_2 => (slice_urn3, ..), ..)
 }
 
 // find the slice URN, given a slice UID
 function get_slice_urn($sa_url, $signer, $slice_uid) {
-  $client = new XMLCRPClient($sa_url, $signer);
+  $client = new XMLRPCClient($sa_url, $signer);
   $options = array('match' => array('SLICE_UID'=>$slice_uid),
 		   'filter' => array('SLICE_URN'));
   $result = $client->lookup_slices($client->get_credentials(), $options);

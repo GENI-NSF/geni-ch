@@ -275,33 +275,54 @@ function get_projects_for_member($sa_url, $signer, $member_id, $is_member, $role
   if (! is_object($signer)) {
     throw new InvalidArgumentException('Null signer');
   }
-  $cert = $signer->certificate();
-  $key = $signer->privateKey();
-  $get_projects_message['operation'] = 'get_projects_for_member';
-  $get_projects_message[PA_ARGUMENT::MEMBER_ID] = $member_id;
-  $get_projects_message[PA_ARGUMENT::IS_MEMBER] = $is_member;
-  $get_projects_message[PA_ARGUMENT::ROLE_TYPE] = $role;
-  $results = put_message($sa_url, $get_projects_message,
-			 $cert, $key, 
-			 $signer->certificate(), $signer->privateKey());
-  return $results;
+
+  //  $cert = $signer->certificate();
+  //  $key = $signer->privateKey();
+  //  $get_projects_message['operation'] = 'get_projects_for_member';
+  //  $get_projects_message[PA_ARGUMENT::MEMBER_ID] = $member_id;
+  //  $get_projects_message[PA_ARGUMENT::IS_MEMBER] = $is_member;
+  //  $get_projects_message[PA_ARGUMENT::ROLE_TYPE] = $role;
+  //  $results = put_message($sa_url, $get_projects_message,
+  //			 $cert, $key, 
+  //			 $signer->certificate(), $signer->privateKey());
+
+  global $user;
+  $options = array('_dummy' => null);
+  $client = new XMLRPCClient($sa_url, $signer);
+  $member_urn = $user->urn; 
+  $rows = $client->lookup_projects_for_member($member_urn, $client->get_credentials(), $options);
+  $project_uuids = array();
+  foreach($rows as $row) {
+    $project_uuid = $row['PROJECT_UID'];
+    array_push($project_uuids, $project_uuid);
+  }
+  return $project_uuids;
 }
 
 function lookup_project_details($sa_url, $signer, $project_uuids)
 {
-  $cert = $signer->certificate;
-  $key = $signer->privateKey();
-  $get_projects_message['operation'] = 'lookup_project_details';
-  $get_projects_message[PA_ARGUMENT::PROJECT_UUIDS] = $project_uuids;
-  $results = put_message($sa_url, $get_projects_message,
-			 $cert, $key, 
-			 $signer->certificate(), $signer->privateKey());
-			 
-  $results2 = array();
-  foreach ($results as $project) {
-  	  $results2[ $project['project_id'] ] = $project;
-  }			 
-  return $results2;
+  //  $cert = $signer->certificate;
+  //  $key = $signer->privateKey();
+  //  $get_projects_message['operation'] = 'lookup_project_details';
+  //  $get_projects_message[PA_ARGUMENT::PROJECT_UUIDS] = $project_uuids;
+  //  $results = put_message($sa_url, $get_projects_message,
+  //			 $cert, $key, 
+  //			 $signer->certificate(), $signer->privateKey());
+  //			 
+  //  $results2 = array();
+  //  foreach ($results as $project) {
+  //  	  $results2[ $project['project_id'] ] = $project;
+  //  }			 
+  //  return $results2;
+
+  //  error_log("PIDS = " . print_r($project_uuids, true));
+
+  global $user;
+  $client = new XMLRPCClient($sa_url, $signer);
+  $options = array('match' => array('PROJECT_UID' => $project_uuids));
+  $results = $client->lookup_projects($client->get_credentials(), $options);
+  return $results;
+
 }
 
 // Routines to invite and accept invivations for members to projects
