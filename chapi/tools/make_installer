@@ -1,0 +1,20 @@
+#!/bin/bash
+
+wget --output-document abac.tar.gz http://abac.deterlab.net/src/abac-0.1.5.tar.gz
+wget --output-document gcf.tar.gz --post-data "software=gcf-2.3.3.tar.gz&accept=I+have+read+and+accept+the+GPO+terms+of+service+and+disclaimer" http://software.geni.net/local-sw/real_download
+
+git clone git+ssh://trac.gpolab.bbn.com/srv/git/chapi.git
+
+cd chapi
+git clone git+ssh://trac.gpolab.bbn.com/srv/git/amsoil.git
+
+for pl in chrm chapiv1rpc sarm marm csrm logging pgch
+do
+    ln -s ../../../chapi/plugins/$pl AMsoil/src/plugins/$pl
+done
+cp AMsoil/deploy/config.db.apache AMsoil/deploy/config.db
+
+cd ..
+tar cfpz chapi.tgz chapi
+cp chapi/chapi/tools/install_ch .
+tar cfp chapi_installer.tar abac.tar.gz chapi.tgz gcf.tar.gz install_ch
