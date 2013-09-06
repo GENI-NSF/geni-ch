@@ -65,7 +65,7 @@ function create_project($sa_url, $signer, $project_name, $lead_id, $project_purp
 		  '_GENI_PROJECT_PURPOSE' => $project_purpose,
 		  'PROJECT_EXPIRATION'    => $project_expiration);
   $results = $client->create_project($client->get_credentials(), array('fields'=>$fields));
-  $project_id = $results['PROJECT_UID');
+  $project_id = $results['PROJECT_UID'];
 
   return $project_id;
 }
@@ -84,7 +84,7 @@ function get_projects($sa_url, $signer)
 function get_projects_by_lead($sa_url, $signer, $lead_id)
 {
   $client = new XMLRPCClient($sa_url, $signer);
-  $options = array('match'=>array('_GENI_PROJECT_LEAD'=>$lead_id)
+  $options = array('match'=>array('_GENI_PROJECT_LEAD'=>$lead_id),
 		   'filter'=>array('PROJECT_UID'));
   $res = $client->lookup_projects($client->get_credentials(), $options);
   return array_map(function($x) { return $x['PROJECT_UID']; }, $slices);
@@ -97,7 +97,7 @@ $PACHAPI2PORTAL = array('PROJECT_UID'=>PA_PROJECT_TABLE_FIELDNAME::PROJECT_ID,
 			'PROJECT_CREATION'=>PA_PROJECT_TABLE_FIELDNAME::CREATION,
 			'_GENI_PROJECT_PURPOSE'=>PA_PROJECT_TABLE_FIELDNAME::PROJECT_PURPOSE,
 			'PROJECT_EXPIRATION'=>PA_PROJECT_TABLE_FIELDNAME::EXPIRATION,
-			'_GENI_PROJECT_EXPIRED'=>=>PA_PROJECT_TABLE_FIELDNAME::EXPIRED);
+			'_GENI_PROJECT_EXPIRED'=>PA_PROJECT_TABLE_FIELDNAME::EXPIRED);
 
 
 // Return project details
