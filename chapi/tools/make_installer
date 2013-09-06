@@ -16,17 +16,18 @@ git clone git+ssh://trac.gpolab.bbn.com/srv/git/chapi.git
 cd chapi
 #git clone git+ssh://trac.gpolab.bbn.com/srv/git/amsoil.git
 git clone git+ssh://trac.gpolab.bbn.com/home/dmontana/AMsoil
+cd AMsoil
 git checkout gpo
 
 # fix up the amsoil directory
 for pl in chrm chapiv1rpc sarm marm csrm logging pgch
 do
-    ln -s ../../../chapi/plugins/$pl AMsoil/src/plugins/$pl
+    ln -s ../../../chapi/plugins/$pl src/plugins/$pl
 done
-chmod 777 AMsoil/deploy AMsoil/log
+chmod 777 deploy log
 
 # tar up chapi and then the whole package
-cd ..
+cd ../..
 tar cfpz chapi.tgz chapi
 cp chapi/chapi/tools/install_ch .
 tar cfp chapi_installer.tar abac.tar.gz chapi.tgz gcf.tar.gz install_ch

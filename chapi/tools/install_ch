@@ -9,6 +9,8 @@ set -x
 tar pxfz chapi.tgz -C /usr/share/geni-ch
 tar pxfz gcf.tar.gz -C /usr/share/geni-ch
 tar xfz abac.tar.gz -C /usr/share/geni-ch
+mv /usr/share/geni-ch/gcf-2.3.3 /usr/share/geni-ch/gcf
+mv /usr/share/geni-ch/abac-0.1.5 /usr/share/geni-ch/abac
 
 # install required modules
 apt-get -y install libapache2-mod-fastcgi python-setuptools \
