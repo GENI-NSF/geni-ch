@@ -68,6 +68,7 @@ def lookup_project_names_for_user(user_urn):
     q = q.filter(db.MEMBER_ATTRIBUTE_TABLE.c.member_id == db.PROJECT_MEMBER_TABLE.c.member_id)
     q = q.filter(db.MEMBER_ATTRIBUTE_TABLE.c.value == user_urn)
     rows = q.all()
+    session.close()
     
     project_names = [row.project_name for row in rows]
     return project_names
@@ -87,6 +88,7 @@ def lookup_operator_privilege(user_urn):
     q = q.filter(db.MEMBER_ATTRIBUTE_TABLE.c.value == user_urn)
 
     rows = q.all()
+    session.close()
     return len(rows) > 0
 
 class ABACAssertionGenerator(object): 
@@ -105,7 +107,7 @@ class ProjectMemberAsserterByURN(ABACAssertionGenerator):
         user_project_names = lookup_project_names_for_user(user_urn)
         for user_project_name in user_project_names:
             assertion = "ME.is_member_%s<-C" % str(user_project_name)
-            print "Asserting " + assertion
+#            print "Asserting " + assertion
             abac_manager.register_assertion(assertion)
 
 class ProjectMemberAsserterByCert(ProjectMemberAsserterByURN):
@@ -201,9 +203,9 @@ class ABACCheck(object):
                 query_expression = "ME.%s<-%s" % (q_role, q_target)
 
                 ok, proof = abac_manager.query(query_expression)
-                print "query : " + q_target + " " + q_role + " " + str(ok)
+#                print "query : " + q_target + " " + q_role + " " + str(ok)
                 if ok:
-                    print "Proof " + "\n".join(abac_manager.pretty_print_proof(proof))
+#                    print "Proof " + "\n".join(abac_manager.pretty_print_proof(proof))
                     return True
         return False
 
@@ -248,7 +250,7 @@ class ABACGuardBase(GuardBase):
 
 
     def validate_call(self, client_cert, method, credentials, options, arguments = {}):
-        print "ABACGuardBase.validate_call : " + method + " " + str(arguments) + " " + str(options)
+#        print "ABACGuardBase.validate_call : " + method + " " + str(arguments) + " " + str(options)
 
 
         argument_check = self.get_argument_check(method)
@@ -270,15 +272,17 @@ class ABACGuardBase(GuardBase):
         return determine_speaks_for(client_cert, credentials, options)
 
     def protect_results(self, client_cert, method, credentials, results):
-        print "ABACGuardBase.protect_results : " + method + " " + str(results)
+#        print "ABACGuardBase.protect_results : " + method + " " + str(results)
         protected_results = results
         row_check = self.get_row_check(method)
         if row_check:
             protected_results = {}
             for urn in results.keys():
                 urn_result = results[urn]
-#                print "URN = " + urn + " RES = " + str(urn_result)
                 if row_check.permit(client_cert, credentials, urn):
+#                   print "Permitted : " + str(urn_result)
                     protected_results[urn] = urn_result
+#                else:
+#                    print "Not permitted : " + str(urn_result)
         return protected_results
 

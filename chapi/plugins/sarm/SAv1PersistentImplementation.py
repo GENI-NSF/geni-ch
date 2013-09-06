@@ -196,10 +196,12 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         selected_columns, match_criteria = \
             unpack_query_options(options, self.slice_field_mapping)
         session = self.db.getSession()
+
         q = session.query(self.db.SLICE_TABLE, self.db.PROJECT_TABLE.c.project_id, self.db.PROJECT_TABLE.c.project_name)
+
         q = q.filter(self.db.SLICE_TABLE.c.project_id == self.db.PROJECT_TABLE.c.project_id)
+
         q = add_filters(q, match_criteria, self.db.SLICE_TABLE, self.slice_field_mapping)
-#        print "Q = " + str(q)
         rows = q.all()
         session.close()
 
