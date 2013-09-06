@@ -38,7 +38,9 @@ if(!isset($permission_cache)) {
 function get_attributes($cs_url, $signer, $principal, $context_type, $context)
 {
   $client = new XMLRPCClient($cs_url, $signer);
-  return $client->get_attributes($principal, $context_type, $context);
+  $options = array();
+  return $client->get_attributes($principal, $context_type, $context, 
+				 $client->get_credentials(), $options);
 
 }
 
@@ -53,8 +55,9 @@ function get_permissions($cs_url, $signer, $principal)
   }
 
   $client = new XMLRPCClient($cs_url, $signer);
-  //  $result =  $client->get_permissions($principal);
-  $result =  $client->get_permissions(); // TODO: currently get_permissions takes no args
+  $options = array();
+  $result =  $client->get_permissions($principal, $client->get_credentials(), 
+				      $options);
   //error_log("RESULT = " . print_r($result, true));
   
   $pm = compute_permission_manager($result);

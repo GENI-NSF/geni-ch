@@ -46,17 +46,37 @@ class CSv1Handler(HandlerBase):
     def __init__(self):
         super(CSv1Handler, self).__init__(cs_logger)
 
-    def get_attributes(self, context_type):
+    def get_attributes(self, principal, context_type, context, \
+                           credentials, options):
         client_cert = self.requestCertificate()
-        client_cert, options = \
-            self._guard.adjust_client_identity(client_cert, [], {})
-        return self._delegate.get_attributes(client_cert, context_type)
+        try:
+            self._guard.validate_call(client_cert, method, \
+                                          credentials, options,  \
+                                          {'principal' : principal, \
+                                               'context_type' : context_type, \
+                                               'context' : context})
+            client_cert, options = \
+                self._guard.adjust_client_identity(client_cert, \
+                                                       credentials, options)
+            return self._delegate.get_attributes(client_cert, principal, \
+                                                     context_type, context, \
+                                                     credentials, options)
+        except Exception as e:
+            return self._errorReturn(e)
 
-    def get_permissions(self):
+    def get_permissions(self, principal, credentials, options):
         client_cert = self.requestCertificate()
-        client_cert, options = \
-            self._guard.adjust_client_identity(client_cert, [], {})
-        return self._delegate.get_permissions(client_cert)
+        try:
+            self._guard.validate_call(client_cert, method, \
+                                          credentials, options,  \
+                                          {'principal' : principal})
+            client_cert, options = \
+                self._guard.adjust_client_identity(client_cert, \
+                                                       credentials, options);
+            return self._delegate.get_permissions(client_cert, principal, \
+                                                      credentials, options)
+        except Exception as e:
+            return self._errorReturn(e)
 
 
 class CSv1Delegate(DelegateBase):
@@ -65,8 +85,8 @@ class CSv1Delegate(DelegateBase):
         super(CSv1Delegate, self).__init__(cs_logger)
         self.db = pm.getService('chdbengine')
 
-    def get_attributes(self, client_cert, context_type):
-        principal = get_uuid_from_cert(client_cert)
+    def get_attributes(self, client_cert, principal, context_type, context, \
+                           credentials, options):
 
         session = self.db.getSession()
 
@@ -74,6 +94,8 @@ class CSv1Delegate(DelegateBase):
         q = q.filter(self.db.CS_ASSERTION_TABLE.c.attribute == self.db.CS_ATTRIBUTE_TABLE.c.id)
         q = q.filter(self.db.CS_ASSERTION_TABLE.c.principal == principal)
         q = q.filter(self.db.CS_ASSERTION_TABLE.c.context_type == context_type)
+        if context:
+            q = q.filter(self.db.CS_ASSERTION_TABLE.c.context == context)
 
         rows = q.all()
         session.close()
@@ -81,9 +103,7 @@ class CSv1Delegate(DelegateBase):
         return self._successReturn(response)
 
 
-    def get_permissions(self, client_cert):
-        principal = get_uuid_from_cert(client_cert)
-
+    def get_permissions(self, client_cert, principal, credentials, options):
         session = self.db.getSession()
 
         q = session.query(self.db.CS_ACTION_TABLE.c.name, self.db.CS_ATTRIBUTE_TABLE.c.name, \
@@ -100,6 +120,7 @@ class CSv1Delegate(DelegateBase):
         return self._successReturn(response)
 
 # Simple guard, just to capture speaks-for implementation
+# *** WRITE ME ***
 class CSv1Guard(ABACGuardBase):
     def __init__(self):
         ABACGuardBase.__init__(self)
