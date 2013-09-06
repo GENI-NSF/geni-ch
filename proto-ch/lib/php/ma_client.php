@@ -499,7 +499,6 @@ function get_member_urn($ma_url, $signer, $id) {
     $client = new XMLRPCClient($ma_url, $signer);
     $options = array('match'=>array('MEMBER_UID'=>$id),
 		     'filter'=>array('MEMBER_URN'));
-    error_log("H7 ". $id);
     $r = $client->lookup_public_member_info($client->get_credentials(), 
 					    $options);
 
