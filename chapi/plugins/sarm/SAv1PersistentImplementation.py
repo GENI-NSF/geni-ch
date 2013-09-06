@@ -103,9 +103,10 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
     slice_supplemental_fields = {
         "_GENI_SLICE_OWNER" : {"TYPE" : "UUID", "UPDATE" : True},
         "_GENI_SLICE_EMAIL": {"TYPE": "EMAIL", \
-                   "CREATE": "REQUIRED", "UPDATE": True},
+                                  "CREATE": "REQUIRED", "UPDATE": True},
         "_GENI_PROJECT_URN": {"TYPE": "URN", \
-                   "CREATE": "REQUIRED", "UPDATE": False}
+                                  "CREATE": "REQUIRED", "UPDATE": False},
+        "_GENI_PROJECT_UID": {"TYPE" : "UID", "UPDATE" : False}
     }
 
     project_mandatory_fields = {
@@ -138,7 +139,8 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         "SLICE_CREATION" :  "creation",
         "_GENI_SLICE_EMAIL" : "slice_email",
         "_GENI_SLICE_OWNER" : "owner_id", 
-        "_GENI_PROJECT_URN" : row_to_project_urn
+        "_GENI_PROJECT_URN" : row_to_project_urn,
+        "_GENI_PROJECT_UID": 'project_id'
         }
 
     # Mapping from external to internal data schema (PROJECT)
@@ -247,7 +249,9 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                                  credentials, options):
         rows = self.lookup_for_member(member_urn, self.db.SLICE_TABLE, \
                   self.db.SLICE_MEMBER_TABLE, "slice_urn", "slice_id")
-        slices = [{"SLICE_ROLE" : row.name, "SLICE_URN": row.slice_urn} \
+        slices = [{"SLICE_ROLE" : row.name, \
+                       "SLICE_UID" : row.slice_id, \
+                       "SLICE_URN": row.slice_urn} \
                   for row in rows]
         return self._successReturn(slices)
 
@@ -491,6 +495,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         rows = self.lookup_for_member(member_urn, self.db.PROJECT_TABLE, \
                   self.db.PROJECT_MEMBER_TABLE, "project_name", "project_id")
         projects = [{"PROJECT_ROLE" : row.name, \
+                         "PROJECT_UID" : row.project_id, \
                      "PROJECT_URN": row_to_project_urn(row)} for row in rows]
         return self._successReturn(projects)
 
