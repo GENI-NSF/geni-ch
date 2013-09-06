@@ -25,10 +25,11 @@
 
 from chapi.MemberAuthority import MAv1DelegateBase
 from chapi.Exceptions import *
-from ext.geni.util.urn_util import URN
+from geni.util.urn_util import URN
 import amsoil.core.pluginmanager as pm
 from tools.dbutils import *
-import ext.sfa.trust.gid as sfa_gid
+import sfa.trust.gid as sfa_gid
+import sfa.trust.certificate as cert
 import geni.util.cred_util as cred_util
 from sqlalchemy.orm import mapper
 from datetime import *
@@ -57,6 +58,11 @@ class InsideKey(object):
 class SshKey(object):
     pass
 
+def row_cert_to_public_key(row):
+    raw_certificate = row.certificate
+    cert_obj = cert.Certificate(string=raw_certificate)
+    public_key = cert_obj.get_pubkey()
+    return public_key.get_pubkey_string()
 
 class MAv1Implementation(MAv1DelegateBase):
 
@@ -83,12 +89,14 @@ class MAv1Implementation(MAv1DelegateBase):
                                "UPDATE": True, "PROTECT": "IDENTIFYING"},
         "_GENI_MEMBER_EPPN": {"TYPE": "STRING", "CREATE": "ALLOWED", \
                         "UPDATE": True, "PROTECT": "IDENTIFYING"},
-        "_GENI_MEMBER_SSL_PUBLIC_KEY": {"TYPE": "SSL_KEY"},
+        "_GENI_MEMBER_SSL_PUBLIC_KEY": {"TYPE": "KEY"},
+        "_GENI_MEMBER_SSL_CERTIFICATE": {"TYPE": "CERTIFICATE"},
         "_GENI_MEMBER_SSL_PRIVATE_KEY": \
-                      {"TYPE": "SSL_KEY", "PROTECT": "PRIVATE"},
-        "_GENI_MEMBER_INSIDE_PUBLIC_KEY": {"TYPE": "SSL_KEY"},
+                      {"TYPE": "KEY", "PROTECT": "PRIVATE"},
+        "_GENI_MEMBER_INSIDE_PUBLIC_KEY": {"TYPE": "KEY"},
+        "_GENI_MEMBER_INSIDE_CERTIFICATE": {"TYPE": "CERTIFICATE"},
         "_GENI_MEMBER_INSIDE_PRIVATE_KEY": \
-                      {"TYPE": "SSL_KEY", "PROTECT": "PRIVATE"},
+                      {"TYPE": "KEY", "PROTECT": "PRIVATE"},
         "_GENI_USER_CREDENTIAL": {"TYPE": "CREDENTIAL"}
         }
 
@@ -97,9 +105,9 @@ class MAv1Implementation(MAv1DelegateBase):
             {"TYPE" : "URN", "CREATE" : "REQUIRED"}, \
             "KEY_ID" : {"TYPE" : "UID"}, \
             "KEY_PUBLIC_KEY" : \
-            {"TYPE" : "SSL_KEY", "CREATE" : "REQUIRED"},  \
+            {"TYPE" : "KEY", "CREATE" : "REQUIRED"},  \
             "KEY_PRIVATE_KEY" : \
-            {"TYPE" : "SSL_KEY", "CREATE" : "ALLOWED"}, \
+            {"TYPE" : "KEY", "CREATE" : "ALLOWED"}, \
             "KEY_DESCRIPTION" : \
             {"TYPE" : "STRING", "CREATE" : "ALLOWED", "UPDATE" : True} 
     }
@@ -121,9 +129,11 @@ class MAv1Implementation(MAv1DelegateBase):
         "_GENI_MEMBER_PHONE_NUMBER": "telephone_number",
         "_GENI_MEMBER_AFFILIATION": "affiliation",
         "_GENI_MEMBER_EPPN": "eppn",
-        "_GENI_MEMBER_SSL_PUBLIC_KEY": "certificate",
+        "_GENI_MEMBER_SSL_CERTIFICATE": "certificate",
+        "_GENI_MEMBER_SSL_PUBLIC_KEY": row_cert_to_public_key, 
         "_GENI_MEMBER_SSL_PRIVATE_KEY": "private_key",
-        "_GENI_MEMBER_INSIDE_PUBLIC_KEY": "certificate",
+        "_GENI_MEMBER_INSIDE_PUBLIC_KEY": row_cert_to_public_key,
+        "_GENI_MEMBER_INSIDE_CERTIFICATE": "certificate",
         "_GENI_MEMBER_INSIDE_PRIVATE_KEY": "private_key",
         "_GENI_USER_CREDENTIAL": "foo"
         }
@@ -150,8 +160,9 @@ class MAv1Implementation(MAv1DelegateBase):
                       "KEY_DESCRIPTION", "_GENI_KEY_FILENAME"]
 
     public_fields = ["MEMBER_URN", "MEMBER_UID", "MEMBER_USERNAME", \
-             "_GENI_MEMBER_SSL_PUBLIC_KEY", "_GENI_MEMBER_INSIDE_PUBLIC_KEY", \
-             "_GENI_USER_CREDENTIAL"]
+                         "_GENI_MEMBER_SSL_PUBLIC_KEY", "_GENI_MEMBER_SSL_CERTIFICATE", \
+                         "_GENI_MEMBER_INSIDE_PUBLIC_KEY", "_GENI_MEMBER_INSIDE_CERTIFICATE", \
+                         "_GENI_USER_CREDENTIAL"]
 
     identifying_fields = ["MEMBER_FIRSTNAME", "MEMBER_LASTNAME", \
                               "MEMBER_EMAIL", \
@@ -178,8 +189,10 @@ class MAv1Implementation(MAv1DelegateBase):
         mapper(InsideKey, self.db.INSIDE_KEY_TABLE)
         mapper(SshKey, self.db.SSH_KEY_TABLE)
         self.table_mapping = {
+            "_GENI_MEMBER_SSL_CERTIFICATE": OutsideCert,
             "_GENI_MEMBER_SSL_PUBLIC_KEY": OutsideCert,
             "_GENI_MEMBER_SSL_PRIVATE_KEY": OutsideCert,
+            "_GENI_MEMBER_INSIDE_CERTIFICATE": InsideKey,
             "_GENI_MEMBER_INSIDE_PUBLIC_KEY": InsideKey,
             "_GENI_MEMBER_INSIDE_PRIVATE_KEY": InsideKey
             }
@@ -229,10 +242,20 @@ class MAv1Implementation(MAv1DelegateBase):
 
     # find the value for a column in a table
     def get_val_for_uid(self, session, table, field, uid):
-        q = session.query(getattr(table, field))
+        if hasattr(field, '__call__'):
+            q = session.query(table)
+        else:
+            q = session.query(getattr(table, field))
         q = q.filter(table.member_id == uid)
         rows = q.all()
-        return [getattr(row, field) for row in rows]
+        result = []
+        for row in rows:
+            if hasattr(field, '__call__'):
+                value = field(row)
+            else:
+                value = getattr(row, field)
+            result.append(value)
+        return result
 
     # construct a list of ssh keys
     def get_ssh_keys_for_uid(self, session, uid, include_private):
@@ -273,6 +296,7 @@ class MAv1Implementation(MAv1DelegateBase):
                 elif col == "MEMBER_UID":
                     values[col] = uid
                 else:
+                    vals = None
                     if col in self.attributes:
                         vals = self.get_attr_for_uid(session, col, uid)
                     elif col in self.table_mapping:
