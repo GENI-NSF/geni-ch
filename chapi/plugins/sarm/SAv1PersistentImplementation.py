@@ -368,6 +368,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         if not slice.expiration:
             slice.expiration = slice.creation + relativedelta(days=7)
         slice.slice_id = str(uuid.uuid4())
+        slice.owner_id = client_uuid
         slice.slice_urn = urn_for_slice(slice.slice_name, project_name)
         cert, k = cert_util.create_cert(slice.slice_urn, \
             issuer_key = self.key, issuer_cert = self.cert, \
