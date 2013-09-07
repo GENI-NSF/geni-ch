@@ -459,7 +459,6 @@ function lookup_member_names_for_rows($ma_url, $signer, $rows, $field)
     $names_by_id = lookup_member_names($ma_url, $signer, $member_uuids);
   }
   $names_by_id[$signer->account_id] = $signer->prettyName();
-  //  error_log('RESULT = ' . print_r($names_by_id, true));
   return $names_by_id;
 }
 
@@ -468,9 +467,14 @@ function lookup_member_names($ma_url, $signer, $member_uuids)
 {
   $client = new XMLRPCClient($ma_url, $signer);
   $options = array('match'=> array('MEMBER_UID'=>$member_uuids),
-		   'filter'=>array('MEMBER_FIRSTNAME', 'MEMBER_LASTNAME', 'MEMBER_USERNAME'));
+		   'filter'=>array('MEMBER_UID', 'MEMBER_FIRSTNAME', 'MEMBER_LASTNAME', 'MEMBER_USERNAME'));
   $res = $client->lookup_identifying_member_info($client->get_credentials(), $options);
-  $ids = array_map(function($x) { return $x['MEMBER_USERNAME']; }, $res);
+  $ids = array();
+  foreach($res as $member_urn => $member_info) {
+    $member_uuid = $member_info['MEMBER_UID'];
+    $member_username = $member_info['MEMBER_USERNAME'];
+    $ids[$member_uuid] = $member_username;
+  }
   return $ids;
 }
 

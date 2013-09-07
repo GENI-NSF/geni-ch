@@ -49,7 +49,7 @@ function get_permissions($cs_url, $signer, $principal)
   global $permission_cache;
 
   if (array_key_exists($principal, $permission_cache)) {
-    error_log("CACHE HIT get_permissions : " . $principal);
+    //    error_log("CACHE HIT get_permissions : " . $principal);
     return $permission_cache[$principal];
   }
 

@@ -394,7 +394,9 @@ function lookup_project_details($sa_url, $signer, $project_uuids)
   //  error_log("LPD.RESULTS = " . print_r($results, true));
   $converted_projects = array();
   foreach($results as $project) {
-    $converted_projects[] = convert_project_to_internal($project);
+    $converted_project = convert_project_to_internal($project);
+    $project_id = $converted_project[PA_PROJECT_TABLE_FIELDNAME::PROJECT_ID];
+    $converted_projects[$project_id] = $converted_project;
   }
   $results = $converted_projects;
   //  error_log("LPD.RESULTS = " . print_r($results, true));
