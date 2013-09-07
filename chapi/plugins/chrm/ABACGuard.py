@@ -46,7 +46,8 @@ def cache_get(k):
     return _context.cache[k]
 
 def cache_clear():
-    del _context.cache
+    if hasattr(_context, 'cache'):
+        del _context.cache
 
 # Some helper methods
 
@@ -277,6 +278,7 @@ class ABACGuardBase(GuardBase):
 
 
     def validate_call(self, client_cert, method, credentials, options, arguments = {}):
+        return
 #        print "ABACGuardBase.validate_call : " + method + " " + str(arguments) + " " + str(options)
 
 
@@ -299,6 +301,7 @@ class ABACGuardBase(GuardBase):
         return determine_speaks_for(client_cert, credentials, options)
 
     def protect_results(self, client_cert, method, credentials, results):
+        return results
 #        print "ABACGuardBase.protect_results : " + method + " " + str(results)
         protected_results = results
         row_check = self.get_row_check(method)
@@ -311,6 +314,6 @@ class ABACGuardBase(GuardBase):
                     protected_results[urn] = urn_result
 #                else:
 #                    print "Not permitted : " + str(urn_result)
-        clear_cache()
+        cache_clear()
         return protected_results
 

@@ -156,6 +156,24 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         "_GENI_PROJECT_OWNER" : "lead_id"
         }
 
+    project_request_columns = ['context_type', 'context_id', 'request_text', \
+                                   'request_type', 'request_details', 'requestor', \
+                                   'status', 'creation_timestamp', 'resolver', \
+                                   'resolution_timestamp', 'resolution_description']
+    project_request_field_mapping = {
+        'context_type' : 'context_type', 
+        'context_id' : 'context_id', 
+        'request_text' : 'request_text', 
+        'request_type' : 'request_type', 
+        'request_details' : 'request_details', 
+        'requestor' : 'requestor', 
+        'status' : 'status', 
+        'creation_timestamp' : 'creation_timestamp', 
+        'resolver'  : 'resolver' , 
+        'resolution_timestamp' : 'resolution_timestamp', 
+        'resolution_description' : 'resolution_description'
+}
+
 
 
     def __init__(self):
@@ -644,3 +662,85 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         aggs = [row.aggregate_url for row in rows]
         session.close()
         return self._successReturn(aggs)
+
+    # Methods for managing pending project requests
+
+    def create_request(self, client_cert, context_type, \
+                           context_id, request_type, request_text, \
+                           request_details, credentials, options):
+        raise CHAPIv1NotImplementedError('')
+
+    def resolve_pending_request(self, client_cert, context_type, request_id, \
+                                    resolution_status, resolution_description,  \
+                                    credentials, options):
+        raise CHAPIv1NotImplementedError('')
+
+    def get_requests_for_context(self, client_cert, context_type, \
+                                 context_id, status, \
+                                 credentials, options):
+        session = self.db.getSession()
+        q = session.query(self.db.PROJECT_REQUEST_TABLE)
+        q = q.filter(self.db.PROJECT_REQUEST_TABLE.c.context_type == context_type)
+        q = q.filter(self.db.PROJECT_REQUEST_TABLE.c.context_id == context_id)
+        if status:
+            q = q.filter(self.db.PROJECT_REQUEST_TABLE.c.status == status)
+        rows = q.all()
+        session.close()
+        return self._successReturn(rows)
+
+    def get_requests_by_user(self, client_cert, member_id, context_type, \
+                                 context_id, status, \
+                                 credentials, options):
+        session = self.db.getSession()
+        q = session.query(self.db.PROJECT_REQUEST_TABLE)
+        q = q.filter(self.db.PROJECT_REQUEST_TABLE.c.context_type == context_type)
+        if context_id:
+            q = q.filter(self.db.PROJECT_REQUEST_TABLE.c.context_id == context_id)
+        if status:
+            q = q.filter(self.db.PROJECT_REQUEST_TABLE.c.status == status)
+        q = q.filter(self.db.PROJECT_REQUEST_TABLE.c.requestor == member_id)
+
+        rows = q.all()
+        session.close()
+#        print "ROWS = " + str(rows)
+        result = [construct_result_row(row, self.project_request_columns, \
+                                           self.project_request_field_mapping) \
+                      for row in rows]
+        return self._successReturn(result)
+
+    # Request status codes from rq_constants.php
+    PENDING_STATUS = 0
+
+    def get_pending_requests_for_user(self, client_cert, member_id, \
+                                          context_type, context_id, \
+                                          credentials, options):
+        session = self.db.getSession()
+        # Filter those projects with pending requsts to those for which
+        # Given member is lead or admin
+        q = session.query(self.db.PROJECT_REQUEST_TABLE, self.db.PROJECT_MEMBER_TABLE)
+        q.filter(self.db.PROJECT_REQUEST_TABLE.c.context_id == self.db.PROJECT_MEMBER_TABLE.c.project_id)
+        q.filter(self.db.PROJECT_MEMBER_TABLE.c.member_id == member_id)
+        q.filter(self.db.PROJECT_MEMBER_TABLE.c.role.in_([LEAD_ATTRIBUTE, ADMIN_ATTRIBUTE]))
+        q = q.filter(self.db.PROJECT_REQUEST_TABLE.c.context_type == context_type)
+        if context_id:
+            q = q.filter(self.db.PROJECT_REQUEST_TABLE.c.context_id == context_id)
+        q = q.filter(self.db.PROJECT_REQUEST_TABLE.c.status == self.PENDING_STATUS)
+        rows = q.all()
+        session.close()
+#        print "ROWS = " + str(rows)
+        result = [construct_result_row(row, self.project_request_columns, \
+                                           self.project_request_field_mapping) \
+                      for row in rows]
+        return self._successReturn(result)
+
+    def get_number_of_pending_requests_for_user(self, client_cert, member_id, \
+                                                    context_type, context_id, \
+                                                    credentials, options):
+        raise CHAPIv1NotImplementedError('')
+
+    def get_request_by_id(self, client_cert, request_id, context_type):
+        raise CHAPIv1NotImplementedError('')
+
+
+
+

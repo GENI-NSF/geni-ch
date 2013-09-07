@@ -165,6 +165,7 @@ class MAv1Implementation(MAv1DelegateBase):
                          "_GENI_USER_CREDENTIAL"]
 
     identifying_fields = ["MEMBER_FIRSTNAME", "MEMBER_LASTNAME", \
+                              "MEMBER_USERNAME", \
                               "MEMBER_EMAIL", \
                               "MEMBER_URN", "MEMBER_UID", \
                               "_GENI_MEMBER_DISPLAYNAME", "_GENI_MEMBER_PHONE_NUMBER", \
@@ -222,7 +223,10 @@ class MAv1Implementation(MAv1DelegateBase):
     # filter out all the users that have a particular value of an attribute
     def get_uids_for_attribute(self, session, attr, value):
         if attr == 'MEMBER_UID':  # If we already have the UID, return it
-            return [value];
+            if isinstance(value, list):
+                return value
+            else:
+                return [value]
         q = session.query(MemberAttribute.member_id)
         q = q.filter(MemberAttribute.name == self.field_mapping[attr])
         if isinstance(value, types.ListType):
@@ -271,6 +275,7 @@ class MAv1Implementation(MAv1DelegateBase):
 
     # Common code for answering query
     def lookup_member_info(self, options, allowed_fields):
+        
         # preliminaries
         selected_columns, match_criteria = \
             unpack_query_options(options, self.field_mapping)

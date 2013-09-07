@@ -467,7 +467,7 @@ function lookup_member_names_for_rows($ma_url, $signer, $rows, $field)
 function lookup_member_names($ma_url, $signer, $member_uuids)
 {
   $client = new XMLRPCClient($ma_url, $signer);
-  $options = array('match'=> array('MEMBER_UID'=>$member_emails),
+  $options = array('match'=> array('MEMBER_UID'=>$member_uuids),
 		   'filter'=>array('MEMBER_FIRSTNAME', 'MEMBER_LASTNAME', 'MEMBER_USERNAME'));
   $res = $client->lookup_identifying_member_info($client->get_credentials(), $options);
   $ids = array_map(function($x) { return $x['MEMBER_USERNAME']; }, $res);

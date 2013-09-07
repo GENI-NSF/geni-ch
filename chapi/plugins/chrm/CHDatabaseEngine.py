@@ -82,6 +82,8 @@ class CHDatabaseEngine:
             Table('logging_entry_attribute', \
                       self.metadata, autoload=True)
         self.MA_CLIENT_TABLE = Table('ma_client', self.metadata, autoload=True)
+        self.PROJECT_REQUEST_TABLE = Table('pa_project_member_request', \
+                                               self.metadata, autoload=True)
 
     # Get a new session on the database engine
     def getSession(self):
