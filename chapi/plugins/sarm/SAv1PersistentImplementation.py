@@ -156,11 +156,12 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         "_GENI_PROJECT_OWNER" : "lead_id"
         }
 
-    project_request_columns = ['context_type', 'context_id', 'request_text', \
+    project_request_columns = ['id', 'context_type', 'context_id', 'request_text', \
                                    'request_type', 'request_details', 'requestor', \
                                    'status', 'creation_timestamp', 'resolver', \
                                    'resolution_timestamp', 'resolution_description']
     project_request_field_mapping = {
+        'id' : 'id', 
         'context_type' : 'context_type', 
         'context_id' : 'context_id', 
         'request_text' : 'request_text', 
