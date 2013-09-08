@@ -338,7 +338,7 @@ function ma_lookup_member_id($ma_url, $signer, $member_id_key, $member_id_value)
 // get the one member (or null) that matches the specified id
 function ma_lookup_member_by_id($ma_url, $signer, $member_id)
 {
-  $res = ma_lookup_members_by_identifying($ma_url, $signer, 'MEMBER_ID', $member_id);
+  $res = ma_lookup_members_by_identifying($ma_url, $signer, 'MEMBER_UID', $member_id);
   if (count($res) > 0) {
     return $res[0];
   } else {

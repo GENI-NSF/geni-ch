@@ -97,7 +97,7 @@ $PACHAPI2PORTAL = array('PROJECT_UID'=>PA_PROJECT_TABLE_FIELDNAME::PROJECT_ID,
 			'PROJECT_CREATION'=>PA_PROJECT_TABLE_FIELDNAME::CREATION,
 			'PROJECT_DESCRIPTION'=>PA_PROJECT_TABLE_FIELDNAME::PROJECT_PURPOSE,
 			'PROJECT_EXPIRATION'=>PA_PROJECT_TABLE_FIELDNAME::EXPIRATION,
-			'_GENI_PROJECT_EXPIRED'=>PA_PROJECT_TABLE_FIELDNAME::EXPIRED);
+			'PROJECT_EXPIRED'=>PA_PROJECT_TABLE_FIELDNAME::EXPIRED);
 
 $DETAILSKEYS = array('PROJECT_UID',
 		     'PROJECT_URN',
@@ -107,14 +107,15 @@ $DETAILSKEYS = array('PROJECT_UID',
 		     'PROJECT_CREATION',
 		     'PROJECT_DESCRIPTION',
 		     'PROJECT_EXPIRATION',
-		     '_GENI_PROJECT_EXPIRED');
+		     'PROJECT_EXPIRED');
 
 function details_chapi2portal($row)
 {
   global $PACHAPI2PORTAL;
   $nrow = array();
   foreach ($row as $k=>$v) {
-    $nrow[$PACHAPI2PORTAL[$k]] = $v;
+    if (array_key_exists($k, $PACHAPI2PORTAL))
+      $nrow[$PACHAPI2PORTAL[$k]] = $v;
   }
   return $nrow;
 }
@@ -140,15 +141,11 @@ function lookup_projects($sa_url, $signer, $lead_id=null)
   return $results;
 }
 
-function get_project_urn($sa_url, $signer, $project_id) {
-  $details = lookup_project($sa_url, $signer, $project_id);
-  return $details[PA_PROJECT_TABLE_FIELDNAME::PROJECT_URN];
-}
-
 // Return project details
 function lookup_project($sa_url, $signer, $project_id)
 {
   global $project_cache;
+  global $DETAILSKEYS;
   if (! is_object($signer)) {
     throw new InvalidArgumentException('Null signer');
   }
@@ -184,6 +181,7 @@ function lookup_project($sa_url, $signer, $project_id)
 function lookup_project_by_name($sa_url, $signer, $project_name)
 {
   global $project_cache;
+  global $DETAILSKEYS;
   if (! is_object($signer)) {
     throw new InvalidArgumentException('Null signer');
   }
@@ -207,6 +205,18 @@ function lookup_project_by_name($sa_url, $signer, $project_name)
   $details = $details[0];  // just take the first match
   
   return $details;
+}
+
+// find the project URN given the project UUID
+function get_project_urn($sa_url, $signer, $project_uid) {
+  $client = new XMLRPCClient($sa_url, $signer);
+  $options = array('match' => array('PROJECT_UID'=>$project_uid),
+		   'filter' => array('PROJECT_URN'));
+  $result = $client->lookup_projects($client->get_credentials(), $options);
+  error_log("GET_PROJECT_URN : "  . print_r($result, true));
+  $urns = array_keys($result);
+  $urn = $urns[0];
+  return $result[$urn]['PROJECT_URN'];
 }
 
 // FIXME: lookup_projects_member(sa_url, member_id, is_member, role)
@@ -256,7 +266,7 @@ function modify_project_membership($sa_url, $signer, $project_id,
   $members_to_change = _conv_mid2urn_map($sa_url, $signer, $members_to_change);
   $members_to_remove = _conv_mid2urn($sa_url, $signer, $members_to_remove);
   
-  $options = array();
+  $options = array('_dummy' => null);
   if (sizeof($members_to_add)>0)    { $options['members_to_add']    = $members_to_add; }
   if (sizeof($members_to_change)>0) { $options['members_to_change'] = $members_to_change; }
   if (sizeof($members_to_remove)>0) { $options['members_to_remove'] = $members_to_remove; }
@@ -308,12 +318,16 @@ function change_member_role($sa_url, $signer, $project_id, $member_id, $role)
 // If role is provided, filter to members of given role
 function get_project_members($sa_url, $signer, $project_id, $role=null) 
 {
-  $get_project_members_message['operation'] = 'get_project_members';
-  $get_project_members_message[PA_ARGUMENT::PROJECT_ID] = $project_id;
-  $get_project_members_message[PA_ARGUMENT::ROLE_TYPE] = $role;
-  $results = put_message($sa_url, $get_project_members_message, 
-			 $signer->certificate(), $signer->privateKey());
-  return $results;
+  $project_urn = get_project_urn($sa_url, $signer, $project_id);
+
+  $client = new XMLRPCClient($sa_url, $signer);
+  $options = array('_dummy' => null);
+  if (! is_null($role)) {
+    $options['match'] = array('PROJECT_ROLE' => $role);
+  }
+  $result = $client->lookup_project_members($project_urn, $client->get_credentials(), $options);
+  return $result;  // CHAPI: TODO: reformat output to match old
+
 }
 
 // Return list of project ID's for given member_id
@@ -361,7 +375,7 @@ function convert_project_to_internal($project)
 	       PA_PROJECT_TABLE_FIELDNAME::PROJECT_PURPOSE => $project['PROJECT_DESCRIPTION'],
 	       PA_PROJECT_TABLE_FIELDNAME::EXPIRATION => $project['PROJECT_EXPIRATION'],
 	       PA_PROJECT_TABLE_FIELDNAME::EXPIRED => $project['PROJECT_EXPIRED'],
-	       PA_PROJECT_TABLE_FIELDNAME::CREATION => $project['PROJECT_EXPIRED'],
+	       PA_PROJECT_TABLE_FIELDNAME::CREATION => $project['PROJECT_CREATION'],
 	       PA_PROJECT_TABLE_FIELDNAME::PROJECT_EMAIL => $project['_GENI_PROJECT_EMAIL'],
 	       PA_PROJECT_TABLE_FIELDNAME::LEAD_ID => $project['_GENI_PROJECT_OWNER']);
 	       

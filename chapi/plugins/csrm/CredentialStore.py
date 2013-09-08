@@ -102,6 +102,8 @@ class CSv1Delegate(DelegateBase):
         rows = q.all()
         session.close()
         response = [(str(row[0]), str(row[1])) for row in rows] # Convert from unicode to string
+        print "GA : P=%s CT=%s CID=%s OPTS=%s\n" % (principal, context_type, context, options)
+        print "GA.response = " + str(response);
         return self._successReturn(response)
 
 

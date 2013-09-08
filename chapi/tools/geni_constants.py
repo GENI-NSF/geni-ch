@@ -31,6 +31,11 @@ RESOURCE_CONTEXT = 3
 SERVICE_CONTEXT = 4
 MEMBER_CONTEXT = 5
 
+# For translating context types to names (if stored that way in database)
+context_type_names = {PROJECT_CONTEXT : "PROJECT", "SLICE_CONTEXT" : "SLICE", 
+                      RESOURCE_CONTEXT : "RESOURCE", SERVICE_CONTEXT : "SERVICE",
+                      MEMBER_CONTEXT : "MEMBER"}
+
 # Attribute (role) Types
 LEAD_ATTRIBUTE = 1
 ADMIN_ATTRIBUTE = 2
