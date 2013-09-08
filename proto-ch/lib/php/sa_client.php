@@ -44,6 +44,45 @@
 require_once('sa_constants.php');
 require_once('chapi.php');
 require_once 'ma_client.php';
+require_once('client_utils.php');
+
+$SACHAPI2PORTAL = array('SLICE_UID' => SA_SLICE_TABLE_FIELDNAME::SLICE_ID,
+			'SLICE_NAME' => SA_SLICE_TABLE_FIELDNAME::SLICE_NAME,
+			'_GENI_PROJECT_UID' => SA_SLICE_TABLE_FIELDNAME::PROJECT_ID,
+			'SLICE_EXPIRATION' => SA_SLICE_TABLE_FIELDNAME::EXPIRATION,
+			'_GENI_SLICE_OWNER' => SA_SLICE_TABLE_FIELDNAME::OWNER_ID,
+			'SLICE_URN' => SA_SLICE_TABLE_FIELDNAME::SLICE_URN,
+			'_GENI_SLICE_EMAIL' => SA_SLICE_TABLE_FIELDNAME::SLICE_EMAIL,
+			'SLICE_EXPIRED' => SA_SLICE_TABLE_FIELDNAME::EXPIRED,
+			'SLICE_DESCRIPTION' => SA_SLICE_TABLE_FIELDNAME::SLICE_DESCRIPTION);
+
+$SAMEMBERCHAPI2PORTAL = array('SLICE_ROLE' => SA_SLICE_MEMBER_TABLE_FIELDNAME::ROLE, 
+			      'SLICE_MEMBER_UID' => SA_SLICE_MEMBER_TABLE_FIELDNAME::MEMBER_ID);
+
+$DETAILSKEYS = array('SLICE_UID',
+		     'SLICE_NAME',
+		     '_GENI_PROJECT_UID',
+		     'SLICE_EXPIRATION',
+		     '_GENI_SLICE_OWNER',
+		     'SLICE_URN',
+		     '_GENI_SLICE_EMAIL',
+		     'SLICE_EXPIRED',
+		     'SLICE_DESCRIPTION');
+
+function slice_member_chapi2portal($row)
+{
+  global $SAMEMBERCHAPI2PORTAL;
+  return convert_row($row, $SAMEMBERCHAPI2PORTAL);
+}
+
+
+function slice_details_chapi2portal($row)
+{
+  global $SACHAPI2PORTAL;
+  return convert_row($row, $SACHAPI2PORTAL);
+}
+
+
 
 /* Create a slice credential for given SLICE ID and user */
 function get_slice_credential($sa_url, $signer, $slice_id, $cert=NULL)
@@ -60,7 +99,7 @@ function get_slice_credential($sa_url, $signer, $slice_id, $cert=NULL)
     throw new Exception("Cannot get_slice_cred without a user cert");
   }
   $client = new XMLRPCClient($sa_url, $signer);
-  $options = array();
+  $options = array('_dummy' => null);
 
   $result = $client->get_credentials($slice_urn, $client->get_credentials(), $options);
   return $result; //MIK: was $result['slice_credential'];
@@ -126,19 +165,24 @@ function lookup_slice_ids($sa_url, $signer, $project_id)
 
 /* lookup a set of slices by name, project_id, member_id */
 /* That is, the set of slices for which this member_id is a member */
-function lookup_slices($sa_url, $signer, $project_id, $member_id)  // project_id= project_urn, member_id=member_urn
+function lookup_slices($sa_url, $signer, $project_id, $member_id)  // 
 {
-  $member_urn = get_member_urn(sa_to_ma_url($sa_url), $signer, $member_id);
   $client = new XMLRPCClient($sa_url, $signer);
-  $options = array(
-		   'match' => array('PROJECT_URN' => $project_id),
-		   'filter' => array('SLICE_UID')
-		   );
-  $slices = $client->lookup_slices_for_member($member_urn, $client->get_credentials(), $options);
-  
-  $result = $projects[$project_urn] = array_map(function($x) { return $x['SLICE_UID']; }, $slices);
 
-  return $result;
+  if ($member_id) {
+    $member_urn = get_member_urn(sa_to_ma_url($sa_url), $signer, $member_id);
+    $options = array('_dummy' => null);
+    $slices = $client->lookup_slices_for_member($member_urn, $client->get_credentials(), $options);
+  } else {
+    $match = array('_GENI_PROJECT_UID' => $project_id);
+    $filter = array('SLICE_NAME', 'SLICE_URN', 'SLICE_ID');
+    $options = array('match' => $match);
+    $slices = $client->lookup_slices($client->get_credentials(), $options);
+  }
+
+  $converted_slices = array();
+  foreach ($slices as $slice) { $converted_slices[] = slice_details_chapi2portal($slice); }
+  return $converted_slices;
 }
 
 /* lookup details of slice of given id */
@@ -150,7 +194,11 @@ function lookup_slice($sa_url, $signer, $slice_id)
 		   // 'filter' => array('SLICE_URN')  // MIK: do we get everything if no filter specified?
 		   );
   $slices = $client->lookup_slices($client->get_credentials(), $options);
-  $slice = $slices[0];
+  $urns = array_keys($slices);
+  $urn = $urns[0];
+  $slice = $slices[$urn];
+
+  error_log("SLICE = " . print_r($slice, true));
   
   return array($slice['SLICE_UID'],
 	       $slice['SLICE_NAME'],
@@ -169,7 +217,9 @@ function lookup_slice_by_urn($sa_url, $signer, $slice_urn)
 		   // 'filter' => array('SLICE_URN')  // MIK: do we get everything if no filter specified?
 		   );
   $slices = $client->lookup_slices($client->get_credentials(), $options);
-  $slice = $slices[0];
+  $urns = array_keys($slices);
+  $urn = $urns[0];
+  $slice = $slices[$urn];
   
   return array($slice['SLICE_UID'],
 	       $slice['SLICE_NAME'],
@@ -247,18 +297,24 @@ function get_slice_members($sa_url, $signer, $slice_id, $role=null)
   $slice_urn = get_slice_urn($sa_url, $signer, $slice_id);
 
   $client = new XMLRPCClient($sa_url, $signer);
-  $options = array();
+  $options = array('_dummy' => null);
   if (! is_null($role)) {
     $options['match'] = array('SLICE_ROLE' => $role);
   }
   $result = $client->lookup_slice_members($slice_urn, $client->get_credentials(), $options);
-  return $results;  // CHAPI: TODO: reformat output to match old
+  $converted_result = array();
+  foreach($result as $row) { 
+    $converted_row = convert_role(slice_member_chapi2portal($row));
+    $converted_result[] = $converted_row;
+  }
+  return $converted_result;  
+
 }
 
 // Return list of slice_id's, member ID's and roles associated with slice of a given project
 // If role is provided, filter to members of given role
-// CHAPI: I take this to mean the return is [[slice1 mem1 role1] [slice1 mem2 role2] [slice2 mem3 role1] ...], 
-// rather than a map/tree of any sort
+// CHAPI: This should be [{'slice_id' => slice1, 'role' => role1, 'member_id' => mem1}*]
+// 
 
 // slice-> PROJECT_URN
 // 
@@ -267,11 +323,11 @@ function get_slice_members_for_project($sa_url, $signer, $project_id, $role=null
   $client = new XMLRPCClient($sa_url, $signer);
 
   // get all slices of project
-  $options = array('match' => array('PROJECT_UID'=>$slice_uid));
+  $options = array('match' => array('_GENI_PROJECT_UID'=>$project_id));
   $tuples = $client->lookup_slices($client->get_credentials(), $options);
 
   $results = array();
-  $moptions = array();
+  $moptions = array('_dummy' => null);
   if (!is_null($role)) {
     $moptions['match'] = array('SLICE_ROLE'=>$role);
   }
@@ -281,10 +337,14 @@ function get_slice_members_for_project($sa_url, $signer, $project_id, $role=null
     
     $mems = $client->lookup_slice_members($surn, $client->get_credentials(), $moptions);
     foreach ($mems as $mtup) {
-      $results[] = array($sid, $mtup['SLICE_MEMBER'], $mtup['SLICE_ROLE']);
+      $slice_member = array(SA_SLICE_TABLE_FIELDNAME::SLICE_ID => $sid, 
+			    SA_SLICE_MEMBER_TABLE_FIELDNAME::MEMBER_ID => $mtup['SLICE_MEMBER'], 
+			    SA_SLICE_MEMBER_TABLE_FIELDNAME::ROLE => $mtup['SLICE_ROLE']);
+      $slice_member = convert_role($slice_member);
+      $results[] = $slice_member;
     }
   }
-  return $result;
+  return $results;
 }
 
 // Return list of slice ID's and Roles for given member_id for slices to which member belongs
@@ -331,32 +391,13 @@ function lookup_slice_details($sa_url, $signer, $slice_uuids)
   $result = $client->lookup_slices($client->get_credentials(), $options);
   $converted_slices = array();
   foreach ($result as $slice_uuid => $slice) {
-    $converted_slices[$slice_uuid] = convert_slice_to_internal($slice);
+    $converted_slices[$slice_uuid] = slice_details_chapi2portal($slice);
   }
   $result = $converted_slices;
   //  error_log("LSD.result = " . print_r($result, true));
   return $result;
 }
 
-// Convert slice details from external (CH API compliant) names
-// to internal (database field) names
-function convert_slice_to_internal($slice)
-{
-  return array(
-	       SA_SLICE_TABLE_FIELDNAME::SLICE_ID => $slice['SLICE_UID'],
-	       SA_SLICE_TABLE_FIELDNAME::SLICE_NAME =>  $slice['SLICE_NAME'],
-	       SA_SLICE_TABLE_FIELDNAME::PROJECT_ID => 
-	       $slice['_GENI_PROJECT_UID'],
-	       SA_SLICE_TABLE_FIELDNAME::EXPIRATION => $slice['SLICE_EXPIRATION'],
-	       SA_SLICE_TABLE_FIELDNAME::OWNER_ID => 
-	       $slice['_GENI_SLICE_OWNER'],
-	       SA_SLICE_TABLE_FIELDNAME::SLICE_URN => $slice['SLICE_URN'],
-	       SA_SLICE_TABLE_FIELDNAME::SLICE_EMAIL =>
-	       $slice['_GENI_SLICE_EMAIL'],
-	       SA_SLICE_TABLE_FIELDNAME::EXPIRED => $slice['SLICE_EXPIRED'],
-	       SA_SLICE_TABLE_FIELDNAME::SLICE_DESCRIPTION => $slice['SLICE_DESCRIPTION']);
-
-}
 
 // Return a dictionary of the list of slices (details) for a give
 // set of project uuids, indexed by project UUID
@@ -374,7 +415,7 @@ function get_slices_for_projects($sa_url, $signer, $project_uuids, $allow_expire
   $slices = $client->lookup_slices($client->get_credentials(), $options);
   $converted_slices = array();
   foreach( $slices as $slice) {
-    $converted_slices[] = convert_slice_to_internal($slice);
+    $converted_slices[] = slice_details_chapi2portal($slice);
   }
   $slices = $converted_slices;
   //  error_log("GSFP.SLICES = " . print_r($slices, true));

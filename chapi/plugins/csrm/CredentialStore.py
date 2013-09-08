@@ -110,7 +110,7 @@ class CSv1Delegate(DelegateBase):
     def get_permissions(self, client_cert, principal, credentials, options):
         session = self.db.getSession()
 
-        q = session.query(self.db.CS_ACTION_TABLE.c.name, self.db.CS_ATTRIBUTE_TABLE.c.name, \
+        q = session.query(self.db.CS_ACTION_TABLE.c.name, self.db.CS_ASSERTION_TABLE.c.context_type, \
                               self.db.CS_ASSERTION_TABLE.c.context)
         q = q.filter(self.db.CS_ASSERTION_TABLE.c.principal == principal)
         q = q.filter(self.db.CS_ASSERTION_TABLE.c.attribute == self.db.CS_POLICY_TABLE.c.attribute)
@@ -120,7 +120,8 @@ class CSv1Delegate(DelegateBase):
 
         rows = q.all()
         session.close()
-        response = [(str(row[0]), str(row[1]), str(row[2])) for row in rows] # Convert from unicode to string
+        # Convert from unicode to string
+        response = [{'name' : str(row.name), 'context_type' : str(row.context_type), 'context' : str(row.context)} for row in rows] 
         return self._successReturn(response)
 
 # Simple guard, just to capture speaks-for implementation

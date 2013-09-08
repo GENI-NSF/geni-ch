@@ -43,6 +43,7 @@
 
 require_once('pa_constants.php');
 require_once 'chapi.php';
+require_once('client_utils.php');
 
 // A cache of a user's detailed info indexed by member_id
 if(!isset($project_cache)) {
@@ -61,9 +62,9 @@ function create_project($sa_url, $signer, $project_name, $lead_id, $project_purp
   }
 
   $fields = array('PROJECT_NAME'          => $project_name,
-		  '_GENI_PROJECT_LEAD_ID' => $lead_id,
-		  '_GENI_PROJECT_PURPOSE' => $project_purpose,
-		  'PROJECT_EXPIRATION'    => $project_expiration);
+		  '_GENI_PROJECT_OWNER' => $lead_id,
+		  'PROJECT_DESCRIPTION' => $project_purpose,
+		  'PROJECT_EXPIRATION'    => $expiration);
   $results = $client->create_project($client->get_credentials(), array('fields'=>$fields));
   $project_id = $results['PROJECT_UID'];
 
@@ -99,6 +100,9 @@ $PACHAPI2PORTAL = array('PROJECT_UID'=>PA_PROJECT_TABLE_FIELDNAME::PROJECT_ID,
 			'PROJECT_EXPIRATION'=>PA_PROJECT_TABLE_FIELDNAME::EXPIRATION,
 			'PROJECT_EXPIRED'=>PA_PROJECT_TABLE_FIELDNAME::EXPIRED);
 
+$PAMEMBERCHAPI2PORTAL = array('PROJECT_ROLE' => PA_PROJECT_MEMBER_TABLE_FIELDNAME::ROLE, 
+			      'PROJECT_MEMBER_UID' => PA_PROJECT_MEMBER_TABLE_FIELDNAME::MEMBER_ID);
+
 $DETAILSKEYS = array('PROJECT_UID',
 		     'PROJECT_URN',
 		     'PROJECT_NAME',
@@ -109,15 +113,16 @@ $DETAILSKEYS = array('PROJECT_UID',
 		     'PROJECT_EXPIRATION',
 		     'PROJECT_EXPIRED');
 
-function details_chapi2portal($row)
+function project_member_chapi2portal($row)
+{
+  global $PAMEMBERCHAPI2PORTAL;
+  return convert_row($row, $PAMEMBERCHAPI2PORTAL);
+}
+
+function project_details_chapi2portal($row)
 {
   global $PACHAPI2PORTAL;
-  $nrow = array();
-  foreach ($row as $k=>$v) {
-    if (array_key_exists($k, $PACHAPI2PORTAL))
-      $nrow[$PACHAPI2PORTAL[$k]] = $v;
-  }
-  return $nrow;
+  return convert_row($row, $PACHAPI2PORTAL);
 }
 
 // Return project details
@@ -135,7 +140,7 @@ function lookup_projects($sa_url, $signer, $lead_id=null)
   $results = array();
 
   foreach ($res as $row) {
-    $results[] = details_chapi2portal($row);
+    $results[] = project_details_chapi2portal($row);
   }
 
   return $results;
@@ -162,7 +167,7 @@ function lookup_project($sa_url, $signer, $project_id)
   $details = array();
 
   foreach ($res as $row) {
-    $details[] = details_chapi2portal($row);
+    $details[] = project_details_chapi2portal($row);
   }
   //  error_log("LP.end " . $project_id . " " . time());
   // return null if empty
@@ -193,7 +198,7 @@ function lookup_project_by_name($sa_url, $signer, $project_name)
   $details = array();
 
   foreach ($res as $row) {
-    $details[] = details_chapi2portal($row);
+    $details[] = project_details_chapi2portal($row);
   }
   //  error_log("LP.end " . $project_id . " " . time());
   // return null if empty
@@ -213,7 +218,7 @@ function get_project_urn($sa_url, $signer, $project_uid) {
   $options = array('match' => array('PROJECT_UID'=>$project_uid),
 		   'filter' => array('PROJECT_URN'));
   $result = $client->lookup_projects($client->get_credentials(), $options);
-  error_log("GET_PROJECT_URN : "  . print_r($result, true));
+  //  error_log("GET_PROJECT_URN : "  . print_r($result, true));
   $urns = array_keys($result);
   $urn = $urns[0];
   return $result[$urn]['PROJECT_URN'];
@@ -326,7 +331,14 @@ function get_project_members($sa_url, $signer, $project_id, $role=null)
     $options['match'] = array('PROJECT_ROLE' => $role);
   }
   $result = $client->lookup_project_members($project_urn, $client->get_credentials(), $options);
-  return $result;  // CHAPI: TODO: reformat output to match old
+  //  error_log("GPM.result = " . print_r($result, true));
+  $converted_result = array();
+  foreach($result as $row) { 
+    $converted_row = project_member_chapi2portal($row);
+    $converted_row = convert_role($converted_row);
+    $converted_result[] = $converted_row;
+  }
+  return $converted_result;  
 
 }
 
@@ -365,23 +377,6 @@ function get_projects_for_member($sa_url, $signer, $member_id, $is_member, $role
   return $project_uuids;
 }
 
-// Convert slice details from external (CH API compliant) names
-// to internal (database field) names
-function convert_project_to_internal($project)
-{
-  return array(
-	       PA_PROJECT_TABLE_FIELDNAME::PROJECT_ID => $project['PROJECT_UID'],
-	       PA_PROJECT_TABLE_FIELDNAME::PROJECT_NAME => $project['PROJECT_NAME'],
-	       PA_PROJECT_TABLE_FIELDNAME::PROJECT_PURPOSE => $project['PROJECT_DESCRIPTION'],
-	       PA_PROJECT_TABLE_FIELDNAME::EXPIRATION => $project['PROJECT_EXPIRATION'],
-	       PA_PROJECT_TABLE_FIELDNAME::EXPIRED => $project['PROJECT_EXPIRED'],
-	       PA_PROJECT_TABLE_FIELDNAME::CREATION => $project['PROJECT_CREATION'],
-	       PA_PROJECT_TABLE_FIELDNAME::PROJECT_EMAIL => $project['_GENI_PROJECT_EMAIL'],
-	       PA_PROJECT_TABLE_FIELDNAME::LEAD_ID => $project['_GENI_PROJECT_OWNER']);
-	       
-}
-
-
 
 function lookup_project_details($sa_url, $signer, $project_uuids)
 {
@@ -408,7 +403,7 @@ function lookup_project_details($sa_url, $signer, $project_uuids)
   //  error_log("LPD.RESULTS = " . print_r($results, true));
   $converted_projects = array();
   foreach($results as $project) {
-    $converted_project = convert_project_to_internal($project);
+    $converted_project = project_details_chapi2portal($project);
     $project_id = $converted_project[PA_PROJECT_TABLE_FIELDNAME::PROJECT_ID];
     $converted_projects[$project_id] = $converted_project;
   }
