@@ -41,7 +41,7 @@ class CHv1Handler(HandlerBase):
     def get_version(self):
         try:
             gv_return = self._delegate.get_version()
-            print "GV_RETURN = " + str(gv_return)
+#            print "GV_RETURN = " + str(gv_return)
             return gv_return
         except Exception as e:
             return self._errorReturn(e)
