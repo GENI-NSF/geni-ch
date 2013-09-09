@@ -261,9 +261,12 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                      self.db.MEMBER_ATTRIBUTE_TABLE.c.member_id)
         q = q.filter(member_table.c.role == self.db.ROLE_TABLE.c.id)
         rows = q.all()
+        print str(q)
+        print str(rows)
         session.close()
         members = [{role_txt: row.name, member_txt: row.value, \
                         member_uid_txt : row.member_id} for row in rows]
+#        print "MEMBERS = " + str(members)
         return self._successReturn(members)
 
     def lookup_slices_for_member(self, client_cert, member_urn, \
