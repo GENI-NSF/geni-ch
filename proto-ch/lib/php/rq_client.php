@@ -73,7 +73,7 @@ function create_request($url, $signer,
 			$context_type, $context_id, $request_type, 
 			$request_text, $request_details = '')
 {
-  $client = new XMLRPCClient($url, $signer);
+  $client = XMLRPCClient::get_client($url, $signer);
   $options = array('_dummy' => null);
   return $client->create_request($context_type, $context_id, $request_type, 
 				 $request_text, $request_details, 
@@ -87,7 +87,7 @@ function resolve_pending_request($url, $signer,
 				 $request_id, 
 				 $resolution_status, $resolution_description)
 {
-  $client = new XMLRPCClient($url, $signer);
+  $client = XMLRPCClient::get_client($url, $signer);
   $options = array('_dummy' => null);
   return $client->resolve_pending_request($context_type, 
 					  $request_id, 
@@ -100,7 +100,7 @@ function resolve_pending_request($url, $signer,
 function get_requests_for_context($url, $signer, 
 				  $context_type, $context_id, $status=null)
 {
-  $client = new XMLRPCClient($url, $signer);
+  $client = XMLRPCClient::get_client($url, $signer);
   $options = array('_dummy' => null);
   return $client->get_requests_for_context($context_type, 
 					   $context_id,
@@ -114,7 +114,7 @@ function get_requests_for_context($url, $signer,
 function get_requests_by_user($url, $signer, 
 			      $account_id, $context_type, $context_id=null, $status=null)
 {
-  $client = new XMLRPCClient($url, $signer);
+  $client = XMLRPCClient::get_client($url, $signer);
   $options = array('_dummy' => null);
   return $client->get_requests_by_user($account_id, 
 				       $context_type, 
@@ -129,7 +129,7 @@ function get_pending_requests_for_user($url, $signer,
 				       $account_id, 
 				       $context_type, $context_id=null)
 {
-  $client = new XMLRPCClient($url, $signer);
+  $client = XMLRPCClient::get_client($url, $signer);
   $options = array('_dummy' => null);
   return $client->get_pending_requests_for_user($account_id, 
 					   $context_type, 
@@ -144,7 +144,7 @@ function get_number_of_pending_requests_for_user($url, $signer,
 						 $account_id, 
 						 $context_type, $context_id=null)
 {
-  $client = new XMLRPCClient($url, $signer);
+  $client = XMLRPCClient::get_client($url, $signer);
   $options = array('_dummy' => null);
   return $client->get_number_of_pending_requests_for_user($account_id, 
 							  $context_type, 
@@ -156,7 +156,7 @@ function get_number_of_pending_requests_for_user($url, $signer,
 // Get request info for a single request id
 function get_request_by_id($url, $signer, $request_id, $context_type)
 {
-  $client = new XMLRPCClient($url, $signer);
+  $client = XMLRPCClient::get_client($url, $signer);
   $options = array('_dummy' => null);
   return $client->get_request_by_id($request_id, 
 				    $context_type, 

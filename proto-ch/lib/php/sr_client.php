@@ -48,67 +48,54 @@ function service_chapi2portal($row) {
   return $converted_row;
 }
 
+$CACHED_SERVICES = array();
+
 // Return all services in registry
-//CHAPI: ok
 function get_services()
 {
+  global $CACHED_SERVICES;
+  if (sizeof($CACHED_SERVICES)>0) {
+    return $CACHED_SERVICES;
+  }
 
   $sr_url = get_sr_url();
   //  error_log("SR_URL = " . $sr_url);
   $ver = session_cache_lookup(SERVICE_REGISTRY_CACHE_TAG, SERVICE_REGISTRY_CACHE_TIMEOUT, $sr_url, 'get_version', null);
   $fields = $ver['FIELDS'];
-  $client = new XMLRPCClient($sr_url);
+  $client = XMLRPCClient::get_client($sr_url);
   $services = $client->get_services();
   $converted_services = array();
-  foreach ($services as $service) { $converted_services[] = service_chapi2portal($service); }
+  foreach ($services as $service) {
+    $converted_services[] = service_chapi2portal($service);
+  }
+  $CACHED_SERVICES = $converted_services;
+
   return $converted_services;
-
-  /*
-
-  $fields = array('SERVICE_URN', 'SERVICE_URL','SERVICE_NAME','SERVICE_DESCRIPTION');  // 'SERVICE_CERT' breaks it
-  $options = array('filter' => $fields); 
-  $services = array();
-  $mas = $client->call(SR_XMLRPC_API::LOOKUP_MEMBER_AUTHORITIES, $options);
-  if ($mas) {
-    foreach ($mas as &$el) {
-      $el[SR_TABLE_FIELDNAME::SERVICE_TYPE]=SR_SERVICE_TYPE::MEMBER_AUTHORITY;
-    }
-    $services = $mas; 
-  }
-  $sas = $client->call(SR_XMLRPC_API::LOOKUP_SLICE_AUTHORITIES, $options);
-  if ($sas) {
-    foreach ($sas as &$el) {
-      $el[SR_TABLE_FIELDNAME::SERVICE_TYPE]=SR_SERVICE_TYPE::SLICE_AUTHORITY;
-    }
-    $services = array_merge($services, $sas); 
-  }
-  $ags = $client->call(SR_XMLRPC_API::LOOKUP_AGGREGATES, $options);
-  if ($ags) { 
-        foreach ($ags as &$el) {
-	  $el[SR_TABLE_FIELDNAME::SERVICE_TYPE]=SR_SERVICE_TYPE::AGGREGATE_MANAGER;
-	}
-     $services = array_merge($services, $ags);
-  }
-  return $services;
-  */
 }
 
 // Return all services in registry of given type
-//CHAPI: ok
 function get_services_of_type($service_type)
 {
   $services = get_services();
   return select_services($services, $service_type);
 }
 
+$SERVICE_OF_TYPE = array();
+
 // Get URL of first registered service of given service type
-//CHAPI: ok
 function get_first_service_of_type($service_type)
 {
   global $SR_SERVICE_TYPE_NAMES;
+  global $SERVICE_OF_TYPE;
+  if (array_key_exists($service_type, $SERVICE_OF_TYPE)) {
+    return $SERVICE_OF_TYPE[$service_type];
+  }
+
   $sot = get_services_of_type($service_type);
   if (isset($sot) && ! is_null($sot) && is_array($sot) && count($sot) > 0) {
-    return $sot[0][SR_TABLE_FIELDNAME::SERVICE_URL];
+    $ans = $sot[0][SR_TABLE_FIELDNAME::SERVICE_URL];
+    $SERVICE_OF_TYPE[$service_type] = $ans;
+    return $ans;
   } else {
     error_log("Got back 0 cached services of type " . $SR_SERVICE_TYPE_NAMES[$service_type]);
     return null;
@@ -117,7 +104,6 @@ function get_first_service_of_type($service_type)
 
 // Return the service with the given id, or NULL if no service has the
 // given id.
-//CHAPI: ok
 function get_service_by_id($service_id)
 {
   $services = get_services();
@@ -202,13 +188,12 @@ function remove_service($service_id)
 }
 
 // Return all aggregates
-//CHAPI: new
 function get_aggregates()
 {
   $sr_url = get_sr_url();
   $ver = session_cache_lookup(SERVICE_REGISTRY_CACHE_TAG, SERVICE_REGISTRY_CACHE_TIMEOUT, $sr_url, 'get_version', null);
   $fields = $ver['FIELDS'];
-  $client = new XMLRPCClient($sr_url);
+  $client = XMLRPCClient::get_client($sr_url);
   $fields = array('SERVICE_URN', 'SERVICE_URL','SERVICE_NAME','SERVICE_DESCRIPTION');  // 'SERVICE_CERT' breaks it
   $options = array('filter' => $fields); 
   $services = array();
@@ -229,7 +214,7 @@ function get_member_authorities()
   $sr_url = get_sr_url();
   $ver = session_cache_lookup(SERVICE_REGISTRY_CACHE_TAG, SERVICE_REGISTRY_CACHE_TIMEOUT, $sr_url, 'get_version', null);
   $fields = $ver['FIELDS'];
-  $client = new XMLRPCClient($sr_url);
+  $client = XMLRPCClient::get_client($sr_url);
   $fields = array('SERVICE_URN', 'SERVICE_URL','SERVICE_NAME','SERVICE_DESCRIPTION');  // 'SERVICE_CERT' breaks it
   $options = array('filter' => $fields); 
   $services = array();
@@ -250,7 +235,7 @@ function get_slice_authorities()
   $sr_url = get_sr_url();
   $ver = session_cache_lookup(SERVICE_REGISTRY_CACHE_TAG, SERVICE_REGISTRY_CACHE_TIMEOUT, $sr_url, 'get_version', null);
   $fields = $ver['FIELDS'];
-  $client = new XMLRPCClient($sr_url);
+  $client = XMLRPCClient::get_client($sr_url);
   $fields = array('SERVICE_URN', 'SERVICE_URL','SERVICE_NAME','SERVICE_DESCRIPTION');  // 'SERVICE_CERT' breaks it
   $options = array('filter' => $fields); 
   $services = array();
@@ -268,7 +253,7 @@ function get_slice_authorities()
 //CHAPI: new
 function lookup_authorities_for_urns($urns)
 {
-  $client = new XMLRPCClient(get_sr_url());
+  $client = XMLRPCClient::get_client(get_sr_url());
   $urls = $client->lookup_authorities_for_urns($urns);
   return $urls;
 }
@@ -277,8 +262,8 @@ function lookup_authorities_for_urns($urns)
 //CHAPI: new
 function get_trust_roots()
 {
-  $client = new XMLRPCClient(get_sr_url(), null, TRUE);  // unprotected, but return is raw
-  $certs = $client->get_trust_roots();
+  $client = XMLRPCClient::get_client(get_sr_url());
+  $certs = $client->_get_trust_roots(); // _ prefix means raw return value
   return $certs;
 }
 
@@ -297,6 +282,5 @@ function select_services($services, $service_type)
   }
   return $selected;
 }
-
 
 ?>

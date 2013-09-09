@@ -55,7 +55,7 @@ if(!isset($project_cache)) {
 // matters related to project, and documentation purpose of project
 function create_project($sa_url, $signer, $project_name, $lead_id, $project_purpose, $expiration)
 {
-  $client = new XMLRPCClient($sa_url, $signer);
+  $client = XMLRPCClient::get_client($sa_url, $signer);
 
   if (! $expiration) {
     $expiration = "";
@@ -74,7 +74,7 @@ function create_project($sa_url, $signer, $project_name, $lead_id, $project_purp
 // return list of project ids
 function get_projects($sa_url, $signer)
 {
-  $client = new XMLRPCClient($sa_url, $signer);
+  $client = XMLRPCClient::get_client($sa_url, $signer);
   $options = array('match'=>array(),
 		   'filter'=>array('PROJECT_UID'));
   $res = $client->lookup_projects($client->get_credentials(), $options);
@@ -84,7 +84,7 @@ function get_projects($sa_url, $signer)
 // return list of project ids
 function get_projects_by_lead($sa_url, $signer, $lead_id)
 {
-  $client = new XMLRPCClient($sa_url, $signer);
+  $client = XMLRPCClient::get_client($sa_url, $signer);
   $options = array('match'=>array('_GENI_PROJECT_LEAD'=>$lead_id),
 		   'filter'=>array('PROJECT_UID'));
   $res = $client->lookup_projects($client->get_credentials(), $options);
@@ -128,7 +128,7 @@ function project_details_chapi2portal($row)
 // Return project details
 function lookup_projects($sa_url, $signer, $lead_id=null)
 {
-  $client = new XMLRPCClient($sa_url, $signer);
+  $client = XMLRPCClient::get_client($sa_url, $signer);
   $match = array();
   if ($lead_id <> null) {
     $match['_GENI_PROJECT_LEAD']=$lead_id;
@@ -160,7 +160,7 @@ function lookup_project($sa_url, $signer, $project_id)
     return $project_cache[$project_id];
   }
 
-  $client = new XMLRPCClient($sa_url, $signer);
+  $client = XMLRPCClient::get_client($sa_url, $signer);
   $options = array('match'=>array('PROJECT_UID'=>$project_id),
 		   'filter'=>$PADETAILSKEYS);
   $res = $client->lookup_projects($client->get_credentials(), $options);
@@ -191,7 +191,7 @@ function lookup_project_by_name($sa_url, $signer, $project_name)
     throw new InvalidArgumentException('Null signer');
   }
 
-  $client = new XMLRPCClient($sa_url, $signer);
+  $client = XMLRPCClient::get_client($sa_url, $signer);
   $options = array('match'=>array('PROJECT_NAME'=>$project_name),
 		   'filter'=>$PADETAILSKEYS);
   $res = $client->lookup_projects($client->get_credentials(), $options);
@@ -214,7 +214,7 @@ function lookup_project_by_name($sa_url, $signer, $project_name)
 
 // find the project URN given the project UUID
 function get_project_urn($sa_url, $signer, $project_uid) {
-  $client = new XMLRPCClient($sa_url, $signer);
+  $client = XMLRPCClient::get_client($sa_url, $signer);
   $options = array('match' => array('PROJECT_UID'=>$project_uid),
 		   'filter' => array('PROJECT_URN'));
   $result = $client->lookup_projects($client->get_credentials(), $options);
@@ -232,7 +232,7 @@ function update_project($sa_url, $signer, $project_id, $project_name,
 {
   $project_urn = get_project_urn($sa_url, $signer, $project_id);
 
-  $client = new XMLRPCClient($sa_url, $signer);
+  $client = XMLRPCClient::get_client($sa_url, $signer);
   $options = array('fields'=>array('PROJECT_NAME'=>$project_name,
 				   'PROJECT_DESCRIPTION'=>$project_purpose,
 				   'PROJECT_EXPIRATION'=>$project_expiration));
@@ -325,7 +325,7 @@ function get_project_members($sa_url, $signer, $project_id, $role=null)
 {
   $project_urn = get_project_urn($sa_url, $signer, $project_id);
 
-  $client = new XMLRPCClient($sa_url, $signer);
+  $client = XMLRPCClient::get_client($sa_url, $signer);
   $options = array('_dummy' => null);
   if (! is_null($role)) {
     $options['match'] = array('PROJECT_ROLE' => $role);
@@ -366,7 +366,7 @@ function get_projects_for_member($sa_url, $signer, $member_id, $is_member, $role
 
   global $user;
   $options = array('_dummy' => null);
-  $client = new XMLRPCClient($sa_url, $signer);
+  $client = XMLRPCClient::get_client($sa_url, $signer);
   $member_urn = $user->urn; 
   $rows = $client->lookup_projects_for_member($member_urn, $client->get_credentials(), $options);
   $project_uuids = array();
@@ -397,7 +397,7 @@ function lookup_project_details($sa_url, $signer, $project_uuids)
   //  error_log("PIDS = " . print_r($project_uuids, true));
 
   global $user;
-  $client = new XMLRPCClient($sa_url, $signer);
+  $client = XMLRPCClient::get_client($sa_url, $signer);
   $options = array('match' => array('PROJECT_UID' => $project_uuids));
   $results = $client->lookup_projects($client->get_credentials(), $options);
   //  error_log("LPD.RESULTS = " . print_r($results, true));

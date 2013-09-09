@@ -37,12 +37,25 @@ require_once 'geni_syslog.php';
 class XMLRPCClient
 {
   private $url;
-  private $rawreturn = FALSE;
   private $combined = null;
+  private $keyfile = null;
+
+  private static $clients = array();
+  
+  public static function get_client($url, $signer=null) {
+    $k = array($url, $signer);
+    if (array_key_exists($k, self::$clients)) {
+      return self::$clients[$k];
+    } else {
+      $client = new XMLRPCClient($url, $signer);
+      self::$clients[$k] = $client;
+      return $client;
+    }
+  }    
 
   // arguments:
   //  
-  public function __construct($url, $signer=null, $rawreturn=FALSE)
+  function __construct($url, $signer=null)
   {
     $this->url = $url;
     $this->signer = $signer;
@@ -50,17 +63,31 @@ class XMLRPCClient
       $this->private_key = $signer->privateKey();
       $this->certificate = $signer->certificate();
     }
-    $this->rawreturn = $rawreturn;
   }
 
+  // clean up by deleting the cred file if we made one
+  private function __destruct() 
+  {
+    if (! is_null($keyfile)) {
+      unlink($keyfile);
+    }
+  }
   // magic calls.  $this->foo(arg1, arg2) turns into $this->__call("foo", array(arg1, arg2))
   public function __call($fun, $args)
   {
     return $this->call($fun, $args);
   }
 
+  // if the function called has a leading '_' the return value will not be processed
+  // using the usual triple.
   public function call($fun, $args)
   {
+    $rawreturn = false;
+    if (strpos($fun, '_')==0) {
+      $rawreturn = true;
+      $fun = substr($fun, 1);
+    }
+
     $request = xmlrpc_encode_request($fun, $args);
 
     // mik: I would have liked to use the following, but it
@@ -88,6 +115,7 @@ class XMLRPCClient
     if (!is_null($this->signer)) {
       //error_log("SIGNER = " . print_r($this->signer, true));
       $pemf = $this->_write_combined_credentials();
+      $keyfile = $pemf;
       curl_setopt($ch, CURLOPT_SSLKEY, $pemf);
       curl_setopt($ch, CURLOPT_SSLKEYTYPE, "PEM");
       curl_setopt($ch, CURLOPT_SSLCERT, $pemf);
@@ -99,11 +127,12 @@ class XMLRPCClient
 
     curl_close($ch);
 
-    if (! is_null($pemf)) {
-      unlink($pemf);
-    }
+    // this is now handled by the destructor
+    //if (! is_null($pemf)) {
+    //      unlink($pemf);
+    //    }
 
-    if ($this->rawreturn) {
+    if ($rawreturn) {
       return $result;
     }
 

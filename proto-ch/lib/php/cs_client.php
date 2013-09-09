@@ -37,7 +37,7 @@ if(!isset($permission_cache)) {
 
 function get_attributes($cs_url, $signer, $principal, $context_type, $context)
 {
-  $client = new XMLRPCClient($cs_url, $signer);
+  $client = XMLRPCClient::get_client($cs_url, $signer);
   $options = array('_dummy' => null); // Force this to be a dictionary, not an array on other side
   return $client->get_attributes($principal, $context_type, $context, 
 				 $client->get_credentials(), $options);
@@ -53,7 +53,7 @@ function get_permissions($cs_url, $signer, $principal)
     return $permission_cache[$principal];
   }
 
-  $client = new XMLRPCClient($cs_url, $signer);
+  $client = XMLRPCClient::get_client($cs_url, $signer);
   $options = array('_dummy' => 'null'); // Force this to be a dictionary, not an array on other side
   $result =  $client->get_permissions($principal, $client->get_credentials(), 
 				      $options);

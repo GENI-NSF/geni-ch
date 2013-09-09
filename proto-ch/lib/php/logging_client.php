@@ -33,27 +33,27 @@ require_once('chapi.php');
 //    user_id (the writer of the log entry)
 function log_event($log_url, $signer, $message, $attributes, $user_id )
 {
-  $client = new XMLRPCClient($log_url, $signer);
+  $client = XMLRPCClient::get_client($log_url, $signer);
   $client->log_event($message, $attributes, $user_id);
 }
 
 function get_log_entries_by_author($log_url, $signer, $user_id, $num_hours=24)
 {
-  $client = new XMLRPCClient($log_url, $signer);
+  $client = XMLRPCClient::get_client($log_url, $signer);
   $entries = $client->get_log_entries_by_author($user_id, $num_hours);
   return $entries;
 }
 
 function get_log_entries_for_context($log_url, $signer, $context_type, $context_id, $num_hours=24)
 {
-  $client = new XMLRPCClient($log_url, $signer);
+  $client = XMLRPCClient::get_client($log_url, $signer);
   $entries = $client->get_log_entries_for_context($context_type, $context_id, $num_hours);
   return $entries;
 }
 
 function get_attributes_for_log_entry($log_url, $signer, $event_id)
 {
-  $client = new XMLRPCClient($log_url, $signer);
+  $client = XMLRPCClient::get_client($log_url, $signer);
   $attribs = $client->get_attributes_for_log_entry($event_id);
   return $attribs;
 }
