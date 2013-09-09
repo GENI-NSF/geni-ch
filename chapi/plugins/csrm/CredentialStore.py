@@ -121,7 +121,7 @@ class CSv1Delegate(DelegateBase):
         rows = q.all()
         session.close()
         # Convert from unicode to string
-        response = [{'name' : str(row.name), 'context_type' : str(row.context_type), 'context' : str(row.context)} for row in rows] 
+        response = [( str(row.name), str(row.context_type), str(row.context) ) for row in rows] 
         return self._successReturn(response)
 
 # Simple guard, just to capture speaks-for implementation
