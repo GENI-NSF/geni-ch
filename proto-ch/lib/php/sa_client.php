@@ -434,14 +434,22 @@ function get_slices_for_projects($sa_url, $signer, $project_uuids, $allow_expire
   return $projects;  
 }
 
+$SLICE_ID2URN = array();
+
 // find the slice URN, given a slice UID
 function get_slice_urn($sa_url, $signer, $slice_uid) {
+  global $SLICE_ID2URN;
+  if (array_key_exists($slice_uid, $SLICE_ID2URN)) {
+    return $SLICE_ID2URN[$slice_uid];
+  }
+
   $client = XMLRPCClient::get_client($sa_url, $signer);
   $options = array('match' => array('SLICE_UID'=>$slice_uid),
 		   'filter' => array('SLICE_URN'));
   $result = $client->lookup_slices($client->get_credentials(), $options);
   $urns = array_keys($result);
   $urn = $urns[0];
+  $SLICE_ID2URN[$slice_uid] = $urn; // remember it
   return $urn;
 }
 
