@@ -181,7 +181,7 @@ function lookup_slices($sa_url, $signer, $project_id, $member_id)  //
     $slices = $client->lookup_slices_for_member($member_urn, $client->get_credentials(), $options);
   } else {
     $match = array('_GENI_PROJECT_UID' => $project_id);
-    $filter = array('SLICE_NAME', 'SLICE_URN', 'SLICE_ID', '_GENI_PROJECT_UID');
+    $filter = array('SLICE_NAME', 'SLICE_URN', 'SLICE_UID', '_GENI_PROJECT_UID');
     $options = array('match' => $match);
     $slices = $client->lookup_slices($client->get_credentials(), $options);
   }
@@ -339,7 +339,7 @@ function get_slice_members_for_project($sa_url, $signer, $project_id, $role=null
     $mems = $client->lookup_slice_members($surn, $client->get_credentials(), $moptions);
     foreach ($mems as $mtup) {
       $slice_member = array(SA_SLICE_TABLE_FIELDNAME::SLICE_ID => $sid, 
-			    SA_SLICE_MEMBER_TABLE_FIELDNAME::MEMBER_ID => $mtup['SLICE_MEMBER'], 
+			    SA_SLICE_MEMBER_TABLE_FIELDNAME::MEMBER_ID => $mtup['SLICE_MEMBER_UID'], 
 			    SA_SLICE_MEMBER_TABLE_FIELDNAME::ROLE => $mtup['SLICE_ROLE']);
       $slice_member = convert_role($slice_member);
       $results[] = $slice_member;
