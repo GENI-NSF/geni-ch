@@ -113,12 +113,14 @@ class XMLRPCClient
 
     $pemf = null;
     if (!is_null($this->signer)) {
-      //error_log("SIGNER = " . print_r($this->signer, true));
-      $pemf = $this->_write_combined_credentials();
-      $keyfile = $pemf;
-      curl_setopt($ch, CURLOPT_SSLKEY, $pemf);
+      if (!is_null($this->keyfile)) {
+	//error_log("SIGNER = " . print_r($this->signer, true));
+	$pemf = $this->_write_combined_credentials();
+	$this->keyfile = $pemf;
+      }
+      curl_setopt($ch, CURLOPT_SSLKEY, $this->keyfile);
       curl_setopt($ch, CURLOPT_SSLKEYTYPE, "PEM");
-      curl_setopt($ch, CURLOPT_SSLCERT, $pemf);
+      curl_setopt($ch, CURLOPT_SSLCERT, $this->keyfile);
     }
     $ret = curl_exec($ch);
     if ($ret === FALSE) {
