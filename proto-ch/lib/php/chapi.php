@@ -113,7 +113,7 @@ class XMLRPCClient
 
     $pemf = null;
     if (!is_null($this->signer)) {
-      if (!is_null($this->keyfile)) {
+      if (is_null($this->keyfile)) {
 	//error_log("SIGNER = " . print_r($this->signer, true));
 	$pemf = $this->_write_combined_credentials();
 	$this->keyfile = $pemf;
