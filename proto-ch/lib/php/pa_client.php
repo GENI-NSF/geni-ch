@@ -103,7 +103,7 @@ $PACHAPI2PORTAL = array('PROJECT_UID'=>PA_PROJECT_TABLE_FIELDNAME::PROJECT_ID,
 $PAMEMBERCHAPI2PORTAL = array('PROJECT_ROLE' => PA_PROJECT_MEMBER_TABLE_FIELDNAME::ROLE, 
 			      'PROJECT_MEMBER_UID' => PA_PROJECT_MEMBER_TABLE_FIELDNAME::MEMBER_ID);
 
-$DETAILSKEYS = array('PROJECT_UID',
+$PADETAILSKEYS = array('PROJECT_UID',
 		     'PROJECT_URN',
 		     'PROJECT_NAME',
 		     '_GENI_PROJECT_OWNER',
@@ -133,9 +133,9 @@ function lookup_projects($sa_url, $signer, $lead_id=null)
   if ($lead_id <> null) {
     $match['_GENI_PROJECT_LEAD']=$lead_id;
   }
-  global $DETAILSKEYS;
+  global $PADETAILSKEYS;
   $options = array('match'=>$match,
-		   'filter'=>$DETAILSKEYS);
+		   'filter'=>$PADETAILSKEYS);
   $res = $client->lookup_projects($client->get_credentials(), $options);
   $results = array();
 
@@ -150,7 +150,7 @@ function lookup_projects($sa_url, $signer, $lead_id=null)
 function lookup_project($sa_url, $signer, $project_id)
 {
   global $project_cache;
-  global $DETAILSKEYS;
+  global $PADETAILSKEYS;
   if (! is_object($signer)) {
     throw new InvalidArgumentException('Null signer');
   }
@@ -162,7 +162,7 @@ function lookup_project($sa_url, $signer, $project_id)
 
   $client = new XMLRPCClient($sa_url, $signer);
   $options = array('match'=>array('PROJECT_UID'=>$project_id),
-		   'filter'=>$DETAILSKEYS);
+		   'filter'=>$PADETAILSKEYS);
   $res = $client->lookup_projects($client->get_credentials(), $options);
   $details = array();
 
@@ -186,14 +186,14 @@ function lookup_project($sa_url, $signer, $project_id)
 function lookup_project_by_name($sa_url, $signer, $project_name)
 {
   global $project_cache;
-  global $DETAILSKEYS;
+  global $PADETAILSKEYS;
   if (! is_object($signer)) {
     throw new InvalidArgumentException('Null signer');
   }
 
   $client = new XMLRPCClient($sa_url, $signer);
   $options = array('match'=>array('PROJECT_NAME'=>$project_name),
-		   'filter'=>$DETAILSKEYS);
+		   'filter'=>$PADETAILSKEYS);
   $res = $client->lookup_projects($client->get_credentials(), $options);
   $details = array();
 

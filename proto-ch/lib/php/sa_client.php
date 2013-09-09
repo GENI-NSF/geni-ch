@@ -60,7 +60,7 @@ $SACHAPI2PORTAL = array('SLICE_UID' => SA_SLICE_TABLE_FIELDNAME::SLICE_ID,
 $SAMEMBERCHAPI2PORTAL = array('SLICE_ROLE' => SA_SLICE_MEMBER_TABLE_FIELDNAME::ROLE, 
 			      'SLICE_MEMBER_UID' => SA_SLICE_MEMBER_TABLE_FIELDNAME::MEMBER_ID);
 
-$DETAILSKEYS = array('SLICE_UID',
+$SADETAILSKEYS = array('SLICE_UID',
 		     'SLICE_NAME',
 		     '_GENI_PROJECT_UID',
 		     'SLICE_EXPIRATION',
@@ -112,17 +112,21 @@ function create_slice($sa_url, $signer, $project_id, $project_name, $slice_name,
                       $owner_id, $description='')
 {
   $client = new XMLRPCClient($sa_url, $signer);
-  $options = array('SLICE_NAME' => $slice_name,
-		   'SLICE_DESCRIPTION' => $description,
-		   'SLICE_EMAIL' => null,       // MIK: required for the api, but not passed through (controller was null)
-		   //'SLICE_EXPIRATION' => '',  // MIK: not supplied here
-		   //// are the following supported/allowed? MIK
-		   'PROJECT_URN' => $project_id,  // MIK - project_ids are all really URNs
-		   'PROJECT_NAME' => $project_name,
-		   'OWNER_URN' => $owner_id);
-  $slice = $client->create_slice($slice_id, $client->get_credentials(), $options); 
+  $lookup_project_urn_options = array('match' => array('PROJECT_UID' => $project_id), 'filter' => array('PROJECT_URN'));
+  $lookup_project_urn_return = $client->lookup_projects($client->get_credentials(), $lookup_project_urn_options);
+  $project_urns = array_keys($lookup_project_urn_return);
+  $project_urn = $project_urns[0];
+  $options = array('fields' => 
+		   array('SLICE_NAME' => $slice_name,
+			 'SLICE_DESCRIPTION' => $description,
+			 // MIK: email required for the api, but not passed through (controller was null)
+			 '_GENI_SLICE_EMAIL' => null,       
+			 '_GENI_PROJECT_URN' => $project_urn));
+
+  $slice = $client->create_slice($client->get_credentials(), $options); 
+  $converted_slice = slice_details_chapi2portal($slice);
   // CHAPI: TODO reformat return arguments
-  return $slice;
+  return $converted_slice;
 }
 
 /* Lookup slice ids for given project */
