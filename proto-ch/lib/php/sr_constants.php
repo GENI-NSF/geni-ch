@@ -69,12 +69,12 @@ class SR_SERVICE_TYPE
 /* Set of arguments in calls to the SR interface */
 class SR_ARGUMENT
 {
-  const SERVICE_ID = "SERVICE_ID";
-  const SERVICE_URL = "SERVICE_URL";
-  const SERVICE_TYPE = "SERVICE_TYPE";
-  const SERVICE_NAME = "SERVICE_NAME";
-  const SERVICE_DESCRIPTION = "SERVICE_DESCRIPTION";
-  const SERVICE_CERT = "SERVICE_CERT";
+  const SERVICE_ID = "service_id";
+  const SERVICE_URL = "service_url";
+  const SERVICE_TYPE = "service_type";
+  const SERVICE_NAME = "service_name";
+  const SERVICE_DESCRIPTION = "service_description";
+  const SERVICE_CERT = "service_cert";
   const SERVICE_ATTRIBUTES = "service_attributes";
   const SERVICE_ATTRIBUTE_SETS = "service_attribute_sets";
 }
@@ -84,14 +84,14 @@ $SR_TABLENAME = "service_registry";
 
 /* SR table has the following fields */
 class SR_TABLE_FIELDNAME {
-  const SERVICE_ID = "SERVICE_ID";
-  const SERVICE_TYPE = "SERVICE_TYPE";
-  const SERVICE_URL = "SERVICE_URL";
-  const SERVICE_CERT = "SERVICE_CERT";
-  const SERVICE_CERT_CONTENTS = "SERVICE_CERT_CONTENTS";
-  const SERVICE_NAME = "SERVICE_NAME";
-  const SERVICE_DESCRIPTION = "SERVICE_DESCRIPTION";
-  const SERVICE_URN = "SERVICE_URN";
+  const SERVICE_ID = "id";
+  const SERVICE_TYPE = "service_type";
+  const SERVICE_URL = "service_url";
+  const SERVICE_CERT = "service_cert";
+  const SERVICE_CERT_CONTENTS = "service_cert_contents";
+  const SERVICE_NAME = "service_name";
+  const SERVICE_DESCRIPTION = "service_description";
+  const SERVICE_URN = "service_urn";
 }
 
 /* Name of table which holds SR name/value attributes */

@@ -29,7 +29,7 @@ function convert_row($row, $mapping)
 {
   $nrow = array();
   foreach ($row as $k=>$v) {
-    if (array_key_exists($k, $mapping))
+    if (array_key_exists($k, $mapping)) 
       $nrow[$mapping[$k]] = $v;
   }
   return $nrow;

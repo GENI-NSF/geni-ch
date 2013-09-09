@@ -50,6 +50,7 @@ $SACHAPI2PORTAL = array('SLICE_UID' => SA_SLICE_TABLE_FIELDNAME::SLICE_ID,
 			'SLICE_NAME' => SA_SLICE_TABLE_FIELDNAME::SLICE_NAME,
 			'_GENI_PROJECT_UID' => SA_SLICE_TABLE_FIELDNAME::PROJECT_ID,
 			'SLICE_EXPIRATION' => SA_SLICE_TABLE_FIELDNAME::EXPIRATION,
+			'SLICE_CREATION' => SA_SLICE_TABLE_FIELDNAME::CREATION,
 			'_GENI_SLICE_OWNER' => SA_SLICE_TABLE_FIELDNAME::OWNER_ID,
 			'SLICE_URN' => SA_SLICE_TABLE_FIELDNAME::SLICE_URN,
 			'_GENI_SLICE_EMAIL' => SA_SLICE_TABLE_FIELDNAME::SLICE_EMAIL,
@@ -63,6 +64,7 @@ $DETAILSKEYS = array('SLICE_UID',
 		     'SLICE_NAME',
 		     '_GENI_PROJECT_UID',
 		     'SLICE_EXPIRATION',
+		     'SLICE_CREATION',
 		     '_GENI_SLICE_OWNER',
 		     'SLICE_URN',
 		     '_GENI_SLICE_EMAIL',
@@ -175,7 +177,7 @@ function lookup_slices($sa_url, $signer, $project_id, $member_id)  //
     $slices = $client->lookup_slices_for_member($member_urn, $client->get_credentials(), $options);
   } else {
     $match = array('_GENI_PROJECT_UID' => $project_id);
-    $filter = array('SLICE_NAME', 'SLICE_URN', 'SLICE_ID');
+    $filter = array('SLICE_NAME', 'SLICE_URN', 'SLICE_ID', '_GENI_PROJECT_UID');
     $options = array('match' => $match);
     $slices = $client->lookup_slices($client->get_credentials(), $options);
   }
@@ -198,14 +200,9 @@ function lookup_slice($sa_url, $signer, $slice_id)
   $urn = $urns[0];
   $slice = $slices[$urn];
 
-  error_log("SLICE = " . print_r($slice, true));
-  
-  return array($slice['SLICE_UID'],
-	       $slice['SLICE_NAME'],
-	       $slice['PROJECT_URN'],  // UID?
-	       $slice['SLICE_EXPIRATION'],
-	       $slice['OWNER_URN'],    // UID?
-	       $slice['SLICE_URN']);
+  $slice = slice_details_chapi2portal($slice);
+  return $slice;
+
 }
 
 /* lookup details of slice of given slice URN */
@@ -437,7 +434,9 @@ function get_slice_urn($sa_url, $signer, $slice_uid) {
   $options = array('match' => array('SLICE_UID'=>$slice_uid),
 		   'filter' => array('SLICE_URN'));
   $result = $client->lookup_slices($client->get_credentials(), $options);
-  return $result[0]['SLICE_URN'];
+  $urns = array_keys($result);
+  $urn = $urns[0];
+  return $urn;
 }
 
 // CHAPI: convert a SA URL into a MA url

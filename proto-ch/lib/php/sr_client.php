@@ -26,10 +26,27 @@
 
 require_once('sr_constants.php');
 require_once('session_cache.php');
+require_once('client_utils.php');
 require_once('chapi.php');
 
 const SERVICE_REGISTRY_CACHE_TAG = 'service_registry_cache';
 const SERVICE_REGISTRY_CACHE_TIMEOUT = 300;
+
+$SRCHAPI2PORTAL = array('SERVICE_ID' => SR_TABLE_FIELDNAME::SERVICE_ID, 
+			'SERVICE_TYPE' => SR_TABLE_FIELDNAME::SERVICE_TYPE,
+			'SERVICE_URL' => SR_TABLE_FIELDNAME::SERVICE_URL, 
+			'SERVICE_URN' => SR_TABLE_FIELDNAME::SERVICE_URN, 
+			'SERVICE_CERTIFICATE' => SR_TABLE_FIELDNAME::SERVICE_CERT,
+			'SERVICE_NAME' => SR_TABLE_FIELDNAME::SERVICE_NAME,
+			'SERVICE_DESCRIPTION' => SR_TABLE_FIELDNAME::SERVICE_DESCRIPTION,
+			'SERVICE_TYPE' => SR_TABLE_FIELDNAME::SERVICE_TYPE);
+
+
+function service_chapi2portal($row) {
+  global $SRCHAPI2PORTAL;
+  $converted_row = convert_row($row, $SRCHAPI2PORTAL);
+  return $converted_row;
+}
 
 // Return all services in registry
 //CHAPI: ok
@@ -42,8 +59,9 @@ function get_services()
   $fields = $ver['FIELDS'];
   $client = new XMLRPCClient($sr_url);
   $services = $client->get_services();
-  //  error_log("SERVICES = " . print_r($services, true));
-  return $services;
+  $converted_services = array();
+  foreach ($services as $service) { $converted_services[] = service_chapi2portal($service); }
+  return $converted_services;
 
   /*
 
