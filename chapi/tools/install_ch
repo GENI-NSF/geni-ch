@@ -17,7 +17,7 @@ apt-get -y install libapache2-mod-fastcgi python-setuptools \
     python-dev python-m2crypto python-openssl python-flup nginx \
     python-dateutil python-openssl libxmlsec1 \
     xmlsec1 libxmlsec1-openssl libxmlsec1-dev libxml2-dev libxslt-dev \
-    autoconf-archive automake g++ git-core libtool swig
+    autoconf-archive automake g++ git-core libtool swig php5-xmlrpc
 easy_install flask Flask-XML-RPC python-dateutil blinker pika sqlalchemy lxml
 
 # build abac
@@ -62,7 +62,7 @@ patch --backup -p0 /etc/apache2/sites-available/ch-ssl << EOF
  
 +        SSLOptions +ExportCertData
 +        SSLCACertificateFile /usr/share/geni-ch/CA/cacert.pem
-+        SSLVerifyClient require
++        SSLVerifyClient optional_no_ca
 +        SSLVerifyDepth 3
 +        ScriptAlias /SA /usr/share/geni-ch/chapi/AMsoil/src/main.py
 +        ScriptAlias /MA /usr/share/geni-ch/chapi/AMsoil/src/main.py 
