@@ -32,9 +32,26 @@ from ABAC import *
 from SpeaksFor import determine_speaks_for
 from tools.ABACManager import ABACManager
 from ArgumentCheck import *
+from chapi.Memoize import memoize
+import threading
+
+# context support
+_context = threading.local()
+
+def cache_get(k):
+    if not hasattr(_context, 'cache'):
+        _context.cache = dict()
+    if k not in _context.cache:
+        _context.cache[k] = dict()
+    return _context.cache[k]
+
+def cache_clear():
+    if hasattr(_context, 'cache'):
+        del _context.cache
 
 # Some helper methods
 
+@memoize
 def extract_user_urn(client_cert):
     client_cert_object = \
         sfa.trust.certificate.Certificate(string=client_cert)
@@ -48,6 +65,7 @@ def extract_user_urn(client_cert):
             break
     return user_urn
 
+@memoize
 def lookup_project_name_for_slice(slice_urn):
     if not slice_urn: 
         import pdb; pdb.set_trace()
@@ -57,7 +75,12 @@ def lookup_project_name_for_slice(slice_urn):
     project_name = authority_parts[1]
     return project_name
 
+
 def lookup_project_names_for_user(user_urn):
+    cache = cache_get('project_names_for_user')
+    if user_urn in cache:
+        return cache[user_urn]
+
     db = pm.getService('chdbengine')
     session = db.getSession()
 
@@ -71,9 +94,13 @@ def lookup_project_names_for_user(user_urn):
     session.close()
     
     project_names = [row.project_name for row in rows]
+    cache[user_urn] = project_names
     return project_names
 
 def lookup_operator_privilege(user_urn):
+    cache = cache_get('operator_privilege')
+    if user_urn in cache:
+        return cache[user_urn]
     db = pm.getService('chdbengine')
     session = db.getSession()
 
@@ -89,6 +116,7 @@ def lookup_operator_privilege(user_urn):
 
     rows = q.all()
     session.close()
+    cache[user_urn] = (len(rows)>0)
     return len(rows) > 0
 
 class ABACAssertionGenerator(object): 
@@ -150,7 +178,7 @@ class InvocationCheck(object):
     # Raise an AUTHORIZATION_ERROR if there is something wrong about the 
     # certs and credentials and options/argumentspassed to the call
     def authorize_call(self, client_cert, method, credentials, arguments):
-        raise CHAPIv1NotImplementedError("Absract Base class: RowCheck")
+        raise CHAPIv1NotImplementedError("Abstract Base class: RowCheck")
 
     # Authenticate the call, validate arguments and check authorization
     def validate(self, client_cert, method, credentials, options, arguments):
@@ -160,7 +188,7 @@ class InvocationCheck(object):
 
 class RowCheck(object):
     def permit(self, client_cert, credentials, urn):
-        raise CHAPIv1NotImplementedError("Absract Base class: RowCheck")
+        raise CHAPIv1NotImplementedError("Abstract Base class: RowCheck")
         
 
 # An ABAC check gathers a set of assertions and then validates a set of queries
@@ -250,6 +278,7 @@ class ABACGuardBase(GuardBase):
 
 
     def validate_call(self, client_cert, method, credentials, options, arguments = {}):
+        return
 #        print "ABACGuardBase.validate_call : " + method + " " + str(arguments) + " " + str(options)
 
 
@@ -272,6 +301,7 @@ class ABACGuardBase(GuardBase):
         return determine_speaks_for(client_cert, credentials, options)
 
     def protect_results(self, client_cert, method, credentials, results):
+        return results
 #        print "ABACGuardBase.protect_results : " + method + " " + str(results)
         protected_results = results
         row_check = self.get_row_check(method)
@@ -284,5 +314,6 @@ class ABACGuardBase(GuardBase):
                     protected_results[urn] = urn_result
 #                else:
 #                    print "Not permitted : " + str(urn_result)
+        cache_clear()
         return protected_results
 

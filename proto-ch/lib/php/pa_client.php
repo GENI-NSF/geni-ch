@@ -43,6 +43,7 @@
 
 require_once('pa_constants.php');
 require_once 'chapi.php';
+require_once('client_utils.php');
 
 // A cache of a user's detailed info indexed by member_id
 if(!isset($project_cache)) {
@@ -54,16 +55,16 @@ if(!isset($project_cache)) {
 // matters related to project, and documentation purpose of project
 function create_project($sa_url, $signer, $project_name, $lead_id, $project_purpose, $expiration)
 {
-  $client = new XMLRPCClient($sa_url, $signer);
+  $client = XMLRPCClient::get_client($sa_url, $signer);
 
   if (! $expiration) {
     $expiration = "";
   }
 
   $fields = array('PROJECT_NAME'          => $project_name,
-		  '_GENI_PROJECT_LEAD_ID' => $lead_id,
-		  '_GENI_PROJECT_PURPOSE' => $project_purpose,
-		  'PROJECT_EXPIRATION'    => $project_expiration);
+		  '_GENI_PROJECT_OWNER' => $lead_id,
+		  'PROJECT_DESCRIPTION' => $project_purpose,
+		  'PROJECT_EXPIRATION'    => $expiration);
   $results = $client->create_project($client->get_credentials(), array('fields'=>$fields));
   $project_id = $results['PROJECT_UID'];
 
@@ -73,7 +74,7 @@ function create_project($sa_url, $signer, $project_name, $lead_id, $project_purp
 // return list of project ids
 function get_projects($sa_url, $signer)
 {
-  $client = new XMLRPCClient($sa_url, $signer);
+  $client = XMLRPCClient::get_client($sa_url, $signer);
   $options = array('match'=>array(),
 		   'filter'=>array('PROJECT_UID'));
   $res = $client->lookup_projects($client->get_credentials(), $options);
@@ -83,7 +84,7 @@ function get_projects($sa_url, $signer)
 // return list of project ids
 function get_projects_by_lead($sa_url, $signer, $lead_id)
 {
-  $client = new XMLRPCClient($sa_url, $signer);
+  $client = XMLRPCClient::get_client($sa_url, $signer);
   $options = array('match'=>array('_GENI_PROJECT_LEAD'=>$lead_id),
 		   'filter'=>array('PROJECT_UID'));
   $res = $client->lookup_projects($client->get_credentials(), $options);
@@ -91,16 +92,18 @@ function get_projects_by_lead($sa_url, $signer, $lead_id)
 }
 
 $PACHAPI2PORTAL = array('PROJECT_UID'=>PA_PROJECT_TABLE_FIELDNAME::PROJECT_ID,
-			'PROJECT_URN'=>PA_PROJECT_TABLE_FIELDNAME::PROJECT_URN,
 			'PROJECT_NAME'=>PA_PROJECT_TABLE_FIELDNAME::PROJECT_NAME,
 			'_GENI_PROJECT_OWNER'=>PA_PROJECT_TABLE_FIELDNAME::LEAD_ID,
 			'_GENI_PROJECT_EMAIL'=>PA_PROJECT_TABLE_FIELDNAME::PROJECT_EMAIL,
 			'PROJECT_CREATION'=>PA_PROJECT_TABLE_FIELDNAME::CREATION,
 			'PROJECT_DESCRIPTION'=>PA_PROJECT_TABLE_FIELDNAME::PROJECT_PURPOSE,
 			'PROJECT_EXPIRATION'=>PA_PROJECT_TABLE_FIELDNAME::EXPIRATION,
-			'_GENI_PROJECT_EXPIRED'=>PA_PROJECT_TABLE_FIELDNAME::EXPIRED);
+			'PROJECT_EXPIRED'=>PA_PROJECT_TABLE_FIELDNAME::EXPIRED);
 
-$DETAILSKEYS = array('PROJECT_UID',
+$PAMEMBERCHAPI2PORTAL = array('PROJECT_ROLE' => PA_PROJECT_MEMBER_TABLE_FIELDNAME::ROLE, 
+			      'PROJECT_MEMBER_UID' => PA_PROJECT_MEMBER_TABLE_FIELDNAME::MEMBER_ID);
+
+$PADETAILSKEYS = array('PROJECT_UID',
 		     'PROJECT_URN',
 		     'PROJECT_NAME',
 		     '_GENI_PROJECT_OWNER',
@@ -108,48 +111,46 @@ $DETAILSKEYS = array('PROJECT_UID',
 		     'PROJECT_CREATION',
 		     'PROJECT_DESCRIPTION',
 		     'PROJECT_EXPIRATION',
-		     '_GENI_PROJECT_EXPIRED');
+		     'PROJECT_EXPIRED');
 
-function details_chapi2portal($row)
+function project_member_chapi2portal($row)
+{
+  global $PAMEMBERCHAPI2PORTAL;
+  return convert_row($row, $PAMEMBERCHAPI2PORTAL);
+}
+
+function project_details_chapi2portal($row)
 {
   global $PACHAPI2PORTAL;
-  $nrow = array();
-  foreach ($row as $k=>$v) {
-    $nrow[$PACHAPI2PORTAL[$k]] = $v;
-  }
-  return $nrow;
+  return convert_row($row, $PACHAPI2PORTAL);
 }
 
 // Return project details
 function lookup_projects($sa_url, $signer, $lead_id=null)
 {
-  $client = new XMLRPCClient($sa_url, $signer);
+  $client = XMLRPCClient::get_client($sa_url, $signer);
   $match = array();
   if ($lead_id <> null) {
     $match['_GENI_PROJECT_LEAD']=$lead_id;
   }
-  global $DETAILSKEYS;
+  global $PADETAILSKEYS;
   $options = array('match'=>$match,
-		   'filter'=>$DETAILSKEYS);
+		   'filter'=>$PADETAILSKEYS);
   $res = $client->lookup_projects($client->get_credentials(), $options);
   $results = array();
 
   foreach ($res as $row) {
-    $results[] = details_chapi2portal($row);
+    $results[] = project_details_chapi2portal($row);
   }
 
   return $results;
-}
-
-function get_project_urn($sa_url, $signer, $project_id) {
-  $details = lookup_project($sa_url, $signer, $project_id);
-  return $details[PA_PROJECT_TABLE_FIELDNAME::PROJECT_URN];
 }
 
 // Return project details
 function lookup_project($sa_url, $signer, $project_id)
 {
   global $project_cache;
+  global $PADETAILSKEYS;
   if (! is_object($signer)) {
     throw new InvalidArgumentException('Null signer');
   }
@@ -159,14 +160,14 @@ function lookup_project($sa_url, $signer, $project_id)
     return $project_cache[$project_id];
   }
 
-  $client = new XMLRPCClient($sa_url, $signer);
+  $client = XMLRPCClient::get_client($sa_url, $signer);
   $options = array('match'=>array('PROJECT_UID'=>$project_id),
-		   'filter'=>$DETAILSKEYS);
+		   'filter'=>$PADETAILSKEYS);
   $res = $client->lookup_projects($client->get_credentials(), $options);
   $details = array();
 
   foreach ($res as $row) {
-    $details[] = details_chapi2portal($row);
+    $details[] = project_details_chapi2portal($row);
   }
   //  error_log("LP.end " . $project_id . " " . time());
   // return null if empty
@@ -185,18 +186,19 @@ function lookup_project($sa_url, $signer, $project_id)
 function lookup_project_by_name($sa_url, $signer, $project_name)
 {
   global $project_cache;
+  global $PADETAILSKEYS;
   if (! is_object($signer)) {
     throw new InvalidArgumentException('Null signer');
   }
 
-  $client = new XMLRPCClient($sa_url, $signer);
+  $client = XMLRPCClient::get_client($sa_url, $signer);
   $options = array('match'=>array('PROJECT_NAME'=>$project_name),
-		   'filter'=>$DETAILSKEYS);
+		   'filter'=>$PADETAILSKEYS);
   $res = $client->lookup_projects($client->get_credentials(), $options);
   $details = array();
 
   foreach ($res as $row) {
-    $details[] = details_chapi2portal($row);
+    $details[] = project_details_chapi2portal($row);
   }
   //  error_log("LP.end " . $project_id . " " . time());
   // return null if empty
@@ -210,6 +212,18 @@ function lookup_project_by_name($sa_url, $signer, $project_name)
   return $details;
 }
 
+// find the project URN given the project UUID
+function get_project_urn($sa_url, $signer, $project_uid) {
+  $client = XMLRPCClient::get_client($sa_url, $signer);
+  $options = array('match' => array('PROJECT_UID'=>$project_uid),
+		   'filter' => array('PROJECT_URN'));
+  $result = $client->lookup_projects($client->get_credentials(), $options);
+  //  error_log("GET_PROJECT_URN : "  . print_r($result, true));
+  $urns = array_keys($result);
+  $urn = $urns[0];
+  return $result[$urn]['PROJECT_URN'];
+}
+
 // FIXME: lookup_projects_member(sa_url, member_id, is_member, role)
 // FIXME: lookup_projects_ids(sa_url, project_ids_list)
 
@@ -218,7 +232,7 @@ function update_project($sa_url, $signer, $project_id, $project_name,
 {
   $project_urn = get_project_urn($sa_url, $signer, $project_id);
 
-  $client = new XMLRPCClient($sa_url, $signer);
+  $client = XMLRPCClient::get_client($sa_url, $signer);
   $options = array('fields'=>array('PROJECT_NAME'=>$project_name,
 				   'PROJECT_DESCRIPTION'=>$project_purpose,
 				   'PROJECT_EXPIRATION'=>$project_expiration));
@@ -257,7 +271,7 @@ function modify_project_membership($sa_url, $signer, $project_id,
   $members_to_change = _conv_mid2urn_map($sa_url, $signer, $members_to_change);
   $members_to_remove = _conv_mid2urn($sa_url, $signer, $members_to_remove);
   
-  $options = array();
+  $options = array('_dummy' => null);
   if (sizeof($members_to_add)>0)    { $options['members_to_add']    = $members_to_add; }
   if (sizeof($members_to_change)>0) { $options['members_to_change'] = $members_to_change; }
   if (sizeof($members_to_remove)>0) { $options['members_to_remove'] = $members_to_remove; }
@@ -309,12 +323,23 @@ function change_member_role($sa_url, $signer, $project_id, $member_id, $role)
 // If role is provided, filter to members of given role
 function get_project_members($sa_url, $signer, $project_id, $role=null) 
 {
-  $get_project_members_message['operation'] = 'get_project_members';
-  $get_project_members_message[PA_ARGUMENT::PROJECT_ID] = $project_id;
-  $get_project_members_message[PA_ARGUMENT::ROLE_TYPE] = $role;
-  $results = put_message($sa_url, $get_project_members_message, 
-			 $signer->certificate(), $signer->privateKey());
-  return $results;
+  $project_urn = get_project_urn($sa_url, $signer, $project_id);
+
+  $client = XMLRPCClient::get_client($sa_url, $signer);
+  $options = array('_dummy' => null);
+  if (! is_null($role)) {
+    $options['match'] = array('PROJECT_ROLE' => $role);
+  }
+  $result = $client->lookup_project_members($project_urn, $client->get_credentials(), $options);
+  //  error_log("GPM.result = " . print_r($result, true));
+  $converted_result = array();
+  foreach($result as $row) { 
+    $converted_row = project_member_chapi2portal($row);
+    $converted_row = convert_role($converted_row);
+    $converted_result[] = $converted_row;
+  }
+  return $converted_result;  
+
 }
 
 // Return list of project ID's for given member_id
@@ -341,7 +366,7 @@ function get_projects_for_member($sa_url, $signer, $member_id, $is_member, $role
 
   global $user;
   $options = array('_dummy' => null);
-  $client = new XMLRPCClient($sa_url, $signer);
+  $client = XMLRPCClient::get_client($sa_url, $signer);
   $member_urn = $user->urn; 
   $rows = $client->lookup_projects_for_member($member_urn, $client->get_credentials(), $options);
   $project_uuids = array();
@@ -351,23 +376,6 @@ function get_projects_for_member($sa_url, $signer, $member_id, $is_member, $role
   }
   return $project_uuids;
 }
-
-// Convert slice details from external (CH API compliant) names
-// to internal (database field) names
-function convert_project_to_internal($project)
-{
-  return array(
-	       PA_PROJECT_TABLE_FIELDNAME::PROJECT_ID => $project['PROJECT_UID'],
-	       PA_PROJECT_TABLE_FIELDNAME::PROJECT_NAME => $project['PROJECT_NAME'],
-	       PA_PROJECT_TABLE_FIELDNAME::PROJECT_PURPOSE => $project['PROJECT_DESCRIPTION'],
-	       PA_PROJECT_TABLE_FIELDNAME::EXPIRATION => $project['PROJECT_EXPIRATION'],
-	       PA_PROJECT_TABLE_FIELDNAME::EXPIRED => $project['PROJECT_EXPIRED'],
-	       PA_PROJECT_TABLE_FIELDNAME::CREATION => $project['PROJECT_EXPIRED'],
-	       PA_PROJECT_TABLE_FIELDNAME::PROJECT_EMAIL => $project['_GENI_PROJECT_EMAIL'],
-	       PA_PROJECT_TABLE_FIELDNAME::LEAD_ID => $project['_GENI_PROJECT_OWNER']);
-	       
-}
-
 
 
 function lookup_project_details($sa_url, $signer, $project_uuids)
@@ -389,13 +397,15 @@ function lookup_project_details($sa_url, $signer, $project_uuids)
   //  error_log("PIDS = " . print_r($project_uuids, true));
 
   global $user;
-  $client = new XMLRPCClient($sa_url, $signer);
+  $client = XMLRPCClient::get_client($sa_url, $signer);
   $options = array('match' => array('PROJECT_UID' => $project_uuids));
   $results = $client->lookup_projects($client->get_credentials(), $options);
   //  error_log("LPD.RESULTS = " . print_r($results, true));
   $converted_projects = array();
   foreach($results as $project) {
-    $converted_projects[] = convert_project_to_internal($project);
+    $converted_project = project_details_chapi2portal($project);
+    $project_id = $converted_project[PA_PROJECT_TABLE_FIELDNAME::PROJECT_ID];
+    $converted_projects[$project_id] = $converted_project;
   }
   $results = $converted_projects;
   //  error_log("LPD.RESULTS = " . print_r($results, true));

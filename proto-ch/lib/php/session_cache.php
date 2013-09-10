@@ -61,7 +61,7 @@ function session_cache_lookup($key, $refresh_timeout, $refresh_url, $refresh_met
 	  $refresh_message[$arg_key] = $arg_val;
 	}
       }
-      $client = new XMLRPCClient($refresh_url);
+      $client = XMLRPCClient::get_client($refresh_url);
       $response = $client->$refresh_method();  // ignores args
 
       $_SESSION[$key] = $response;

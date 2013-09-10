@@ -44,6 +44,47 @@
 require_once('sa_constants.php');
 require_once('chapi.php');
 require_once 'ma_client.php';
+require_once('client_utils.php');
+
+$SACHAPI2PORTAL = array('SLICE_UID' => SA_SLICE_TABLE_FIELDNAME::SLICE_ID,
+			'SLICE_NAME' => SA_SLICE_TABLE_FIELDNAME::SLICE_NAME,
+			'_GENI_PROJECT_UID' => SA_SLICE_TABLE_FIELDNAME::PROJECT_ID,
+			'SLICE_EXPIRATION' => SA_SLICE_TABLE_FIELDNAME::EXPIRATION,
+			'SLICE_CREATION' => SA_SLICE_TABLE_FIELDNAME::CREATION,
+			'_GENI_SLICE_OWNER' => SA_SLICE_TABLE_FIELDNAME::OWNER_ID,
+			'SLICE_URN' => SA_SLICE_TABLE_FIELDNAME::SLICE_URN,
+			'_GENI_SLICE_EMAIL' => SA_SLICE_TABLE_FIELDNAME::SLICE_EMAIL,
+			'SLICE_EXPIRED' => SA_SLICE_TABLE_FIELDNAME::EXPIRED,
+			'SLICE_DESCRIPTION' => SA_SLICE_TABLE_FIELDNAME::SLICE_DESCRIPTION);
+
+$SAMEMBERCHAPI2PORTAL = array('SLICE_ROLE' => SA_SLICE_MEMBER_TABLE_FIELDNAME::ROLE, 
+			      'SLICE_MEMBER_UID' => SA_SLICE_MEMBER_TABLE_FIELDNAME::MEMBER_ID);
+
+$SADETAILSKEYS = array('SLICE_UID',
+		     'SLICE_NAME',
+		     '_GENI_PROJECT_UID',
+		     'SLICE_EXPIRATION',
+		     'SLICE_CREATION',
+		     '_GENI_SLICE_OWNER',
+		     'SLICE_URN',
+		     '_GENI_SLICE_EMAIL',
+		     'SLICE_EXPIRED',
+		     'SLICE_DESCRIPTION');
+
+function slice_member_chapi2portal($row)
+{
+  global $SAMEMBERCHAPI2PORTAL;
+  return convert_row($row, $SAMEMBERCHAPI2PORTAL);
+}
+
+
+function slice_details_chapi2portal($row)
+{
+  global $SACHAPI2PORTAL;
+  return convert_row($row, $SACHAPI2PORTAL);
+}
+
+
 
 /* Create a slice credential for given SLICE ID and user */
 function get_slice_credential($sa_url, $signer, $slice_id, $cert=NULL)
@@ -59,8 +100,8 @@ function get_slice_credential($sa_url, $signer, $slice_id, $cert=NULL)
     error_log("Cannot get_slice_cred without a user cert");
     throw new Exception("Cannot get_slice_cred without a user cert");
   }
-  $client = new XMLRPCClient($sa_url, $signer);
-  $options = array();
+  $client = XMLRPCClient::get_client($sa_url, $signer);
+  $options = array('_dummy' => null);
 
   $result = $client->get_credentials($slice_urn, $client->get_credentials(), $options);
   return $result; //MIK: was $result['slice_credential'];
@@ -70,24 +111,28 @@ function get_slice_credential($sa_url, $signer, $slice_id, $cert=NULL)
 function create_slice($sa_url, $signer, $project_id, $project_name, $slice_name,
                       $owner_id, $description='')
 {
-  $client = new XMLRPCClient($sa_url, $signer);
-  $options = array('SLICE_NAME' => $slice_name,
-		   'SLICE_DESCRIPTION' => $description,
-		   'SLICE_EMAIL' => null,       // MIK: required for the api, but not passed through (controller was null)
-		   //'SLICE_EXPIRATION' => '',  // MIK: not supplied here
-		   //// are the following supported/allowed? MIK
-		   'PROJECT_URN' => $project_id,  // MIK - project_ids are all really URNs
-		   'PROJECT_NAME' => $project_name,
-		   'OWNER_URN' => $owner_id);
-  $slice = $client->create_slice($slice_id, $client->get_credentials(), $options); 
+  $client = XMLRPCClient::get_client($sa_url, $signer);
+  $lookup_project_urn_options = array('match' => array('PROJECT_UID' => $project_id), 'filter' => array('PROJECT_URN'));
+  $lookup_project_urn_return = $client->lookup_projects($client->get_credentials(), $lookup_project_urn_options);
+  $project_urns = array_keys($lookup_project_urn_return);
+  $project_urn = $project_urns[0];
+  $options = array('fields' => 
+		   array('SLICE_NAME' => $slice_name,
+			 'SLICE_DESCRIPTION' => $description,
+			 // MIK: email required for the api, but not passed through (controller was null)
+			 '_GENI_SLICE_EMAIL' => null,       
+			 '_GENI_PROJECT_URN' => $project_urn));
+
+  $slice = $client->create_slice($client->get_credentials(), $options); 
+  $converted_slice = slice_details_chapi2portal($slice);
   // CHAPI: TODO reformat return arguments
-  return $slice;
+  return $converted_slice;
 }
 
 /* Lookup slice ids for given project */
 function lookup_slice_ids($sa_url, $signer, $project_id)
 {
-  $client = new XMLRPCClient($sa_url, $signer);
+  $client = XMLRPCClient::get_client($sa_url, $signer);
   $options = array('match' => array('PROJECT_URN' => $project_id),
 		   'filter' => array('SLICE_UID'));
   $slices = $client->lookup_slices($client->get_credentials(), $options);
@@ -126,50 +171,56 @@ function lookup_slice_ids($sa_url, $signer, $project_id)
 
 /* lookup a set of slices by name, project_id, member_id */
 /* That is, the set of slices for which this member_id is a member */
-function lookup_slices($sa_url, $signer, $project_id, $member_id)  // project_id= project_urn, member_id=member_urn
+function lookup_slices($sa_url, $signer, $project_id, $member_id)  // 
 {
-  $member_urn = get_member_urn(sa_to_ma_url($sa_url), $signer, $member_id);
-  $client = new XMLRPCClient($sa_url, $signer);
-  $options = array(
-		   'match' => array('PROJECT_URN' => $project_id),
-		   'filter' => array('SLICE_UID')
-		   );
-  $slices = $client->lookup_slices_for_member($member_urn, $client->get_credentials(), $options);
-  
-  $result = $projects[$project_urn] = array_map(function($x) { return $x['SLICE_UID']; }, $slices);
+  $client = XMLRPCClient::get_client($sa_url, $signer);
 
-  return $result;
+  if ($member_id) {
+    $member_urn = get_member_urn(sa_to_ma_url($sa_url), $signer, $member_id);
+    $options = array('_dummy' => null);
+    $slices = $client->lookup_slices_for_member($member_urn, $client->get_credentials(), $options);
+  } else {
+    $match = array('_GENI_PROJECT_UID' => $project_id);
+    $filter = array('SLICE_NAME', 'SLICE_URN', 'SLICE_UID', '_GENI_PROJECT_UID');
+    $options = array('match' => $match);
+    $slices = $client->lookup_slices($client->get_credentials(), $options);
+  }
+
+  $converted_slices = array();
+  foreach ($slices as $slice) { $converted_slices[] = slice_details_chapi2portal($slice); }
+  return $converted_slices;
 }
 
 /* lookup details of slice of given id */
 // Return array(id, name, project_id, expiration, owner_id, urn)
 function lookup_slice($sa_url, $signer, $slice_id)
 {
-  $client = new XMLRPCClient($sa_url, $signer);
+  $client = XMLRPCClient::get_client($sa_url, $signer);
   $options = array('match' => array('SLICE_UID' => $slice_id),
 		   // 'filter' => array('SLICE_URN')  // MIK: do we get everything if no filter specified?
 		   );
   $slices = $client->lookup_slices($client->get_credentials(), $options);
-  $slice = $slices[0];
-  
-  return array($slice['SLICE_UID'],
-	       $slice['SLICE_NAME'],
-	       $slice['PROJECT_URN'],  // UID?
-	       $slice['SLICE_EXPIRATION'],
-	       $slice['OWNER_URN'],    // UID?
-	       $slice['SLICE_URN']);
+  $urns = array_keys($slices);
+  $urn = $urns[0];
+  $slice = $slices[$urn];
+
+  $slice = slice_details_chapi2portal($slice);
+  return $slice;
+
 }
 
 /* lookup details of slice of given slice URN */
 // Return array(id, name, project_id, expiration, owner_id, urn)
 function lookup_slice_by_urn($sa_url, $signer, $slice_urn)
 {
-  $client = new XMLRPCClient($sa_url, $signer);
+  $client = XMLRPCClient::get_client($sa_url, $signer);
   $options = array('match' => array('SLICE_URN' => $slice_urn),
 		   // 'filter' => array('SLICE_URN')  // MIK: do we get everything if no filter specified?
 		   );
   $slices = $client->lookup_slices($client->get_credentials(), $options);
-  $slice = $slices[0];
+  $urns = array_keys($slices);
+  $urn = $urns[0];
+  $slice = $slices[$urn];
   
   return array($slice['SLICE_UID'],
 	       $slice['SLICE_NAME'],
@@ -187,7 +238,7 @@ function renew_slice($sa_url, $signer, $slice_id, $expiration)
 {
   $slice_urn = get_slice_urn($sa_url, $signer, $slice_id);
 
-  $client = new XMLRPCClient($sa_url, $signer);
+  $client = XMLRPCClient::get_client($sa_url, $signer);
   $options = array('update' => array('SLICE_EXPIRATION' => $expiration),
 		   );
   $client->update_slice($slice_urn, $client->get_credentials(), $options);
@@ -205,7 +256,7 @@ function modify_slice_membership($sa_url, $signer, $slice_id,
 {
   $slice_urn = get_slice_urn($sa_url, $signer, $slice_id);
 
-  $client = new XMLRPCClient($sa_url, $signer);
+  $client = XMLRPCClient::get_client($sa_url, $signer);
   $options = array('members_to_add' => $members_to_add,
 		   'members_to_remove' => $members_to_remove,
 		   'members_to_change' => $members_to_change,
@@ -246,32 +297,38 @@ function get_slice_members($sa_url, $signer, $slice_id, $role=null)
 {
   $slice_urn = get_slice_urn($sa_url, $signer, $slice_id);
 
-  $client = new XMLRPCClient($sa_url, $signer);
-  $options = array();
+  $client = XMLRPCClient::get_client($sa_url, $signer);
+  $options = array('_dummy' => null);
   if (! is_null($role)) {
     $options['match'] = array('SLICE_ROLE' => $role);
   }
   $result = $client->lookup_slice_members($slice_urn, $client->get_credentials(), $options);
-  return $results;  // CHAPI: TODO: reformat output to match old
+  $converted_result = array();
+  foreach($result as $row) { 
+    $converted_row = convert_role(slice_member_chapi2portal($row));
+    $converted_result[] = $converted_row;
+  }
+  return $converted_result;  
+
 }
 
 // Return list of slice_id's, member ID's and roles associated with slice of a given project
 // If role is provided, filter to members of given role
-// CHAPI: I take this to mean the return is [[slice1 mem1 role1] [slice1 mem2 role2] [slice2 mem3 role1] ...], 
-// rather than a map/tree of any sort
+// CHAPI: This should be [{'slice_id' => slice1, 'role' => role1, 'member_id' => mem1}*]
+// 
 
 // slice-> PROJECT_URN
 // 
 function get_slice_members_for_project($sa_url, $signer, $project_id, $role=null)
 {
-  $client = new XMLRPCClient($sa_url, $signer);
+  $client = XMLRPCClient::get_client($sa_url, $signer);
 
   // get all slices of project
-  $options = array('match' => array('PROJECT_UID'=>$slice_uid));
+  $options = array('match' => array('_GENI_PROJECT_UID'=>$project_id));
   $tuples = $client->lookup_slices($client->get_credentials(), $options);
 
   $results = array();
-  $moptions = array();
+  $moptions = array('_dummy' => null);
   if (!is_null($role)) {
     $moptions['match'] = array('SLICE_ROLE'=>$role);
   }
@@ -281,10 +338,14 @@ function get_slice_members_for_project($sa_url, $signer, $project_id, $role=null
     
     $mems = $client->lookup_slice_members($surn, $client->get_credentials(), $moptions);
     foreach ($mems as $mtup) {
-      $results[] = array($sid, $mtup['SLICE_MEMBER'], $mtup['SLICE_ROLE']);
+      $slice_member = array(SA_SLICE_TABLE_FIELDNAME::SLICE_ID => $sid, 
+			    SA_SLICE_MEMBER_TABLE_FIELDNAME::MEMBER_ID => $mtup['SLICE_MEMBER_UID'], 
+			    SA_SLICE_MEMBER_TABLE_FIELDNAME::ROLE => $mtup['SLICE_ROLE']);
+      $slice_member = convert_role($slice_member);
+      $results[] = $slice_member;
     }
   }
-  return $result;
+  return $results;
 }
 
 // Return list of slice ID's and Roles for given member_id for slices to which member belongs
@@ -298,7 +359,7 @@ function get_slice_members_for_project($sa_url, $signer, $project_id, $role=null
 function get_slices_for_member($sa_url, $signer, $member_id, $is_member, $role=null)
 {
   $member_urn = get_member_urn(sa_to_ma_url($sa_url), $signer, $member_id);
-  $client = new XMLRPCClient($sa_url, $signer);
+  $client = XMLRPCClient::get_client($sa_url, $signer);
 
   if ($is_member) {
     $options = array('_dummy' => null);
@@ -315,8 +376,10 @@ function get_slices_for_member($sa_url, $signer, $member_id, $is_member, $role=n
   // Convert columns from 'external' to 'internal' format
   $converted_results = array();
   foreach($results as $row) {
-    $row[SA_SLICE_MEMBER_TABLE_FIELDNAME::SLICE_ID] = $row['SLICE_UID'];
-    $converted_results[] = $row;
+    $converted_row = array(SA_SLICE_MEMBER_TABLE_FIELDNAME::SLICE_ID => $row['SLICE_UID'], 
+			   SA_SLICE_MEMBER_TABLE_FIELDNAME::ROLE => $row['SLICE_ROLE']);
+    $converted_row = convert_role($converted_row);
+    $converted_results[] = $converted_row;
   }
   $results = $converted_results;
   //  error_log("GSFM.RESULTS = " . print_r($results, true));
@@ -326,37 +389,18 @@ function get_slices_for_member($sa_url, $signer, $member_id, $is_member, $role=n
 
 function lookup_slice_details($sa_url, $signer, $slice_uuids)
 {
-  $client = new XMLRPCClient($sa_url, $signer);
+  $client = XMLRPCClient::get_client($sa_url, $signer);
   $options = array('match' => array('SLICE_UID'=>$slice_uuids));
   $result = $client->lookup_slices($client->get_credentials(), $options);
   $converted_slices = array();
   foreach ($result as $slice_uuid => $slice) {
-    $converted_slices[$slice_uuid] = convert_slice_to_internal($slice);
+    $converted_slices[$slice_uuid] = slice_details_chapi2portal($slice);
   }
   $result = $converted_slices;
   //  error_log("LSD.result = " . print_r($result, true));
   return $result;
 }
 
-// Convert slice details from external (CH API compliant) names
-// to internal (database field) names
-function convert_slice_to_internal($slice)
-{
-  return array(
-	       SA_SLICE_TABLE_FIELDNAME::SLICE_ID => $slice['SLICE_UID'],
-	       SA_SLICE_TABLE_FIELDNAME::SLICE_NAME =>  $slice['SLICE_NAME'],
-	       SA_SLICE_TABLE_FIELDNAME::PROJECT_ID => 
-	       $slice['_GENI_PROJECT_UID'],
-	       SA_SLICE_TABLE_FIELDNAME::EXPIRATION => $slice['SLICE_EXPIRATION'],
-	       SA_SLICE_TABLE_FIELDNAME::OWNER_ID => 
-	       $slice['_GENI_SLICE_OWNER'],
-	       SA_SLICE_TABLE_FIELDNAME::SLICE_URN => $slice['SLICE_URN'],
-	       SA_SLICE_TABLE_FIELDNAME::SLICE_EMAIL =>
-	       $slice['_GENI_SLICE_EMAIL'],
-	       SA_SLICE_TABLE_FIELDNAME::EXPIRED => $slice['SLICE_EXPIRED'],
-	       SA_SLICE_TABLE_FIELDNAME::SLICE_DESCRIPTION => $slice['SLICE_DESCRIPTION']);
-
-}
 
 // Return a dictionary of the list of slices (details) for a give
 // set of project uuids, indexed by project UUID
@@ -364,7 +408,7 @@ function convert_slice_to_internal($slice)
 // Optinonally, allow expired slices (default=false)
 function get_slices_for_projects($sa_url, $signer, $project_uuids, $allow_expired=false)
 {
-  $client = new XMLRPCClient($sa_url, $signer);
+  $client = XMLRPCClient::get_client($sa_url, $signer);
   $projects = array();
   foreach($project_uuids as $project_uuid) { 
     $projects[$project_uuid] = array();
@@ -374,7 +418,7 @@ function get_slices_for_projects($sa_url, $signer, $project_uuids, $allow_expire
   $slices = $client->lookup_slices($client->get_credentials(), $options);
   $converted_slices = array();
   foreach( $slices as $slice) {
-    $converted_slices[] = convert_slice_to_internal($slice);
+    $converted_slices[] = slice_details_chapi2portal($slice);
   }
   $slices = $converted_slices;
   //  error_log("GSFP.SLICES = " . print_r($slices, true));
@@ -390,13 +434,23 @@ function get_slices_for_projects($sa_url, $signer, $project_uuids, $allow_expire
   return $projects;  
 }
 
+$SLICE_ID2URN = array();
+
 // find the slice URN, given a slice UID
 function get_slice_urn($sa_url, $signer, $slice_uid) {
-  $client = new XMLRPCClient($sa_url, $signer);
+  global $SLICE_ID2URN;
+  if (array_key_exists($slice_uid, $SLICE_ID2URN)) {
+    return $SLICE_ID2URN[$slice_uid];
+  }
+
+  $client = XMLRPCClient::get_client($sa_url, $signer);
   $options = array('match' => array('SLICE_UID'=>$slice_uid),
 		   'filter' => array('SLICE_URN'));
   $result = $client->lookup_slices($client->get_credentials(), $options);
-  return $result[0]['SLICE_URN'];
+  $urns = array_keys($result);
+  $urn = $urns[0];
+  $SLICE_ID2URN[$slice_uid] = $urn; // remember it
+  return $urn;
 }
 
 // CHAPI: convert a SA URL into a MA url

@@ -56,6 +56,8 @@ def parseOptions():
                       default = None)
     parser.add_option("--int_arg", help="Integer argument for some calls",
                       default = None)
+    parser.add_option("--int2_arg", help="second integer argument for some calls",
+                      default = None)
     parser.add_option("--uuid_arg", help="UUID argument for some calls",
                       default = None)
     parser.add_option("--uuid2_arg", help="second UUID argument for some calls",
@@ -167,7 +169,7 @@ def main():
     elif opts.method in ['delete_key', 'update_key'] \
             and opts.int_arg and opts.urn:
         (result, msg) = _do_ssl(framework, suppress_errors, reason, fcn, \
-                                    opts.urn, opts.int_arg, 
+                                    opts.uuid_arg, opts.int_arg, opts.uuid2_arg,
                                     opts.credentials, client_options)
 
     # Client Authorization methods
@@ -180,6 +182,20 @@ def main():
         (result, msg) = \
             _do_ssl(framework, suppress_errors, reason, fcn, opts.uuid_arg,
                     opts.urn, opts.int_arg)
+
+    # Project request methods
+    elif opts.method in ['get_requests_for_context']:
+        (result, msg) = \
+            _do_ssl(framework, suppress_errors, reason, fcn, opts.int_arg, 
+                    opts.urn_arg, opts.int2_arg, opts.credentials, client_options)
+    elif opts.method in ['get_requests_by_user']:
+        (result, msg) = \
+            _do_ssl(framework, suppress_errors, reason, fcn, opts.uuid_arg,
+                    opts.int_arg, opts.uuid2_arg, opts.int2_arg, opts.credentials, client_options)
+    elif opts.method in ['get_pending_requests_for_user']:
+        (result, msg) = \
+            _do_ssl(framework, suppress_errors, reason, fcn, opts.uuid_arg,
+                    opts.int_arg, opts.uuid2_arg, opts.credentials, client_options)
 
     # MA certificate methods
     elif opts.method in ['create_certificate']:

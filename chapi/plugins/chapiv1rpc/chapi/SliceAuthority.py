@@ -462,6 +462,117 @@ class SAv1Handler(HandlerBase):
         except Exception as e:
             return self._errorReturn(e)
 
+    # Methods for handling pending project / slice requests
+    # Note: Not part of standard Federation API
+    
+    def create_request(self, context_type, context_id, request_type, request_text, 
+                       request_details, credentials, options):
+        client_cert = self.requestCertificate()
+        method = 'create_request'
+        try:
+            client_cert, options = self._guard.adjust_client_identity(client_cert, 
+                                                                     credentials, options)
+            return self._delegate.create_request(client_cert, \
+                                                     context_type, context_id, \
+                                                     request_type, request_text, \
+                                                     request_details, credentials, options)
+        except Exception as e:
+            return self._errorReturn(e)
+
+
+    def resolve_pending_request(self, context_type, request_id, \
+                                    resolution_status, resolution_description,  \
+                                    credentials, options):
+        client_cert = self.requestCertificate()
+        method = 'create_request'
+        try:
+            client_cert, options = self._guard.adjust_client_identity(client_cert, 
+                                                                     credentials, options)
+            return self._delegate.resolve_pending_request(client_cert, \
+                                                              context_type, request_id, \
+                                                              resolution_status, \
+                                                             resolution_description, \
+                                                             credentials, options)
+        except Exception as e:
+            return self._errorReturn(e)
+
+    def get_requests_for_context(self, context_type, context_id, status, \
+                                     credentials, options):
+        print "SA.get_requests_for_context : %s %s %s" % (context_type, context_id, status)
+        client_cert = self.requestCertificate()
+        method = 'get_requests_for_context'
+        try:
+            client_cert, options = self._guard.adjust_client_identity(client_cert, 
+                                                                     credentials, options)
+            return self._delegate.get_requests_for_context(client_cert, \
+                                                               context_type, context_id,\
+                                                               status, \
+                                                               credentials, options)
+        except Exception as e:
+            return self._errorReturn(e)
+
+
+    def get_requests_by_user(self, member_id, context_type, context_id, status, \
+                                     credentials, options):
+        client_cert = self.requestCertificate()
+        method = 'get_requests_by_user'
+        try:
+            client_cert, options = self._guard.adjust_client_identity(client_cert, 
+                                                                     credentials, options)
+            return self._delegate.get_requests_by_user(client_cert, \
+                                                           member_id, 
+                                                           context_type, context_id,\
+                                                           status, \
+                                                           credentials, options)
+        except Exception as e:
+            return self._errorReturn(e)
+
+    def get_pending_requests_for_user(self, member_id, context_type, context_id, \
+                                     credentials, options):
+        client_cert = self.requestCertificate()
+        method = 'get_pending_requests_for_user'
+        try:
+            client_cert, options = self._guard.adjust_client_identity(client_cert, 
+                                                                     credentials, options)
+            return self._delegate.get_pending_requests_for_user(client_cert, \
+                                                                    member_id, 
+                                                                    context_type, \
+                                                                    context_id,\
+                                                                    credentials, options)
+        except Exception as e:
+            return self._errorReturn(e)
+
+    def get_number_of_pending_requests_for_user(self, member_id, \
+                                                    context_type, context_id, \
+                                                    credentials, options):
+        client_cert = self.requestCertificate()
+        method = 'get_number_of_pending_requests_for_user'
+        try:
+            client_cert, options = self._guard.adjust_client_identity(client_cert, 
+                                                                     credentials, options)
+            return self._delegate.get_number_of_pending_requests_for_user(client_cert, 
+                                                                          member_id, 
+                                                                          context_type, 
+                                                                          context_id,
+                                                                          credentials, 
+                                                                          options)
+        except Exception as e:
+            return self._errorReturn(e)
+
+    def get_request_by_id(self, request_id, context_type, credentials, options):
+        client_cert = self.requestCertificate()
+        method = 'get_number_of_pending_requests_for_user'
+        try:
+            client_cert, options = self._guard.adjust_client_identity(client_cert, 
+                                                                     credentials, options)
+            return self._delegate.get_number_of_pending_requests_for_user(client_cert, 
+                                                                          request_id,
+                                                                          context_type, 
+                                                                          credentials, 
+                                                                          options)
+        except Exception as e:
+            return self._errorReturn(e)
+
 
 # Base class for implementing the SA Slice interface. Must be
 # implemented in a derived class, and that derived class
@@ -523,8 +634,6 @@ class SAv1DelegateBase(DelegateBase):
                            slice_urn, credentials, options):
         raise CHAPIv1NotImplementedError('')
 
-
-
     
     ## PROJECT SERVICE methods
 
@@ -553,5 +662,42 @@ class SAv1DelegateBase(DelegateBase):
                                      client_cert, member_urn, \
                                      credentials, options):
         raise CHAPIv1NotImplementedError('')
+
+    # Request handling methods
+
+    def create_request(self, client_cert, context_type, \
+                           context_id, request_type, request_text, \
+                           request_details, credentials, options):
+        raise CHAPIv1NotImplementedError('')
+
+    def resolve_pending_request(self, client_cert, context_type, request_id, \
+                                    resolution_status, resolution_description,  \
+                                    credentials, options):
+        raise CHAPIv1NotImplementedError('')
+
+    def get_requests_for_context(self, client_cert, context_type, \
+                                 context_id, status, \
+                                 credentials, options):
+        raise CHAPIv1NotImplementedError('')
+
+    def get_requests_by_user(self, client_cert, member_id, context_type, \
+                                 context_id, status, \
+                                 credentials, options):
+        raise CHAPIv1NotImplementedError('')
+
+    def get_pending_requests_for_user(self, client_cert, member_id, \
+                                          context_type, context_id, \
+                                          credentials, options):
+        raise CHAPIv1NotImplementedError('')
+
+    def get_number_of_pending_requests_for_user(self, client_cert, member_id, \
+                                                    context_type, context_id, \
+                                                    credentials, options):
+        raise CHAPIv1NotImplementedError('')
+
+    def get_request_by_id(self, client_cert, request_id, context_type, \
+                              credentials, options):
+        raise CHAPIv1NotImplementedError('')
+
 
 

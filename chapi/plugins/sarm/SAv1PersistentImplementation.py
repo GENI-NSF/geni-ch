@@ -156,6 +156,25 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         "_GENI_PROJECT_OWNER" : "lead_id"
         }
 
+    project_request_columns = ['id', 'context_type', 'context_id', 'request_text', \
+                                   'request_type', 'request_details', 'requestor', \
+                                   'status', 'creation_timestamp', 'resolver', \
+                                   'resolution_timestamp', 'resolution_description']
+    project_request_field_mapping = {
+        'id' : 'id', 
+        'context_type' : 'context_type', 
+        'context_id' : 'context_id', 
+        'request_text' : 'request_text', 
+        'request_type' : 'request_type', 
+        'request_details' : 'request_details', 
+        'requestor' : 'requestor', 
+        'status' : 'status', 
+        'creation_timestamp' : 'creation_timestamp', 
+        'resolver'  : 'resolver' , 
+        'resolution_timestamp' : 'resolution_timestamp', 
+        'resolution_description' : 'resolution_description'
+}
+
 
 
     def __init__(self):
@@ -242,9 +261,12 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                      self.db.MEMBER_ATTRIBUTE_TABLE.c.member_id)
         q = q.filter(member_table.c.role == self.db.ROLE_TABLE.c.id)
         rows = q.all()
+#        print str(q)
+#        print str(rows)
         session.close()
         members = [{role_txt: row.name, member_txt: row.value, \
                         member_uid_txt : row.member_id} for row in rows]
+#        print "MEMBERS = " + str(members)
         return self._successReturn(members)
 
     def lookup_slices_for_member(self, client_cert, member_urn, \
@@ -332,9 +354,14 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
             session.close()
             raise CHAPIv1DuplicateError('Already exists a slice named ' + name)
 
+        # Create email if not provided
+        if not 'SLICE_EMAIL' in options or not options['SLICE_EMAIL']:
+            options['SLICE_EMAIL'] = 'slice-%s@example.com' % name
+
         # fill in the fields of the object
         slice = Slice()
         project_urn = None
+        slice.email = options['SLICE_EMAIL']
         for key, value in options["fields"].iteritems():
             if key == "_GENI_PROJECT_URN":
                 project_urn = value
@@ -350,6 +377,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         if not slice.expiration:
             slice.expiration = slice.creation + relativedelta(days=7)
         slice.slice_id = str(uuid.uuid4())
+        slice.owner_id = client_uuid
         slice.slice_urn = urn_for_slice(slice.slice_name, project_name)
         cert, k = cert_util.create_cert(slice.slice_urn, \
             issuer_key = self.key, issuer_cert = self.cert, \
@@ -644,3 +672,85 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         aggs = [row.aggregate_url for row in rows]
         session.close()
         return self._successReturn(aggs)
+
+    # Methods for managing pending project requests
+
+    def create_request(self, client_cert, context_type, \
+                           context_id, request_type, request_text, \
+                           request_details, credentials, options):
+        raise CHAPIv1NotImplementedError('')
+
+    def resolve_pending_request(self, client_cert, context_type, request_id, \
+                                    resolution_status, resolution_description,  \
+                                    credentials, options):
+        raise CHAPIv1NotImplementedError('')
+
+    def get_requests_for_context(self, client_cert, context_type, \
+                                 context_id, status, \
+                                 credentials, options):
+        session = self.db.getSession()
+        q = session.query(self.db.PROJECT_REQUEST_TABLE)
+        q = q.filter(self.db.PROJECT_REQUEST_TABLE.c.context_type == context_type)
+        q = q.filter(self.db.PROJECT_REQUEST_TABLE.c.context_id == context_id)
+        if status:
+            q = q.filter(self.db.PROJECT_REQUEST_TABLE.c.status == status)
+        rows = q.all()
+        session.close()
+        return self._successReturn(rows)
+
+    def get_requests_by_user(self, client_cert, member_id, context_type, \
+                                 context_id, status, \
+                                 credentials, options):
+        session = self.db.getSession()
+        q = session.query(self.db.PROJECT_REQUEST_TABLE)
+        q = q.filter(self.db.PROJECT_REQUEST_TABLE.c.context_type == context_type)
+        if context_id:
+            q = q.filter(self.db.PROJECT_REQUEST_TABLE.c.context_id == context_id)
+        if status:
+            q = q.filter(self.db.PROJECT_REQUEST_TABLE.c.status == status)
+        q = q.filter(self.db.PROJECT_REQUEST_TABLE.c.requestor == member_id)
+
+        rows = q.all()
+        session.close()
+#        print "ROWS = " + str(rows)
+        result = [construct_result_row(row, self.project_request_columns, \
+                                           self.project_request_field_mapping) \
+                      for row in rows]
+        return self._successReturn(result)
+
+    # Request status codes from rq_constants.php
+    PENDING_STATUS = 0
+
+    def get_pending_requests_for_user(self, client_cert, member_id, \
+                                          context_type, context_id, \
+                                          credentials, options):
+        session = self.db.getSession()
+        # Filter those projects with pending requsts to those for which
+        # Given member is lead or admin
+        q = session.query(self.db.PROJECT_REQUEST_TABLE, self.db.PROJECT_MEMBER_TABLE)
+        q = q.filter(self.db.PROJECT_REQUEST_TABLE.c.context_id == self.db.PROJECT_MEMBER_TABLE.c.project_id)
+        q = q.filter(self.db.PROJECT_MEMBER_TABLE.c.member_id == member_id)
+        q = q.filter(self.db.PROJECT_MEMBER_TABLE.c.role.in_([LEAD_ATTRIBUTE, ADMIN_ATTRIBUTE]))
+        q = q.filter(self.db.PROJECT_REQUEST_TABLE.c.context_type == context_type)
+        if context_id:
+            q = q.filter(self.db.PROJECT_REQUEST_TABLE.c.context_id == context_id)
+        q = q.filter(self.db.PROJECT_REQUEST_TABLE.c.status == self.PENDING_STATUS)
+        rows = q.all()
+        session.close()
+#        print "ROWS = " + str(rows)
+        result = [construct_result_row(row, self.project_request_columns, \
+                                           self.project_request_field_mapping) \
+                      for row in rows]
+        return self._successReturn(result)
+
+    def get_number_of_pending_requests_for_user(self, client_cert, member_id, \
+                                                    context_type, context_id, \
+                                                    credentials, options):
+        raise CHAPIv1NotImplementedError('')
+
+    def get_request_by_id(self, client_cert, request_id, context_type):
+        raise CHAPIv1NotImplementedError('')
+
+
+
+

@@ -21,6 +21,7 @@
 # IN THE WORK.
 #----------------------------------------------------------------------
 
+import amsoil.core.pluginmanager as pm
 from chapi.Clearinghouse import CHv1Handler
 from CHv1PersistentImplementation import CHv1PersistentImplementation
 from chapi.Exceptions import *
@@ -95,9 +96,15 @@ class SRv1Delegate(CHv1PersistentImplementation):
         rows = q.all()
         session.close()
 
-        authorities = [construct_result_row(row, selected_columns, \
-                                                self.field_mapping) \
-                           for row in rows]
+        services = [construct_result_row(row, selected_columns, \
+                                             self.field_mapping) \
+                        for row in rows]
 
-        return self._successReturn(authorities)
+        # Fill in the service_cert_contents
+        for service in services:
+            service_cert = service['SERVICE_CERTIFICATE']
+            if service_cert:
+                service['SERVICE_CERTIFICATE_CONTENTS'] = open(service_cert, 'r').read()
+
+        return self._successReturn(services)
 
