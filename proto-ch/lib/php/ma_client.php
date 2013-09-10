@@ -77,7 +77,7 @@ function register_ssh_key($ma_url, $signer, $member_id, $filename,
 function lookup_public_ssh_keys($ma_url, $signer, $member_id)
 {
   $client = new XMLRPCClient($ma_url, $signer);
-  $options = array('match'=> array('MEMBER_UID'=>$member_id),
+  $options = array('match'=> array('_GENI_KEY_MEMBER_UID'=>$member_id),
 		   'filter'=>array('KEY_PUBLIC'));
   $res = $client->lookup_keys($client->get_credentials(), $options);
   $ssh_keys = array_map(function($x) { return $x['KEY_PUBLIC']; }, $res);
@@ -88,7 +88,7 @@ function lookup_public_ssh_keys($ma_url, $signer, $member_id)
 function lookup_private_ssh_keys($ma_url, $signer, $member_id)
 {
   $client = new XMLRPCClient($ma_url, $signer);
-  $options = array('match'=> array('MEMBER_UID'=>$member_id),
+  $options = array('match'=> array('_GENI_KEY_MEMBER_UID'=>$member_id),
 		   'filter'=>array('KEY_PRIVATE'));
   $res = $client->lookup_keys($client->get_credentials(), $options);
   $ssh_keys = array_map(function($x) { return $x['KEY_PRIVATE']; }, $res);

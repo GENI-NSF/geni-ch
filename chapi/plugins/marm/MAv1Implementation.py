@@ -139,13 +139,15 @@ class MAv1Implementation(MAv1DelegateBase):
         }
 
     key_fields = ["KEY_MEMBER", "KEY_ID", "KEY_PUBLIC", "KEY_PRIVATE", 
-                  "KEY_DESCRIPTION", "_GENI_KEY_FILENAME" ]
+                  "KEY_DESCRIPTION", "_GENI_KEY_MEMBER_UID", 
+                  "_GENI_KEY_FILENAME" ]
     key_field_mapping = {
         "KEY_MEMBER": 'value',
         "KEY_ID": 'id',
         "KEY_PUBLIC": "public_key",
         "KEY_PRIVATE": "private_key",
         "KEY_DESCRIPTION":  "description",
+        "_GENI_KEY_MEMBER_UID": "member_id",
         "_GENI_KEY_FILENAME": "filename"
         }
 
@@ -153,11 +155,12 @@ class MAv1Implementation(MAv1DelegateBase):
     services = ["MEMBER", "KEY"]
 
     attributes = ["MEMBER_URN", "MEMBER_UID", "MEMBER_FIRSTNAME", \
-                  "MEMBER_LASTNAME", "MEMBER_USERNAME", "MEMBER_EMAIL", \
-                  "_GENI_MEMBER_DISPLAYNAME", "_GENI_MEMBER_PHONE_NUMBER", \
-                  "_GENI_MEMBER_AFFILIATION", "_GENI_MEMBER_EPPN", \
+                      "MEMBER_LASTNAME", "MEMBER_USERNAME", "MEMBER_EMAIL", \
+                      "_GENI_MEMBER_DISPLAYNAME", "_GENI_MEMBER_PHONE_NUMBER", \
+                      "_GENI_MEMBER_AFFILIATION", "_GENI_MEMBER_EPPN", \
                       "KEY_MEMBER", "KEY_ID", "KEY_PUBLIC", "KEY_PRIVATE", \
-                      "KEY_DESCRIPTION", "_GENI_KEY_FILENAME"]
+                      "KEY_DESCRIPTION", "_GENI_KEY_MEMBER_UID", \
+                      "_GENI_KEY_FILENAME"]
 
     public_fields = ["MEMBER_URN", "MEMBER_UID", "MEMBER_USERNAME", \
                          "_GENI_MEMBER_SSL_PUBLIC_KEY", "_GENI_MEMBER_SSL_CERTIFICATE", \
@@ -176,7 +179,8 @@ class MAv1Implementation(MAv1DelegateBase):
                           "_GENI_MEMBER_INSIDE_PRIVATE_KEY"]
 
     key_fields = ["KEY_MEMBER", "KEY_ID", "KEY_PUBLIC", "KEY_PRIVATE", 
-                  "KEY_DESCRIPTION", "_GENI_KEY_FILENAME" ]
+                  "KEY_DESCRIPTION", "_GENI_KEY_MEMBER_UID", 
+                  "_GENI_KEY_FILENAME" ]
 
     required_create_key_fields = ["KEY_PUBLIC"]
     allowed_create_key_fields = ["KEY_PUBLIC", "KEY_PRIVATE", "KEY_DESCRIPTION", "_GENI_KEY_FILENAME"]
@@ -487,6 +491,7 @@ class MAv1Implementation(MAv1DelegateBase):
         return self._successReturn(True)
 
     def lookup_keys(self, client_cert, credentials, options):
+
         selected_columns, match_criteria = \
             unpack_query_options(options, self.key_field_mapping)
         if not match_criteria:
