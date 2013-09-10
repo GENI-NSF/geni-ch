@@ -56,7 +56,7 @@ chmod 644 /etc/apache2/sites-available/ch-ssl
 patch --backup -p0 /etc/apache2/sites-available/ch-ssl << EOF
 --- ch-ssl	2013-09-06 08:54:59.234460479 -0400
 +++ /etc/apache2/sites-available/ch-ssl	2013-09-06 08:46:59.526437589 -0400
-@@ -190,6 +190,17 @@
+@@ -190,6 +190,18 @@
  	Include /usr/share/geni-ch/cs/apache2.conf
  	Include /usr/share/geni-ch/logging/apache2.conf
  
@@ -69,7 +69,8 @@ patch --backup -p0 /etc/apache2/sites-available/ch-ssl << EOF
 +        ScriptAlias /CS /usr/share/geni-ch/chapi/AMsoil/src/main.py 
 +        ScriptAlias /CH /usr/share/geni-ch/chapi/AMsoil/src/main.py 
 +        ScriptAlias /LOG /usr/share/geni-ch/chapi/AMsoil/src/main.py 
-+        ScriptAlias /PCGH /usr/share/geni-ch/chapi/AMsoil/src/main.py 
++        ScriptAlias /PGCH /usr/share/geni-ch/chapi/AMsoil/src/main.py 
++        ScriptAlias /SR /usr/share/geni-ch/chapi/AMsoil/src/main.py 
 +
  </VirtualHost>
  
