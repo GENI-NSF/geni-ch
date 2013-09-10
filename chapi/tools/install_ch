@@ -77,5 +77,20 @@ patch --backup -p0 /etc/apache2/sites-available/ch-ssl << EOF
  # Catch-all default virtual host, so other CNAMEs to this IP are not
 EOF
 
+patch --backup -p0 /etc/geni-ch/settings.php << EOF
+--- /etc/geni-ch/settings.php~	2013-08-07 14:04:34.864683018 -0400
++++ /etc/geni-ch/settings.php	2013-09-09 13:28:40.282455423 -0400
+@@ -33,7 +33,8 @@
+ 
+ $portal_admin_email = 'portal-sandbox-admin@gpolab.bbn.com';
+ 
+-$service_registry_url = 'https://ch-mt.gpolab.bbn.com/sr/sr_controller.php';
++//$service_registry_url = 'https://ch-mt.gpolab.bbn.com/sr/sr_controller.php';
++$service_registry_url = 'https://ch-mt.gpolab.bbn.com/SR';
+ 
+ // User/PW for an admin account on the iRODS server for use by the portal
+ // in creating iRODS accounts
+EOF
+
 # restart apache
 service apache2 restart
