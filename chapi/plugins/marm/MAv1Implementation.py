@@ -234,7 +234,7 @@ class MAv1Implementation(MAv1DelegateBase):
         q = session.query(MemberAttribute.member_id)
         q = q.filter(MemberAttribute.name == self.field_mapping[attr])
         if isinstance(value, types.ListType):
-            q = q.filter(MemberAttribute.value._in(value))
+            q = q.filter(MemberAttribute.value.in_(value))
         else:
             q = q.filter(MemberAttribute.value == value)
         rows = q.all()
