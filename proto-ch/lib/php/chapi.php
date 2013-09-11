@@ -37,27 +37,19 @@ require_once 'geni_syslog.php';
 class XMLRPCClient
 {
   private $url;
-  private $combined = null;
-  private $keyfile = null;
+  private $signer;
+  private $combined = null;   // memory cache of PEM encoded cert+privatekey
+  private $keyfile = null;    // name of the keyfile written to (if known)
 
-  private static $clients = array();
-  
+  // this is intended to allow for the maintenance of a cache of 
+  // constructed instances, but requires a long-lived php process (along
+  // with access to an appropriately long-lived cache variable) to 
+  // get substantial benefits.  The _SESSION array is not a good match
+  // for such a cache, since it gets serialized to disk between invocations
+  // and objects are destructed after serializing, leaving things like
+  // the signer files broken on the disk.
   public static function get_client($url, $signer=null) {
-    $signer_key = "NULL";
-    if($signer != null && $signer->privateKey() != null)
-      $signer_key = $signer->privateKey();
-    $k = $url . ":" . $signer_key;
-    //    $k = array($url, $signer);
-    if (array_key_exists($k, self::$clients)) {
-      //      error_log("Retrieved client : " . $url);
-      $result = self::$clients[$k];
-    } else {
-      $client = new XMLRPCClient($url, $signer);
-      self::$clients[$k] = $client;
-      //      error_log("Created new client : " . $url);
-      $result = $client;
-    }
-    return $result; 
+    return $client = new XMLRPCClient($url, $signer);
   }    
 
   // arguments:
@@ -77,9 +69,11 @@ class XMLRPCClient
   {
     if (! is_null($this->keyfile)) {
       unlink($this->keyfile);
+      $this->keyfile = null;  // wipe out the variable just to be sure
     }
   }
-  // magic calls.  $this->foo(arg1, arg2) turns into $this->__call("foo", array(arg1, arg2))
+  // magic calls.  $this->foo(arg1, arg2) turns into:
+  //     $this->__call("foo", array(arg1, arg2))
   public function __call($fun, $args)
   {
     return $this->call($fun, $args);
@@ -103,7 +97,6 @@ class XMLRPCClient
     // added, but CURL works, so we'll go with it.
     //$context = stream_context_create(array('http' => $opts));
     //$file = file_get_contents($this->url, false, $context);
-
     $ch = curl_init();
     $headers = array("Content-Type: text/xml",
 		     "Content-Length: ".strlen($request),
@@ -129,18 +122,16 @@ class XMLRPCClient
       curl_setopt($ch, CURLOPT_SSLKEYTYPE, "PEM");
       curl_setopt($ch, CURLOPT_SSLCERT, $this->keyfile);
     }
+
     //   error_log("CURL : " . $this->url);
     $ret = curl_exec($ch);
     if ($ret === FALSE) {
       error_log("CHAPI: CURL_ERROR = " . curl_error($ch));
     }
 
-    curl_close($ch);
-
-    // this is now handled by the destructor
-    //if (! is_null($pemf)) {
-    //      unlink($pemf);
-    //    }
+    curl_close($ch);  // TODO: would be nice to reuse these connections at this level
+    
+    // keyfile cleanup is handled by the destructor
 
     if ($rawreturn) {
       return $result;
@@ -151,9 +142,15 @@ class XMLRPCClient
     return $this->result_handler($result);
   }
 
-  // Write the combined cert to a file.
+  // Write the combined cert (cert and private key) to a file for our transport.
+  // the signer instance has files, but they are raw binary, rather than the
+  // PEM encoded files that cURL expects.
+  //
+  // TODO: figure out how to use the raw files rather than having to write these.
+  //
   // arguments:
-  //   $file: if null, will create a temporary file, returning the name.  Otherwise, writes to the file
+  //   $file: if null, will create a temporary file, returning the name.  Otherwise, 
+  //     will write to the filename specified. 
   // return:
   //   the name of the file written to.
   function _write_combined_credentials($file=null) {
@@ -168,7 +165,6 @@ class XMLRPCClient
     file_put_contents($file, $this->combined);
     return $file;
   }
-
 
 
   // unpack the CHAPI results, retaining compatibilty with the 
@@ -210,4 +206,45 @@ class XMLRPCClient
   function get_credentials() {
     return array();
   }
+}
+
+
+// Session cache access.  This is a simpler static interface than 
+// session_cache.php
+// 
+function get_session_cached($skey)
+{
+  if(!isset($_SESSION)) {
+    session_start(); // make sure that _session exists
+  }
+  if (!array_key_exists($skey, $_SESSION)) {
+    $_SESSION[$skey] = array();
+  }
+  return $_SESSION[$skey];
+}
+
+function set_session_cached($skey, $ar)
+{
+  if(!isset($_SESSION)) {
+    session_start(); // make sure that _session exists
+  }
+  $_SESSION[$skey] = $ar;
+  return $ar;
+}
+
+function get_session_cached_value($skey, $valuekey)
+{
+  $cache = get_session_cached($skey);
+  if (array_key_exists($valuekey, $cache)) {
+    return $cache[$valuekey];
+  } else {
+    return null;
+  }
+}
+
+function set_session_cached_value($skey, $valuekey, $value)
+{
+  $cache = get_session_cached($skey);
+  $cache[$valuekey] = $value;
+  set_session_cached($skey, $cache);
 }

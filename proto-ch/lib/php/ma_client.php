@@ -269,19 +269,26 @@ function ma_lookup_members_by_identifying($ma_url, $signer, $identifying_key, $i
   $pubres = $client->lookup_public_member_info($client->get_credentials(), 
 					       $options);
   //  error_log( " PUBRES = " . print_r($pubres, true));
+  
+  $ids = array();
+  foreach ($pubres as $urn => $pubrow) {
+    $ids[] = $pubrow['MEMBER_UID'];
+  }
+  $idrow = $client->lookup_identifying_member_info($client->get_credentials(), 
+						   array('match' => array('MEMBER_UID'=>$ids)));
+  //    error_log("   ID = " . print_r($id, true));
+  //    error_log("   IDROW = " . print_r($idrow, true));
   foreach ($pubres as $urn => $pubrow) {
     //    error_log("   URN = " . $urn);
     //    error_log("   PUBROW = " . print_r($pubrow, true));
-      $id = $pubrow['MEMBER_UID'];
-    $idrow = $client->lookup_identifying_member_info($client->get_credentials(), array('match' => array('MEMBER_UID'=>$id)));
-    //    error_log("   ID = " . print_r($id, true));
-    //    error_log("   IDROW = " . print_r($idrow, true));
+    $id = $pubrow['MEMBER_UID'];
     $m = new Member($id);
     $m->init_from_record($pubrow);
     $m->init_from_record($idrow[$urn]);
     $members[] = $m;
     $member_cache[$id] = $m;
   }
+
   $member_by_attribute_cache[$cache_key] = $members;
 
   return $members;
@@ -398,13 +405,10 @@ $DETAILS_PUBLIC = array(
 			"_GENI_USER_CREDENTIAL",
 			);
 
+// lookup public details for one member
 function _lookup_public_member_details($client, $signer, $uid)
 {
-  global $DETAILS_PUBLIC;
-  $options = array('match'=>array('MEMBER_UID'=>$uid),
-		   'filter'=>$DETAILS_PUBLIC);
-  $r = $client->lookup_public_member_info($client->get_credentials(), 
-					  $options);
+  $r = _lookup_public_members_details($client, $signer, array($uid));
   if (sizeof($r)>0) {
     $urns = array_keys($r);
     $urn = $urns[0];
@@ -412,6 +416,16 @@ function _lookup_public_member_details($client, $signer, $uid)
   } else {
     return array();
   }
+}
+
+function _lookup_public_members_details($client, $signer, $uid)
+{
+  global $DETAILS_PUBLIC;
+  $options = array('match'=>array('MEMBER_UID'=>$uid),
+		   'filter'=>$DETAILS_PUBLIC);
+  $r = $client->lookup_public_member_info($client->get_credentials(), 
+					  $options);
+  return $r;
 }
 
 $DETAILS_IDENTIFYING = array(
@@ -491,13 +505,11 @@ function lookup_members_by_email($ma_url, $signer, $member_emails)
 }
 
 
-$MEMBER_ID2URN = array();
-
 function get_member_urn($ma_url, $signer, $id) {
-  global $MEMBER_ID2URN;
-  if (array_key_exists($id, $MEMBER_ID2URN)) {
-      return $MEMBER_ID2URN[$id];
-    } else {
+  $cache = get_session_cached('member_urn');
+  if (array_key_exists($id, $cache)) {
+      return $cache[$id];
+  } else {
     $client = XMLRPCClient::get_client($ma_url, $signer);
     $options = array('match'=>array('MEMBER_UID'=>$id),
 		     'filter'=>array('MEMBER_URN'));
@@ -510,9 +522,10 @@ function get_member_urn($ma_url, $signer, $id) {
     } else {
       $urn = null;  // cache failures
     }
-      $MEMBER_ID2URN[$id] = $urn;
-      return $urn;
-    }
+    $cache[$id] = $urn;
+    set_session_cached('member_urn', $cache);
+    return $urn;
+  }
 }
 
 ?>

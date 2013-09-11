@@ -93,7 +93,8 @@ function session_cache_flush($key)
     return;
   }
 
-  $_SESSION[$timeout_key] = null;
+  $_SESSION[$timeout_key] = null;  // MIK: shouldn't this be unset($_SESSION[$timeout_key])?
+
 }
 
 ?>
