@@ -382,7 +382,7 @@ function lookup_member_details($ma_url, $signer, $member_uuids)
     $attrs = array();
     foreach (array_merge($pubdet,$iddet) as $k => $v) {
       $ak = _attkey_to_portalkey($k);
-      $attrs[$k] = $v;
+      $attrs[$ak] = $v;
     }
     $result[$uid] = $attrs;
   }
