@@ -13,6 +13,7 @@ mv /usr/share/geni-ch/gcf-2.3.3 /usr/share/geni-ch/gcf
 mv /usr/share/geni-ch/abac-0.1.5 /usr/share/geni-ch/abac
 
 # install required modules
+apt-get update
 apt-get -y install libapache2-mod-fastcgi python-setuptools \
     python-dev python-m2crypto python-openssl python-flup nginx \
     python-dateutil python-openssl libxmlsec1 \
