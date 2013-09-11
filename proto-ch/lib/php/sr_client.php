@@ -49,14 +49,13 @@ function service_chapi2portal($row) {
   return $converted_row;
 }
 
-$CACHED_SERVICES = array();
-
 // Return all services in registry
 function get_services()
 {
-  global $CACHED_SERVICES;
-  if (sizeof($CACHED_SERVICES)>0) {
-    return $CACHED_SERVICES;
+  $cached = get_session_cached('get_services');
+
+  if (sizeof($cached)>0) {
+    return $cached;
   }
 
   $sr_url = get_sr_url();
@@ -69,7 +68,7 @@ function get_services()
   foreach ($services as $service) {
     $converted_services[] = service_chapi2portal($service);
   }
-  $CACHED_SERVICES = $converted_services;
+  set_session_cached('get_services', $converted_services);
 
   return $converted_services;
 }
@@ -81,21 +80,20 @@ function get_services_of_type($service_type)
   return select_services($services, $service_type);
 }
 
-$SERVICE_OF_TYPE = array();
-
 // Get URL of first registered service of given service type
 function get_first_service_of_type($service_type)
 {
   global $SR_SERVICE_TYPE_NAMES;
-  global $SERVICE_OF_TYPE;
-  if (array_key_exists($service_type, $SERVICE_OF_TYPE)) {
-    return $SERVICE_OF_TYPE[$service_type];
+  
+  $cache = get_session_cached('service_of_type');
+  if (array_key_exists($service_type, $cache)) {
+    return $cache[$service_type];
   }
 
   $sot = get_services_of_type($service_type);
   if (isset($sot) && ! is_null($sot) && is_array($sot) && count($sot) > 0) {
     $ans = $sot[0][SR_TABLE_FIELDNAME::SERVICE_URL];
-    $SERVICE_OF_TYPE[$service_type] = $ans;
+    $cache[$service_type] = $ans;
     return $ans;
   } else {
     error_log("Got back 0 cached services of type " . $SR_SERVICE_TYPE_NAMES[$service_type]);
