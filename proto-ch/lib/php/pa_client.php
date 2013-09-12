@@ -250,12 +250,13 @@ function _conv_mid2urn($sa_url, $signer, $alist)
 
 function _conv_mid2urn_map($sa_url, $signer, $amap)
 {
-  $nmap = array();
+  $narr = array();
   foreach ($amap as $mid => $v) {
     $murn = get_member_urn(sa_to_ma_url($sa_url), $signer, $mid);
-    $nmap[$murn] = $v;
+    $role = strtoupper($CS_ATTRIBUTE_TYPE_NAME[$v]);
+    $narr[] = array('PROJECT_MEMBER' => $murn, 'PROJECT_ROLE' => $role);
   }
-  return $nmap;
+  return $narr;
 }
 
 // Modify project membership according to given lists to add/change_role/remove
@@ -274,7 +275,7 @@ function modify_project_membership($sa_url, $signer, $project_id,
   $members_to_change = _conv_mid2urn_map($sa_url, $signer, $members_to_change);
   $members_to_remove = _conv_mid2urn($sa_url, $signer, $members_to_remove);
   
-  $options = array('_dummy' => null);
+  $options = array();
   if (sizeof($members_to_add)>0)    { $options['members_to_add']    = $members_to_add; }
   if (sizeof($members_to_change)>0) { $options['members_to_change'] = $members_to_change; }
   if (sizeof($members_to_remove)>0) { $options['members_to_remove'] = $members_to_remove; }
