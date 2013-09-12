@@ -42,6 +42,7 @@
 
 
 require_once('pa_constants.php');
+require_once('cs_constants.php');
 require_once 'chapi.php';
 require_once('client_utils.php');
 
@@ -250,6 +251,7 @@ function _conv_mid2urn($sa_url, $signer, $alist)
 
 function _conv_mid2urn_map($sa_url, $signer, $amap)
 {
+  global $CS_ATTRIBUTE_TYPE_NAME;
   $narr = array();
   foreach ($amap as $mid => $v) {
     $murn = get_member_urn(sa_to_ma_url($sa_url), $signer, $mid);
