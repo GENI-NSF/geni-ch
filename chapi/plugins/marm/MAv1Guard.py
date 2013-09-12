@@ -43,7 +43,6 @@ class MAv1Guard(ABACGuardBase):
 
 
     # Set of argument checks indexed by method name
-    # *** FINISH
     ARGUMENT_CHECK_FOR_METHOD = \
         {
         'lookup_public_member_info' : \
@@ -78,19 +77,58 @@ class MAv1Guard(ABACGuardBase):
                                     MA.optional_key_fields),
         'create_certificate' : \
             None
-}
-    
+        }
 
     # Set of invocation checks indexed by method name
-    # *** FINISH
     INVOCATION_CHECK_FOR_METHOD = \
-        { 
+        {
+        'lookup_public_member_info' : \
+            SubjectInvocationCheck([
+                "ME.MAY_LOOKUP_PUBLIC_MEMBER_INFO<-ME.IS_OPERATOR"
+            ], None, standard_subject_extractor),
+        'lookup_identifying_member_info' : \
+            SubjectInvocationCheck([
+                "ME.MAY_LOOKUP_IDENTIFYING_MEMBER_INFO<-ME.IS_OPERATOR", 
+                "ME.MAY_LOOKUP_IDENTIFYING_MEMBER_INFO_$SUBJECT<-ME.SHARES_PROJECT_$SUBJECT"
+                ], assert_shares_project, standard_subject_extractor),
+        'lookup_private_member_info' : \
+            SubjectInvocationCheck([
+#                "ME.MAY_LOOKUP_PRIVATE_MEMBER_INFO<-ME.IS_OPERATOR", 
+                "ME.MAY_LOOKUP_PRIVATE_MEMBER_INFO_$SUBJECT<-ME.IS_$SUBJECT"
+                ], None, standard_subject_extractor), 
+        'update_member_info' : \
+            SubjectInvocationCheck([
+            "ME.MAY_UPDATE_MEMBER_INFO<-ME.IS_OPERATOR", 
+            "ME.MAY_UPDATE_MEMBER_INFO_$SUBJECT<-ME.IS_$SUBJECT"
+                ], None, standard_subject_extractor), 
+        'create_key' : \
+            SubjectInvocationCheck([
+                "ME.MAY_CREATE_KEY<-ME.IS_OPERATOR",
+                "ME.MAY_CREATE_KEY_$SUBJECT<-ME.IS_$SUBJECT",
+                ], None, standard_subject_extractor), 
+        'delete_key' : \
+            SubjectInvocationCheck([
+                "ME.MAY_CREATE_KEY<-ME.IS_OPERATOR",
+                "ME.MAY_DELETE_KEY_$SUBJECT<-ME.IS_$SUBJECT",
+                ], None, standard_subject_extractor), 
+        'update_key' : \
+            SubjectInvocationCheck([
+                "ME.MAY_CREATE_KEY<-ME.IS_OPERATOR",
+                "ME.MAY_CREATE_KEY_$SUBJECT<-ME.IS_$SUBJECT",
+                ], None, standard_subject_extractor), 
+        'lookup_keys' : \
+            SubjectInvocationCheck([
+                "ME.MAY_LOOKUP_KEYS<-ME.IS_OPERATOR",
+                "ME.MAY_LOOKUP_KEYS_$SUBJECT<-ME.SHARES_SLICE_$SUBJECT", 
+                ], assert_shares_slice, key_subject_extractor), 
+        'create_certificate' : 
+            SubjectInvocationCheck([
+                "ME.MAY_CREATE_CERTIFICATE<-ME.IS_OPERATOR",
+                "ME.MAY_CREATE_CERTIFICATE<-ME.IS_AUTHORITY"
+                "ME.MAY_CREATE_CERTIFICATE_$SUBJECT<-ME.IS_$SUBJECT",
+                ], None, standard_subject_extractor)
         }
 
-    # *** FINISH
-    ROW_CHECK_FOR_METHOD = \
-        { 
-        }
 
     # Lookup argument check per method (or None if none registered)
     def get_argument_check(self, method):
@@ -104,11 +142,7 @@ class MAv1Guard(ABACGuardBase):
             return self.INVOCATION_CHECK_FOR_METHOD[method]
         return None
 
-    # Lookup row check per method (or None if none registered)
-    def get_row_check(self, method):
-        if self.ROW_CHECK_FOR_METHOD.has_key(method):
-            return self.ROW_CHECK_FOR_METHOD[method]
-        return None
+
 
 
 

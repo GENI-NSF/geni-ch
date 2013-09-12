@@ -37,33 +37,9 @@ from dateutil.relativedelta import relativedelta
 import uuid
 from CHDatabaseEngine import Aggregate
 from geni_constants import *
+from geni_utils import *
 from tools.cs_utils import *
 
-
-# Utility functions for morphing from native schema to public-facing
-# schema
-
-# Turn a project URN into a project name
-def from_project_urn(project_urn):
-    parts = project_urn.split('+')
-    return parts[len(parts)-1]
-
-# Turn a project name into a project URN
-def to_project_urn(authority, project_name):
-    return "urn:publicid:IDN+%s+project+%s" % \
-        (authority, project_name)
-
-# Turn a row with project name into a project URN
-def row_to_project_urn(row):
-    config = pm.getService('config')
-    authority = config.get("chrm.authority")
-    return to_project_urn(authority, row.project_name)
-
-def urn_for_slice(slice_name, project_name):
-    config = pm.getService('config')
-    authority = config.get("chrm.authority")
-    return "urn:publicid:IDN+%s:%s+slice+%s" % \
-        (authority, project_name, slice_name)
 
 # classes for mapping to sql tables
 

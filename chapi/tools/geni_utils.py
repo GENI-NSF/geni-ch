@@ -21,30 +21,30 @@
 # IN THE WORK.
 #----------------------------------------------------------------------
 
-# Sets of constants for defining relationships and roles in GENI 
-# Registry and Authorities
+# Utility functions for morphing from native schema to public-facing
+# schema
 
-# Context Types
-PROJECT_CONTEXT = 1
-SLICE_CONTEXT = 2
-RESOURCE_CONTEXT = 3
-SERVICE_CONTEXT = 4
-MEMBER_CONTEXT = 5
+import amsoil.core.pluginmanager as pm
 
-# For translating context types to names (if stored that way in database)
-context_type_names = {PROJECT_CONTEXT : "PROJECT", SLICE_CONTEXT : "SLICE", 
-                      RESOURCE_CONTEXT : "RESOURCE", SERVICE_CONTEXT : "SERVICE",
-                      MEMBER_CONTEXT : "MEMBER"}
+# Turn a project URN into a project name
+def from_project_urn(project_urn):
+    parts = project_urn.split('+')
+    return parts[len(parts)-1]
 
-# Attribute (role) Types
-LEAD_ATTRIBUTE = 1
-ADMIN_ATTRIBUTE = 2
-MEMBER_ATTRIBUTE = 3
-AUDITOR_ATTRIBUTE = 4
-OPERATOR_ATTRIBUTE = 5
+# Turn a project name into a project URN
+def to_project_urn(authority, project_name):
+    return "urn:publicid:IDN+%s+project+%s" % \
+        (authority, project_name)
 
-attribute_type_names = { LEAD_ATTRIBUTE : "LEAD", ADMIN_ATTRIBUTE : "ADMIN", 
-                         MEMBER_ATTRIBUTE : "MEMBER", AUDITOR_ATTRIBUTE : "AUDITOR",
-                         OPERATOR_ATTRIBUTE : "OPERATOR"}
+# Turn a row with project name into a project URN
+def row_to_project_urn(row):
+    config = pm.getService('config')
+    authority = config.get("chrm.authority")
+    return to_project_urn(authority, row.project_name)
 
+def urn_for_slice(slice_name, project_name):
+    config = pm.getService('config')
+    authority = config.get("chrm.authority")
+    return "urn:publicid:IDN+%s:%s+slice+%s" % \
+        (authority, project_name, slice_name)
 

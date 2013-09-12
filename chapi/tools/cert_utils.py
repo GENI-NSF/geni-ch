@@ -60,3 +60,9 @@ def get_urn_from_cert(cert):
             urn = san_part[4:]
             break
     return urn
+
+# Pull the object name fro the URN
+# It is the part after the last +
+def get_name_from_urn(urn):
+    parts = urn.split("+")
+    return str(parts[len(parts)-1])
