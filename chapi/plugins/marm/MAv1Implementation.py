@@ -426,7 +426,7 @@ class MAv1Implementation(MAv1DelegateBase):
 
        # Check that all the fields are allowed to be updated
         if 'fields' not in options:
-            return self._errorReturn(CHAPIv1ArgumentError("No fields in update_key"))
+            return self._errorReturn(CHAPIv1ArgumentError("No fields in create_key"))
         fields = options['fields']
         validate_fields(fields, self.required_create_key_fields, \
                             self.allowed_create_key_fields)
@@ -508,7 +508,10 @@ class MAv1Implementation(MAv1DelegateBase):
         # Handle key_member specially : it is not part of the SSH key table
         if 'KEY_MEMBER' in match_criteria.keys():
             member_urn = match_criteria['KEY_MEMBER']
-            q = q.filter(self.db.MEMBER_ATTRIBUTE_TABLE.c.value == member_urn)
+            if isinstance(member_urn, types.ListType):
+                q = q.filter(self.db.MEMBER_ATTRIBUTE_TABLE.c.value.in_(member_urn))
+            else:
+                q = q.filter(self.db.MEMBER_ATTRIBUTE_TABLE.c.value == member_urn)
             del match_criteria['KEY_MEMBER']
 
         q = add_filters(q, match_criteria, self.db.SSH_KEY_TABLE, self.key_field_mapping)

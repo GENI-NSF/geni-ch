@@ -60,38 +60,127 @@ class SAv1Guard(ABACGuardBase):
                                     SAv1PersistentImplementation.slice_supplemental_fields),
         'lookup_slices' : \
             LookupArgumentCheck(SAv1PersistentImplementation.slice_mandatory_fields,\
-                                    SAv1PersistentImplementation.slice_supplemental_fields)
+                                    SAv1PersistentImplementation.slice_supplemental_fields),
+        'get_credentials' : None,
+        'modify_slice_membership' : None,
+        'lookup_slice_members' : None,
+        'lookup_slices_for_member' : None,
+        'register_aggregate' : None,
+        'remove_aggregate' : None,
+        'lookup_slice_aggregates' : None,
+        'create_project' : None,
+        'lookup_projects' : None,
+        'update_project' : None,
+        'modify_project_membership' : None,
+        'lookup_project_members' : None,
+        'lookup_projects_for_member' : None
         }
     
 
     # Set of invocation checks indexed by method name
-    # *** FINISH
     INVOCATION_CHECK_FOR_METHOD = \
         { 
-        # lookup_slice_members can be called by anyone who is either
-        #   - a member of the project to which the slice belongs
-        #   - an operator
-        'lookup_slice_members' : 
-        ABACInvocationCheck(asserters= [
-                OperatorAsserter(), 
-                ProjectMemberAsserterByCert()
-                ],
-                            queries = [["C", "is_operator"], QueryProjectMemberBySliceURN()])
-    }
 
-    # Set of row checks indexed by method name
-    # *** FINISH
-    ROW_CHECK_FOR_METHOD = \
-        { 
-        # Rows returned from lookup_slices must belong to a project that the caller belongs to
-        # Unless the requester is an operator, in which case all rows are okay to return
-        'lookup_slices' : 
-        ABACRowCheck(asserters = [
-                OperatorAsserter(), 
-                ProjectMemberAsserterByCert()
-                ],
-                     queries = [["C", "is_operator"], QueryProjectMemberBySliceURN()]) 
+        'create_slice' : \
+            SubjectInvocationCheck([
+                "ME.MAY_CREATE_SLICE<-ME.IS_OPERATOR",
+                "ME.MAY_CREATE_SLICE_$SUBJECT<-ME.IS_LEAD_$SUBJECT", 
+                "ME.MAY_CREATE_SLICE_$SUBJECT<-ME.IS_ADMIN_$SUBJECT", 
+                "ME.MAY_CREATE_SLICE_$SUBJECT<-ME.IS_MEMBER_$SUBJECT"
+                ], assert_slice_role, project_urn_extractor),
+
+        'lookup_slices' : \
+            SubjectInvocationCheck([
+                "ME.MAY_LOOKUP_SLICES<-ME.IS_OPERATOR",
+                "ME.MAY_LOOKUP_SLICES_$SUBJECT<-ME.IS_LEAD_$SUBJECT", 
+                "ME.MAY_LOOKUP_SLICES_$SUBJECT<-ME.IS_ADMIN_$SUBJECT"
+                ], assert_slice_role, standard_subject_extractor),
+
+        'update_slice' : \
+            SubjectInvocationCheck([
+                "ME.MAY_UPDATE_SLICE<-ME.IS_OPERATOR",
+                "ME.MAY_UPDATE_SLICE_$SUBJECT<-ME.IS_LEAD_$SUBJECT", 
+                "ME.MAY_UPDATE_SLICE_$SUBJECT<-ME.IS_ADMIN_$SUBJECT"
+                ], assert_slice_role, slice_urn_extractor),
+
+        'get_credentials' : \
+            SubjectInvocationCheck([
+                "ME.MAY_GET_CREDENTIALS<-ME.IS_OPERATOR",
+                "ME.MAY_GET_CREDENTIALS_$SUBJECT<-ME.BELONGS_TO_$SUBJECT"
+                ], assert_belongs_to_slice, slice_urn_extractor),
+
+        'modify_slice_membership' : 
+            SubjectInvocationCheck([
+                "ME.MAY_MODIFY_SLICE_MEMBERSHIP<-ME.IS_OPERATOR",
+                "ME.MAY_MODIFY_SLICE_MEMBERSHIP_$SUBJECT<-ME.IS_LEAD_$SUBJECT",
+                "ME.MAY_MODIFY_SLICE_MEMBERSHIP_$SUBJECT<-ME.IS_ADMIN_$SUBJECT",
+                ], assert_slice_role, slice_urn_extractor),
+
+        'lookup_slice_members' : 
+            SubjectInvocationCheck([
+                "ME.MAY_LOOKUP_SLICE_MEMBERS<-ME.IS_OPERATOR",
+                "ME.MAY_LOOKUP_SLICE_MEMBERS_CREDENTIALS_$SUBJECT<-ME.BELONGS_TO_$SUBJECT"
+                ], assert_belongs_to_slice, slice_urn_extractor),
+
+        'lookup_slices_for_member' :
+            SubjectInvocationCheck([
+                "ME.MAY_LOOKUP_SLICES_FOR_MEMBER<-ME.IS_OPERATOR",
+                "ME.MAY_LOOKUP_SLICES_FOR_MEMBER_$SUBJECT<-ME.SHARES_SLICE_$SUBJECT"
+                ], assert_shares_slice, member_urn_extractor),
+
+        'create_project' : \
+            SubjectInvocationCheck([
+                "ME.MAY_CREATE_PROJECT<-ME.IS_OPERATOR",
+                "ME.MAY_CREATE_PROJECT<-ME.IS_PI"
+                ], None, project_urn_extractor),
+
+        'lookup_projects' : \
+            SubjectInvocationCheck([
+                "ME.MAY_LOOKUP_PROJECTS<-CALLER"  # Open to anyone with a legitimate cert
+                ], None, standard_subject_extractor),
+
+        'update_project' : \
+            SubjectInvocationCheck([
+                "ME.MAY_UPDATE_PROJECT<-ME.IS_OPERATOR",
+                "ME.MAY_UPDATE_PROJECT_$SUBJECT<-ME.IS_LEAD_$SUBJECT", 
+                "ME.MAY_UPDATE_PROJECT_$SUBJECT<-ME.IS_ADMIN_$SUBJECT"
+                ], assert_slice_role, project_urn_extractor),
+
+        'modify_project_membership' : \
+            SubjectInvocationCheck([
+                "ME.MAY_MODIFY_PROJECT_MEMBERSHIP<-ME.IS_OPERATOR",
+                "ME.MAY_MODIFY_PROJECT_MEMBERSHIP_$SUBJECT<-ME.IS_LEAD_$SUBJECT",
+                "ME.MAY_MODIFY_PROJECT_MEMBERSHIP_$SUBJECT<-ME.IS_ADMIN_$SUBJECT",
+                ], assert_project_role, project_urn_extractor),
+
+        'lookup_project_members' : \
+            SubjectInvocationCheck([
+                "ME.MAY_LOOKUP_PROJECT_MEMBERS_$SUBJECT<-ME.IS_OPERATOR",
+                "ME.MAY_LOOKUP_PROJECT_MEMBERS_$SUBJECT<-ME.BELONGS_TO_$SUBJECT"
+                ], assert_belongs_to_project, project_urn_extractor),
+
+        'lookup_projects_for_member' : \
+            SubjectInvocationCheck([
+                "ME.MAY_LOOKUP_PROJECTS_FOR_MEMBER<-ME.IS_OPERATOR",
+                "ME.MAY_LOOKUP_PROJECTS_FOR_MEMBER_$SUBJECT<-ME.SHARES_PROJECT_$SUBJECT"
+                ], assert_shares_project, member_urn_extractor),
+
+        # *** WRITE ME: Guards for aggregate methods
+        'register_aggregate' : None,
+        'remove_aggregate' : None,
+        'lookup_slice_aggregates' : None,
+
+        # *** WRITE ME: Guards for project request methods
+        'create_request' :  None,
+        'resolve_pending_request' :  None,
+        'get_requests_for_context' :  None,
+        'get_requests_by_user' :  None,
+        'get_pending_requests_by_user' :  None,
+        'get_number_of_pending_requests_by_user' :  None,
+        'get_request_by_id' : None
+
         }
+
 
     # Lookup argument check per method (or None if none registered)
     def get_argument_check(self, method):
