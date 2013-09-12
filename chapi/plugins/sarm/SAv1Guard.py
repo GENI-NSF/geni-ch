@@ -49,9 +49,10 @@ class SAv1Guard(ABACGuardBase):
 
 
     # Set of argument checks indexed by method name
-    # *** FINISH
     ARGUMENT_CHECK_FOR_METHOD = \
         {
+
+        # Argument checks for slice methods
         'create_slice' : \
             CreateArgumentCheck(SAv1PersistentImplementation.slice_mandatory_fields,\
                                    SAv1PersistentImplementation.slice_supplemental_fields),
@@ -61,19 +62,47 @@ class SAv1Guard(ABACGuardBase):
         'lookup_slices' : \
             LookupArgumentCheck(SAv1PersistentImplementation.slice_mandatory_fields,\
                                     SAv1PersistentImplementation.slice_supplemental_fields),
-        'get_credentials' : None,
-        'modify_slice_membership' : None,
-        'lookup_slice_members' : None,
-        'lookup_slices_for_member' : None,
-        'register_aggregate' : None,
-        'remove_aggregate' : None,
-        'lookup_slice_aggregates' : None,
-        'create_project' : None,
-        'lookup_projects' : None,
-        'update_project' : None,
-        'modify_project_membership' : None,
-        'lookup_project_members' : None,
-        'lookup_projects_for_member' : None
+        'modify_slice_membership' : None, # No options required (slice_urn argument)
+        'lookup_slice_members' : None, # No options required (slice_urn argument)
+        'lookup_slices_for_member' : None, # No options required (member_urn argument)
+        'get_credentials' : None, # No options required (slice_urn argument)
+
+        # Argument checks for project methods
+
+        'create_project' : \
+            CreateArgumentCheck(SAv1PersistentImplementation.project_mandatory_fields,\
+                                   SAv1PersistentImplementation.project_supplemental_fields),
+        'update_project' : \
+            UpdateArgumentCheck(SAv1PersistentImplementation.slice_mandatory_fields,\
+                                    SAv1PersistentImplementation.slice_supplemental_fields),
+        'lookup_projects' : \
+            LookupArgumentCheck(SAv1PersistentImplementation.slice_mandatory_fields,\
+                                    SAv1PersistentImplementation.slice_supplemental_fields),
+        'modify_project_membership' : None, # No options required (project_urn argument)
+        'lookup_project_members' : None, # No options required (project_urn argument)
+        'lookup_projects_for_member' : None, # No options required (member_urn argument)
+
+        # Argument checks for sliver info aggregate methods
+        'register_aggregate' : None, # No options required (slice_urn, aggregate_url arguments)
+        'remove_aggregate' : None, # No options required (slice_urn, aggregate_url arguments)
+        'lookup_slice_aggregates' : None,  # No options required (slice_urn argument)
+
+        # Argument checks for project request methods
+        # No options required (context_type, request_id, resolution_status, resolution_description arguments)
+        'create_request' :  None, 
+        # No options required (context_type, request_id, resolution_status, resolution_description arguments)
+        'resolve_pending_request' :  None, 
+        # No options required (context_type, context_id, status arguments)
+        'get_requests_for_context' :  None,
+        # No options required (member_id, context_type, context_id, status arguments)
+        'get_requests_by_user' :  None,
+        # No options required (member_id, context_type, context_id arguments)
+        'get_pending_requests_by_user' :  None,
+        # No options required (member_id, context_type, context_id arguments)
+        'get_number_of_pending_requests_by_user' :  None,
+        # No options required (request_id, context_type arguments)
+        'get_request_by_id' : None
+
         }
     
 

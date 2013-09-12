@@ -178,7 +178,6 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         mapper(Project, self.db.PROJECT_TABLE)
         mapper(ProjectMember, self.db.PROJECT_MEMBER_TABLE)
 
-
     def get_version(self):
         version_info = {"VERSION" : self.version_number, 
                         "SERVICES" : self.services,
@@ -654,12 +653,42 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
     def create_request(self, client_cert, context_type, \
                            context_id, request_type, request_text, \
                            request_details, credentials, options):
-        raise CHAPIv1NotImplementedError('')
+        client_uuid = get_uuid_from_cert(client_cert)
+        session = self.db.getSession()
+        ins = self.db.PROJECT_REQUEST_TABLE.insert().values(context_type = context_type, \
+                                                                context_id = context_id, \
+                                                                request_type = request_type, \
+                                                                request_text = request_text, \
+                                                                request_details = request_details, \
+                                                                creation_timestamp = datetime.now(), \
+                                                                status = PENDING_STATUS, \
+                                                                requestor = client_uuid)
+        result = session.execute(ins)
+        
+        query = "select max(id) from pa_project_member_request"
+        request_id  = session.execute(query).fetchone().values()[0]
+        session.commit()
+        session.close()
+        return self._successReturn(request_id)
 
     def resolve_pending_request(self, client_cert, context_type, request_id, \
                                     resolution_status, resolution_description,  \
                                     credentials, options):
-        raise CHAPIv1NotImplementedError('')
+        client_uuid = get_uuid_from_cert(client_cert)
+        session = self.db.getSession()
+
+        update_values = {'status' : resolution_status, 
+                         'resolver' : client_uuid, 
+                         'resolution_description' : resolution_description,
+                         'resolution_timestamp' : datetime.now() 
+                         }
+        update = self.db.PROJECT_REQUEST_TABLE.update(values=update_values)
+        update = update.where(self.db.PROJECT_REQUEST_TABLE.c.id == request_id)
+        update = update.where(self.db.PROJECT_REQUEST_TABLE.c.context_type == context_type)
+        session.execute(update)
+        session.commit()
+        session.close()
+        return self._successReturn(True)
 
     def get_requests_for_context(self, client_cert, context_type, \
                                  context_id, status, \
@@ -694,9 +723,6 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                       for row in rows]
         return self._successReturn(result)
 
-    # Request status codes from rq_constants.php
-    PENDING_STATUS = 0
-
     def get_pending_requests_for_user(self, client_cert, member_id, \
                                           context_type, context_id, \
                                           credentials, options):
@@ -722,10 +748,25 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
     def get_number_of_pending_requests_for_user(self, client_cert, member_id, \
                                                     context_type, context_id, \
                                                     credentials, options):
-        raise CHAPIv1NotImplementedError('')
+        requests = self.get_pending_requests_for_user(client_cert, member_id, \
+                                                          context_type, context_id,  \
+                                                          credentials, options)
+        if requests['code'] != NO_ERROR:
+            return requests
+        return self._successReturn(len(requests['value']))
 
-    def get_request_by_id(self, client_cert, request_id, context_type):
-        raise CHAPIv1NotImplementedError('')
+    def get_request_by_id(self, client_cert, request_id, context_type, \
+                              credentials, options):
+        session = self.db.getSession()
+        q = session.query(self.db.PROJECT_REQUEST_TABLE)
+        q = q.filter(self.db.PROJECT_REQUEST_TABLE.c.id == request_id)
+        q = q.filter(self.db.PROJECT_REQUEST_TABLE.c.context_type == context_type)
+        rows = q.all()
+        session.close()
+        result = [construct_result_row(row, self.project_request_columns, \
+                                           self.project_request_field_mapping) \
+                      for row in rows]
+        return self._successReturn(result)
 
 
 
