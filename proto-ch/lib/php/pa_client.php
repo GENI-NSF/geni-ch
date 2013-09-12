@@ -246,7 +246,7 @@ function update_project($sa_url, $signer, $project_id, $project_name,
 
 function _conv_mid2urn($sa_url, $signer, $alist)
 {
-  return array_map(function ($mid) { return get_member_urn(sa_to_ma_url($sa_url), $signer, $mid); }, $alist);
+  return array_map(function ($mid) use ($sa_url, $signer) { return get_member_urn(sa_to_ma_url($sa_url), $signer, $mid); }, $alist);
 }
 
 function _conv_mid2urn_map($sa_url, $signer, $amap)
