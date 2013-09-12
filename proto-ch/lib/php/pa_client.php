@@ -267,6 +267,9 @@ function modify_project_membership($sa_url, $signer, $project_id,
 				   $members_to_change, 
 				   $members_to_remove)
 {
+  $project_urn = get_project_urn($sa_url, $signer, $project_id);
+
+  $client = XMLRPCClient::get_client($sa_url, $signer);
   $members_to_add = _conv_mid2urn_map($sa_url, $signer, $members_to_add);
   $members_to_change = _conv_mid2urn_map($sa_url, $signer, $members_to_change);
   $members_to_remove = _conv_mid2urn($sa_url, $signer, $members_to_remove);
@@ -275,7 +278,8 @@ function modify_project_membership($sa_url, $signer, $project_id,
   if (sizeof($members_to_add)>0)    { $options['members_to_add']    = $members_to_add; }
   if (sizeof($members_to_change)>0) { $options['members_to_change'] = $members_to_change; }
   if (sizeof($members_to_remove)>0) { $options['members_to_remove'] = $members_to_remove; }
-  modify_project_membership($project_urn, $client->get_credentials(), $options);
+  $res = $client->modify_project_membership($project_urn, $client->get_credentials(), $options);
+  return $res;
 }
 
 
