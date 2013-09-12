@@ -47,4 +47,8 @@ attribute_type_names = { LEAD_ATTRIBUTE : "LEAD", ADMIN_ATTRIBUTE : "ADMIN",
                          MEMBER_ATTRIBUTE : "MEMBER", AUDITOR_ATTRIBUTE : "AUDITOR",
                          OPERATOR_ATTRIBUTE : "OPERATOR"}
 
+# Request status codes from rq_constants.php
+PENDING_STATUS = 0
+
+
 
