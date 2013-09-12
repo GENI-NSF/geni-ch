@@ -277,7 +277,7 @@ function modify_project_membership($sa_url, $signer, $project_id,
   $members_to_change = _conv_mid2urn_map($sa_url, $signer, $members_to_change);
   $members_to_remove = _conv_mid2urn($sa_url, $signer, $members_to_remove);
   
-  $options = array();
+  $options = array('_dummy' => null);
   if (sizeof($members_to_add)>0)    { $options['members_to_add']    = $members_to_add; }
   if (sizeof($members_to_change)>0) { $options['members_to_change'] = $members_to_change; }
   if (sizeof($members_to_remove)>0) { $options['members_to_remove'] = $members_to_remove; }
@@ -374,14 +374,17 @@ function get_projects_for_member($sa_url, $signer, $member_id, $is_member, $role
   global $user;
   $options = array('_dummy' => null);
   $client = XMLRPCClient::get_client($sa_url, $signer);
-  $member_urn = $user->urn; 
+  $member_urn = $user->urn;
   $rows = $client->lookup_projects_for_member($member_urn, $client->get_credentials(), $options);
-  $project_uuids = array();
-  foreach($rows as $row) {
-    $project_uuid = $row['PROJECT_UID'];
-    array_push($project_uuids, $project_uuid);
+  $project_uuids = array_map(function ($row) { return $row['PROJECT_UID']; }, $rows);
+  if ($is_member) {
+    return $project_uuids;
   }
-  return $project_uuids;
+
+  $options = array('filter' => array('PROJECT_UID'));
+  $rows = $client->lookup_projects($client->get_credentials(), $options);
+  $all_uuids = array_map(function ($row) { return $row['PROJECT_UID']; }, $rows);
+  return array_diff($all_uuids, $project_uuids);
 }
 
 
