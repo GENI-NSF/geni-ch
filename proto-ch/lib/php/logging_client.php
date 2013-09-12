@@ -23,6 +23,7 @@
 //----------------------------------------------------------------------
 
 require_once('chapi.php');
+require_once('cs_constants.php');
 
 // Client side services for Logging of events within GENI clearinghouse
 
@@ -42,6 +43,15 @@ function get_log_entries_by_author($log_url, $signer, $user_id, $num_hours=24)
   $client = XMLRPCClient::get_client($log_url, $signer);
   $entries = $client->get_log_entries_by_author($user_id, $num_hours);
   return $entries;
+}
+
+// Helper function to turn context/context_id into attribute dictionary
+function get_attribute_for_context($context_type, $context_id)
+{
+  global $CS_CONTEXT_TYPE_NAME;
+  $context_type_as_name = $CS_CONTEXT_TYPE_NAME[$context_type];
+  $attribute[$context_type_as_name] = $context_id;
+  return $attribute;
 }
 
 function get_log_entries_for_context($log_url, $signer, $context_type, $context_id, $num_hours=24)
