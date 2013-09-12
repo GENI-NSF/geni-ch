@@ -565,11 +565,11 @@ class SAv1Handler(HandlerBase):
         try:
             client_cert, options = self._guard.adjust_client_identity(client_cert, 
                                                                      credentials, options)
-            return self._delegate.get_number_of_pending_requests_for_user(client_cert, 
-                                                                          request_id,
-                                                                          context_type, 
-                                                                          credentials, 
-                                                                          options)
+            return self._delegate.get_request_by_id(client_cert, 
+                                                    request_id,
+                                                    context_type, 
+                                                    credentials, 
+                                                    options)
         except Exception as e:
             return self._errorReturn(e)
 
