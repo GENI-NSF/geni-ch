@@ -240,6 +240,7 @@ class ABACManager:
     # I.e. can we prove query statement Q (X.role<-target)
     # Return ok, proof
     def query(self, query_expression):
+        query_expression = str(query_expression) # Avoid unicode
         query_expression_parts = query_expression.split("<-")
         if len(query_expression_parts) != 2:
             raise Exception("Illegal query expression : " + query_expression)
@@ -294,6 +295,7 @@ class ABACManager:
     # into RT1_line/RT0 roles and principal keyids
     # Generate exception if a principal is referenced but not registered
     def register_assertion(self, assertion):
+        assertion = str(assertion) # Avoid unicode
         assertion_pieces = assertion.split("<-")
         if len(assertion_pieces) != 2:
             raise Exception("Ill-formed assertion: need exactly 1 <- : " \
