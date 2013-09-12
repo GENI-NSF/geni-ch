@@ -348,7 +348,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                     raise CHAPIv1ArgumentError('No project with urn ' + value)
             else:
                 setattr(slice, self.slice_field_mapping[key], value)
-        slice.creation = datetime.now()
+        slice.creation = datetime.utcnow()
         if not slice.expiration:
             slice.expiration = slice.creation + relativedelta(days=7)
         slice.slice_id = str(uuid.uuid4())
@@ -389,7 +389,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                               MEMBER_ATTRIBUTE, SLICE_CONTEXT, slice.slice_id)
 
 
-        attribs = [{"SLICE" : slice.slice_id}, {"PROJECT" : slice.project_id}]
+        attribs = {"SLICE" : slice.slice_id, "PROJECT" : slice.project_id}
         self.logging_service.log_event("Created slice " + name, 
                                        attribs, client_uuid)
 
@@ -410,6 +410,25 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         q = q.update(updates)
         session.commit()
         session.close()
+
+        # Log the update project
+        client_uuid = get_uuid_from_cert(client_cert)
+        slice_uuid = \
+            self.get_slice_id(session, 'slice_urn', slice_urn)
+        project_name, authority, slice_name = \
+            extract_data_from_slice_urn(slice_urn)
+        project_uuid = \
+            self.get_project_id(session, 'project_name', project_name)
+        attribs = {"PROJECT" : project_uuid, "SLICE" : slice_uuid}
+        self.logging_service.log_event("Updated slice " + name, 
+                                       attribs, client_uuid)
+        if "SLICE_EXPIRATION" in options['fields']: 
+            expiration = options['fields']['SLICE_EXPIRATION']
+            self.logging_service.log_event("Renewed slice %s until %s" \
+                                               (slice_name, expiration), \
+                                               attribs, client_uuid)
+
+
         return self._successReturn(True)
 
     # create a new project
@@ -427,7 +446,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         project = Project()
         for key, value in options["fields"].iteritems():
             setattr(project, self.project_field_mapping[key], value)
-        project.creation = datetime.now()
+        project.creation = datetime.utcnow()
         if not project.expiration:
             project.expiration = project.creation + relativedelta(days=7)
         project.project_id = str(uuid.uuid4())
@@ -452,7 +471,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                           LEAD_ATTRIBUTE, \
                           PROJECT_CONTEXT, project.project_id)
 
-        attribs = [{"PROJECT" : project.project_id}]
+        attribs = {"PROJECT" : project.project_id}
         self.logging_service.log_event("Created project " + name, 
                                        attribs, client_uuid)
 
@@ -476,6 +495,15 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         q = q.update(updates)
         session.commit()
         session.close()
+
+        # Log the update project
+        client_uuid = get_uuid_from_cert(client_cert)
+        project_uuid = \
+            self.get_project_id(session, 'project_name', project_name)
+        attribs = {"PROJECT" : project_uuid}
+        self.logging_service.log_event("Updated project " + name, 
+                                       attribs, client_uuid)
+
         return self._successReturn(True)
 
     # get info on a set of projects
@@ -527,19 +555,28 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         session = self.db.getSession()
         name = from_project_urn(project_urn)
         project_id = self.get_project_id(session, "project_name", name)
-        return self.modify_membership(session, ProjectMember, project_id, \
-            options, 'project_id', 'PROJECT_MEMBER', 'PROJECT_ROLE', 'project')
+        client_uuid = get_uuid_from_cert(client_cert)
+        return self.modify_membership(session, ProjectMember, client_uuid, \
+                                          project_id, project_urn, \
+                                          options, 'project_id', \
+                                          'PROJECT_MEMBER', 'PROJECT_ROLE', \
+                                          'project')
 
     # change the membership in a project
     def modify_slice_membership(self, client_cert, slice_urn, \
                                 credentials, options):
         session = self.db.getSession()
         slice_id = self.get_slice_id(session, "slice_urn", slice_urn)
-        return self.modify_membership(session, SliceMember, slice_id, \
-            options, 'slice_id', 'SLICE_MEMBER', 'SLICE_ROLE', 'slice')
+        client_uuid = get_uuid_from_cert(client_cert)
+        return self.modify_membership(session, SliceMember, client_uuid, \
+                                          slice_id, slice_urn, \
+                                          options, 'slice_id', \
+                                          'SLICE_MEMBER', 'SLICE_ROLE', \
+                                          'slice')
 
     # shared between modify_slice_membership and modify_project_membership
-    def modify_membership(self, session, member_class, id, options, id_field,
+    def modify_membership(self, session, member_class, client_uuid, id, urn, 
+                          options, id_field,
                           member_str, role_str, text_str):
         id_str = '%s.%s' % (member_class.__name__, id_field)
 
@@ -596,6 +633,56 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         # finish up
         session.commit()
         session.close()
+
+
+        # Now log the removals, adds, changes
+
+        # Get attributes for logging membership changes
+        if text_str == 'slice':
+            project_name, authority, slice_name = \
+                extract_data_from_slice_urn(urn)
+            project_id = \
+                self.get_project_id(session, 'PROJECT_NAME', project_name)
+            attribs = {"SLICE" : id, "PROJECT_ID" : project_id}
+            label = slice_name
+        else:
+            project_name = get_name_from_urn(urn)
+            project_id = \
+                self.get_project_id(session, 'PROJECT_NAME', project_name)
+            attribs = {"PROJECT" : id}
+            label = project_name
+
+        # Log all removals
+        if 'members_to_remove' in options:
+            members_to_remove = options['members_to_remove']
+            for member_to_remove in members_to_remove:
+                self.logging_service.log_event(
+                    "Removed member %s from %s %s" % \
+                        (member_to_remove, text_str, label), \
+                        attribs, client_uid)
+
+        # Log all adds
+        if 'members_to_add' in options:
+            members_to_add = options['members_to_add']
+            for member_to_add in members_to_add:
+                member_urn = member_to_add[member_str]
+                member_role = member_to_add[role_str]
+                self.logging_service.log_event(
+                    "Added member %s in role % to % %s" % \
+                        (member_urn, member_role, text_str, label), 
+                        attribs, client_uid)
+
+        # Log all changes
+        if 'members_to_change' in options:
+            members_to_change = options['members_to_change']
+            for member_to_change in members_to_change:
+                member_urn = member_to_change[member_str]
+                member_role = member_to_change[role_str]
+                self.logging_service.log_event(
+                    "Changed member %s to role % to % %s" % \
+                        (member_urn, member_role, text_str, label), 
+                        attribs, client_uid)
+
         return self._successReturn(None)
 
     def get_member_id_for_urn(self, session, urn):
@@ -655,14 +742,15 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                            request_details, credentials, options):
         client_uuid = get_uuid_from_cert(client_cert)
         session = self.db.getSession()
-        ins = self.db.PROJECT_REQUEST_TABLE.insert().values(context_type = context_type, \
-                                                                context_id = context_id, \
-                                                                request_type = request_type, \
-                                                                request_text = request_text, \
-                                                                request_details = request_details, \
-                                                                creation_timestamp = datetime.now(), \
-                                                                status = PENDING_STATUS, \
-                                                                requestor = client_uuid)
+        ins = self.db.PROJECT_REQUEST_TABLE.insert().values(
+            context_type = context_type, \
+                context_id = context_id, \
+                request_type = request_type, \
+                request_text = request_text, \
+                request_details = request_details, \
+                creation_timestamp = datetime.utcnow(), \
+                status = PENDING_STATUS, \
+                requestor = client_uuid)
         result = session.execute(ins)
         
         query = "select max(id) from pa_project_member_request"
@@ -680,7 +768,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         update_values = {'status' : resolution_status, 
                          'resolver' : client_uuid, 
                          'resolution_description' : resolution_description,
-                         'resolution_timestamp' : datetime.now() 
+                         'resolution_timestamp' : datetime.utcnow() 
                          }
         update = self.db.PROJECT_REQUEST_TABLE.update(values=update_values)
         update = update.where(self.db.PROJECT_REQUEST_TABLE.c.id == request_id)

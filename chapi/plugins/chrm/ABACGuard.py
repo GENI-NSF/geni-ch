@@ -440,7 +440,7 @@ class InvocationCheck(object):
 
     # Raise an ARGUMENT_ERROR if there is something wrong about the 
     # arguments passed to method
-    def validate_arguments(self, method, options, arguments):
+    def validate_arguments(self, client_cert, method, options, arguments):
         # Method-specific logic
         pass
 
@@ -451,7 +451,7 @@ class InvocationCheck(object):
 
     # Validate arguments and check authorization
     def validate(self, client_cert, method, credentials, options, arguments):
-        self.validate_arguments(method, options, arguments)
+        self.validate_arguments(client_cert, method, options, arguments)
         self.authorize_call(client_cert, method, credentials, options, arguments)
 
 # Class that determines if the caller has the right to invoke a given method on all
@@ -469,11 +469,10 @@ class SubjectInvocationCheck(InvocationCheck):
 
     # Check that there are subjects in the arguments if required
     # Store the list of subjects for later authorization
-    def validate_arguments(self, method, options, arguments):
+    def validate_arguments(self, client_cert, method, options, arguments):
         if self._subject_extractor:
             self._subjects = self._subject_extractor(options, arguments)
             if not self._subjects or len(self._subjects) == 0:
-                import pdb; pdb.set_trace()
                 raise CHAPIv1ArgumentError("No subjects supplied to call %s" % method);
             if len(self._subjects) > 1:
                 raise CHAPIv1ArgumentError("Can't provide mixture of subject types for call %s: %s" % \

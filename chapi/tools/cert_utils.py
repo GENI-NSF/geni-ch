@@ -66,3 +66,16 @@ def get_urn_from_cert(cert):
 def get_name_from_urn(urn):
     parts = urn.split("+")
     return str(parts[len(parts)-1])
+
+# Retrieve project_name, authority, slice_name from slice urn
+def extract_data_from_slice_urn(urn):
+    # Pull out slice name and project_name
+    urn_parts = urn.split('+')
+    slice_name = urn_paorts[len(urn_parts)-1]
+    authority = urn_parts[1]
+    authority_parts = authority.split(':')
+    if len(authority_parts) != 2:
+        raise Exception("No project specified in slice urn: " + urn)
+    authority = authority_parts[0]
+    project_name = authority_parts[1]
+    return project_name, authority, slice_name
