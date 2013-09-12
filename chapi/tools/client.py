@@ -54,13 +54,21 @@ def parseOptions():
                       default="get_version")
     parser.add_option("--agg_url",  help="URL of aggregate in some API calls",
                       default = None)
+    parser.add_option("--string_arg", help="String argument for some calls",
+                      default = None)
+    parser.add_option("--string2_arg", help="second string argument for some calls",
+                      default = None)
     parser.add_option("--int_arg", help="Integer argument for some calls",
                       default = None)
     parser.add_option("--int2_arg", help="second integer argument for some calls",
                       default = None)
+    parser.add_option("--int3_arg", help="third integer argument for some calls",
+                      default = None)
     parser.add_option("--uuid_arg", help="UUID argument for some calls",
                       default = None)
     parser.add_option("--uuid2_arg", help="second UUID argument for some calls",
+                      default = None)
+    parser.add_option("--uuid3_arg", help="third UUID argument for some calls",
                       default = None)
     parser.add_option("--file_arg", help="FILE argument for some calls",
                       default = None)
@@ -184,6 +192,16 @@ def main():
                     opts.urn, opts.int_arg)
 
     # Project request methods
+    elif opts.method in ['create_request']:
+        (result, msg) = \
+            _do_ssl(framework, suppress_errors, reason, fcn, opts.int_arg, 
+                    opts.uuid_arg, opts.int2_arg, opts.string_arg, opts.string2_arg, \
+                        opts.credentials, client_options)
+    elif opts.method in ['resolve_pending_request']:
+        (result, msg) = \
+            _do_ssl(framework, suppress_errors, reason, fcn, opts.int_arg, 
+                    opts.int2_arg, opts.int3_arg, opts.string_arg, \
+                        opts.credentials, client_options)
     elif opts.method in ['get_requests_for_context']:
         (result, msg) = \
             _do_ssl(framework, suppress_errors, reason, fcn, opts.int_arg, 
@@ -192,10 +210,15 @@ def main():
         (result, msg) = \
             _do_ssl(framework, suppress_errors, reason, fcn, opts.uuid_arg,
                     opts.int_arg, opts.uuid2_arg, opts.int2_arg, opts.credentials, client_options)
-    elif opts.method in ['get_pending_requests_for_user']:
+    elif opts.method in ['get_pending_requests_for_user', 'get_number_of_pending_requests_for_user']:
         (result, msg) = \
             _do_ssl(framework, suppress_errors, reason, fcn, opts.uuid_arg,
                     opts.int_arg, opts.uuid2_arg, opts.credentials, client_options)
+
+    elif opts.method in ['get_request_by_id']:
+        (result, msg) = \
+            _do_ssl(framework, suppress_errors, reason, fcn, 
+                    opts.int_arg, opts.int2_arg, opts.credentials, client_options)
 
     # MA certificate methods
     elif opts.method in ['create_certificate']:
