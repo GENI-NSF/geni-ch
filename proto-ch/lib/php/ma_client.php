@@ -216,7 +216,7 @@ function _attkey_to_portalkey($k) {
 
 // member abstration class
 class Member {
-  function __construct($id) {
+  function __construct($id=null) {
     $this->member_id = $id;
   }
   

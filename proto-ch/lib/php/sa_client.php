@@ -89,7 +89,7 @@ function slice_details_chapi2portal($row)
 /* Create a slice credential for given SLICE ID and user */
 function get_slice_credential($sa_url, $signer, $slice_id, $cert=NULL)
 {
-  $slice_urn = get_slice_urn($sa_url, $signer, $slide_id);
+  $slice_urn = get_slice_urn($sa_url, $signer, $slice_id);
 
   $signer_cert = $signer->certificate();
   $signer_key = $signer->privateKey();
