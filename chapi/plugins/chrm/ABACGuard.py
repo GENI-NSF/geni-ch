@@ -201,7 +201,8 @@ def lookup_pi_privilege(user_urn):
 
 # If given caller and given subject share a common project
 # Generate an ME.SHARES_PROJECT_$subject<-caller assertion
-def assert_shares_project(caller_urn, member_urn, abac_manager):
+def assert_shares_project(caller_urn, member_urn, label, abac_manager):
+    if label != "MEMBER_URN": return
     db = pm.getService('chdbengine')
     session = db.getSession()
 
@@ -228,7 +229,8 @@ def assert_shares_project(caller_urn, member_urn, abac_manager):
 
 # If given caller and given subject share a common slice
 # Generate an ME.SHARES_SLICE(subject)<-caller assertion
-def assert_shares_slice(caller_urn, member_urn, abac_manager):
+def assert_shares_slice(caller_urn, member_urn, label, abac_manager):
+    if label != "MEMBER_URN": return
     db = pm.getService('chdbengine')
     session = db.getSession()
 
@@ -255,7 +257,8 @@ def assert_shares_slice(caller_urn, member_urn, abac_manager):
         abac_manager.register_assertion(assertion)
 
 # Assert ME.IS_$ROLE(SLICE)<-CALLER for the roles caller has on slice
-def assert_slice_role(caller_urn, slice_urn, abac_manager):
+def assert_slice_role(caller_urn, slice_urn, label, abac_manager):
+    if label != "SLICE_URN": return
     db = pm.getService('chdbengine')
     session = db.getSession()
 
@@ -274,8 +277,7 @@ def assert_slice_role(caller_urn, slice_urn, abac_manager):
         assertion = "ME.IS_%s_%s<-CALLER" % (role_name, flatten_urn(slice_urn))
         abac_manager.register_assertion(assertion)
 
-# Assert ME.IS_$ROLE_$PROJECT<-CALLER for the roles caller has on project
-def assert_project_role(caller_ur, project_urn, abac_manager):
+def get_project_role_for_member(caller_urn, project_urn):
     db = pm.getService('chdbengine')
     session = db.getSession()
     project_name = get_name_from_urn(project_urn)
@@ -288,7 +290,13 @@ def assert_project_role(caller_ur, project_urn, abac_manager):
     q = q.filter(db.MEMBER_ATTRIBUTE_TABLE.c.member_id == db.PROJECT_MEMBER_TABLE.c.member_id)
     rows = q.all()
     session.close()
-    
+    return rows
+
+
+# Assert ME.IS_$ROLE_$PROJECT<-CALLER for the roles caller has on project
+def assert_project_role(caller_urn, project_urn, label, abac_manager):
+    if label != "PROJECT_URN": return
+    rows = get_project_role_for_member(caller_urn, project_urn)
     for row in rows:
         role = row.role
         role_name = attribute_type_names[role]
@@ -297,7 +305,8 @@ def assert_project_role(caller_ur, project_urn, abac_manager):
 
 
 # Assert ME.BELONGS_TO_$SLICE<-CALLER if caller is member of slice
-def assert_belongs_to_slice(caller_urn, slice_urn, abac_manager):
+def assert_belongs_to_slice(caller_urn, slice_urn, label, abac_manager):
+    if label != "SLICE_URN": return
     db = pm.getService('chdbengine')
     session = db.getSession()
 
@@ -316,7 +325,8 @@ def assert_belongs_to_slice(caller_urn, slice_urn, abac_manager):
 
 
 # Assert ME.BELONGS_TO_$PROJECT<-CALLER if caller is member of project
-def assert_belongs_to_project(caller_urn, project_urn, abac_manager):
+def assert_belongs_to_project(caller_urn, project_urn, label, abac_manager):
+    if label != "PROJECT_URN": return
     db = pm.getService('chdbengine')
     session = db.getSession()
     project_name = get_name_from_urn(project_urn)
@@ -334,6 +344,37 @@ def assert_belongs_to_project(caller_urn, project_urn, abac_manager):
         assertion = "ME.BELONGS_TO_%s<-CALLER" % flatten_urn(project_urn)
         abac_manager.register_assertion(assertion)
 
+# Take a request_id and from that determine the context(project) and requestor
+# From there, Assert whether the project membership requestor is the caller
+# And assert the role on the project of the caller (if any)
+def assert_request_id_requestor_and_project_role(caller_urn, request_id, label, abac_manager):
+    if label != "REQUEST_ID" : return
+    db = pm.getService('chdbengine')
+    session = db.getSession()
+    q = session.query(db.PROJECT_TABLE.c.project_name, db.MEMBER_ATTRIBUTE_TABLE.c.value)
+    q = q.filter(db.PROJECT_REQUEST_TABLE.c.requestor == db.MEMBER_ATTRIBUTE_TABLE.c.member_id)
+    q = q.filter(db.MEMBER_ATTRIBUTE_TABLE.c.name == 'urn')
+    q = q.filter(db.PROJECT_REQUEST_TABLE.c.id == request_id)
+    q = q.filter(db.PROJECT_TABLE.c.project_id == db.PROJECT_REQUEST_TABLE.c.context_id)
+    rows = q.all()
+    session.close()
+    if len(rows) > 0:
+        project_name = rows[0].project_name
+        requestor_urn = rows[0].value
+        config = pm.getService('config')
+        authority = config.get("chrm.authority")
+        project_urn = to_project_urn(authority, project_name)
+
+        if caller_urn == requestor_urn:
+            assertion = "ME.IS_REQUESTOR<-CALLER"
+            abac_manager.register_assertion(assertion)
+
+        role_rows = get_project_role_for_member(caller_urn, project_urn)
+        for row in role_rows:
+            role = row.role
+            role_name = attribute_type_names[role]
+            assertion = "ME.IS_%s_%s<-CALLER" % (role_name, request_id)
+            abac_manager.register_assertion(assertion)
 
 # Extractors to extract subject identifiers from request
 # These return a dictionary of {'SUBJECT_TYPE : [List of SUBJECT IDENTIFIERS OF THIS TYPE]}
@@ -394,6 +435,37 @@ def member_urn_extractor(options, arguments):
     member_urn = arguments['member_urn']
     return {"MEMBER_URN" : [member_urn]}
 
+# Pull project urn out of context_id
+def request_context_extractor(options, arguments):
+    project_uid = arguments['context_id']
+    db = pm.getService('chdbengine')
+    session = db.getSession()
+    q = session.query(db.PROJECT_TABLE.c.project_name)
+    q = q.filter(db.PROJECT_TABLE.c.project_id == project_uid)
+    rows = q.all()
+    session.close()
+    extracted = {}
+    if len(rows) > 0:
+        project_name = rows[0].project_name
+        config = pm.getService('config')
+        authority = config.get("chrm.authority")
+        project_urn = to_project_urn(authority, project_name)
+        extracted = {"PROJECT_URN" : project_urn}
+    return extracted
+
+
+# Pull project_id out as the subject
+def request_id_context_extractor(options, arguments):
+    request_id = arguments['request_id']
+    extracted = {"REQUEST_ID" : request_id}
+    return extracted
+
+def request_member_extractor(options, arguments):
+    member_uid = arguments['member_id']
+    member_urn = convert_member_uid_to_urn(member_uid)
+    extracted = {"MEMBER_URN" : member_urn}
+    return extracted
+
 
 # class ABACAssertionGenerator(object): 
 #     def generate_assertions(self, abac_manager, client_cert, credentials, arguments, urn):
@@ -440,7 +512,7 @@ class InvocationCheck(object):
 
     # Raise an ARGUMENT_ERROR if there is something wrong about the 
     # arguments passed to method
-    def validate_arguments(self, method, options, arguments):
+    def validate_arguments(self, client_cert, method, options, arguments):
         # Method-specific logic
         pass
 
@@ -451,16 +523,18 @@ class InvocationCheck(object):
 
     # Validate arguments and check authorization
     def validate(self, client_cert, method, credentials, options, arguments):
-        self.validate_arguments(method, options, arguments)
+        self.validate_arguments(client_cert, method, options, arguments)
         self.authorize_call(client_cert, method, credentials, options, arguments)
 
 # Class that determines if the caller has the right to invoke a given method on all
 # the subjects of a given method invocation
 class SubjectInvocationCheck(InvocationCheck):
 
-    def __init__(self, policies, attribute_extractor, subject_extractor):
+    def __init__(self, policies, attribute_extractors, subject_extractor):
         self._policies = policies
-        self._attribute_extractor = attribute_extractor
+        self._attribute_extractors = attribute_extractors
+        if attribute_extractors and not isinstance(attribute_extractors, list): 
+            self._attribute_extractors = [attribute_extractors]
         self._subject_extractor = subject_extractor
         self._subjects = None
         self.config = pm.getService('config')
@@ -469,11 +543,10 @@ class SubjectInvocationCheck(InvocationCheck):
 
     # Check that there are subjects in the arguments if required
     # Store the list of subjects for later authorization
-    def validate_arguments(self, method, options, arguments):
+    def validate_arguments(self, client_cert, method, options, arguments):
         if self._subject_extractor:
             self._subjects = self._subject_extractor(options, arguments)
             if not self._subjects or len(self._subjects) == 0:
-                import pdb; pdb.set_trace()
                 raise CHAPIv1ArgumentError("No subjects supplied to call %s" % method);
             if len(self._subjects) > 1:
                 raise CHAPIv1ArgumentError("Can't provide mixture of subject types for call %s: %s" % \
@@ -498,11 +571,11 @@ class SubjectInvocationCheck(InvocationCheck):
             ABACManager(certs_by_name = {"CALLER" : client_cert}, 
                         cert_files_by_name = {"ME" : self.cert_file}, 
                         key_files_by_name = {"ME" : self.key_file});
-#        abac_manager._verbose = True
+        abac_manager._verbose = True
 
         client_urn = get_urn_from_cert(client_cert)
 
-        # Gather assertions for caller
+        # Gather context-free assertions for caller
         if lookup_operator_privilege(client_urn):
             abac_manager.register_assertion("ME.IS_OPERATOR<-CALLER")
         if lookup_pi_privilege(client_urn):
@@ -514,15 +587,16 @@ class SubjectInvocationCheck(InvocationCheck):
                 subjects_of_type = self._subjects[subject_type]
                 if not isinstance(subjects_of_type, list) : subjects_of_type = [subjects_of_type]
                 for subject in subjects_of_type:
-#                    print "SUBJECT = " + subject
+#                   print "SUBJECT = " + subject
                     subject_name = flatten_urn(subject)
 
                     self.load_policies(abac_manager, subject_name)
 
-                    if self._attribute_extractor:
+                    if self._attribute_extractors:
                         # Try to make an assertion about the relationship between the caller and subject
                         # And store assertion in abac_manager
-                        self._attribute_extractor(client_urn, subject, abac_manager)
+                        for attribute_extractor in self._attribute_extractors:
+                            attribute_extractor(client_urn, subject, subject_type, abac_manager)
 
                     queries = [
                         "ME.MAY_%s_%s<-CALLER" % (method.upper(), subject_name), 
@@ -532,7 +606,8 @@ class SubjectInvocationCheck(InvocationCheck):
                     one_succeeded = False
                     for query in queries:
                         ok, proof = abac_manager.query(query)
-#                        print "Q = " + query + " OK = " + str(ok)
+                        if abac_manager._verbose:
+                            print "Testing ABAC query " + query + " OK = " + str(ok)
                         if ok:
                             one_succeeded = True
                             break

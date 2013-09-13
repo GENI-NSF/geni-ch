@@ -135,7 +135,7 @@ def main():
         id1 = '848e4a11-55eb-45df-a0e8-b79109fb0a88'
         type2 = 'PROJECT'
         id2 = '8c042cf0-8389-48e0-aca1-782fd7a20794'
-        attributes = [{type1 : id1}, {type2 : id2}]
+        attributes = {type1 : id1, type2 : id2}
         user_id = '8e405a75-3ff7-4288-bfa5-111552fa53ce'
         (result, msg) = _do_ssl(framework, suppress_errors, reason, fcn, \
                                     message, attributes, user_id)

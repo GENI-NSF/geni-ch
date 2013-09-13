@@ -25,6 +25,25 @@ from ABACGuard import *
 from ArgumentCheck import *
 from MAv1Implementation import MAv1Implementation as MA
 
+# Special class to make sure no one can ask for SSH private keys
+# other that for self
+class LookupKeysInvocationCheck(SubjectInvocationCheck):
+        
+    def validate_arguments(self, client_cert, method, options, arguments):
+        super(LookupKeysInvocationCheck, self).validate_arguments(
+            client_cert, method, options, arguments)
+        # If they didn't specify a filter (all by default), 
+        # or they explicitly asked for KEY_PRIVATE, there can only
+        # be the caller in the list of requested users in 'match'
+        if 'filter' not in options or 'KEY_PRIVATE' in options['filter']:
+            client_urn = get_urn_from_cert(client_cert)
+            for member_urn in self._subjects['MEMBER_URN']:
+                if member_urn != client_urn:
+                    raise CHAPIv1AuthorizationError(
+                        "Can't request private SSH key for user other" + 
+                        " than self. Limit match criteria or set filter" + 
+                        " explicitly : " + member_urn)
+
 # Specific guard for GPO MA
 # Provide a set of invocation checks and row checks per method
 class MAv1Guard(ABACGuardBase):
@@ -117,7 +136,7 @@ class MAv1Guard(ABACGuardBase):
                 "ME.MAY_CREATE_KEY_$SUBJECT<-ME.IS_$SUBJECT",
                 ], None, standard_subject_extractor), 
         'lookup_keys' : \
-            SubjectInvocationCheck([
+            LookupKeysInvocationCheck([
                 "ME.MAY_LOOKUP_KEYS<-ME.IS_OPERATOR",
                 "ME.MAY_LOOKUP_KEYS_$SUBJECT<-ME.SHARES_SLICE_$SUBJECT", 
                 ], assert_shares_slice, key_subject_extractor), 
