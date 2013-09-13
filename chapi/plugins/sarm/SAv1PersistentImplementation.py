@@ -851,11 +851,8 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         q = q.filter(self.db.PROJECT_REQUEST_TABLE.c.context_type == context_type)
         rows = q.all()
         session.close()
-        result = [construct_result_row(row, self.project_request_columns, \
-                                           self.project_request_field_mapping) \
-                      for row in rows]
-        return self._successReturn(result)
-
-
-
+        if len(rows) == 0:
+            return self._successReturn(None)
+        return self._successReturn(construct_result_row(rows[0], \
+            self.project_request_columns, self.project_request_field_mapping))
 
