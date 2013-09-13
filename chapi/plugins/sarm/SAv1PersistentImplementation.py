@@ -642,13 +642,11 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
             project_name, authority, slice_name = \
                 extract_data_from_slice_urn(urn)
             project_id = \
-                self.get_project_id(session, 'PROJECT_NAME', project_name)
+                self.get_project_id(session, 'project_name', project_name)
             attribs = {"SLICE" : id, "PROJECT_ID" : project_id}
             label = slice_name
         else:
             project_name = get_name_from_urn(urn)
-            project_id = \
-                self.get_project_id(session, 'PROJECT_NAME', project_name)
             attribs = {"PROJECT" : id}
             label = project_name
 
