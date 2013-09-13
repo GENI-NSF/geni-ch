@@ -824,7 +824,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         q = q.filter(self.db.PROJECT_REQUEST_TABLE.c.context_type == context_type)
         if context_id:
             q = q.filter(self.db.PROJECT_REQUEST_TABLE.c.context_id == context_id)
-        q = q.filter(self.db.PROJECT_REQUEST_TABLE.c.status == self.PENDING_STATUS)
+        q = q.filter(self.db.PROJECT_REQUEST_TABLE.c.status == PENDING_STATUS)
         rows = q.all()
         session.close()
 #        print "ROWS = " + str(rows)
