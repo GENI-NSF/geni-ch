@@ -32,7 +32,7 @@ def setup():
     # setup config keys
     config = pm.getService("config")
 
-    gcf_root = "/usr/share/geni-ch/portal/gcf"
+    gcf_root = "/usr/share/geni-ch/portal/gcf.d"
     config.install('chapiv1rpc.gcf_root', gcf_root, \
                        "Location of local GCF install")
     config.install("chapiv1rpc.ch_cert_root", \
