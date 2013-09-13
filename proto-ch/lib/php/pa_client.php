@@ -376,14 +376,14 @@ function get_projects_for_member($sa_url, $signer, $member_id, $is_member, $role
   $client = XMLRPCClient::get_client($sa_url, $signer);
   $member_urn = $user->urn;
   $rows = $client->lookup_projects_for_member($member_urn, $client->get_credentials(), $options);
-  $project_uuids = array_map(function ($row) { return $row['PROJECT_UID']; }, $rows);
+  $project_uuids = array_map(function ($row) { return $row['PROJECT_UID']; }, array_values($rows));
   if ($is_member) {
     return $project_uuids;
   }
 
   $options = array('filter' => array('PROJECT_UID'));
   $rows = $client->lookup_projects($client->get_credentials(), $options);
-  $all_uuids = array_map(function ($row) { return $row['PROJECT_UID']; }, $rows);
+  $all_uuids = array_map(function ($row) { return $row['PROJECT_UID']; }, array_values($rows));
   return array_diff($all_uuids, $project_uuids);
 }
 
