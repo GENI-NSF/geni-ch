@@ -185,7 +185,77 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                         "FIELDS": self.supplemental_fields}
         return self._successReturn(version_info)
 
+    def get_expiration_query(self, session, type, old_flag, resurrect):
+        if type == 'slice':
+            table = Slice
+            q = session.query(Slice.slice_id, \
+                                  Slice.project_id, \
+                                  Slice.slice_name)
+        else:
+            table = Project
+            q = session.query(Project.project_id, \
+                                  Project.project_name)
+        q = q.filter(table.expired == old_flag)
+        if resurrect:
+            q = q.filter(table.expiration > datetime.utcnow())
+        else:
+            q = q.filter(table.expiration < datetime.utcnow())
+
+        return q
+
+
+
+    def update_expirations(self, client_uuid, type, resurrect):
+        if resurrect:
+            old_flag = True
+            new_flag = False
+            label = "Expired "
+        else:
+            old_flag = False
+            new_flag = True
+            label = "Restored previously expired "
+
+        session = self.db.getSession()
+        q = self.get_expiration_query(session, type, old_flag, resurrect)
+        rows = q.all()
+        session.close()
+
+        if len(rows) > 0:
+            session = self.db.getSession()
+            q = self.get_expiration_query(session, type, old_flag, resurrect)
+            update_fields = {'expired' : new_flag}
+            q = q.update(update_fields)
+            session.commit()
+            session.close()
+
+
+        for row in rows:
+            if type == 'slice':
+                name = row.slice_name
+                attrs = {"SLICE" : row.slice_id, "PROJECT" : row.project_id}
+            else:
+                name = row.project_name
+                attrs = {"PROJECT" : row.project_id}
+            self.logging_service.log_event("%s %s %s" % (label, type, name), 
+                                           attrs, client_uuid)
+
+
+    # Check for
+    #   Recently expired slices and set their expired flags to 't'
+    def update_slice_expirations(self, client_uuid):
+        self.update_expirations(client_uuid, 'siice', False)
+
+    # Check for 
+    #   Recently expired projects and set their expired flags to 't'
+    #   Recently extended expired projects and set their expired flags to 'f'
+    def update_project_expirations(self, client_uuid):
+        self.update_expirations(client_uuid, 'project', False)
+        self.update_expirations(client_uuid, 'project', True)
+
     def lookup_slices(self, client_cert, credentials, options):
+
+        client_uuid = get_uuid_from_cert(client_cert)
+        self.update_slice_expirations(client_uuid)
 
         selected_columns, match_criteria = \
             unpack_query_options(options, self.slice_field_mapping)
@@ -224,6 +294,10 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
     # shared code for lookup_slice_members() and lookup_project_members()
     def lookup_members(self, table, member_table, name, name_field, \
                        id_field, role_txt, member_txt, member_uid_txt):
+
+        client_uuid = get_uuid_from_cert(client_cert)
+        self.update_slice_expirations(client_uuid)
+
         session = self.db.getSession()
         q = session.query(member_table, table.c[name_field],
                           self.db.MEMBER_ATTRIBUTE_TABLE.c.value,
@@ -246,6 +320,9 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
 
     def lookup_slices_for_member(self, client_cert, member_urn, \
                                  credentials, options):
+        client_uuid = get_uuid_from_cert(client_cert)
+        self.update_slice_expirations(client_uuid)
+
         rows = self.lookup_for_member(member_urn, self.db.SLICE_TABLE, \
                   self.db.SLICE_MEMBER_TABLE, "slice_urn", "slice_id")
         slices = [{"SLICE_ROLE" : row.name, \
@@ -255,6 +332,9 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         return self._successReturn(slices)
 
     def get_credentials(self, client_cert, slice_urn, credentials, options):
+
+        client_uuid = get_uuid_from_cert(client_cert)
+        self.update_slice_expirations(client_uuid)
 
         session = self.db.getSession()
         q = session.query(self.db.SLICE_TABLE.c.expiration, \
@@ -321,6 +401,8 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
     def create_slice(self, client_cert, credentials, options):
 
         client_uuid = get_uuid_from_cert(client_cert)
+        self.update_slice_expirations(client_uuid)
+
         session = self.db.getSession()
 
         # check that slice does not already exist
@@ -398,6 +480,10 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
 
     # update an existing slice
     def update_slice(self, client_cert, slice_urn, credentials, options):
+
+        client_uuid = get_uuid_from_cert(client_cert)
+        self.update_slice_expirations(client_uuid)
+
         session = self.db.getSession()
         if not self.get_slice_id(session, "slice_urn", slice_urn):
             session.close()
@@ -433,7 +519,10 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
 
     # create a new project
     def create_project(self, client_cert, credentials, options):
+
         client_uuid = get_uuid_from_cert(client_cert)
+        self.update_project_expirations(client_uuid)
+
         session = self.db.getSession()
 
         # check that project does not already exist
@@ -482,6 +571,10 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
 
     # update an existing project
     def update_project(self, client_cert, project_urn, credentials, options):
+
+        client_uuid = get_uuid_from_cert(client_cert)
+        self.update_project_expirations(client_uuid)
+
         session = self.db.getSession()
         name = from_project_urn(project_urn)
         if not self.get_project_id(session, "project_name", name):
@@ -508,6 +601,10 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
 
     # get info on a set of projects
     def lookup_projects(self, client_cert, credentials, options):
+
+        client_uuid = get_uuid_from_cert(client_cert)
+        self.update_project_expirations(client_uuid)
+
         columns, match_criteria = \
             unpack_query_options(options, self.project_field_mapping)
         session = self.db.getSession()
@@ -525,6 +622,10 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
     # get the projects associated with a member
     def lookup_projects_for_member(self, client_cert, member_urn, \
                                    credentials, options):
+
+        client_uuid = get_uuid_from_cert(client_cert)
+        self.update_project_expirations(client_uuid)
+
         rows = self.lookup_for_member(member_urn, self.db.PROJECT_TABLE, \
                   self.db.PROJECT_MEMBER_TABLE, "project_name", "project_id")
         projects = [{"PROJECT_ROLE" : row.name, \
@@ -552,6 +653,10 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
     # change the membership in a project
     def modify_project_membership(self, client_cert, project_urn, \
                                   credentials, options):
+
+        client_uuid = get_uuid_from_cert(client_cert)
+        self.update_project_expirations(client_uuid)
+
         session = self.db.getSession()
         name = from_project_urn(project_urn)
         project_id = self.get_project_id(session, "project_name", name)
@@ -565,9 +670,12 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
     # change the membership in a project
     def modify_slice_membership(self, client_cert, slice_urn, \
                                 credentials, options):
+
+        client_uuid = get_uuid_from_cert(client_cert)
+        self.update_slice_expirations(client_uuid)
+
         session = self.db.getSession()
         slice_id = self.get_slice_id(session, "slice_urn", slice_urn)
-        client_uuid = get_uuid_from_cert(client_cert)
         return self.modify_membership(session, SliceMember, client_uuid, \
                                           slice_id, slice_urn, \
                                           options, 'slice_id', \
@@ -657,7 +765,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                 self.logging_service.log_event(
                     "Removed member %s from %s %s" % \
                         (member_to_remove, text_str, label), \
-                        attribs, client_uid)
+                        attribs, client_uuid)
 
         # Log all adds
         if 'members_to_add' in options:
@@ -668,7 +776,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                 self.logging_service.log_event(
                     "Added member %s in role % to % %s" % \
                         (member_urn, member_role, text_str, label), 
-                        attribs, client_uid)
+                        attribs, client_uuid)
 
         # Log all changes
         if 'members_to_change' in options:
@@ -679,7 +787,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                 self.logging_service.log_event(
                     "Changed member %s to role % to % %s" % \
                         (member_urn, member_role, text_str, label), 
-                        attribs, client_uid)
+                        attribs, client_uuid)
 
         return self._successReturn(None)
 
