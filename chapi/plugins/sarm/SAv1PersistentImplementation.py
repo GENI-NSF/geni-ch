@@ -799,7 +799,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         q = q.filter(self.db.PROJECT_REQUEST_TABLE.c.context_type == context_type)
         if context_id:
             q = q.filter(self.db.PROJECT_REQUEST_TABLE.c.context_id == context_id)
-        if status:
+        if status or status == 0:
             q = q.filter(self.db.PROJECT_REQUEST_TABLE.c.status == status)
         q = q.filter(self.db.PROJECT_REQUEST_TABLE.c.requestor == member_id)
 
