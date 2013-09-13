@@ -73,11 +73,11 @@ class SAv1Guard(ABACGuardBase):
             CreateArgumentCheck(SAv1PersistentImplementation.project_mandatory_fields,\
                                    SAv1PersistentImplementation.project_supplemental_fields),
         'update_project' : \
-            UpdateArgumentCheck(SAv1PersistentImplementation.slice_mandatory_fields,\
-                                    SAv1PersistentImplementation.slice_supplemental_fields),
+            UpdateArgumentCheck(SAv1PersistentImplementation.project_mandatory_fields,\
+                                    SAv1PersistentImplementation.project_supplemental_fields),
         'lookup_projects' : \
-            LookupArgumentCheck(SAv1PersistentImplementation.slice_mandatory_fields,\
-                                    SAv1PersistentImplementation.slice_supplemental_fields),
+            LookupArgumentCheck(SAv1PersistentImplementation.project_mandatory_fields,\
+                                    SAv1PersistentImplementation.project_supplemental_fields),
         'modify_project_membership' : None, # No options required (project_urn argument)
         'lookup_project_members' : None, # No options required (project_urn argument)
         'lookup_projects_for_member' : None, # No options required (member_urn argument)
