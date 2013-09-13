@@ -165,9 +165,24 @@ function lookup_keys_and_certs($ma_url, $signer, $member_uuid)
 // CHAPI: unsupported
 function ma_create_account($ma_url, $signer, $attrs, $self_asserted_attrs)
 {
-  $msg = "create_account is unimplemented";
-  error_log($msg);
-  throw new Exception($msg);
+  $all_attrs = array();
+  foreach (array_keys($attrs) as $attr_name) {
+    $all_attrs[] = array(MA_ATTRIBUTE::NAME => $attr_name,
+            MA_ATTRIBUTE::VALUE => $attrs[$attr_name],
+            MA_ATTRIBUTE::SELF_ASSERTED => FALSE);
+  }
+  foreach (array_keys($self_asserted_attrs) as $attr_name) {
+    $all_attrs[] = array(MA_ATTRIBUTE::NAME => $attr_name,
+            MA_ATTRIBUTE::VALUE => $self_asserted_attrs[$attr_name],
+            MA_ATTRIBUTE::SELF_ASSERTED => TRUE);
+  }
+
+  $client = XMLRPCClient::get_client($ma_url, $signer);
+  $options = array();
+  $results = $client->create_member($all_attrs, $signer->certificate(), $options);
+  
+  // return member_id
+  return $results['MEMBER_UID'];
 }
 
 // map from CHAPI MA attributes to portal attribute keys
