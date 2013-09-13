@@ -97,9 +97,9 @@ class SAv1Guard(ABACGuardBase):
         # No options required (member_id, context_type, context_id, status arguments)
         'get_requests_by_user' :  None,
         # No options required (member_id, context_type, context_id arguments)
-        'get_pending_requests_by_user' :  None,
+        'get_pending_requests_for_user' :  None,
         # No options required (member_id, context_type, context_id arguments)
-        'get_number_of_pending_requests_by_user' :  None,
+        'get_number_of_pending_requests_for_user' :  None,
         # No options required (request_id, context_type arguments)
         'get_request_by_id' : None
 
@@ -135,7 +135,10 @@ class SAv1Guard(ABACGuardBase):
         'get_credentials' : \
             SubjectInvocationCheck([
                 "ME.MAY_GET_CREDENTIALS<-ME.IS_OPERATOR",
-                "ME.MAY_GET_CREDENTIALS_$SUBJECT<-ME.BELONGS_TO_$SUBJECT"
+                "ME.MAY_UPDATE_SLICE_$SUBJECT<-ME.IS_LEAD_$SUBJECT", 
+                "ME.MAY_UPDATE_SLICE_$SUBJECT<-ME.IS_ADMIN_$SUBJECT",
+                "ME.MAY_UPDATE_SLICE_$SUBJECT<-ME.IS_MEMBER_$SUBJECT",
+                "ME.MAY_UPDATE_SLICE_$SUBJECT<-ME.IS_OPERATOR_$SUBJECT"
                 ], assert_belongs_to_slice, slice_urn_extractor),
 
         'modify_slice_membership' : 
@@ -199,14 +202,51 @@ class SAv1Guard(ABACGuardBase):
         'remove_aggregate' : None,
         'lookup_slice_aggregates' : None,
 
-        # *** WRITE ME: Guards for project request methods
-        'create_request' :  None,
-        'resolve_pending_request' :  None,
-        'get_requests_for_context' :  None,
-        'get_requests_by_user' :  None,
-        'get_pending_requests_by_user' :  None,
-        'get_number_of_pending_requests_by_user' :  None,
-        'get_request_by_id' : None
+        # 
+        'create_request' :  None, # Open: anyone can request
+
+        # Only if you are operator the lead/admin of the context
+        'resolve_pending_request' :  \
+            SubjectInvocationCheck([
+                "ME.MAY_RESOLVE_PENDING_REQUEST<-ME.IS_OPERATOR",
+                "ME.MAY_RESOLVE_PENDING_REQUEST_$SUBJECT<-ME.IS_LEAD_$SUBJECT",
+                "ME.MAY_RESOLVE_PENDING_REQUEST_$SUBJECT<-ME.IS_ADMIN_$SUBJECT",
+                ], assert_project_role, request_id_context_extractor),
+
+         # Only if you are operator or the lead/admin of the context
+        'get_requests_for_context' :  
+            SubjectInvocationCheck([
+                "ME.MAY_GET_REQUESTS_FOR_CONTEXT<-ME.IS_OPERATOR",
+                "ME.MAY_GET_REQUESTS_FOR_CONTEXT_$SUBJECT<-ME.IS_LEAD_$SUBJECT",
+                "ME.MAY_GET_REQUESTS_FOR_CONTEXT_$SUBJECT<-ME.IS_ADMIN_$SUBJECT",
+                ], assert_project_role, request_context_extractor),
+
+
+         # member_id argument == caller
+        'get_requests_by_user' :  \
+            SubjectInvocationCheck([
+                "ME.MAY_GET_REQUESTS_BY_USER<-ME.IS_OPERATOR",
+                "ME.MAY_GET_REQUESTS_BY_USER_$SUBJECT<-ME.IS_$SUBJECT"
+                ], None, request_member_extractor),
+        'get_pending_requests_for_user' :  \
+            SubjectInvocationCheck([
+                "ME.MAY_GET_PENDING_REQUESTS_FOR_USER<-ME.IS_OPERATOR",
+                "ME.MAY_GET_PENDING_REQUESTS_FOR_USER_$SUBJECT<-ME.IS_$SUBJECT"
+                ], None, request_member_extractor),
+        'get_number_of_pending_requests_for_user' :  \
+            SubjectInvocationCheck([
+                "ME.MAY_GET_NUMBER_OF_PENDING_REQUESTS_FOR_USER<-ME.IS_OPERATOR",
+                "ME.MAY_GET_NUMBER_OF_PENDING_REQUESTS_FOR_USER_$SUBJECT<-ME.IS_$SUBJECT"
+                ], None, request_member_extractor),
+
+        # Only if you are an operator, you are the requestor or the lead/admin of the context  
+        'get_request_by_id' : \
+            SubjectInvocationCheck([
+                "ME.MAY_GET_REQUEST_BY_ID<-ME.IS_OPERATOR",
+                "ME.MAY_GET_REQUEST_BY_ID_$SUBJECT<-ME.IS_LEAD_$SUBJECT",
+                "ME.MAY_GET_REQUEST_BY_ID_$SUBJECT<-ME.IS_ADMIN_$SUBJECT",
+                "ME.MAY_GET_REQUEST_BY_ID<-ME.IS_REQUESTOR"
+                ], assert_request_id_requestor_and_project_role, request_id_context_extractor),
 
         }
 

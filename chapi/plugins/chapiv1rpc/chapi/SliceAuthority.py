@@ -470,6 +470,13 @@ class SAv1Handler(HandlerBase):
         client_cert = self.requestCertificate()
         method = 'create_request'
         try:
+            self._guard.validate_call(client_cert, method, \
+                                          credentials, options, \
+                                          {'context_type' : context_type, 
+                                           'context_id' : context_id, 
+                                           'request_type' : request_type,
+                                           'request_text' : request_text,
+                                           'request_details' : request_details})
             client_cert, options = self._guard.adjust_client_identity(client_cert, 
                                                                      credentials, options)
             return self._delegate.create_request(client_cert, \
@@ -484,8 +491,14 @@ class SAv1Handler(HandlerBase):
                                     resolution_status, resolution_description,  \
                                     credentials, options):
         client_cert = self.requestCertificate()
-        method = 'create_request'
+        method = 'resolve_pending_request'
         try:
+            self._guard.validate_call(client_cert, method, \
+                                          credentials, options, \
+                                          {'context_type' : context_type,
+                                           'request_id' : request_id,
+                                           'resolution_status' : resolution_status,
+                                           'resolution_description' : resolution_description})
             client_cert, options = self._guard.adjust_client_identity(client_cert, 
                                                                      credentials, options)
             return self._delegate.resolve_pending_request(client_cert, \
@@ -502,6 +515,11 @@ class SAv1Handler(HandlerBase):
         client_cert = self.requestCertificate()
         method = 'get_requests_for_context'
         try:
+            self._guard.validate_call(client_cert, method, \
+                                          credentials, options, \
+                                          {'context_type' : context_type, 
+                                           'context_id' : context_id,
+                                           'status' : status})
             client_cert, options = self._guard.adjust_client_identity(client_cert, 
                                                                      credentials, options)
             return self._delegate.get_requests_for_context(client_cert, \
@@ -517,6 +535,12 @@ class SAv1Handler(HandlerBase):
         client_cert = self.requestCertificate()
         method = 'get_requests_by_user'
         try:
+            self._guard.validate_call(client_cert, method, \
+                                          credentials, options, \
+                                          {'member_id' : member_id,
+                                           'context_type' : context_type, 
+                                           'context_id' : context_id, 
+                                           'status' : status})
             client_cert, options = self._guard.adjust_client_identity(client_cert, 
                                                                      credentials, options)
             return self._delegate.get_requests_by_user(client_cert, \
@@ -532,6 +556,11 @@ class SAv1Handler(HandlerBase):
         client_cert = self.requestCertificate()
         method = 'get_pending_requests_for_user'
         try:
+            self._guard.validate_call(client_cert, method, \
+                                          credentials, options, \
+                                          {'member_id' : member_id,
+                                           'context_type' : context_type,
+                                           'context_id' : context_id})
             client_cert, options = self._guard.adjust_client_identity(client_cert, 
                                                                      credentials, options)
             return self._delegate.get_pending_requests_for_user(client_cert, \
@@ -548,6 +577,11 @@ class SAv1Handler(HandlerBase):
         client_cert = self.requestCertificate()
         method = 'get_number_of_pending_requests_for_user'
         try:
+            self._guard.validate_call(client_cert, method, \
+                                          credentials, options, \
+                                          {'member_id' : member_id,
+                                           'context_type' : context_type,
+                                           'context_id' : context_id})
             client_cert, options = self._guard.adjust_client_identity(client_cert, 
                                                                      credentials, options)
             return self._delegate.get_number_of_pending_requests_for_user(client_cert, 
@@ -561,8 +595,12 @@ class SAv1Handler(HandlerBase):
 
     def get_request_by_id(self, request_id, context_type, credentials, options):
         client_cert = self.requestCertificate()
-        method = 'get_number_of_pending_requests_for_user'
+        method = 'get_request_by_id'
         try:
+            self._guard.validate_call(client_cert, method, \
+                                          credentials, options, \
+                                          {'request_id' : request_id,
+                                           'context_type' : context_type})
             client_cert, options = self._guard.adjust_client_identity(client_cert, 
                                                                      credentials, options)
             return self._delegate.get_request_by_id(client_cert, 

@@ -124,10 +124,11 @@ class Loggingv1Delegate(DelegateBase):
         super(Loggingv1Delegate, self).__init__(logging_logger)
         self.db = pm.getService('chdbengine')
 
+    # The attributes argument is a dictionary of name/value pairs
     def log_event(self, client_cert, message, attributes, user_id):
 
         session = self.db.getSession()
-        now = datetime.datetime.now()
+        now = datetime.datetime.utcnow()
         # Record the event
         # Insert into logging_entry (event_time, user_id, message) values
         # (now, user_id, message)
@@ -136,9 +137,7 @@ class Loggingv1Delegate(DelegateBase):
         # Grab the event
         event_id = result.inserted_primary_key[0]
         # Register the attributes
-        for attribute in attributes:
-            key = attribute.keys()[0]
-            value = attribute[key]
+        for key, value in attributes.values():
             # Insert into logging_entry_attribute_table 
             # (event_id, attribute_name, attribute_value) 
             # values (event_id, key, value)
@@ -151,7 +150,7 @@ class Loggingv1Delegate(DelegateBase):
         session = self.db.getSession()
         q = session.query(self.db.LOGGING_ENTRY_TABLE)
         q = q.filter(self.db.LOGGING_ENTRY_TABLE.c.user_id == user_id)
-        min_event_time = datetime.datetime.now() - relativedelta(hours=num_hours)
+        min_event_time = datetime.datetime.utcnow() - relativedelta(hours=num_hours)
         q = q.filter(self.db.LOGGING_ENTRY_TABLE.c.event_time >= min_event_time)
         rows = q.all()
         session.close()
@@ -163,7 +162,7 @@ class Loggingv1Delegate(DelegateBase):
         session = self.db.getSession()
         q = session.query(self.db.LOGGING_ENTRY_TABLE)
         q = q.filter(self.db.LOGGING_ENTRY_TABLE.c.id == self.db.LOGGING_ENTRY_ATTRIBUTE_TABLE.c.event_id)
-        min_event_time = datetime.datetime.now() - relativedelta(hours=num_hours)
+        min_event_time = datetime.datetime.utcnow() - relativedelta(hours=num_hours)
         q = q.filter(self.db.LOGGING_ENTRY_TABLE.c.event_time >= min_event_time)
         q = q.filter(self.db.LOGGING_ENTRY_ATTRIBUTE_TABLE.c.attribute_name == context_type_names[context_type])
         q = q.filter(self.db.LOGGING_ENTRY_ATTRIBUTE_TABLE.c.attribute_value == context_id)
@@ -177,7 +176,7 @@ class Loggingv1Delegate(DelegateBase):
         session = self.db.getSession()
         q = session.query(self.db.LOGGING_ENTRY_TABLE)
         q = q.filter(self.db.LOGGING_ENTRY_TABLE.c.id == self.db.LOGGING_ENTRY_ATTRIBUTE_TABLE.c.event_id)
-        min_event_time = datetime.datetime.now() - relativedelta(hours=num_hours)
+        min_event_time = datetime.datetime.utcnow() - relativedelta(hours=num_hours)
         q = q.filter(self.db.LOGGING_ENTRY_TABLE.c.event_time >= min_event_time)
         conditions = []
         for attribute_set in attribute_sets:

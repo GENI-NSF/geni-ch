@@ -133,6 +133,8 @@ class PGCHv1Delegate(DelegateBase):
         # return is slice credential
         #args: credential, type, uuid, urn
 
+        if not args:
+            raise Exception("PGCH.Credential called with args=None")
 
         cred_type = None
         if 'type' in args:
@@ -166,6 +168,8 @@ class PGCHv1Delegate(DelegateBase):
                 return lookup_slices_return
             slice_urn = lookup_slices_return ['value'].keys()[0]
 
+        if not slice_uuid and not slice_urn:
+            raise Exception("SLICE URN or UUID not provided to PGCH.GetCredential");
 
         options = {}
         get_credentials_return = \
@@ -436,7 +440,9 @@ class PGCHv1Delegate(DelegateBase):
 
         member_urn = extract_user_urn(client_cert)
 
-        options = {'match' : {'KEY_MEMBER' : member_urn}}
+        options = {'match' : {'KEY_MEMBER' : member_urn},
+                   "filter" : ['KEY_PUBLIC']
+                   }
         ssh_keys_result = \
             self._ma_handler._delegate.lookup_keys(client_cert, creds, options)
 #        print "SSH_KEYS_RESULT = " + str(ssh_keys_result)

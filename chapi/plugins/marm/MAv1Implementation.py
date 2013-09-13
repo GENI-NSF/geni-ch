@@ -104,9 +104,9 @@ class MAv1Implementation(MAv1DelegateBase):
         "KEY_MEMBER" : \
             {"TYPE" : "URN", "CREATE" : "REQUIRED"}, \
             "KEY_ID" : {"TYPE" : "UID"}, \
-            "KEY_PUBLIC_KEY" : \
+            "KEY_PUBLIC" : \
             {"TYPE" : "KEY", "CREATE" : "REQUIRED"},  \
-            "KEY_PRIVATE_KEY" : \
+            "KEY_PRIVATE" : \
             {"TYPE" : "KEY", "CREATE" : "ALLOWED"}, \
             "KEY_DESCRIPTION" : \
             {"TYPE" : "STRING", "CREATE" : "ALLOWED", "UPDATE" : True} 
@@ -415,7 +415,7 @@ class MAv1Implementation(MAv1DelegateBase):
         if not certs:
             return None
         gid = sfa_gid.GID(string = certs[0])
-        expires = datetime.now() + relativedelta(years=1)
+        expires = datetime.utcnow() + relativedelta(years=1)
         cred = cred_util.create_credential(gid, gid, expires, "user", \
                   self.key, self.cert, self.trusted_roots)
         return cred.save_to_string()
