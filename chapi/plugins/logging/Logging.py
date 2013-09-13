@@ -137,7 +137,7 @@ class Loggingv1Delegate(DelegateBase):
         # Grab the event
         event_id = result.inserted_primary_key[0]
         # Register the attributes
-        for key, value in attributes.values():
+        for key, value in attributes.iteritems():
             # Insert into logging_entry_attribute_table 
             # (event_id, attribute_name, attribute_value) 
             # values (event_id, key, value)
