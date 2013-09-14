@@ -424,7 +424,15 @@ def key_subject_extractor(options, arguments):
         
 
 def project_urn_extractor(options, arguments):
-    project_urn = arguments['project_urn']
+    if 'project_urn' in arguments:
+        project_urn = arguments['project_urn']
+    elif 'PROJECT_NAME' in options['fields']:
+        project_name = options['fields']['PROJECT_NAME']
+        config = pm.getService('config')
+        authority = config.get('chrm.authority')
+        project_urn = to_project_urn(authority, project_name)
+    elif '_GENI_PROJECT_URN' in options['fields']:
+        project_urn = options['fields']['_GENI_PROJECT_URN']
     return {"PROJECT_URN" : [project_urn]}
 
 def slice_urn_extractor(options, arguments):
