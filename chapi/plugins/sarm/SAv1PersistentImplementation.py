@@ -763,9 +763,10 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         if 'members_to_remove' in options:
             members_to_remove = options['members_to_remove']
             for member_to_remove in members_to_remove:
+                member_name = get_name_from_urn(member_to_remove)
                 self.logging_service.log_event(
                     "Removed member %s from %s %s" % \
-                        (member_to_remove, text_str, label), \
+                        (member_name, text_str, label), \
                         attribs, client_uuid)
 
         # Log all adds
@@ -773,10 +774,11 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
             members_to_add = options['members_to_add']
             for member_to_add in members_to_add:
                 member_urn = member_to_add[member_str]
+                member_name = get_name_from_urn(member_urn)
                 member_role = member_to_add[role_str]
                 self.logging_service.log_event(
-                    "Added member %s in role % to % %s" % \
-                        (member_urn, member_role, text_str, label), 
+                    "Added member %s in role %s to %s %s" % \
+                        (member_name, member_role, text_str, label), 
                         attribs, client_uuid)
 
         # Log all changes
@@ -784,10 +786,11 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
             members_to_change = options['members_to_change']
             for member_to_change in members_to_change:
                 member_urn = member_to_change[member_str]
+                member_name = get_name_from_urn(member_urn)
                 member_role = member_to_change[role_str]
                 self.logging_service.log_event(
-                    "Changed member %s to role % to % %s" % \
-                        (member_urn, member_role, text_str, label), 
+                    "Changed member %s to role %s to %s %s" % \
+                        (member_name, member_role, text_str, label), 
                         attribs, client_uuid)
 
         return self._successReturn(None)
