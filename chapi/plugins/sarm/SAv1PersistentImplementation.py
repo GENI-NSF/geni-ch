@@ -96,7 +96,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         }
 
     project_supplemental_fields = {
-        "_GENI_PROJECT_OWNER" : {"TYPE" : "UUID", "UPDATE" : True},
+        "_GENI_PROJECT_OWNER" : {"TYPE" : "UUID", "CREATE" : "REQUIRED", "UPDATE" : True},
         "_GENI_PROJECT_EMAIL": {"TYPE": "EMAIL", "CREATE": "REQUIRED", "UPDATE": True, "OBJECT" : "PROJECT"}
         }
 
@@ -209,11 +209,11 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         if resurrect:
             old_flag = True
             new_flag = False
-            label = "Expired "
+            label = "Restored previously expired "
         else:
             old_flag = False
             new_flag = True
-            label = "Restored previously expired "
+            label = "Expired "
 
         session = self.db.getSession()
         q = self.get_expiration_query(session, type, old_flag, resurrect)
@@ -243,7 +243,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
     # Check for
     #   Recently expired slices and set their expired flags to 't'
     def update_slice_expirations(self, client_uuid):
-        self.update_expirations(client_uuid, 'siice', False)
+        self.update_expirations(client_uuid, 'slice', False)
 
     # Check for 
     #   Recently expired projects and set their expired flags to 't'
@@ -251,6 +251,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
     def update_project_expirations(self, client_uuid):
         self.update_expirations(client_uuid, 'project', False)
         self.update_expirations(client_uuid, 'project', True)
+        self.update_expirations(client_uuid, 'slice', False)
 
     def lookup_slices(self, client_cert, credentials, options):
 
@@ -278,7 +279,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
 
     # members in a slice
     def lookup_slice_members(self, client_cert, slice_urn, credentials, options):
-        return self.lookup_members(self.db.SLICE_TABLE, \
+        return self.lookup_members(client_cert, self.db.SLICE_TABLE, \
             self.db.SLICE_MEMBER_TABLE, slice_urn, "slice_urn", \
             "slice_id", "SLICE_ROLE", "SLICE_MEMBER", "SLICE_MEMBER_UID")
 
@@ -286,14 +287,15 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
     def lookup_project_members(self, client_cert, project_urn, \
                                credentials, options):
         project_name = from_project_urn(project_urn)
-        return self.lookup_members(self.db.PROJECT_TABLE, \
+        return self.lookup_members(client_cert, self.db.PROJECT_TABLE, \
             self.db.PROJECT_MEMBER_TABLE, project_name, "project_name", \
             "project_id", "PROJECT_ROLE", "PROJECT_MEMBER", \
                                        "PROJECT_MEMBER_UID")
 
     # shared code for lookup_slice_members() and lookup_project_members()
-    def lookup_members(self, table, member_table, name, name_field, \
-                       id_field, role_txt, member_txt, member_uid_txt):
+    def lookup_members(self, client_cert, table, member_table, \
+                           name, name_field, \
+                           id_field, role_txt, member_txt, member_uid_txt):
 
         client_uuid = get_uuid_from_cert(client_cert)
         self.update_slice_expirations(client_uuid)
@@ -639,7 +641,6 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         session = self.db.getSession()
         q = session.query(member_table, self.db.MEMBER_ATTRIBUTE_TABLE,
                           table.c[name_field], self.db.ROLE_TABLE.c.name)
-        q = q.filter(table.c.expired == 'f')
         q = q.filter(self.db.MEMBER_ATTRIBUTE_TABLE.c.name == 'urn')
         q = q.filter(self.db.MEMBER_ATTRIBUTE_TABLE.c.value == member_urn)
         q = q.filter(member_table.c.member_id == \
