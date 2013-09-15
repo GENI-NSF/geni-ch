@@ -431,8 +431,8 @@ def project_urn_extractor(options, arguments):
         config = pm.getService('config')
         authority = config.get('chrm.authority')
         project_urn = to_project_urn(authority, project_name)
-    elif '_GENI_PROJECT_URN' in options['fields']:
-        project_urn = options['fields']['_GENI_PROJECT_URN']
+    elif 'SLICE_PROJECT_URN' in options['fields']:
+        project_urn = options['fields']['SLICE_PROJECT_URN']
     return {"PROJECT_URN" : [project_urn]}
 
 def slice_urn_extractor(options, arguments):

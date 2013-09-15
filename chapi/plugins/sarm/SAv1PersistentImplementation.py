@@ -74,14 +74,14 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         "SLICE_EXPIRATION": {"TYPE": "DATETIME", "CREATE" : "ALLOWED", "UPDATE": True},
         "SLICE_EXPIRED": {"TYPE": "BOOLEAN"},
         "SLICE_CREATION": {"TYPE": "DATETIME"},
+        "SLICE_PROJECT_URN": {"TYPE": "URN", \
+                                  "CREATE": "REQUIRED", "UPDATE": False},
         }
 
     slice_supplemental_fields = {
         "_GENI_SLICE_OWNER" : {"TYPE" : "UUID", "UPDATE" : True},
         "_GENI_SLICE_EMAIL": {"TYPE": "EMAIL", \
                                   "CREATE": "REQUIRED", "UPDATE": True},
-        "_GENI_PROJECT_URN": {"TYPE": "URN", \
-                                  "CREATE": "REQUIRED", "UPDATE": False},
         "_GENI_PROJECT_UID": {"TYPE" : "UID", "UPDATE" : False}
     }
 
@@ -113,9 +113,9 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         "SLICE_EXPIRATION" :  "expiration",
         "SLICE_EXPIRED" :  "expired",
         "SLICE_CREATION" :  "creation",
+        "SLICE_PROJECT_URN" : row_to_project_urn,
         "_GENI_SLICE_EMAIL" : "slice_email",
         "_GENI_SLICE_OWNER" : "owner_id", 
-        "_GENI_PROJECT_URN" : row_to_project_urn,
         "_GENI_PROJECT_UID": 'project_id'
         }
 
@@ -422,7 +422,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         project_urn = None
         slice.email = options['SLICE_EMAIL']
         for key, value in options["fields"].iteritems():
-            if key == "_GENI_PROJECT_URN":
+            if key == "SLICEPROJECT_URN":
                 project_urn = value
                 project_name = from_project_urn(value)
                 slice.project_id = self.get_project_id(session, \
