@@ -144,6 +144,7 @@ class Loggingv1Delegate(DelegateBase):
             ins = self.db.LOGGING_ENTRY_ATTRIBUTE_TABLE.insert().values(event_id = event_id, attribute_name=key, attribute_value=value)
             result = session.execute(ins)
         session.commit()
+        session.close()
         return self._successReturn(True)
 
     def get_log_entries_by_author(self, client_cert, user_id, num_hours):

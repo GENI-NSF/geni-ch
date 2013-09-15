@@ -530,6 +530,7 @@ class MAv1Implementation(MAv1DelegateBase):
             ins = self.db.MEMBER_ATTRIBUTE_TABLE.insert().values(attr)
             session.execute(ins)
         session.commit()
+        session.close()
         return self._successReturn(atmap.values())
 
     # Implementation of KEY Service methods
@@ -567,6 +568,7 @@ class MAv1Implementation(MAv1DelegateBase):
         fields["KEY_MEMBER"] = member_urn
 
         session.commit()
+        session.close()
         return self._successReturn(fields)
 
     def delete_key(self, client_cert, member_urn, key_id, \
@@ -579,6 +581,7 @@ class MAv1Implementation(MAv1DelegateBase):
         if num_del == 0:
             return self._errorReturn(CHAPIv1DatabaseError("No key with id  %s" % key_id))
         session.commit()
+        session.close()
         return self._successReturn(True)
 
     def update_key(self, client_cert, member_urn, key_id, \
@@ -600,6 +603,7 @@ class MAv1Implementation(MAv1DelegateBase):
         if num_upd == 0:
             return self._errorReturn(CHAPIv1DatabaseError("No key with id %s" % key_id))
         session.commit()
+        session.close()
         return self._successReturn(True)
 
     def lookup_keys(self, client_cert, credentials, options):
@@ -733,6 +737,7 @@ class MAv1Implementation(MAv1DelegateBase):
         ins = self.db.OUTSIDE_CERT_TABLE().values(insert_fields)
         result = session.execute(ins)
         session.commit()
+        session.close()
 
         return self._successReturn(True)
 
