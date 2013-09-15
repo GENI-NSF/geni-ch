@@ -151,9 +151,9 @@ class MAv1Guard(ABACGuardBase):
                 ], None, standard_subject_extractor),
         'create_member' : 
             SubjectInvocationCheck([
-                "ME.MAY_CREATE_CERTIFICATE<-ME.IS_OPERATOR",
-                "ME.MAY_CREATE_CERTIFICATE<-ME.IS_AUTHORITY"
-                ], None, standard_subject_extractor),
+                "ME.MAY_CREATE_MEMBER<-ME.IS_OPERATOR",
+                "ME.MAY_CREATE_MEMBER<-ME.IS_AUTHORITY"
+                ], None, None),
         }
 
 
