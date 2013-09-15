@@ -74,14 +74,14 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         "SLICE_EXPIRATION": {"TYPE": "DATETIME", "CREATE" : "ALLOWED", "UPDATE": True},
         "SLICE_EXPIRED": {"TYPE": "BOOLEAN"},
         "SLICE_CREATION": {"TYPE": "DATETIME"},
+        "SLICE_PROJECT_URN": {"TYPE": "URN", \
+                                  "CREATE": "REQUIRED", "UPDATE": False},
         }
 
     slice_supplemental_fields = {
         "_GENI_SLICE_OWNER" : {"TYPE" : "UUID", "UPDATE" : True},
         "_GENI_SLICE_EMAIL": {"TYPE": "EMAIL", \
                                   "CREATE": "REQUIRED", "UPDATE": True},
-        "_GENI_PROJECT_URN": {"TYPE": "URN", \
-                                  "CREATE": "REQUIRED", "UPDATE": False},
         "_GENI_PROJECT_UID": {"TYPE" : "UID", "UPDATE" : False}
     }
 
@@ -96,7 +96,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         }
 
     project_supplemental_fields = {
-        "_GENI_PROJECT_OWNER" : {"TYPE" : "UUID", "UPDATE" : True},
+        "_GENI_PROJECT_OWNER" : {"TYPE" : "UUID", "CREATE" : "REQUIRED", "UPDATE" : True},
         "_GENI_PROJECT_EMAIL": {"TYPE": "EMAIL", "CREATE": "REQUIRED", "UPDATE": True, "OBJECT" : "PROJECT"}
         }
 
@@ -113,9 +113,9 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         "SLICE_EXPIRATION" :  "expiration",
         "SLICE_EXPIRED" :  "expired",
         "SLICE_CREATION" :  "creation",
+        "SLICE_PROJECT_URN" : row_to_project_urn,
         "_GENI_SLICE_EMAIL" : "slice_email",
         "_GENI_SLICE_OWNER" : "owner_id", 
-        "_GENI_PROJECT_URN" : row_to_project_urn,
         "_GENI_PROJECT_UID": 'project_id'
         }
 
@@ -209,11 +209,11 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         if resurrect:
             old_flag = True
             new_flag = False
-            label = "Expired "
+            label = "Restored previously expired "
         else:
             old_flag = False
             new_flag = True
-            label = "Restored previously expired "
+            label = "Expired "
 
         session = self.db.getSession()
         q = self.get_expiration_query(session, type, old_flag, resurrect)
@@ -243,7 +243,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
     # Check for
     #   Recently expired slices and set their expired flags to 't'
     def update_slice_expirations(self, client_uuid):
-        self.update_expirations(client_uuid, 'siice', False)
+        self.update_expirations(client_uuid, 'slice', False)
 
     # Check for 
     #   Recently expired projects and set their expired flags to 't'
@@ -251,6 +251,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
     def update_project_expirations(self, client_uuid):
         self.update_expirations(client_uuid, 'project', False)
         self.update_expirations(client_uuid, 'project', True)
+        self.update_expirations(client_uuid, 'slice', False)
 
     def lookup_slices(self, client_cert, credentials, options):
 
@@ -278,7 +279,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
 
     # members in a slice
     def lookup_slice_members(self, client_cert, slice_urn, credentials, options):
-        return self.lookup_members(self.db.SLICE_TABLE, \
+        return self.lookup_members(client_cert, self.db.SLICE_TABLE, \
             self.db.SLICE_MEMBER_TABLE, slice_urn, "slice_urn", \
             "slice_id", "SLICE_ROLE", "SLICE_MEMBER", "SLICE_MEMBER_UID")
 
@@ -286,14 +287,15 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
     def lookup_project_members(self, client_cert, project_urn, \
                                credentials, options):
         project_name = from_project_urn(project_urn)
-        return self.lookup_members(self.db.PROJECT_TABLE, \
+        return self.lookup_members(client_cert, self.db.PROJECT_TABLE, \
             self.db.PROJECT_MEMBER_TABLE, project_name, "project_name", \
             "project_id", "PROJECT_ROLE", "PROJECT_MEMBER", \
                                        "PROJECT_MEMBER_UID")
 
     # shared code for lookup_slice_members() and lookup_project_members()
-    def lookup_members(self, table, member_table, name, name_field, \
-                       id_field, role_txt, member_txt, member_uid_txt):
+    def lookup_members(self, client_cert, table, member_table, \
+                           name, name_field, \
+                           id_field, role_txt, member_txt, member_uid_txt):
 
         client_uuid = get_uuid_from_cert(client_cert)
         self.update_slice_expirations(client_uuid)
@@ -420,7 +422,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         project_urn = None
         slice.email = options['SLICE_EMAIL']
         for key, value in options["fields"].iteritems():
-            if key == "_GENI_PROJECT_URN":
+            if key == "SLICE_PROJECT_URN":
                 project_urn = value
                 project_name = from_project_urn(value)
                 slice.project_id = self.get_project_id(session, \
@@ -536,8 +538,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         for key, value in options["fields"].iteritems():
             setattr(project, self.project_field_mapping[key], value)
         project.creation = datetime.utcnow()
-        if not project.expiration:
-            project.expiration = project.creation + relativedelta(days=7)
+        if project.expiration == "": project.expiration=None
         project.project_id = str(uuid.uuid4())
 
         if not hasattr(project, 'project_email') or not project.project_email:
@@ -639,7 +640,6 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         session = self.db.getSession()
         q = session.query(member_table, self.db.MEMBER_ATTRIBUTE_TABLE,
                           table.c[name_field], self.db.ROLE_TABLE.c.name)
-        q = q.filter(table.c.expired == 'f')
         q = q.filter(self.db.MEMBER_ATTRIBUTE_TABLE.c.name == 'urn')
         q = q.filter(self.db.MEMBER_ATTRIBUTE_TABLE.c.value == member_urn)
         q = q.filter(member_table.c.member_id == \
@@ -762,9 +762,10 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         if 'members_to_remove' in options:
             members_to_remove = options['members_to_remove']
             for member_to_remove in members_to_remove:
+                member_name = get_name_from_urn(member_to_remove)
                 self.logging_service.log_event(
                     "Removed member %s from %s %s" % \
-                        (member_to_remove, text_str, label), \
+                        (member_name, text_str, label), \
                         attribs, client_uuid)
 
         # Log all adds
@@ -772,10 +773,11 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
             members_to_add = options['members_to_add']
             for member_to_add in members_to_add:
                 member_urn = member_to_add[member_str]
+                member_name = get_name_from_urn(member_urn)
                 member_role = member_to_add[role_str]
                 self.logging_service.log_event(
-                    "Added member %s in role % to % %s" % \
-                        (member_urn, member_role, text_str, label), 
+                    "Added member %s in role %s to %s %s" % \
+                        (member_name, member_role, text_str, label), 
                         attribs, client_uuid)
 
         # Log all changes
@@ -783,10 +785,11 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
             members_to_change = options['members_to_change']
             for member_to_change in members_to_change:
                 member_urn = member_to_change[member_str]
+                member_name = get_name_from_urn(member_urn)
                 member_role = member_to_change[role_str]
                 self.logging_service.log_event(
-                    "Changed member %s to role % to % %s" % \
-                        (member_urn, member_role, text_str, label), 
+                    "Changed member %s to role %s to %s %s" % \
+                        (member_name, member_role, text_str, label), 
                         attribs, client_uuid)
 
         return self._successReturn(None)
