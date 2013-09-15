@@ -531,6 +531,13 @@ class MAv1Implementation(MAv1DelegateBase):
             session.execute(ins)
         session.commit()
         session.close()
+
+        # Log the successful creation of member
+        self.logging_service = pm.getService('loggingv1handler')
+        msg = "Activated GENI user : %s" % member_id
+        attrs = {"MEMBER" : member_id}
+        self.logging_service.log_event(msg, attrs, member_id)
+
         return self._successReturn(atmap.values())
 
     # Implementation of KEY Service methods
@@ -569,6 +576,13 @@ class MAv1Implementation(MAv1DelegateBase):
 
         session.commit()
         session.close()
+
+        # Log the creation of the SSH key
+        client_uuid = get_uuid_from_cert(ciient_cert)
+        attrs = {"MEMBER" : client_uuid}
+        msg = "%s registering SSH key %s" % (member_urn, key_id)
+        self.logging_service.log_event(msg, attrs, client_uuid)
+
         return self._successReturn(fields)
 
     def delete_key(self, client_cert, member_urn, key_id, \
@@ -582,6 +596,13 @@ class MAv1Implementation(MAv1DelegateBase):
             return self._errorReturn(CHAPIv1DatabaseError("No key with id  %s" % key_id))
         session.commit()
         session.close()
+
+        # Log the deletion of the SSH key
+        client_uuid = get_uuid_from_cert(ciient_cert)
+        attrs = {"MEMBER" : client_uuid}
+        msg = "%s deleting SSH key %s" % (member_urn, key_id)
+        self.logging_service.log_event(msg, attrs, client_uuid)
+
         return self._successReturn(True)
 
     def update_key(self, client_cert, member_urn, key_id, \
