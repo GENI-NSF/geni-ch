@@ -469,3 +469,12 @@ def request_member_extractor(options, arguments):
     extracted = {"MEMBER_URN" : member_urn}
     return extracted
 
+# Pull principal out of arguments
+def principal_extractor(options, arguments):
+    principal_uid = arguments['principal']
+    principal_urn = convert_member_uid_to_urn(principal_uid)
+    return {'MEMBER_URN' : principal_urn}
+
+
+
+
