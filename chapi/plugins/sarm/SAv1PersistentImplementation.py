@@ -422,7 +422,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         project_urn = None
         slice.email = options['SLICE_EMAIL']
         for key, value in options["fields"].iteritems():
-            if key == "SLICEPROJECT_URN":
+            if key == "SLICE_PROJECT_URN":
                 project_urn = value
                 project_name = from_project_urn(value)
                 slice.project_id = self.get_project_id(session, \
@@ -538,8 +538,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         for key, value in options["fields"].iteritems():
             setattr(project, self.project_field_mapping[key], value)
         project.creation = datetime.utcnow()
-        if not project.expiration:
-            project.expiration = project.creation + relativedelta(days=7)
+        if project.expiration == "": project.expiration=None
         project.project_id = str(uuid.uuid4())
 
         if not hasattr(project, 'project_email') or not project.project_email:
