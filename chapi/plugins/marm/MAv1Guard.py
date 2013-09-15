@@ -95,7 +95,9 @@ class MAv1Guard(ABACGuardBase):
             LookupArgumentCheck(MA.standard_key_fields, \
                                     MA.optional_key_fields),
         'create_certificate' : \
-            None
+            None,  
+        'create_member' : \
+            None # Check is done in create_member itself
         }
 
     # Set of invocation checks indexed by method name
@@ -144,9 +146,14 @@ class MAv1Guard(ABACGuardBase):
         'create_certificate' : 
             SubjectInvocationCheck([
                 "ME.MAY_CREATE_CERTIFICATE<-ME.IS_OPERATOR",
+                "ME.MAY_CREATE_CERTIFICATE<-ME.IS_AUTHORITY",
+                "ME.MAY_CREATE_CERTIFICATE_$SUBJECT<-ME.IS_$SUBJECT"
+                ], None, standard_subject_extractor),
+        'create_member' : 
+            SubjectInvocationCheck([
+                "ME.MAY_CREATE_CERTIFICATE<-ME.IS_OPERATOR",
                 "ME.MAY_CREATE_CERTIFICATE<-ME.IS_AUTHORITY"
-                "ME.MAY_CREATE_CERTIFICATE_$SUBJECT<-ME.IS_$SUBJECT",
-                ], None, standard_subject_extractor)
+                ], None, standard_subject_extractor),
         }
 
 

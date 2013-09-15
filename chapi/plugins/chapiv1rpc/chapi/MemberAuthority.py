@@ -142,7 +142,8 @@ class MAv1Handler(HandlerBase):
         method = 'create_member'
         try:
             self._guard.validate_call(client_cert, method, \
-                                          credentials, options)
+                                          credentials, options, \
+                                          {'attributes' : attributes})
             client_cert, options = \
                 self._guard.adjust_client_identity(client_cert, \
                                                        credentials, options)
