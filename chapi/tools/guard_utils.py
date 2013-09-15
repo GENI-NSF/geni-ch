@@ -31,6 +31,7 @@ import threading
 from geni_utils import *
 from geni_constants import *
 from chapi.Memoize import memoize
+from chapi.Exceptions import *
 
 # context support
 _context = threading.local()
