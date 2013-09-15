@@ -174,6 +174,9 @@ def lookup_operator_privilege(user_urn):
     cache[user_urn] = (len(rows)>0)
     return len(rows) > 0
 
+def lookup_authority_privilege(user_urn):
+    return user_urn.find("+authority+")>= 0
+
 def lookup_pi_privilege(user_urn):
     cache = cache_get('pi_privilege')
     if user_urn in cache:
@@ -589,6 +592,8 @@ class SubjectInvocationCheck(InvocationCheck):
         if lookup_pi_privilege(client_urn):
             abac_manager.register_assertion("ME.IS_PI<-CALLER")
         abac_manager.register_assertion("ME.IS_%s<-CALLER" % flatten_urn(client_urn))
+        if lookup_authority_privilege(client_urn):
+            abac_manager.register_assertion("ME.IS_AUTHORITY<-CALLER")
 
         if self._subjects:
             for subject_type in self._subjects.keys():

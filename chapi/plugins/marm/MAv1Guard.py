@@ -107,6 +107,7 @@ class MAv1Guard(ABACGuardBase):
             ], None, standard_subject_extractor),
         'lookup_identifying_member_info' : \
             SubjectInvocationCheck([
+                "ME.MAY_LOOKUP_IDENTIFYING_MEMBER_INFO<-ME.IS_AUTHORITY",
                 "ME.MAY_LOOKUP_IDENTIFYING_MEMBER_INFO<-ME.IS_OPERATOR", 
                 "ME.MAY_LOOKUP_IDENTIFYING_MEMBER_INFO_$SUBJECT<-ME.SHARES_PROJECT_$SUBJECT"
                 ], assert_shares_project, standard_subject_extractor),
