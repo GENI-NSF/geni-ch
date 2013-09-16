@@ -179,7 +179,7 @@ function ma_create_account($ma_url, $signer, $attrs, $self_asserted_attrs)
   }
 
   $client = XMLRPCClient::get_client($ma_url, $signer);
-  $options = array();
+  $options = array('_dummy' => null);
   $results = $client->create_member($all_attrs, $client->get_credentials(), $options);
   
   // return member_id
