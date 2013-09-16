@@ -92,7 +92,7 @@ def derive_username(email_address):
     if len(username)>8:
         username = username[0:8]
     # remove unacceptable characters
-    username = re.sub('[~a-z0-9_]', '', username)
+    username = re.sub('![a-z0-9_]', '', username)
     # remove leading non-alphabetic leading chars
     username = re.sub('^[^a-z]*', '', username)
 
@@ -119,12 +119,13 @@ def derive_username(email_address):
     raise CHAPIv1ArgumentError('Unable to find a username based on '+email_address)
 
 def username_exists(name):
-    session = self.db.getSession()
+    db = pm.getService('chdbengine')
+    session = db.getSession()
     q = session.query(MemberAttribute.member_id)
     q = q.filter(MemberAttribute.name == name)
     rows = q.all()
     session.close()
-    return rows > 0
+    return len(rows) > 0
 
 def make_member_urn(cert, username):
     ma_urn = get_urn_from_cert(cert)
@@ -503,8 +504,6 @@ class MAv1Implementation(MAv1DelegateBase):
         # if it weren't for needing to track which attributes were self-asserted
         # we could just use options['fields']
 
-        import pdb; pdb.set_trace()
-
         # rearrange the attributes a bit
         atmap = dict()
         for attr in attributes:
@@ -520,8 +519,8 @@ class MAv1Implementation(MAv1DelegateBase):
         user_name = derive_username(email_address)
         user_urn = make_member_urn(client_cert, user_name)
 
-        atmap['username'] = {'name':'username', 'value':user_name, 'self_asserted':false}
-        atmap['urn'] = {'name':'urn', 'value':user_urn, 'self_asserted':false}
+        atmap['username'] = {'name':'username', 'value':user_name, 'self_asserted':False}
+        atmap['urn'] = {'name':'urn', 'value':user_urn, 'self_asserted':False}
 
         member_id = uuid.uuid4()
 
