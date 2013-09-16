@@ -78,9 +78,14 @@ function lookup_public_ssh_keys($ma_url, $signer, $member_id)
 {
   $client = XMLRPCClient::get_client($ma_url, $signer);
   $options = array('match'=> array('_GENI_KEY_MEMBER_UID'=>$member_id),
-		   'filter'=>array('KEY_PUBLIC'));
+		   'filter'=>array('KEY_PUBLIC', '_GENI_KEY_FILENAME', 'KEY_DESCRIPTION', 'KEY_ID', '_GENI_KEY_MEMBER_UID'));
   $res = $client->lookup_keys($client->get_credentials(), $options);
-  $ssh_keys = array_map(function($x) { return $x['KEY_PUBLIC']; }, $res);
+  $ssh_keys = array_map(function($x) { 
+      return array('id' => $x['KEY_ID'],
+		   'public_key' => $x['KEY_PUBLIC'],
+		   'description' => $x['KEY_DESCRIPTION'],
+		   'member_id' => $x['_GENI_KEY_MEMBER_UID'],
+		   'filename' => $x['_GENI_KEY_FILENAME']); }, $res);
   return $ssh_keys;
 }
 
@@ -89,9 +94,15 @@ function lookup_private_ssh_keys($ma_url, $signer, $member_id)
 {
   $client = XMLRPCClient::get_client($ma_url, $signer);
   $options = array('match'=> array('_GENI_KEY_MEMBER_UID'=>$member_id),
-		   'filter'=>array('KEY_PRIVATE'));
+		   'filter'=>array('KEY_PRIVATE', 'KEY_PUBLIC', '_GENI_KEY_FILENAME', 'KEY_DESCRIPTION', 'KEY_ID', '_GENI_KEY_MEMBER_UID'));
   $res = $client->lookup_keys($client->get_credentials(), $options);
-  $ssh_keys = array_map(function($x) { return $x['KEY_PRIVATE']; }, $res);
+  $ssh_keys = array_map(function($x) { 
+      return array('id' => $x['KEY_ID'],
+		   'private_key' => $x['KEY_PRIVATE'],
+		   'public_key' => $x['KEY_PUBLIC'],
+		   'description' => $x['KEY_DESCRIPTION'],
+		   'member_id' => $x['_GENI_KEY_MEMBER_UID'],
+		   'filename' => $x['_GENI_KEY_FILENAME']); }, $res);
   return $ssh_keys;
 }
 
