@@ -503,6 +503,8 @@ class MAv1Implementation(MAv1DelegateBase):
         # if it weren't for needing to track which attributes were self-asserted
         # we could just use options['fields']
 
+        import pdb; pdb.set_trace()
+
         # rearrange the attributes a bit
         atmap = dict()
         for attr in attributes:
