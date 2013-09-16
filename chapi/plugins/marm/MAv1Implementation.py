@@ -209,13 +209,13 @@ class MAv1Implementation(MAv1DelegateBase):
 
     # This call is unprotected: no checking of credentials
     def get_version(self):
-        all_optional_fields = \
-            dict(optional_fields.items() + optional_key_fields.items())
+        all_optional_fields = dict(self.optional_fields.items() + \
+                                   self.optional_key_fields.items())
         version_info = {"VERSION": self.version_number,
                         "CREDENTIAL_TYPES": self.credential_types,
                         "OBJECTS" : self.objects,
                         "SERVICES" : self.services,
-                        "FIELDS": self.all_optional_fields}
+                        "FIELDS": all_optional_fields}
         return self._successReturn(version_info)
 
     # ensure that all of a set of entries are attributes
