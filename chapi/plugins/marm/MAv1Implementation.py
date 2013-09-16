@@ -525,9 +525,10 @@ class MAv1Implementation(MAv1DelegateBase):
         member_id = uuid.uuid4()
 
         session = self.db.getSession()
-        ins = self.db.MEMBER_TABLE.insert().values({'member_id':member_id})
+        ins = self.db.MEMBER_TABLE.insert().values({'member_id':str(member_id)})
         result = session.execute(ins)
         for attr in atmap.values():
+            attr['member_id'] = str(member_id)
             ins = self.db.MEMBER_ATTRIBUTE_TABLE.insert().values(attr)
             session.execute(ins)
         session.commit()
