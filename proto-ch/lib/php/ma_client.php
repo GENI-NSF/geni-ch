@@ -342,7 +342,7 @@ function ma_authorize_client($ma_url, $signer, $member_id, $client_urn,
 			     $authorize_sense)
 {
   $client = XMLRPCClient::get_client(client_url($ma_url), $signer);
-  $res = $client->list_authorize_client($member_id, $client_urn, $authorize_sense);
+  $res = $client->authorize_client($member_id, $client_urn, $authorize_sense);
   return $res;
 }
 
