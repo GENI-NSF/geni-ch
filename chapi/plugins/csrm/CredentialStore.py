@@ -28,7 +28,7 @@ from CHDatabaseEngine import *
 from chapi.DelegateBase import DelegateBase
 from chapi.HandlerBase import HandlerBase
 from ABACGuard import *
-from guard_utils import *
+from tools.guard_utils import *
 from chapi.Exceptions import *
 from sqlalchemy import *
 from datetime import *
