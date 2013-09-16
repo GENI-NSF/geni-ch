@@ -182,8 +182,10 @@ function ma_create_account($ma_url, $signer, $attrs, $self_asserted_attrs)
   $options = array('_dummy' => null);
   $results = $client->create_member($all_attrs, $client->get_credentials(), $options);
   
+  error_log("MA_CREATE_ACCOUNT.results = " . print_r($results, true));
+  
   // return member_id
-  return $results['MEMBER_UID'];
+  return $results[0]['member_id'];
 }
 
 // map from CHAPI MA attributes to portal attribute keys

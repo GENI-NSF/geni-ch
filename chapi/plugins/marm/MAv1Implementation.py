@@ -678,18 +678,7 @@ class MAv1Implementation(MAv1DelegateBase):
             open(csr_file, 'w').write(csr_data)
         else:
             # No CSR provided: Generate cert and private key
-            (csr_fd, csr_file) = tempfile.mkstemp()
-            os.close(csr_fd)
-            (key_fd, key_file) = tempfile.mkstemp()
-            os.close(key_fd)
-            csr_request_args = ['/usr/bin/openssl', 'req', '-new', \
-                                    '-newkey', 'rsa:1024', \
-                                    '-nodes', \
-                                    '-keyout', key_file, \
-                                    '-out', csr_file, '-batch']
-            subprocess.call(csr_request_args)
-            private_key = open(key_file).read()
-#            print "KEY = " + private_key
+            private_key, csr_file = make_csr()
 
         # Lookup UID and email from URN
         match = {'MEMBER_URN' : member_urn}
@@ -702,55 +691,17 @@ class MAv1Implementation(MAv1DelegateBase):
         email = str(member_info['MEMBER_EMAIL'])
         uuid = str(member_info['MEMBER_UID'])
 
-        # sign the csr to create cert
-        extname = 'v3_user'
-        extdata_template = "[ %s ]\n" + \
-            "subjectKeyIdentifier=hash\n" + \
-            "authorityKeyIdentifier=keyid:always,issuer:always\n" + \
-            "basicConstraints = CA:false\n"
-        extdata = extdata_template % extname
-        
-        if email:
-            extdata = extdata + \
-                "subjectAltName=email:copy,URI:%s,URI:urn:uuid:%s\n" \
-                % (urn, uuid);
-            subject = "/CN=%s/emailAddress=%s" % (uuid, email)
-        else:
-            extdata = extdata + \
-                "subjectAltName=URI:%s,URI:urn:uuid:%s\n" % (urn, uuid)
-            subject = "/CN=%s" % uuid;
-
-        (ext_fd, ext_file) = tempfile.mkstemp()
-        os.close(ext_fd)
-        open(ext_file, 'w').write(extdata)
-
-        (cert_fd, cert_file) = tempfile.mkstemp()
-        os.close(cert_fd)
-
-        sign_csr_args = ['/usr/bin/openssl', 'ca', \
-                             '-config', '/usr/share/geni-ch/CA/openssl.cnf', \
-                             '-extfile', ext_file, \
-                             '-policy', 'policy_anything', \
-                             '-out', cert_file, \
-                             '-in', csr_file, \
-                             '-extensions', extname, \
-                             '-batch', \
-                             '-notext', \
-                             '-cert', self.cert,\
-                             '-keyfile', self.key, \
-                             '-subj', subject ]
-#        print " ".join(sign_csr_args)
-
-        # Grab cert from cert_file
-        cert_pem = open(cert_file).read()
-#        print "CERT_PEM = " + cert_pem
+        cert_pem, private_key = \
+            make_cert_and_key(member_id, member_email, \
+                                  member_urn, self.cert, self.key, csr_file)
 
         # Grab signer pem
         signer_pem = open(self.cert).read()
-        
+
         # This is the aggregate cert
         # Need to return it somehow
         cert_chain = cert_pem + signer_pem
+
 
         # Store cert and key in outside_cert table
         session = self.db.getSession()

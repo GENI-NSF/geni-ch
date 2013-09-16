@@ -115,7 +115,8 @@ class MAv1Guard(ABACGuardBase):
                 ], assert_shares_project, standard_subject_extractor),
         'lookup_private_member_info' : \
             SubjectInvocationCheck([
-#                "ME.MAY_LOOKUP_PRIVATE_MEMBER_INFO<-ME.IS_OPERATOR", 
+                "ME.MAY_LOOKUP_PRIVATE_MEMBER_INFO<-ME.IS_AUTHORITY", 
+                "ME.MAY_LOOKUP_PRIVATE_MEMBER_INFO<-ME.IS_OPERATOR", 
                 "ME.MAY_LOOKUP_PRIVATE_MEMBER_INFO_$SUBJECT<-ME.IS_$SUBJECT"
                 ], None, standard_subject_extractor), 
         'update_member_info' : \

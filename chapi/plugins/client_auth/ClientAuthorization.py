@@ -33,6 +33,8 @@ from datetime import *
 from dateutil.relativedelta import relativedelta
 from tools.dbutils import *
 from ABACGuard import ABACGuardBase
+from guard_utils import *
+from cert_utils import *
 
 clientauth_logger = amsoil.core.log.getLogger('clientauthv1')
 xmlrpc = pm.getService('xmlrpc')
@@ -73,6 +75,9 @@ class ClientAuthv1Delegate(DelegateBase):
     def __init__(self):
         super(ClientAuthv1Delegate, self).__init__(clientauth_logger)
         self.db = pm.getService('chdbengine')
+        self.cert = '/usr/share/geni-ch/km/km-cert.pem'
+        self.key = '/usr/share/geni-ch/km/km-key.pem'
+        self.logging_service = pm.getService('loggingv1handler')
 
     # Dictionary of client_name => client_urn
     def list_clients(self):
@@ -97,13 +102,87 @@ class ClientAuthv1Delegate(DelegateBase):
         return self._successReturn(entries)
 
     # Authorize/deauthorize a tool with respect to a user
-    # *** WRITE ME
     def authorize_client(self, client_cert, member_id, \
                              client_urn, authorize_sense):
-        raise CHAPIv1NotImplementedError('')
+        member_urn = convert_member_uid_to_urn(member_id)
 
-# *** WRITE ME
+        if authorize_sense:
+            private_key, csr_file = make_csr()
+            member_email = convert_member_uid_to_email(member_id)
+            cert_pem = make_cert(member_id, member_email, member_urn, \
+                                     self.cert, self.key, csr_file)
+
+            signer_pem = open(self.cert).read()
+            cert_chain = cert_pem + signer_pem
+
+            # insert into MA_INSIDE_KEY_TABLENAME
+            # (member_id, client_urn, certificate, private_key)
+            # values 
+            # (member_id, client_urn, cert, key)
+            session = self.db.getSession()
+            insert_values = {'client_urn' : client_urn, 'member_id' : str(member_id), \
+                                 'private_key' : private_key, 'certificate' : cert_chain}
+            ins = self.db.INSIDE_KEY_TABLE.insert().values(insert_values)
+            session.execute(ins)
+            session.commit()
+            session.close()
+
+            # log_event
+            msg = "Authorizing client %s for member %s" % (client_urn, member_urn)
+            attribs = {"MEMBER" : member_id}
+            self.logging_service.log_event(msg, attribs, member_id)
+
+
+        else:
+
+            # delete from MA_INSIDE_KEY_TABLENAME
+            # where member_id = member_id and client_urn = client_urn
+            session = self.db.getSession()
+            q = q.filter(self.db.INSIDE_KEY_TABLE.c.member_id == member_id)
+            q = q.filter(self.db.INSIDE_KEY_TABLE.c.client_urn == client_urn)
+            q = q.delete()
+            session.commit()
+            session.close()
+
+            # log_event
+            msg = "Deauthorizing client %s for member %s" % (client_urn, member_urn)
+            attribs = {"MEMBER" : member_id}
+            self.logging_service.log_event(msg, attribs, member_id)
+        
+
+
+# Guard for client authorization - only for authorities
 class ClientAuthv1Guard(ABACGuardBase):
-    def __init__(self):
-        ABACGuardBase.__init__(self)
+
+    # Set of invocation checks indexed by method name
+    # *** WRITE ME
+    ARGUMENT_CHECK_FOR_METHOD = \
+        {
+        'list_clients' : None,
+        'list_authorized_clients' : None,
+        'authorize_client' : None
+        }
+
+    # Set of invocation checks indexed by method name
+    # *** WRITE ME
+    INVOCATION_CHECK_FOR_METHOD = \
+        {
+        'list_clients' : None,
+        'list_authorized_clients' : None,
+        'authorize_client' : None
+        }
+
+
+    # Lookup argument check per method (or None if none registered)
+    def get_argument_check(self, method):
+        if self.ARGUMENT_CHECK_FOR_METHOD.has_key(method):
+            return self.ARGUMENT_CHECK_FOR_METHOD[method]
+        return None
+
+    # Lookup invocation check per method (or None if none registered)
+    def get_invocation_check(self, method):
+        if self.INVOCATION_CHECK_FOR_METHOD.has_key(method):
+            return self.INVOCATION_CHECK_FOR_METHOD[method]
+        return None
+
 

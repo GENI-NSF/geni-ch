@@ -144,6 +144,21 @@ def convert_member_uid_to_urn(member_uid):
     cache[member_uid] = member_urn
     return member_urn
 
+def convert_member_uid_to_email(member_uid):
+    cache = cache_get('member_uid_to_email')
+    if member_uid in cache:
+        return cache[member_uid]
+    db = pm.getService('chdbengine')
+    session = db.getSession()
+    q = session.query(db.MEMBER_ATTRIBUTE_TABLE.c.value)
+    q = q.filter(db.MEMBER_ATTRIBUTE_TABLE.c.member_id == member_uid)
+    q = q.filter(db.MEMBER_ATTRIBUTE_TABLE.c.name == 'email_address')
+    rows = q.all()
+    session.close()
+    member_email = rows[0].value
+    cache[member_uid] = member_email
+    return member_email
+
 
 def lookup_operator_privilege(user_urn):
     cache = cache_get('operator_privilege')
