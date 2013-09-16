@@ -27,7 +27,8 @@ from amsoil.core import serviceinterface
 from CHDatabaseEngine import *
 from chapi.DelegateBase import DelegateBase
 from chapi.HandlerBase import HandlerBase
-from ABACGuard import ABACGuardBase
+from ABACGuard import *
+from guard_utils import *
 from chapi.Exceptions import *
 from sqlalchemy import *
 from datetime import *
@@ -130,13 +131,39 @@ class CSv1Guard(ABACGuardBase):
     def __init__(self):
         ABACGuardBase.__init__(self)
 
+    # Set of argument checks indexed by method name
+    ARGUMENT_CHECK_FOR_METHOD = \
+        {
+        'get_attributes' : None,
+        'get_permissions' : None
+        }
+
+    INVOCATION_CHECK_FOR_METHOD = \
+        {
+        'get_attributes' : \
+            SubjectInvocationCheck([
+                "ME.MAY_GET_ATTRIBUTES<-ME.IS_AUTHORITY",
+                "ME.MAY_GET_ATTRIBUTES_$SUBJECT<-ME.IS_$SUBJECT"
+                ], None, principal_extractor),
+        'get_permissions' : \
+            SubjectInvocationCheck([
+                "ME.MAY_GET_PERMISSIONS<-ME.IS_AUTHORITY",
+                "ME.MAY_GET_PERMISSIONS_$SUBJECT<-ME.IS_$SUBJECT"
+                ], None, principal_extractor),
+        }
+
+
+    # Lookup argument check per method (or None if none registered)
     def get_argument_check(self, method):
+        if self.ARGUMENT_CHECK_FOR_METHOD.has_key(method):
+            return self.ARGUMENT_CHECK_FOR_METHOD[method]
         return None
 
+    # Lookup invocation check per method (or None if none registered)
     def get_invocation_check(self, method):
+        if self.INVOCATION_CHECK_FOR_METHOD.has_key(method):
+            return self.INVOCATION_CHECK_FOR_METHOD[method]
         return None
 
-    def get_row_check(self, method):
-        return None
 
 

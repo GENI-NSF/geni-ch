@@ -28,7 +28,7 @@ from amsoil.core import serviceinterface
 from chapi.DelegateBase import DelegateBase
 from chapi.HandlerBase import HandlerBase
 from chapi.Exceptions import *
-from ABACGuard import extract_user_urn
+from guard_utils import extract_user_urn
 import sfa.trust.gid as gid
 import geni.util.urn_util as urn_util
 

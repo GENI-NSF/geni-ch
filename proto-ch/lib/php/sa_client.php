@@ -121,7 +121,7 @@ function create_slice($sa_url, $signer, $project_id, $project_name, $slice_name,
 			 'SLICE_DESCRIPTION' => $description,
 			 // MIK: email required for the api, but not passed through (controller was null)
 			 '_GENI_SLICE_EMAIL' => null,       
-			 '_GENI_PROJECT_URN' => $project_urn));
+			 'SLICE_PROJECT_URN' => $project_urn));
 
   $slice = $client->create_slice($client->get_credentials(), $options); 
   $converted_slice = slice_details_chapi2portal($slice);

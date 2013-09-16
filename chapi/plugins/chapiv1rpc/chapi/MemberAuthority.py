@@ -132,6 +132,34 @@ class MAv1Handler(HandlerBase):
         except Exception as e:
             return self._errorReturn(e)
 
+    # This call is protected
+    # Create a new member using the specified attributes.  Attribute email is 
+    # required.  Returns the attributes of the resulting member record, including
+    # the uid and urn.
+    # Authorized by client cert and credentials
+    def create_member(self, attributes, credentials, options):
+        client_cert = self.requestCertificate()
+        method = 'create_member'
+        try:
+            self._guard.validate_call(client_cert, method, \
+                                          credentials, options, \
+                                          {'attributes' : attributes})
+            client_cert, options = \
+                self._guard.adjust_client_identity(client_cert, \
+                                                       credentials, options)
+            results =  self._delegate.create_member(client_cert, \
+                                                    attributes, \
+                                                    credentials, options)
+            if results['code'] == NO_ERROR:
+                results_value = results['value']
+                new_results_value = self._guard.protect_results(client_cert, method, credentials, results_value)
+                results = self._successReturn(new_results_value)
+
+            return results
+
+        except Exception as e:
+            return self._errorReturn(e)
+
     # KEY service methods
 
     # Create a record for a key pair for given member
@@ -306,6 +334,10 @@ class MAv1DelegateBase(DelegateBase):
 
     # This call is protected
     def update_member_info(self, client_cert, member_urn, credentials, options):
+        raise CHAPIv1NotImplementedError('')
+
+    # This call is protected
+    def create_member(self, client_cert, attributes, credentials, options):
         raise CHAPIv1NotImplementedError('')
 
     # KEY service methods

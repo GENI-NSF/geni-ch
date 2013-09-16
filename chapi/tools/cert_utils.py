@@ -22,6 +22,9 @@
 #----------------------------------------------------------------------
 
 import sfa.trust.certificate
+import subprocess
+import os
+import tempfile
 
 # A set of utilities to pull infomration out of X509 certs
 
@@ -79,3 +82,69 @@ def extract_data_from_slice_urn(urn):
     authority = authority_parts[0]
     project_name = authority_parts[1]
     return project_name, authority, slice_name
+
+# Generate a CSR, return private key and file containing csr
+def make_csr():
+    (csr_fd, csr_file) = tempfile.mkstemp()
+    os.close(csr_fd)
+    (key_fd, key_file) = tempfile.mkstemp()
+    os.close(key_fd)
+    csr_request_args = ['/usr/bin/openssl', 'req', '-new', \
+                            '-newkey', 'rsa:1024', \
+                            '-nodes', \
+                            '-keyout', key_file, \
+                            '-out', csr_file, '-batch']
+    subprocess.call(csr_request_args)
+    private_key = open(key_file).read()
+    return private_key, csr_file
+
+# Generate an X509 cert and private key
+# Return cert
+def make_cert(uuid, email, urn, \
+                          signer_cert_file, signer_key_file, csr_file):
+
+    # sign the csr to create cert
+    extname = 'v3_user'
+    extdata_template = "[ %s ]\n" + \
+        "subjectKeyIdentifier=hash\n" + \
+        "authorityKeyIdentifier=keyid:always,issuer:always\n" + \
+        "basicConstraints = CA:false\n"
+    extdata = extdata_template % extname
+        
+    if email:
+        extdata = extdata + \
+            "subjectAltName=email:copy,URI:%s,URI:urn:uuid:%s\n" \
+            % (urn, uuid);
+        subject = "/CN=%s/emailAddress=%s" % (uuid, email)
+    else:
+        extdata = extdata + \
+            "subjectAltName=URI:%s,URI:urn:uuid:%s\n" % (urn, uuid)
+        subject = "/CN=%s" % uuid;
+
+    (ext_fd, ext_file) = tempfile.mkstemp()
+    os.close(ext_fd)
+    open(ext_file, 'w').write(extdata)
+
+    (cert_fd, cert_file) = tempfile.mkstemp()
+    os.close(cert_fd)
+
+    sign_csr_args = ['/usr/bin/openssl', 'ca', \
+                         '-config', '/usr/share/geni-ch/CA/openssl.cnf', \
+                         '-extfile', ext_file, \
+                         '-policy', 'policy_anything', \
+                         '-out', cert_file, \
+                         '-in', csr_file, \
+                         '-extensions', extname, \
+                         '-batch', \
+                         '-notext', \
+                         '-cert', signer_cert_file,\
+                         '-keyfile', signer_key_file, \
+                         '-subj', subject ]
+#        print " ".join(sign_csr_args)
+
+        # Grab cert from cert_file
+    cert_pem = open(cert_file).read()
+#        print "CERT_PEM = " + cert_pem
+
+    return cert_pem
+

@@ -28,6 +28,7 @@ from chapi.Exceptions import *
 from geni.util.urn_util import URN
 import amsoil.core.pluginmanager as pm
 from tools.dbutils import *
+from tools.cert_utils import *
 import sfa.trust.gid as sfa_gid
 import sfa.trust.certificate as cert
 import geni.util.cred_util as cred_util
@@ -37,7 +38,8 @@ from dateutil.relativedelta import relativedelta
 import os
 import tempfile
 import subprocess
-
+import uuid
+import re
 
 # classes for mapping to sql tables
 
@@ -63,6 +65,84 @@ def row_cert_to_public_key(row):
     cert_obj = cert.Certificate(string=raw_certificate)
     public_key = cert_obj.get_pubkey()
     return public_key.get_pubkey_string()
+
+def derive_username(email_address):
+    # See http://www.linuxjournal.com/article/9585
+    # try to figure out a reasonable username.
+    # php: $email_addr = filter_var($email_address, FILTER_SANITIZE_EMAIL);
+    email_addr = re.sub('[^a-zA-Z0-9!#$%&\'*+\-/=?^_`{|}~@.[]]', '', email_address)
+    # print "<br/>derive2: email_addr = $email_addr<br/>\n"; */
+
+    # Now get the username portion.
+    atindex = email_addr.rindex('@')
+    # print "atindex = $atindex<br/>\n"; */
+    username = email_addr[0:atindex]
+    # print "base username = $username<br/>\n"; */
+
+    # Follow the rules here:
+    #         http://groups.geni.net/geni/wiki/GeniApiIdentifiers#Name
+    #  * Max 8 characters
+    #  * Case insensitive internally
+    #  * Obey this regex: '^[a-zA-Z][\w]\{0,7\}$'
+    # Additionally, sanitize the username so it can be used in ABAC
+
+    # lowercase the username
+    username = username.lower()
+    # trim the username to 8 chars
+    if len(username)>8:
+        username = username[0:8]
+    # remove unacceptable characters
+    username = re.sub('![a-z0-9_]', '', username)
+    # remove leading non-alphabetic leading chars
+    username = re.sub('^[^a-z]*', '', username)
+
+    if not username:
+        username = "geni1"
+
+    if not username_exists(username):
+        # print "no conflict with $username<br/>\n";
+        return username
+    else:
+        # shorten the name and append a two-digit number
+        if len(username)>6:
+            username = username[0:6]
+        for i in range(1, 100):
+            if i<10:
+                tmpname = username+'0'+str(i)
+            else:
+                tmpname = username+str(i)
+            # print "trying $tmpname<br/>\n";
+            if not username_exists(tmpname):
+                # print "no conflict with $tmpname<br/>\n";
+                return tmpname
+
+    raise CHAPIv1ArgumentError('Unable to find a username based on '+email_address)
+
+def username_exists(name):
+    db = pm.getService('chdbengine')
+    session = db.getSession()
+    q = session.query(MemberAttribute.member_id)
+    q = q.filter(MemberAttribute.name == name)
+    rows = q.all()
+    session.close()
+    return len(rows) > 0
+
+def make_member_urn(cert, username):
+    ma_urn = get_urn_from_cert(cert)
+    ma_authority, ma_type, ma_name = parse_urn(ma_urn)
+    return make_urn(ma_authority, 'user', username)
+
+def parse_urn(urn):
+    '''returns authority, type, name'''
+    m = re.search('urn:publicid:IDN\+([^\+]+)\+([^\+]+)\+([^\+]+)$', urn)
+    if m is not None:
+        return m.group(1), m.group(2), m.group(3)
+    else:
+        return None
+
+
+def make_urn(authority, typ, name):
+    return 'urn:publicid:IDN+'+authority+'+'+typ+'+'+name
 
 class MAv1Implementation(MAv1DelegateBase):
 
@@ -420,6 +500,48 @@ class MAv1Implementation(MAv1DelegateBase):
                   self.key, self.cert, self.trusted_roots)
         return cred.save_to_string()
 
+    def create_member(self, client_cert, attributes, credentials, options):
+        # if it weren't for needing to track which attributes were self-asserted
+        # we could just use options['fields']
+
+        # rearrange the attributes a bit
+        atmap = dict()
+        for attr in attributes:
+            atmap[attr['name']]=attr  # also value, self_asserted
+
+        # check to make sure that there's an email address
+        if 'email_address' not in atmap.keys():
+            return self._errorReturn(CHAPIv1DatabaseError("No email_address attribute"))
+        else:
+            email_address = atmap['email_address']['value']
+
+        # username
+        user_name = derive_username(email_address)
+        user_urn = make_member_urn(client_cert, user_name)
+
+        atmap['username'] = {'name':'username', 'value':user_name, 'self_asserted':False}
+        atmap['urn'] = {'name':'urn', 'value':user_urn, 'self_asserted':False}
+
+        member_id = uuid.uuid4()
+
+        session = self.db.getSession()
+        ins = self.db.MEMBER_TABLE.insert().values({'member_id':str(member_id)})
+        result = session.execute(ins)
+        for attr in atmap.values():
+            attr['member_id'] = str(member_id)
+            ins = self.db.MEMBER_ATTRIBUTE_TABLE.insert().values(attr)
+            session.execute(ins)
+        session.commit()
+        session.close()
+
+        # Log the successful creation of member
+        self.logging_service = pm.getService('loggingv1handler')
+        msg = "Activated GENI user : %s" % member_id
+        attrs = {"MEMBER" : member_id}
+        self.logging_service.log_event(msg, attrs, member_id)
+
+        return self._successReturn(atmap.values())
+
     # Implementation of KEY Service methods
 
     def create_key(self, client_cert, member_urn, credentials, options):
@@ -455,6 +577,14 @@ class MAv1Implementation(MAv1DelegateBase):
         fields["KEY_MEMBER"] = member_urn
 
         session.commit()
+        session.close()
+
+        # Log the creation of the SSH key
+        client_uuid = get_uuid_from_cert(ciient_cert)
+        attrs = {"MEMBER" : client_uuid}
+        msg = "%s registering SSH key %s" % (member_urn, key_id)
+        self.logging_service.log_event(msg, attrs, client_uuid)
+
         return self._successReturn(fields)
 
     def delete_key(self, client_cert, member_urn, key_id, \
@@ -467,6 +597,14 @@ class MAv1Implementation(MAv1DelegateBase):
         if num_del == 0:
             return self._errorReturn(CHAPIv1DatabaseError("No key with id  %s" % key_id))
         session.commit()
+        session.close()
+
+        # Log the deletion of the SSH key
+        client_uuid = get_uuid_from_cert(ciient_cert)
+        attrs = {"MEMBER" : client_uuid}
+        msg = "%s deleting SSH key %s" % (member_urn, key_id)
+        self.logging_service.log_event(msg, attrs, client_uuid)
+
         return self._successReturn(True)
 
     def update_key(self, client_cert, member_urn, key_id, \
@@ -488,6 +626,7 @@ class MAv1Implementation(MAv1DelegateBase):
         if num_upd == 0:
             return self._errorReturn(CHAPIv1DatabaseError("No key with id %s" % key_id))
         session.commit()
+        session.close()
         return self._successReturn(True)
 
     def lookup_keys(self, client_cert, credentials, options):
@@ -539,18 +678,7 @@ class MAv1Implementation(MAv1DelegateBase):
             open(csr_file, 'w').write(csr_data)
         else:
             # No CSR provided: Generate cert and private key
-            (csr_fd, csr_file) = tempfile.mkstemp()
-            os.close(csr_fd)
-            (key_fd, key_file) = tempfile.mkstemp()
-            os.close(key_fd)
-            csr_request_args = ['/usr/bin/openssl', 'req', '-new', \
-                                    '-newkey', 'rsa:1024', \
-                                    '-nodes', \
-                                    '-keyout', key_file, \
-                                    '-out', csr_file, '-batch']
-            subprocess.call(csr_request_args)
-            private_key = open(key_file).read()
-#            print "KEY = " + private_key
+            private_key, csr_file = make_csr()
 
         # Lookup UID and email from URN
         match = {'MEMBER_URN' : member_urn}
@@ -563,55 +691,17 @@ class MAv1Implementation(MAv1DelegateBase):
         email = str(member_info['MEMBER_EMAIL'])
         uuid = str(member_info['MEMBER_UID'])
 
-        # sign the csr to create cert
-        extname = 'v3_user'
-        extdata_template = "[ %s ]\n" + \
-            "subjectKeyIdentifier=hash\n" + \
-            "authorityKeyIdentifier=keyid:always,issuer:always\n" + \
-            "basicConstraints = CA:false\n"
-        extdata = extdata_template % extname
-        
-        if email:
-            extdata = extdata + \
-                "subjectAltName=email:copy,URI:%s,URI:urn:uuid:%s\n" \
-                % (urn, uuid);
-            subject = "/CN=%s/emailAddress=%s" % (uuid, email)
-        else:
-            extdata = extdata + \
-                "subjectAltName=URI:%s,URI:urn:uuid:%s\n" % (urn, uuid)
-            subject = "/CN=%s" % uuid;
-
-        (ext_fd, ext_file) = tempfile.mkstemp()
-        os.close(ext_fd)
-        open(ext_file, 'w').write(extdata)
-
-        (cert_fd, cert_file) = tempfile.mkstemp()
-        os.close(cert_fd)
-
-        sign_csr_args = ['/usr/bin/openssl', 'ca', \
-                             '-config', '/usr/share/geni-ch/CA/openssl.cnf', \
-                             '-extfile', ext_file, \
-                             '-policy', 'policy_anything', \
-                             '-out', cert_file, \
-                             '-in', csr_file, \
-                             '-extensions', extname, \
-                             '-batch', \
-                             '-notext', \
-                             '-cert', self.cert,\
-                             '-keyfile', self.key, \
-                             '-subj', subject ]
-#        print " ".join(sign_csr_args)
-
-        # Grab cert from cert_file
-        cert_pem = open(cert_file).read()
-#        print "CERT_PEM = " + cert_pem
+        cert_pem, private_key = \
+            make_cert_and_key(member_id, member_email, \
+                                  member_urn, self.cert, self.key, csr_file)
 
         # Grab signer pem
         signer_pem = open(self.cert).read()
-        
+
         # This is the aggregate cert
         # Need to return it somehow
         cert_chain = cert_pem + signer_pem
+
 
         # Store cert and key in outside_cert table
         session = self.db.getSession()
@@ -621,6 +711,7 @@ class MAv1Implementation(MAv1DelegateBase):
         ins = self.db.OUTSIDE_CERT_TABLE().values(insert_fields)
         result = session.execute(ins)
         session.commit()
+        session.close()
 
         return self._successReturn(True)
 
