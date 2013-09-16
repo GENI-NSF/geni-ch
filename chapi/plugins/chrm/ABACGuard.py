@@ -25,18 +25,18 @@ from CHDatabaseEngine import CHDatabaseEngine
 import amsoil.core.pluginmanager as pm
 from  sqlalchemy import *
 from  sqlalchemy.orm import aliased
-from cert_utils import *
+from tools.cert_utils import *
 from chapi.GuardBase import GuardBase
 from chapi.Exceptions import *
 import sfa.trust.certificate;
 import types
 from ABAC import *
-from SpeaksFor import determine_speaks_for
+from tools.SpeaksFor import determine_speaks_for
 from tools.ABACManager import ABACManager
 from ArgumentCheck import *
-from geni_constants import *
-from geni_utils import *
-from guard_utils import *
+from tools.geni_constants import *
+from tools.geni_utils import *
+from tools.guard_utils import *
 
 
 # Pre-processor for method invocations
