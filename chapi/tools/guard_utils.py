@@ -29,6 +29,7 @@ from  sqlalchemy import *
 from  sqlalchemy.orm import aliased
 import threading
 from geni_utils import *
+from cert_utils import *
 from geni_constants import *
 from chapi.Memoize import memoize
 from chapi.Exceptions import *
@@ -159,6 +160,20 @@ def convert_member_uid_to_email(member_uid):
     cache[member_uid] = member_email
     return member_email
 
+def convert_member_email_to_uid(member_email):
+    cache = cache_get('member_email_to_urn')
+    if member_email in cache:
+        return cache[member_email]
+    db = pm.getService('chdbengine')
+    session = db.getSession()
+    q = session.query(db.MEMBER_ATTRIBUTE_TABLE.c.member_id)
+    q = q.filter(db.MEMBER_ATTRIBUTE_TABLE.c.value == member_email)
+    q = q.filter(db.MEMBER_ATTRIBUTE_TABLE.c.name == 'email_address')
+    rows = q.all()
+    session.close()
+    member_uid = rows[0].member_id
+    cache[member_email] = member_uid
+    return member_uid
 
 def lookup_operator_privilege(user_urn):
     cache = cache_get('operator_privilege')
@@ -422,6 +437,20 @@ def standard_subject_extractor(options, arguments):
         if not isinstance(member_uids, list): member_uids = [member_uids]
         member_urns = [convert_member_uid_to_urn(member_uid) for member_uid in member_uids]
         extracted["MEMBER_URN"] = member_urns
+    if '_GENI_KEY_MEMBER_UID' in match_option:
+        member_uids = match_option['_GENI_KEY_MEMBER_UID']
+        if not isinstance(member_uids, list): member_uids =[member_uids]
+        member_urns = [convert_member_uid_to_urn(member_uid) for member_uid in member_uids]
+        extracted['MEMBER_URN'] = member_urns
+    if 'MEMBER_EMAIL' in match_option:
+        member_emails = match_option['MEMBER_EMAIL']
+        member_urns = []
+        for member_email in member_emails:
+            member_uid = convert_member_email_to_uid(member_email)
+            if member_uid:
+                member_urn = convert_member_uid_to_urn(member_uid)
+                member_urns.append(member_urn)
+        extracted['MEMBER_URN'] = member_urns
     return extracted
 
 def key_subject_extractor(options, arguments):
@@ -430,7 +459,14 @@ def key_subject_extractor(options, arguments):
         raise CHAPIv1ArgumentError("No match option for query")
     match_option = options['match']
     if 'KEY_MEMBER' in match_option:
-        extracted['MEMBER_URN'] = match_option['KEY_MEMBER']
+        member_urns = match_option['KEY_MEMBER']
+        if not isinstance(member_urns, list): member_urns = [member_urns]
+        extracted['MEMBER_URN'] = member_urns
+    if '_GENI_KEY_MEMBER_UID' in match_option:
+        member_uids = match_option['_GENI_KEY_MEMBER_UID']
+        if not isinstance(member_uids, list): member_uids = [member_uids]
+        member_urns = [convert_member_uid_to_urn(member_uid) for member_uid in member_uids]
+        extracted['MEMBER_URN'] = member_urns
     return extracted
         
 
