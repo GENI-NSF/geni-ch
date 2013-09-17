@@ -25,13 +25,13 @@
 
 from chapi.MemberAuthority import MAv1DelegateBase
 from chapi.Exceptions import *
-from ext.geni.util.urn_util import URN
+from geni.util.urn_util import URN
 import amsoil.core.pluginmanager as pm
 from tools.dbutils import *
 from tools.cert_utils import *
 import ext.sfa.trust.gid as sfa_gid
 import ext.sfa.trust.certificate as cert
-import ext.geni.util.cred_util as cred_util
+import geni.util.cred_util as cred_util
 from sqlalchemy.orm import mapper
 from datetime import *
 from dateutil.relativedelta import relativedelta

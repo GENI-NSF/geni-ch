@@ -22,7 +22,7 @@
 #----------------------------------------------------------------------
 
 from chapi.Exceptions import *
-from ext.geni.util.urn_util import is_valid_urn
+from geni.util.urn_util import is_valid_urn
 import types
 
 # Create a subset 'fields' dictionary with only fields in given list

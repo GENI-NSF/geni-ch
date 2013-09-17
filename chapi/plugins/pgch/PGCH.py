@@ -23,14 +23,14 @@
 
 import amsoil.core.log
 import amsoil.core.pluginmanager as pm
-import ext.sfa.util.xrn
+import sfa.util.xrn
 from amsoil.core import serviceinterface
 from chapi.DelegateBase import DelegateBase
 from chapi.HandlerBase import HandlerBase
 from chapi.Exceptions import *
 from tools.guard_utils import extract_user_urn
-import ext.sfa.trust.gid as gid
-import ext.geni.util.urn_util as urn_util
+import sfa.trust.gid as gid
+import geni.util.urn_util as urn_util
 
 pgch_logger = amsoil.core.log.getLogger('pgchv1')
 
