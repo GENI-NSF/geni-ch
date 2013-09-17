@@ -97,83 +97,167 @@ def lookup_project_names_for_user(user_urn):
     cache[user_urn] = project_names
     return project_names
 
+# Take a uid or list of uids, make sure they're all in the cache
+# and return a urn or list of urns
 def convert_slice_uid_to_urn(slice_uid):
+    slice_uids = slice_uid
+    if not isinstance(slice_uid, list): slice_uids = [slice_uid]
+
     cache = cache_get('slice_uid_to_urn')
-    if slice_uid in cache:
-        return cache[slice_uid]
+    uncached_uids = [id for id in slice_uids if id not in cache]
 
-    db = pm.getService('chdbengine')
-    session = db.getSession()
-    q = session.query(db.SLICE_TABLE.c.slice_urn)
-    q = q.filter(db.SLICE_TABLE.c.slice_id == slice_uid)
-    rows = q.all()
-    session.close()
-    slice_urn = rows[0].slice_urn
-    cache[slice_uid] = slice_urn
-    return slice_urn
+    if len(uncached_uids) > 0:
+        db = pm.getService('chdbengine')
+        session = db.getSession()
+        q = session.query(db.SLICE_TABLE.c.slice_urn, db.SLICE_TABLE.c.slice_id)
+        q = q.filter(db.SLICE_TABLE.c.slice_id.in_(uncached_uids))
+        rows = q.all()
+        session.close()
+        for row in rows:
+            slice_id = row.slice_id
+            slice_urn = row.slice_urn
+            cache[slice_id] = slice_urn
 
+    if not isinstance(slice_uid, list):
+        if slice_uid in cache:
+            return cache[slice_uid]
+        else:
+            return None
+    else:
+        return [cache[id] for id in slice_uids if id in cache]
+
+# Take a uid or list of uids, make sure they're all in the cache
+# and return a urn or list of urns
 def convert_project_uid_to_urn(project_uid):
-    cache = cache_get('project_uid_to_urn')
-    if project_uid in cache:
-        return cache[project_uid]
 
     config = pm.getService('config')
     authority = config.get("chrm.authority")
-    db = pm.getService('chdbengine')
-    session = db.getSession()
-    q = session.query(db.PROJECT_TABLE.c.project_name)
-    q = q.filter(db.PROJECT_TABLE.c.project_id == project_uid)
-    rows = q.all()
-    session.close()
-    project_name = rows[0].project_name
-    project_urn = to_project_urn(authority, project_name)
-    cache[project_uid] = project_urn
-    return project_urn
 
+    project_uids = project_uid
+    if not isinstance(project_uid, list): project_uids = [project_uid]
+
+    cache = cache_get('project_uid_to_urn')
+    uncached_uids = [id for id in project_uids if id not in cache]
+
+    if len(uncached_uids) > 0:
+        db = pm.getService('chdbengine')
+        session = db.getSession()
+        q = session.query(db.PROJECT_TABLE.c.project_name, \
+                              db.PROJECT_TABLE.c.project_id)
+        q = q.filter(db.PROJECT_TABLE.c.project_id.in_(uncached_uids))
+        rows = q.all()
+        session.close()
+        for row in rows:
+            project_id = row.project_id
+            project_name = row.project_name
+            project_urn = to_project_urn(authority, project_name)
+            cache[project_id] = project_urn
+
+    if not isinstance(project_uid, list):
+        if project_uid in cache:
+            return cache[project_uid]
+        else:
+            return None
+    else:
+        return [cache[id] for id in project_uids if id in cache]
+
+
+# Take a uid or list of uids, make sure they're all in the cache
+# and return a urn or list of urns
 def convert_member_uid_to_urn(member_uid):
+
+    member_uids = member_uid
+    if not isinstance(member_uid, list): member_uids = [member_uid]
+
     cache = cache_get('member_uid_to_urn')
-    if member_uid in cache:
-        return cache[member_uid]
-    db = pm.getService('chdbengine')
-    session = db.getSession()
-    q = session.query(db.MEMBER_ATTRIBUTE_TABLE.c.value)
-    q = q.filter(db.MEMBER_ATTRIBUTE_TABLE.c.member_id == member_uid)
-    q = q.filter(db.MEMBER_ATTRIBUTE_TABLE.c.name == 'urn')
-    rows = q.all()
-    session.close()
-    member_urn = rows[0].value
-    cache[member_uid] = member_urn
-    return member_urn
+    uncached_uids = [id for id in member_uids if id not in cache]
 
+    if len(uncached_uids) > 0:
+        db = pm.getService('chdbengine')
+        session = db.getSession()
+        q = session.query(db.MEMBER_ATTRIBUTE_TABLE.c.value, \
+                              db.MEMBER_ATTRIBUTE_TABLE.c.member_id)
+        q = q.filter(db.MEMBER_ATTRIBUTE_TABLE.c.member_id.in_(uncached_uids))
+        q = q.filter(db.MEMBER_ATTRIBUTE_TABLE.c.name == 'urn')
+        rows = q.all()
+        session.close()
+        for row in rows:
+            member_urn = row.value
+            member_id = row.member_id
+            cache[member_id] = member_urn
+            
+    if not isinstance(member_uid, list):
+        if member_uid in cache:
+            return cache[member_uid]
+        else:
+            return None
+    else:
+        return [cache[id] for id in member_uids if id in cache]
+
+# Take a uid or list of uids, make sure they're all in the cache
+# and return an email or list of emails
 def convert_member_uid_to_email(member_uid):
-    cache = cache_get('member_uid_to_email')
-    if member_uid in cache:
-        return cache[member_uid]
-    db = pm.getService('chdbengine')
-    session = db.getSession()
-    q = session.query(db.MEMBER_ATTRIBUTE_TABLE.c.value)
-    q = q.filter(db.MEMBER_ATTRIBUTE_TABLE.c.member_id == member_uid)
-    q = q.filter(db.MEMBER_ATTRIBUTE_TABLE.c.name == 'email_address')
-    rows = q.all()
-    session.close()
-    member_email = rows[0].value
-    cache[member_uid] = member_email
-    return member_email
 
+    member_uids = member_uid
+    if not isinstance(member_uid, list): member_uids = [member_uid]
+
+    cache = cache_get('member_uid_to_email')
+    uncached_uids = [id for id in member_uids if id not in cache]
+
+    if len(uncached_uids) > 0:
+        db = pm.getService('chdbengine')
+        session = db.getSession()
+        q = session.query(db.MEMBER_ATTRIBUTE_TABLE.c.value, \
+                              db.MEMBER_ATTRIBUTE_TABLE.c.member_id)
+        q = q.filter(db.MEMBER_ATTRIBUTE_TABLE.c.member_id.in_(uncached_uids))
+        q = q.filter(db.MEMBER_ATTRIBUTE_TABLE.c.name == 'email_address')
+        rows = q.all()
+        session.close()
+        for row in rows:
+            member_email = row.value
+            member_id = row.member_id
+            cache[member_id] = member_email
+            
+    if not isinstance(member_uid, list):
+        if member_uid in cache:
+            return cache[member_uid]
+        else:
+            return None
+    else:
+        return [cache[id] for id in member_uids if id in cache]
+
+
+# Take an email or list of emails, make sure they're all in the cache
+# and return a uid or list of uids
 def convert_member_email_to_uid(member_email):
-    cache = cache_get('member_email_to_urn')
-    if member_email in cache:
-        return cache[member_email]
-    db = pm.getService('chdbengine')
-    session = db.getSession()
-    q = session.query(db.MEMBER_ATTRIBUTE_TABLE.c.member_id)
-    q = q.filter(db.MEMBER_ATTRIBUTE_TABLE.c.value == member_email)
-    q = q.filter(db.MEMBER_ATTRIBUTE_TABLE.c.name == 'email_address')
-    rows = q.all()
-    session.close()
-    member_uid = rows[0].member_id
-    cache[member_email] = member_uid
-    return member_uid
+
+    member_emails = member_email
+    if not isinstance(member_email, list): member_emails = [member_email]
+
+    cache = cache_get('member_email_to_uid')
+    uncached_emails = [em for em in member_emails if em not in cache]
+
+    if len(uncached_emails) > 0:
+        db = pm.getService('chdbengine')
+        session = db.getSession()
+        q = session.query(db.MEMBER_ATTRIBUTE_TABLE.c.value, \
+                              db.MEMBER_ATTRIBUTE_TABLE.c.member_id)
+        q = q.filter(db.MEMBER_ATTRIBUTE_TABLE.c.value.in_(uncached_emails))
+        q = q.filter(db.MEMBER_ATTRIBUTE_TABLE.c.name == 'email_address')
+        rows = q.all()
+        session.close()
+        for row in rows:
+            member_email = row.value
+            member_id = row.member_id
+            cache[member_email] = member_id
+            
+    if not isinstance(member_email, list):
+        if member_email in cache:
+            return cache[member_email]
+        else:
+            return None
+    else:
+        return [cache[em] for em in member_emails if em in cache]
 
 def lookup_operator_privilege(user_urn):
     cache = cache_get('operator_privilege')
@@ -416,40 +500,36 @@ def standard_subject_extractor(options, arguments):
     if "SLICE_UID" in match_option:
         slice_uids = match_option['SLICE_UID']
         if not isinstance(slice_uids, list): slice_uids = [slice_uids]
-        slice_urns = [convert_slice_uid_to_urn(slice_uid) for slice_uid in slice_uids]
+        slice_urns = convert_slice_uid_to_urn(slice_uids)
         extracted["SLICE_URN"] = slice_urns
     if "PROJECT_URN" in match_option:
         extracted["PROJECT_URN"] =  match_option['PROJECT_URN']
     if "PROJECT_UID" in match_option:
         project_uids = match_option['PROJECT_UID']
         if not isinstance(project_uids, list): project_uids = [project_uids]
-        project_urns = [convert_project_uid_to_urn(project_uid) for project_uid in project_uids]
+        project_urns = convert_project_uid_to_urn(project_uids)
         extracted["PROJECT_URN"] = project_urns
     if "_GENI_PROJECT_UID" in match_option:
         project_uids = match_option['_GENI_PROJECT_UID']
         if not isinstance(project_uids, list): project_uids = [project_uids]
-        project_urns = [convert_project_uid_to_urn(project_uid) for project_uid in project_uids]
+        project_urns = convert_project_uid_to_urn(project_uids)
         extracted["PROJECT_URN"] = project_urns
     if "MEMBER_URN" in match_option:
         extracted["MEMBER_URN"] =  match_option['MEMBER_URN']
     if "MEMBER_UID" in match_option:
         member_uids = match_option['MEMBER_UID']
         if not isinstance(member_uids, list): member_uids = [member_uids]
-        member_urns = [convert_member_uid_to_urn(member_uid) for member_uid in member_uids]
+        member_urns = convert_member_uid_to_urn(member_uids)
         extracted["MEMBER_URN"] = member_urns
     if '_GENI_KEY_MEMBER_UID' in match_option:
         member_uids = match_option['_GENI_KEY_MEMBER_UID']
         if not isinstance(member_uids, list): member_uids =[member_uids]
-        member_urns = [convert_member_uid_to_urn(member_uid) for member_uid in member_uids]
+        member_urns = convert_member_uid_to_urn(member_uids)
         extracted['MEMBER_URN'] = member_urns
     if 'MEMBER_EMAIL' in match_option:
         member_emails = match_option['MEMBER_EMAIL']
-        member_urns = []
-        for member_email in member_emails:
-            member_uid = convert_member_email_to_uid(member_email)
-            if member_uid:
-                member_urn = convert_member_uid_to_urn(member_uid)
-                member_urns.append(member_urn)
+        member_uids = convert_member_email_to_uid(member_emails)
+        member_urns = convert_member_uid_to_urn(member_uids)
         extracted['MEMBER_URN'] = member_urns
     return extracted
 
