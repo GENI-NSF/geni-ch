@@ -36,8 +36,8 @@ from datetime import *
 from dateutil.relativedelta import relativedelta
 import uuid
 from CHDatabaseEngine import Aggregate
-from tools.geni_constants import *
-from tools.geni_utils import *
+from geni_constants import *
+from geni_utils import *
 from tools.cs_utils import *
 
 
