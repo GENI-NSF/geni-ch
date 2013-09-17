@@ -32,7 +32,7 @@ from sqlalchemy import *
 import datetime
 from dateutil.relativedelta import relativedelta
 from tools.dbutils import *
-from geni_constants import context_type_names
+from tools.geni_constants import context_type_names
 
 logging_logger = amsoil.core.log.getLogger('logv1')
 xmlrpc = pm.getService('xmlrpc')

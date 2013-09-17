@@ -33,8 +33,8 @@ from datetime import *
 from dateutil.relativedelta import relativedelta
 from tools.dbutils import *
 from ABACGuard import ABACGuardBase
-from guard_utils import *
-from cert_utils import *
+from tools.guard_utils import *
+from tools.cert_utils import *
 
 clientauth_logger = amsoil.core.log.getLogger('clientauthv1')
 xmlrpc = pm.getService('xmlrpc')
