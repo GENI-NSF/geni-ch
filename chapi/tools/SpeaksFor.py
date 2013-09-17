@@ -23,7 +23,7 @@
 
 import optparse
 import os, sys
-import ext.sfa.trust.certificate
+import sfa.trust.certificate
 from cert_utils import *
 from ABACManager import ABACManager
 

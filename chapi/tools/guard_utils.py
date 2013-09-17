@@ -53,7 +53,7 @@ def cache_clear():
 @memoize
 def extract_user_urn(client_cert):
     client_cert_object = \
-        ext.sfa.trust.certificate.Certificate(string=client_cert)
+        sfa.trust.certificate.Certificate(string=client_cert)
     user_urn = None
     identifiers = client_cert_object.get_extension('subjectAltName')
     identifier_parts = identifiers.split(',')
