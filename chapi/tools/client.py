@@ -74,6 +74,8 @@ def parseOptions():
                       default = None)
     parser.add_option("--options", help="JSON of options argument", default="{}")
     parser.add_option("--options_file", help="File containing JSON of options argument", default=None)
+    parser.add_option("--attributes", help="JSON of attributes argument", default="{}")
+    parser.add_option("--attributes_file", help="File containing JSON of attributes argument", default=None)
     parser.add_option("--credentials", \
                           help="List of comma-separated credential files", \
                           default="")
@@ -97,6 +99,9 @@ def main():
     client_options = json.loads(opts.options)
     if opts.options_file:
         client_options = json.load(open(opts.options_file, 'r'))
+    client_attributes = json.loads(opts.attributes)
+    if opts.attributes_file:
+        client_attributes = json.load(open(opts.attributes_file, 'r'))
     print "CREDS = " + str(opts.credentials)
     print "OPTIONS = " + str(client_options)
     suppress_errors = None
@@ -229,6 +234,12 @@ def main():
         (result, msg) = \
             _do_ssl(framework, suppress_errors, reason, fcn, opts.urn,
                     opts.credentials, options)
+
+    # Methods that take attributes and options
+    elif client_attributes:
+        (result, msg) = _do_ssl(framework, suppress_errors, reason, fcn, \
+                                    client_attributes, \
+                                    opts.credentials, client_options)
                              
     # Methods that take credentials and options and urn arguments
     elif opts.urn:
