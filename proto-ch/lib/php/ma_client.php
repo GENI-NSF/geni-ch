@@ -527,10 +527,14 @@ function lookup_members_by_email($ma_url, $signer, $member_emails)
 {
   $client = XMLRPCClient::get_client($ma_url, $signer);
   $options = array('match'=> array('MEMBER_EMAIL'=>$member_emails),
-		   'filter'=>array('MEMBER_UID'));
-  $res = $client->lookup_identifying_member_info($client->get_credentials(), $options);
-  $ids = array_map(function($x) { return $x['MEMBER_UID']; }, $res);
-  return array($member_emails => $ids);
+                   'filter'=>array('MEMBER_UID', 'MEMBER_EMAIL'));
+  $res = $client->lookup_identifying_member_info($client->get_credentials(), $o\
+ptions);
+  $ret = array();
+  foreach ($res	as $vals) {
+    $ret[$vals['MEMBER_EMAIL']] = $vals['MEMBER_UID'];
+  }
+  return $ret;
 }
 
 
