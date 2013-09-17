@@ -27,9 +27,9 @@ from chapi.Exceptions import *
 import amsoil.core.pluginmanager as pm
 from tools.dbutils import *
 from chapi.SliceAuthority import SAv1DelegateBase
-import sfa.trust.gid as gid
-import geni.util.cred_util as cred_util
-import geni.util.cert_util as cert_util
+import ext.sfa.trust.gid as gid
+import ext.geni.util.cred_util as cred_util
+import ext.geni.util.cert_util as cert_util
 from sqlalchemy.orm import mapper
 from tools.cert_utils import *
 from datetime import *
