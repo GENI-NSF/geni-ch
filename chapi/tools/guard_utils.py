@@ -306,12 +306,14 @@ def lookup_pi_privilege(user_urn):
     cache[user_urn] = (len(rows)>0)
     return len(rows) > 0
 
+# ATTRIBUTE EXTRACTORS:
 # Methods to generate assertions based on relationship between the CALLER 
 # and the SUBJECT
 
 # If given caller and given subject share a common project
 # Generate an ME.SHARES_PROJECT_$subject<-caller assertion
-def assert_shares_project(caller_urn, member_urn, label, abac_manager):
+def assert_shares_project(caller_urn, member_urns, label, abac_manager):
+    member_urn = member_urns[0] # Pull singelton URN from list
     if label != "MEMBER_URN": return
     db = pm.getService('chdbengine')
     session = db.getSession()
@@ -339,7 +341,8 @@ def assert_shares_project(caller_urn, member_urn, label, abac_manager):
 
 # If given caller and given subject share a common slice
 # Generate an ME.SHARES_SLICE(subject)<-caller assertion
-def assert_shares_slice(caller_urn, member_urn, label, abac_manager):
+def assert_shares_slice(caller_urn, member_urns, label, abac_manager):
+    member_urn = member_urns[0] # Pull singleton URN from list
     if label != "MEMBER_URN": return
     db = pm.getService('chdbengine')
     session = db.getSession()
@@ -366,35 +369,40 @@ def assert_shares_slice(caller_urn, member_urn, label, abac_manager):
         assertion = "ME.SHARES_SLICE_%s<-CALLER" % flatten_urn(member_urn)
         abac_manager.register_assertion(assertion)
 
-# Assert ME.IS_$ROLE(SLICE)<-CALLER for the roles caller has on slice
-def assert_slice_role(caller_urn, slice_urn, label, abac_manager):
-    if label != "SLICE_URN": return
+# Assert ME.IS_$ROLE(SLICE)<-CALLER for all slices of given set 
+# of which caller is a member
+def assert_slice_role(caller_urn, slice_urns, label, abac_manager):
     db = pm.getService('chdbengine')
     session = db.getSession()
-
-    q = session.query(db.SLICE_MEMBER_TABLE.c.role, db.SLICE_TABLE, db.MEMBER_ATTRIBUTE_TABLE)
+    q = session.query(db.SLICE_MEMBER_TABLE.c.role, \
+                          db.SLICE_TABLE.c.slice_urn, \
+                          db.MEMBER_ATTRIBUTE_TABLE)
     q = q.filter(db.SLICE_MEMBER_TABLE.c.slice_id == db.SLICE_TABLE.c.slice_id)
-    q = q.filter(db.SLICE_TABLE.c.slice_urn == slice_urn)
+    q = q.filter(db.MEMBER_ATTRIBUTE_TABLE.c.member_id == \
+                     db.SLICE_MEMBER_TABLE.c.member_id)
+    q = q.filter(db.SLICE_TABLE.c.slice_urn.in_(slice_urns))
     q = q.filter(db.MEMBER_ATTRIBUTE_TABLE.c.name == 'urn')
     q = q.filter(db.MEMBER_ATTRIBUTE_TABLE.c.value == caller_urn)
-    q = q.filter(db.MEMBER_ATTRIBUTE_TABLE.c.member_id == db.SLICE_MEMBER_TABLE.c.member_id)
     rows = q.all()
     session.close()
-    
+
     for row in rows:
         role = row.role
+        slice_urn = row.slice_urn
         role_name = attribute_type_names[role]
         assertion = "ME.IS_%s_%s<-CALLER" % (role_name, flatten_urn(slice_urn))
         abac_manager.register_assertion(assertion)
 
-def get_project_role_for_member(caller_urn, project_urn):
+def get_project_role_for_member(caller_urn, project_urns):
     db = pm.getService('chdbengine')
     session = db.getSession()
-    project_name = get_name_from_urn(project_urn)
+    if not isinstance(project_urns, list): project_urns = [project_urns]
+    project_names = \
+        [get_name_from_urn(project_urn) for project_urn in project_urns]
 
-    q = session.query(db.PROJECT_MEMBER_TABLE.c.role, db.PROJECT_TABLE, db.MEMBER_ATTRIBUTE_TABLE)
+    q = session.query(db.PROJECT_MEMBER_TABLE.c.role, db.PROJECT_TABLE.c.project_name, db.MEMBER_ATTRIBUTE_TABLE)
     q = q.filter(db.PROJECT_MEMBER_TABLE.c.project_id == db.PROJECT_TABLE.c.project_id)
-    q = q.filter(db.PROJECT_TABLE.c.project_name == project_name)
+    q = q.filter(db.PROJECT_TABLE.c.project_name.in_(project_names))
     q = q.filter(db.MEMBER_ATTRIBUTE_TABLE.c.name == 'urn')
     q = q.filter(db.MEMBER_ATTRIBUTE_TABLE.c.value == caller_urn)
     q = q.filter(db.MEMBER_ATTRIBUTE_TABLE.c.member_id == db.PROJECT_MEMBER_TABLE.c.member_id)
@@ -403,54 +411,73 @@ def get_project_role_for_member(caller_urn, project_urn):
     return rows
 
 
-# Assert ME.IS_$ROLE_$PROJECT<-CALLER for the roles caller has on project
-def assert_project_role(caller_urn, project_urn, label, abac_manager):
+# Assert ME.IS_$ROLE_$PROJECT<-CALLER for the projects among given set 
+# of which caller is a member
+def assert_project_role(caller_urn, project_urns, label, abac_manager):
     if label != "PROJECT_URN": return
-    rows = get_project_role_for_member(caller_urn, project_urn)
+    rows = get_project_role_for_member(caller_urn, project_urns)
+    config = pm.getService('config')
+    authority = config.get("chrm.authority")
     for row in rows:
         role = row.role
+        project_name = row.project_name
+        project_urn = to_project_urn(authority, project_name)
         role_name = attribute_type_names[role]
         assertion = "ME.IS_%s_%s<-CALLER" % (role_name, flatten_urn(project_urn))
         abac_manager.register_assertion(assertion)
 
 
 # Assert ME.BELONGS_TO_$SLICE<-CALLER if caller is member of slice
-def assert_belongs_to_slice(caller_urn, slice_urn, label, abac_manager):
+def assert_belongs_to_slice(caller_urn, slice_urns, label, abac_manager):
     if label != "SLICE_URN": return
     db = pm.getService('chdbengine')
     session = db.getSession()
 
-    q = session.query(db.SLICE_MEMBER_TABLE.c.role, db.SLICE_TABLE, db.MEMBER_ATTRIBUTE_TABLE)
+    q = session.query(db.SLICE_MEMBER_TABLE.c.role, \
+                          db.SLICE_TABLE.c.slice_urn, \
+                          db.MEMBER_ATTRIBUTE_TABLE)
     q = q.filter(db.SLICE_MEMBER_TABLE.c.slice_id == db.SLICE_TABLE.c.slice_id)
-    q = q.filter(db.SLICE_TABLE.c.slice_urn == slice_urn)
+    q = q.filter(db.SLICE_TABLE.c.slice_urn.in_(slice_urns))
     q = q.filter(db.MEMBER_ATTRIBUTE_TABLE.c.name == 'urn')
     q = q.filter(db.MEMBER_ATTRIBUTE_TABLE.c.value == caller_urn)
-    q = q.filter(db.MEMBER_ATTRIBUTE_TABLE.c.member_id == db.SLICE_MEMBER_TABLE.c.member_id)
+    q = q.filter(db.MEMBER_ATTRIBUTE_TABLE.c.member_id == \
+                     db.SLICE_MEMBER_TABLE.c.member_id)
     rows = q.all()
     session.close()
 
-    if len(rows) > 0:
+    for row in rows:
+        slice_urn = row.slice_urn
         assertion = "ME.BELONGS_TO_%s<-CALLER" % flatten_urn(slice_urn)
         abac_manager.register_assertion(assertion)
 
 
 # Assert ME.BELONGS_TO_$PROJECT<-CALLER if caller is member of project
-def assert_belongs_to_project(caller_urn, project_urn, label, abac_manager):
+def assert_belongs_to_project(caller_urn, project_urns, label, abac_manager):
     if label != "PROJECT_URN": return
     db = pm.getService('chdbengine')
     session = db.getSession()
-    project_name = get_name_from_urn(project_urn)
+    project_names = \
+        [get_name_from_urn(project_urn) for project_urn in project_urns]
 
-    q = session.query(db.PROJECT_MEMBER_TABLE.c.role, db.PROJECT_TABLE, db.MEMBER_ATTRIBUTE_TABLE)
-    q = q.filter(db.PROJECT_MEMBER_TABLE.c.project_id == db.PROJECT_TABLE.c.project_id)
-    q = q.filter(db.PROJECT_TABLE.c.project_name == project_name)
+    q = session.query(db.PROJECT_MEMBER_TABLE.c.role, \
+                          db.PROJECT_TABLE.c.project_name, \
+                          db.MEMBER_ATTRIBUTE_TABLE)
+    q = q.filter(db.PROJECT_MEMBER_TABLE.c.project_id == \
+                     db.PROJECT_TABLE.c.project_id)
+    q = q.filter(db.PROJECT_TABLE.c.project_name.in_(project_names))
     q = q.filter(db.MEMBER_ATTRIBUTE_TABLE.c.name == 'urn')
     q = q.filter(db.MEMBER_ATTRIBUTE_TABLE.c.value == caller_urn)
-    q = q.filter(db.MEMBER_ATTRIBUTE_TABLE.c.member_id == db.PROJECT_MEMBER_TABLE.c.member_id)
+    q = q.filter(db.MEMBER_ATTRIBUTE_TABLE.c.member_id == \
+                     db.PROJECT_MEMBER_TABLE.c.member_id)
     rows = q.all()
     session.close()
 
-    if len(rows) > 0:
+    config = pm.getService('config')
+    authority = config.get("chrm.authority")
+
+    for row in rows:
+        project_name = row.project_name
+        project_urn = to_project_urn(authority, project_name)
         assertion = "ME.BELONGS_TO_%s<-CALLER" % flatten_urn(project_urn)
         abac_manager.register_assertion(assertion)
 
@@ -458,6 +485,7 @@ def assert_belongs_to_project(caller_urn, project_urn, label, abac_manager):
 # From there, Assert whether the project membership requestor is the caller
 # And assert the role on the project of the caller (if any)
 def assert_request_id_requestor_and_project_role(caller_urn, request_id, label, abac_manager):
+    request_id = request_id[0] # turn list back into singleton
     if label != "REQUEST_ID" : return
     db = pm.getService('chdbengine')
     session = db.getSession()
