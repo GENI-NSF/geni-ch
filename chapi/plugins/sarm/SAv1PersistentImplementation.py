@@ -898,7 +898,10 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
             q = q.filter(self.db.PROJECT_REQUEST_TABLE.c.status == status)
         rows = q.all()
         session.close()
-        return self._successReturn(rows)
+        result = [construct_result_row(row, self.project_request_columns, 
+                                       self.project_request_field_mapping) \
+                      for row in rows]
+        return self._successReturn(result)
 
     def get_requests_by_user(self, client_cert, member_id, context_type, \
                                  context_id, status, \
