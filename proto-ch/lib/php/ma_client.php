@@ -176,7 +176,7 @@ function lookup_keys_and_certs($ma_url, $signer, $member_uuid)
 // CHAPI: unsupported
 function ma_create_account($ma_url, $signer, $attrs, $self_asserted_attrs)
 {
-  error_log("IN MA_CREATE_ACCOUNT " + print_r($attrs, true) + " " + print_r($self_asserted_attrs, true));
+//  error_log("IN MA_CREATE_ACCOUNT " + print_r($attrs, true) + " " + print_r($self_asserted_attrs, true));
   $all_attrs = array();
   foreach (array_keys($attrs) as $attr_name) {
     $all_attrs[] = array(MA_ATTRIBUTE::NAME => $attr_name,
@@ -193,7 +193,7 @@ function ma_create_account($ma_url, $signer, $attrs, $self_asserted_attrs)
   $options = array('_dummy' => null);
   $results = $client->create_member($all_attrs, $client->get_credentials(), $options);
   
-  error_log("MA_CREATE_ACCOUNT.results = " . print_r($results, true));
+//  error_log("MA_CREATE_ACCOUNT.results = " . print_r($results, true));
   
   // return member_id
   return $results[0]['member_id'];
@@ -227,7 +227,7 @@ $MEMBERKEYALTS = invert_array($MEMBERALTKEYS);
 function _portalkey_to_attkey($k) {
   global $MEMBERKEYALTS;
   if (array_key_exists($k, $MEMBERKEYALTS)) {
-    return $MEMBERKEYALTSS[$k];
+    return $MEMBERKEYALTS[$k];
   } else {
     return $k;
   }
@@ -363,7 +363,8 @@ function ma_authorize_client($ma_url, $signer, $member_id, $client_urn,
 //CHAPI: Now an pseudo-alias for ma_lookup_members_by_identifying(...)[0]
 function ma_lookup_member_id($ma_url, $signer, $member_id_key, $member_id_value)
 {
-  $res = ma_lookup_members_by_identifying($ma_url, $signer, $member_id_key, $member_id_value);
+  $chapi_member_id_key = _portalkey_to_attkey($member_id_key);
+  $res = ma_lookup_members_by_identifying($ma_url, $signer, $chapi_member_id_key, $member_id_value);
   if (count($res) > 0) {
     return $res[0];
   } else {

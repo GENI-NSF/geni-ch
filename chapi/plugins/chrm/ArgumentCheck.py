@@ -153,6 +153,24 @@ class LookupArgumentCheck(FieldsArgumentCheck):
         if 'filter' in options:
             self.validateFieldList(options['filter'])
 
+# Lookup - 'match' [{FIELD : VALUE], {FIELD : VALUE} ...]
+#        - 'filter' [FIELD, FIELD, FIELD]
+class LookupArgumentCheckMatchOptional(FieldsArgumentCheck):
+
+    def __init__(self, mandatory_fields, supplemental_fields):
+        FieldsArgumentCheck.__init__(self, None,
+                                         None, \
+                                         mandatory_fields, supplemental_fields)
+
+    def validate(self, options, arguments):
+        FieldsArgumentCheck.validate(self, options, arguments)
+
+        if 'match' in options:
+            self.validateFieldValueDictionary(options['match'])
+
+        if 'filter' in options:
+            self.validateFieldList(options['filter'])
+
 # Create - 'fields' [{FIELD : VALUE], {FIELD : VALUE} ...]
 # Make sure that all other fields are {"Create" : "Allowed"}
 # Make sure all required fields in the object spec are present

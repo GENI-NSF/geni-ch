@@ -132,7 +132,7 @@ class Loggingv1Delegate(DelegateBase):
         # Record the event
         # Insert into logging_entry (event_time, user_id, message) values
         # (now, user_id, message)
-        ins = self.db.LOGGING_ENTRY_TABLE.insert().values(event_time=now, user_id=user_id, message=message)
+        ins = self.db.LOGGING_ENTRY_TABLE.insert().values(event_time=str(now), user_id=str(user_id), message=message)
         result = session.execute(ins)
         # Grab the event
         event_id = result.inserted_primary_key[0]
@@ -141,7 +141,7 @@ class Loggingv1Delegate(DelegateBase):
             # Insert into logging_entry_attribute_table 
             # (event_id, attribute_name, attribute_value) 
             # values (event_id, key, value)
-            ins = self.db.LOGGING_ENTRY_ATTRIBUTE_TABLE.insert().values(event_id = event_id, attribute_name=key, attribute_value=value)
+            ins = self.db.LOGGING_ENTRY_ATTRIBUTE_TABLE.insert().values(event_id = event_id, attribute_name=key, attribute_value=str(value))
             result = session.execute(ins)
         session.commit()
         session.close()

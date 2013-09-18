@@ -76,7 +76,7 @@ class SAv1Guard(ABACGuardBase):
             UpdateArgumentCheck(SAv1PersistentImplementation.project_mandatory_fields,\
                                     SAv1PersistentImplementation.project_supplemental_fields),
         'lookup_projects' : \
-            LookupArgumentCheck(SAv1PersistentImplementation.project_mandatory_fields,\
+            LookupArgumentCheckMatchOptional(SAv1PersistentImplementation.project_mandatory_fields,\
                                     SAv1PersistentImplementation.project_supplemental_fields),
         'modify_project_membership' : None, # No options required (project_urn argument)
         'lookup_project_members' : None, # No options required (project_urn argument)
