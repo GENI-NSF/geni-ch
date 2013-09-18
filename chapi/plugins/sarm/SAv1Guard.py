@@ -122,7 +122,8 @@ class SAv1Guard(ABACGuardBase):
             SubjectInvocationCheck([
                 "ME.MAY_LOOKUP_SLICES<-ME.IS_OPERATOR",
                 "ME.MAY_LOOKUP_SLICES_$SUBJECT<-ME.IS_LEAD_$SUBJECT", 
-                "ME.MAY_LOOKUP_SLICES_$SUBJECT<-ME.IS_ADMIN_$SUBJECT"
+                "ME.MAY_LOOKUP_SLICES_$SUBJECT<-ME.IS_ADMIN_$SUBJECT",
+                "ME.MAY_LOOKUP_SLICES_$SUBJECT<-ME.IS_MEMBER_$SUBJECT"
                 ], assert_slice_role, standard_subject_extractor),
 
         'update_slice' : \
