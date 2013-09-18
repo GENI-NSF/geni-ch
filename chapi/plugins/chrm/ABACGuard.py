@@ -81,9 +81,9 @@ class SubjectInvocationCheck(InvocationCheck):
     def validate_arguments(self, client_cert, method, options, arguments):
         if self._subject_extractor:
             self._subjects = self._subject_extractor(options, arguments)
-            if not self._subjects or len(self._subjects) == 0:
-                raise CHAPIv1ArgumentError("No subjects supplied to call %s" % method);
-            if len(self._subjects) > 1:
+#            if not self._subjects or len(self._subjects) == 0:
+#                raise CHAPIv1ArgumentError("No subjects supplied to call %s" % method);
+            if self._subjects and len(self._subjects) > 1:
                 raise CHAPIv1ArgumentError("Can't provide mixture of subject types for call %s: %s" % \
                                                (method, self._subjects.keys()))
 
