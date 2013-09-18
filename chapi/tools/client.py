@@ -210,7 +210,7 @@ def main():
     elif opts.method in ['get_requests_for_context']:
         (result, msg) = \
             _do_ssl(framework, suppress_errors, reason, fcn, opts.int_arg, 
-                    opts.urn_arg, opts.int2_arg, opts.credentials, client_options)
+                    opts.uuid_arg, opts.int2_arg, opts.credentials, client_options)
     elif opts.method in ['get_requests_by_user']:
         (result, msg) = \
             _do_ssl(framework, suppress_errors, reason, fcn, opts.uuid_arg,

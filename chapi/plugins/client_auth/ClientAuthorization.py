@@ -32,7 +32,7 @@ from sqlalchemy import *
 from datetime import *
 from dateutil.relativedelta import relativedelta
 from tools.dbutils import *
-from ABACGuard import ABACGuardBase
+from ABACGuard import *
 from tools.guard_utils import *
 from tools.cert_utils import *
 
@@ -51,8 +51,11 @@ class ClientAuthv1Handler(HandlerBase):
         return self._delegate.list_clients()
 
     def list_authorized_clients(self, member_id):
+        method = 'list_authorized_clients'
         client_cert = self.requestCertificate()
         try:
+            self._guard.validate_call(client_cert, method, \
+                                          [], {}, {'member_id': member_id})
             results = self._delegate.list_authorized_clients(client_cert, \
                                                                  member_id)
             return results;
@@ -60,8 +63,12 @@ class ClientAuthv1Handler(HandlerBase):
             return self._errorReturn(e)
 
     def authorize_client(self, member_id, client_urn, authorize_sense):
+        method = 'authorize_client'
         client_cert = self.requestCertificate()
         try:
+            self._guard.validate_call(client_cert, method, [], {}, \
+                                          {'member_id' : member_id, \
+                                               'client_urn' : client_urn})
             results = self._delegate.authorize_client(client_cert, \
                                                            member_id, \
                                                            client_urn, \
@@ -150,12 +157,15 @@ class ClientAuthv1Delegate(DelegateBase):
             self.logging_service.log_event(msg, attribs, member_id)
         
 
+def member_id_extractor(options, arguments):
+    member_id = arguments['member_id']
+    member_urn = convert_member_uid_to_urn(member_id)
+    return {"MEMBER_URN" : member_urn}
 
 # Guard for client authorization - only for authorities
 class ClientAuthv1Guard(ABACGuardBase):
 
-    # Set of invocation checks indexed by method name
-    # *** WRITE ME
+    # Set of argument checks indexed by method name
     ARGUMENT_CHECK_FOR_METHOD = \
         {
         'list_clients' : None,
@@ -164,12 +174,19 @@ class ClientAuthv1Guard(ABACGuardBase):
         }
 
     # Set of invocation checks indexed by method name
-    # *** WRITE ME
     INVOCATION_CHECK_FOR_METHOD = \
         {
         'list_clients' : None,
-        'list_authorized_clients' : None,
-        'authorize_client' : None
+        'list_authorized_clients' : \
+            SubjectInvocationCheck([
+                "ME.MAY_LIST_AUTHORIZED_CLIENTS<-ME.IS_AUTHORITY",
+                "ME.MAY_LIST_AUTHORIZED_CLIENTS_$SUBJECT<-ME.IS_$SUBJECT"
+                ], None, member_id_extractor),
+        'authorize_client' : \
+            SubjectInvocationCheck([
+                "ME.MAY_AUTHORIZE_CLIENT<-ME.IS_AUTHORITY",
+                "ME.MAY_AUTHORIZE_CLIENT_$SUBJECT<-ME.IS_$SUBJECT"
+                ], None, member_id_extractor)
         }
 
 

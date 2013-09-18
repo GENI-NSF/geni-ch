@@ -125,8 +125,9 @@ class CSv1Delegate(DelegateBase):
         response = [( str(row.name), str(row.context_type), str(row.context) ) for row in rows] 
         return self._successReturn(response)
 
-# Simple guard, just to capture speaks-for implementation
-# *** WRITE ME ***
+# Guard on Credential Store methods
+# Essentially you can get attributes or permissions for yourself, 
+# or if you are an authority
 class CSv1Guard(ABACGuardBase):
     def __init__(self):
         ABACGuardBase.__init__(self)

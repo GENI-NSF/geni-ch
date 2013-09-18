@@ -22,6 +22,7 @@
 #----------------------------------------------------------------------
 
 from CHDatabaseEngine import CHDatabaseEngine
+import amsoil.core.log
 import amsoil.core.pluginmanager as pm
 from  sqlalchemy import *
 from  sqlalchemy.orm import aliased
@@ -37,6 +38,8 @@ from ArgumentCheck import *
 from tools.geni_constants import *
 from tools.geni_utils import *
 from tools.guard_utils import *
+
+logger = amsoil.core.log.getLogger('ABAC')
 
 
 # Pre-processor for method invocations
@@ -78,9 +81,9 @@ class SubjectInvocationCheck(InvocationCheck):
     def validate_arguments(self, client_cert, method, options, arguments):
         if self._subject_extractor:
             self._subjects = self._subject_extractor(options, arguments)
-            if not self._subjects or len(self._subjects) == 0:
-                raise CHAPIv1ArgumentError("No subjects supplied to call %s" % method);
-            if len(self._subjects) > 1:
+#            if not self._subjects or len(self._subjects) == 0:
+#                raise CHAPIv1ArgumentError("No subjects supplied to call %s" % method);
+            if self._subjects and len(self._subjects) > 1:
                 raise CHAPIv1ArgumentError("Can't provide mixture of subject types for call %s: %s" % \
                                                (method, self._subjects.keys()))
 
@@ -117,39 +120,47 @@ class SubjectInvocationCheck(InvocationCheck):
             abac_manager.register_assertion("ME.IS_AUTHORITY<-CALLER")
 
         if self._subjects:
-            for subject_type in self._subjects.keys():
-                subjects_of_type = self._subjects[subject_type]
-                if not isinstance(subjects_of_type, list) : subjects_of_type = [subjects_of_type]
-                for subject in subjects_of_type:
-#                   print "SUBJECT = " + subject
-                    subject_name = flatten_urn(subject)
 
-                    self.load_policies(abac_manager, subject_name)
+            subject_type = self._subjects.keys()[0]
+            subjects_of_type = self._subjects[subject_type]
+            if not isinstance(subjects_of_type, list) : 
+                subjects_of_type = [subjects_of_type]
 
-                    if self._attribute_extractors:
-                        # Try to make an assertion about the relationship between the caller and subject
-                        # And store assertion in abac_manager
-                        for attribute_extractor in self._attribute_extractors:
-                            attribute_extractor(client_urn, subject, subject_type, abac_manager)
+            # Register assertions for the user 
+            if self._attribute_extractors:
+                for attribute_extractor in self._attribute_extractors:
+                    attribute_extractor(client_urn, subjects_of_type, \
+                                            subject_type, abac_manager)
 
-                    queries = [
-                        "ME.MAY_%s_%s<-CALLER" % (method.upper(), subject_name), 
-                        "ME.MAY_%s<-CALLER" % method.upper()
-                        ]
+            # Register policies relative to the subjects
+            # And try to prove that the user may call the method, 
+            # given the policies
+            # About who can call the method and the attibutes of the caller
+            for subject in subjects_of_type:
+#                print "SUBJECT = " + subject
+                subject_name = flatten_urn(subject)
 
-                    one_succeeded = False
-                    for query in queries:
-                        ok, proof = abac_manager.query(query)
-                        if abac_manager._verbose:
-                            print "Testing ABAC query " + query + " OK = " + str(ok)
-                        if ok:
-                            one_succeeded = True
-                            break
+                self.load_policies(abac_manager, subject_name)
 
-                    if not one_succeeded:
-                        raise CHAPIv1AuthorizationError(\
-                            "Caller not authorized to call method %s with options %s arguments %s queries %s" %\
-                                (method, options, arguments, queries));
+                queries = [
+                    "ME.MAY_%s_%s<-CALLER" % (method.upper(), subject_name), 
+                    "ME.MAY_%s<-CALLER" % method.upper()
+                    ]
+
+                one_succeeded = False
+                for query in queries:
+                    ok, proof = abac_manager.query(query)
+                    if abac_manager._verbose:
+                        print "Testing ABAC query %s OK = %s" % (query, ok)
+                    if ok:
+                        one_succeeded = True
+                        break
+
+                if not one_succeeded:
+                    template = "Caller not authorized to call method %s " + \
+                        "with options %s arguments %s queries %s"
+                    raise CHAPIv1AuthorizationError(template % \
+                            (method, options, arguments, queries));
                     
         else:
             self.load_policies(abac_manager, None)
@@ -157,8 +168,9 @@ class SubjectInvocationCheck(InvocationCheck):
             query ="ME.MAY_%s<-CALLER" % method.upper()
             ok, proof = abac_manager.query(query)
             if not ok:
-                raise CHAPIv1AuthorizationError(\
-                    "Caller not authorized to call method %s with options %s arguments %s query %s" %\
+                template = "Caller not authorized to call method %s " + \
+                    "with options %s arguments %s query %s"
+                raise CHAPIv1AuthorizationError(template % \
                         (method, options, arguments, query));
 
 
