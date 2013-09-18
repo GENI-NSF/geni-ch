@@ -38,6 +38,7 @@ from ArgumentCheck import *
 from tools.geni_constants import *
 from tools.geni_utils import *
 from tools.guard_utils import *
+from syslog import syslog
 
 logger = amsoil.core.log.getLogger('ABAC')
 
@@ -106,7 +107,7 @@ class SubjectInvocationCheck(InvocationCheck):
             ABACManager(certs_by_name = {"CALLER" : client_cert}, 
                         cert_files_by_name = {"ME" : self.cert_file}, 
                         key_files_by_name = {"ME" : self.key_file});
-#        abac_manager._verbose = True
+        # abac_manager._verbose = True
 
         client_urn = get_urn_from_cert(client_cert)
 
@@ -151,7 +152,7 @@ class SubjectInvocationCheck(InvocationCheck):
                 for query in queries:
                     ok, proof = abac_manager.query(query)
                     if abac_manager._verbose:
-                        print "Testing ABAC query %s OK = %s" % (query, ok)
+                        syslog("Testing ABAC query %s OK = %s" % (query, ok))
                     if ok:
                         one_succeeded = True
                         break
