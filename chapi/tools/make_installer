@@ -14,8 +14,8 @@ git clone git+ssh://trac.gpolab.bbn.com/srv/git/chapi.git
 
 # get gpo branch of local amsoil repo inside of chapi directory
 cd chapi
-#git clone git+ssh://trac.gpolab.bbn.com/srv/git/amsoil.git
-git clone git+ssh://trac.gpolab.bbn.com/home/dmontana/AMsoil
+git clone git+ssh://trac.gpolab.bbn.com/srv/git/amsoil.git
+mv amsoil AMsoil
 cd AMsoil
 git checkout gpo
 
