@@ -313,7 +313,10 @@ def lookup_pi_privilege(user_urn):
 # If given caller and given subject share a common project
 # Generate an ME.SHARES_PROJECT_$subject<-caller assertion
 def assert_shares_project(caller_urn, member_urns, label, abac_manager):
-    member_urn = member_urns[0] # Pull singelton URN from list
+    if isinstance(member_urns, list): 
+        member_urn = member_urns[0] # Pull singleton URN from list
+    else:
+        member_urn = member_urns
     if label != "MEMBER_URN": return
     db = pm.getService('chdbengine')
     session = db.getSession()
@@ -342,7 +345,10 @@ def assert_shares_project(caller_urn, member_urns, label, abac_manager):
 # If given caller and given subject share a common slice
 # Generate an ME.SHARES_SLICE(subject)<-caller assertion
 def assert_shares_slice(caller_urn, member_urns, label, abac_manager):
-    member_urn = member_urns[0] # Pull singleton URN from list
+    if isinstance(member_urns, list): 
+        member_urn = member_urns[0] # Pull singleton URN from list
+    else:
+        member_urn = member_urns
     if label != "MEMBER_URN": return
     db = pm.getService('chdbengine')
     session = db.getSession()
@@ -521,7 +527,8 @@ def assert_request_id_requestor_and_project_role(caller_urn, request_id, label, 
 def standard_subject_extractor(options, arguments):
     extracted = {}
     if 'match' not in options:
-        raise CHAPIv1ArgumentError("No match option for query")
+        return None
+#        raise CHAPIv1ArgumentError("No match option for query")
     match_option = options['match']
     if "SLICE_URN" in match_option:
         extracted["SLICE_URN"] =  match_option['SLICE_URN']
