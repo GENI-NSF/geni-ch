@@ -25,19 +25,18 @@ import os
 from sqlalchemy import *
 from chapi.Exceptions import *
 import amsoil.core.pluginmanager as pm
-from tools.dbutils import *
 from chapi.SliceAuthority import SAv1DelegateBase
 import sfa.trust.gid as gid
 import geni.util.cred_util as cred_util
 import geni.util.cert_util as cert_util
 from sqlalchemy.orm import mapper
-from tools.cert_utils import *
 from datetime import *
 from dateutil.relativedelta import relativedelta
 import uuid
-from CHDatabaseEngine import Aggregate
-from geni_constants import *
-from geni_utils import *
+from tools.dbutils import *
+from tools.cert_utils import *
+from tools.geni_constants import *
+from tools.geni_utils import *
 from tools.cs_utils import *
 
 
@@ -54,7 +53,6 @@ class SliceMember(object):
 
 class ProjectMember(object):
     pass
-
 
 # Implementation of SA that speaks to GPO Slice and projects table schema
 class SAv1PersistentImplementation(SAv1DelegateBase):
@@ -811,38 +809,53 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
            return rows[0].id
         return None
 
-        
-    def register_aggregate(self, client_cert, \
-                               slice_urn, aggregate_url, credentials, options):
-        session = self.db.getSession()
-        agg = Aggregate()
-        agg.slice_urn = slice_urn
-        agg.aggregate_url = aggregate_url
-        session.add(agg)
-        session.commit()
-        session.close()
-        return self._successReturn(None)
+    # Sliver Info API
 
-    def remove_aggregate(self, client_cert, \
-                             slice_urn, aggregate_url, credentials, options):
-        session = self.db.getSession()
-        q = session.query(Aggregate)
-        q = q.filter(Aggregate.slice_urn == slice_urn)
-        q = q.filter(Aggregate.aggregate_url == aggregate_url)
-        q.delete()
-        session.commit()
-        session.close()
-        return self._successReturn(None)
+    def create_sliver_info(self, client_cert, credentials, options):
+        raise CHAPIv1NotImplementedError('')
 
-    def lookup_slice_aggregates(self, client_cert, \
-                           slice_urn, credentials, options):
-        session = self.db.getSession()
-        q = session.query(Aggregate.aggregate_url)
-        q = q.filter(Aggregate.slice_urn == slice_urn)
-        rows = q.all()
-        aggs = [row.aggregate_url for row in rows]
-        session.close()
-        return self._successReturn(aggs)
+    def delete_sliver_info(self, client_cert, sliver_urn, \
+                               credentials, options):
+        raise CHAPIv1NotImplementedError('')
+
+    def update_sliver_info(self, client_cert, sliver_urn, \
+                               credentials, options):
+        raise CHAPIv1NotImplementedError('')
+
+    def lookup_sliver_info(self, client_cert, credentials, options):
+        raise CHAPIv1NotImplementedError('')
+
+#     def register_aggregate(self, client_cert, \
+#                                slice_urn, aggregate_url, credentials, options):
+#         session = self.db.getSession()
+#         agg = Aggregate()
+#         agg.slice_urn = slice_urn
+#         agg.aggregate_url = aggregate_url
+#         session.add(agg)
+#         session.commit()
+#         session.close()
+#         return self._successReturn(None)
+
+#     def remove_aggregate(self, client_cert, \
+#                              slice_urn, aggregate_url, credentials, options):
+#         session = self.db.getSession()
+#         q = session.query(Aggregate)
+#         q = q.filter(Aggregate.slice_urn == slice_urn)
+#         q = q.filter(Aggregate.aggregate_url == aggregate_url)
+#         q.delete()
+#         session.commit()
+#         session.close()
+#         return self._successReturn(None)
+
+#     def lookup_slice_aggregates(self, client_cert, \
+#                            slice_urn, credentials, options):
+#         session = self.db.getSession()
+#         q = session.query(Aggregate.aggregate_url)
+#         q = q.filter(Aggregate.slice_urn == slice_urn)
+#         rows = q.all()
+#         aggs = [row.aggregate_url for row in rows]
+#         session.close()
+#         return self._successReturn(aggs)
 
     # Methods for managing pending project requests
 

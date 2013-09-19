@@ -219,92 +219,106 @@ class SAv1Handler(HandlerBase):
             return self._errorReturn(e)
 
     ## SLIVER INFO SERVICE methods
+
+    # Create a record of sliver creation
+    # Provide a dictionary of required fields and return a 
+    # dictionary of completed fields for new records
+    def create_sliver_info(self, credentials, options):
+        client_cert = self.requestCertificate()
+        method = 'create_sliver_info'
+        try:
+            self._guard.validate_call(client_cert, method, \
+                                          credentials, options)
+            client_cert, options = \
+                self._guard.adjust_client_identity(client_cert, \
+                                                       credentials, options)
+            results = \
+                self._delegate.create_sliver_info(client_cert, \
+                                                      credentials, options)
+            if results['code'] == NO_ERROR:
+                results_value = results['value']
+                new_results_value = \
+                    self._guard.protect_results(client_cert, method, \
+                                                    credentials, results_value)
+                results = self._successReturn(new_resultss_value)
+            return results
+        except Exception as e:
+            return self._errorReturn(e)
+
+    # Delete a sliver_info record of given sliver_urn
+    def delete_sliver_info(self, sliver_urn, credentials, options):
+        client_cert = self.requestCertificate()
+        method = 'delete_sliver_info'
+        try:
+            self._guard.validate_call(client_cert, method, \
+                                          credentials, options, \
+                                          {'sliver_urn' : sliver_urn})
+            client_cert, options = \
+                self._guard.adjust_client_identity(client_cert, \
+                                                       credentials, options)
+            results = \
+                self._delegate.delete_sliver_info(client_cert, \
+                                                      sliver_urn, \
+                                                      credentials, options)
+            if results['code'] == NO_ERROR:
+                results_value = results['value']
+                new_results_value = \
+                    self._guard.protect_results(client_cert, method, \
+                                                    credentials, results_value)
+                results = self._successReturn(new_resultss_value)
+            return results
+        except Exception as e:
+            return self._errorReturn(e)
+
+    # Update the details of a sliver_info record of given sliver_urn
+    def update_sliver_info(self, sliver_urn, credentials, options):
+        client_cert = self.requestCertificate()
+        method = 'update_sliver_info'
+        try:
+            self._guard.validate_call(client_cert, method, \
+                                          credentials, options,  \
+                                          {'sliver_urn' : sliver_urn})
+            client_cert, options = \
+                self._guard.adjust_client_identity(client_cert, \
+                                                       credentials, options)
+            results = \
+                self._delegate.update_sliver_info(client_cert, \
+                                                      sliver_urn, \
+                                                      credentials, options)
+            if results['code'] == NO_ERROR:
+                results_value = results['value']
+                new_results_value = \
+                    self._guard.protect_results(client_cert, method, \
+                                                    credentials, results_value)
+                results = self._successReturn(new_resultss_value)
+            return results
+        except Exception as e:
+            return self._errorReturn(e)
+
+    # Lookup sliver info for given match criteria 
+    # return fields in given fillter driteria
+    def lookup_sliver_info(self, credentials, options):
+        client_cert = self.requestCertificate()
+        method = 'lookup_sliver_info'
+        try:
+            self._guard.validate_call(client_cert, method, \
+                                          credentials, options)
+            client_cert, options = \
+                self._guard.adjust_client_identity(client_cert, \
+                                                       credentials, options)
+            results = \
+                self._delegate.lookup_sliver_info(client_cert, \
+                                                      credentials, options)
+            if results['code'] == NO_ERROR:
+                results_value = results['value']
+                new_results_value = \
+                    self._guard.protect_results(client_cert, method, \
+                                                    credentials, results_value)
+                results = self._successReturn(new_resultss_value)
+            return results
+        except Exception as e:
+            return self._errorReturn(e)
         
-    # Associate an aggregate as having sliver information in a given 
-    # slice. Expected to be called by an aggregate as an asynchronous 
-    # (not critical-path) part of the resource allocation process.
-    def register_aggregate(self, slice_urn, aggregate_url, credentials, options):
-        client_cert = self.requestCertificate()
-        method = 'register_aggregate'
-        try:
-            self._guard.validate_call(client_cert, method, \
-                                          credentials, options, \
-                                          {'slice_urn' : slice_urn,
-                                           'aggregate_url' : aggregate_url})
-            client_cert, options = \
-                self._guard.adjust_client_identity(client_cert, \
-                                                       credentials, options)
-            results = self._delegate.register_aggregate(client_cert, \
-                                                            slice_urn, \
-                                                            aggregate_url, \
-                                                            credentials, \
-                                                            options)
-            if results['code'] == NO_ERROR:
-                results_value = results['value']
-                new_results_value = self._guard.protect_results(client_cert, method, credentials, results_value)
-                results = self._successReturn(new_results_value)
-
-            return results
-        except Exception as e:
-            return self._errorReturn(e)
-
-    # Dis-associate an aggregate as having sliver information in a given slice
-    # Expected to be called by the aggregate as an asynchronous 
-    # (non-critical path) part of the resource de-allocation process
-    def remove_aggregate(self, slice_urn, aggregate_url, credentials, options):
-        client_cert = self.requestCertificate()
-        method = 'remove_aggregate'
-        try:
-            self._guard.validate_call(client_cert, method, \
-                                          credentials, options, \
-                                          {'slice_urn' : slice_urn,
-                                           'aggregate_url' : aggregate_url})
-            client_cert, options = \
-                self._guard.adjust_client_identity(client_cert, \
-                                                       credentials, options)
-            results = self._delegate.remove_aggregate(client_cert, \
-                                                          slice_urn, \
-                                                          aggregate_url, \
-                                                          credentials, \
-                                                          options)
-            if results['code'] == NO_ERROR:
-                results_value = results['value']
-                new_results_value = self._guard.protect_results(client_cert, method, credentials, results_value)
-                results = self._successReturn(new_results_value)
-
-            return results
-        except Exception as e:
-            return self._errorReturn(e)
-
-    # Provide a list of URNs of all aggregates that have been registered
-    # as having resources allocated with a given slice
-    # NB: This list is not definitive in that the aggregate maynot have 
-    # called register_aggregate call, and that the slivers may no longer
-    # be at that aggregate. But it is provided as a convenience for tools to 
-    # know where to go for sliver information (rather than querying 
-    # every aggregate in the CH)
-    def lookup_slice_aggregates(self, slice_urn, credentials, options):
-        client_cert = self.requestCertificate()
-        method = 'lookup_slice_aggregates'
-        try:
-            self._guard.validate_call(client_cert, method, \
-                                          credentials, options, \
-                                          {'slice_urn' : slice_urn})
-            client_cert, options = \
-                self._guard.adjust_client_identity(client_cert, \
-                                                       credentials, options)
-            results = self._delegate.lookup_slice_aggregates(client_cert, \
-                                                              slice_urn, \
-                                                              credentials, \
-                                                              options)
-            if results['code'] == NO_ERROR:
-                results_value = results['value']
-                new_results_value = self._guard.protect_results(client_cert, method, credentials, results_value)
-                results = self._successReturn(new_results_value)
-
-            return results
-        except Exception as e:
-            return self._errorReturn(e)
 
     ## PROJECT SERVICE methods
 
@@ -659,17 +673,19 @@ class SAv1DelegateBase(DelegateBase):
 
 
     ## SLIVER INFO SERVICE methods
-        
-    def register_aggregate(self, client_cert, \
-                               slice_urn, aggregate_url, credentials, options):
+
+    def create_sliver_info(self, client_cert, credentials, options):
         raise CHAPIv1NotImplementedError('')
 
-    def remove_aggregate(self, client_cert, \
-                             slice_urn, aggregate_url, credentials, options):
+    def delete_sliver_info(self, client_cert, sliver_urn, \
+                               credentials, options):
         raise CHAPIv1NotImplementedError('')
 
-    def lookup_slice_aggregates(self, client_cert, \
-                           slice_urn, credentials, options):
+    def update_sliver_info(self, client_cert, sliver_urn, \
+                               credentials, options):
+        raise CHAPIv1NotImplementedError('')
+
+    def lookup_sliver_info(self, client_cert, credentials, options):
         raise CHAPIv1NotImplementedError('')
 
     
