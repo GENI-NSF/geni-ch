@@ -270,6 +270,7 @@ class Member {
 //   return a member object or null
 function ma_lookup_member_by_eppn($ma_url, $signer, $eppn)
 {
+  //error_log( " lookup_member_by_eppn = " . print_r($eppn, true));
   $res =  ma_lookup_members_by_identifying($ma_url, $signer, '_GENI_MEMBER_EPPN', $eppn);
   if ($res) {
     return $res[0];
@@ -292,6 +293,8 @@ function ma_lookup_members_by_identifying($ma_url, $signer, $identifying_key, $i
   }
 
   $members = array();
+
+  //error_log( " lookup_members_by_identifying = " . print_r($identifying_key, true) . " // ". print_r($identifying_value, true));
 
   $client = XMLRPCClient::get_client($ma_url, $signer);
   $options = array('match'=> array($identifying_key=>$identifying_value));
@@ -415,9 +418,11 @@ function lookup_member_details($ma_url, $signer, $member_uuids)
   //  error_log("LMD : " . print_r($member_uuids, true));
   foreach ($member_uuids as $uid) {
     $pubdet = _lookup_public_member_details($client, $signer, $uid);
-    $iddet = _lookup_identifying_member_details($client, $signer, $uid);
+    //$iddet = _lookup_identifying_member_details($client, $signer, $uid);
+    //$alldet = array_merge($pubdet,$iddet);
+    $alldet = $pubdet;
     $attrs = array();
-    foreach (array_merge($pubdet,$iddet) as $k => $v) {
+    foreach ($alldet as $k => $v) {
       $ak = _attkey_to_portalkey($k);
       $attrs[$ak] = $v;
     }
@@ -471,6 +476,7 @@ $DETAILS_IDENTIFYING = array(
 function _lookup_identifying_member_details($client, $signer, $uid)
 {
   global $DETAILS_IDENTIFYING;
+  //error_log( " _limd = " . print_r($uid, true));
   $r = $client->lookup_identifying_member_info($client->get_credentials(),
 					       array('match'=>array('MEMBER_UID'=>$uid),
 						     'filter'=>$DETAILS_IDENTIFYING));
@@ -511,8 +517,9 @@ function lookup_member_names($ma_url, $signer, $member_uuids)
 {
   $client = XMLRPCClient::get_client($ma_url, $signer);
   $options = array('match'=> array('MEMBER_UID'=>$member_uuids),
-		   'filter'=>array('MEMBER_UID', 'MEMBER_FIRSTNAME', 'MEMBER_LASTNAME', 'MEMBER_USERNAME'));
-  $res = $client->lookup_identifying_member_info($client->get_credentials(), $options);
+		   'filter'=>array('MEMBER_UID', 'MEMBER_USERNAME'));
+  //error_log( " _lmns = " . print_r($member_uuids, true));
+  $res = $client->lookup_public_member_info($client->get_credentials(), $options);
   $ids = array();
   foreach($res as $member_urn => $member_info) {
     $member_uuid = $member_info['MEMBER_UID'];
@@ -529,6 +536,8 @@ function lookup_members_by_email($ma_url, $signer, $member_emails)
   $client = XMLRPCClient::get_client($ma_url, $signer);
   $options = array('match'=> array('MEMBER_EMAIL'=>$member_emails),
                    'filter'=>array('MEMBER_UID', 'MEMBER_EMAIL'));
+
+  //error_log( " lmbe = " . print_r($member_emails, true));
   $res = $client->lookup_identifying_member_info($client->get_credentials(), $options);
   $ret = array();
   foreach ($res	as $vals) {
