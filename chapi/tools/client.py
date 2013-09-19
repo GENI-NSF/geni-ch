@@ -190,6 +190,16 @@ def main():
         (result, msg) = \
             _do_ssl(framework, suppress_errors, reason, fcn, opts.uuid_arg,
                     opts.urn, opts.int_arg)
+    # Sliver info methods
+    elif opts.method in ['delete_sliver_info', 'update_sliver_info']:
+        (result, msg) = \
+            _do_ssl(framework, suppress_errors, reason, fcn, opts.urn,
+                    opts.credentials, client_options)
+    elif opts.method in ['create_sliver_info', 'lookup_sliver_info']:
+        (result, msg) = \
+            _do_ssl(framework, suppress_errors, reason, fcn, 
+                    opts.credentials, client_options)
+
 
     # Project request methods
     elif opts.method in ['create_request']:
