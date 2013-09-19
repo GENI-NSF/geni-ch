@@ -74,7 +74,7 @@ def get_name_from_urn(urn):
 def extract_data_from_slice_urn(urn):
     # Pull out slice name and project_name
     urn_parts = urn.split('+')
-    slice_name = urn_paorts[len(urn_parts)-1]
+    slice_name = urn_parts[len(urn_parts)-1]
     authority = urn_parts[1]
     authority_parts = authority.split(':')
     if len(authority_parts) != 2:
