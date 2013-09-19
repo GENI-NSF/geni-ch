@@ -40,6 +40,7 @@ import tempfile
 import subprocess
 import uuid
 import re
+from tools.guard_utils import *
 from syslog import syslog
 
 # classes for mapping to sql tables
