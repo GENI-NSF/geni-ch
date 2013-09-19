@@ -245,23 +245,45 @@ function renew_slice($sa_url, $signer, $slice_id, $expiration)
   // no return
 }
 
+function _conv_mid2urn_s($sa_url, $signer, $alist)
+{
+  return array_map(function ($mid) use ($sa_url, $signer) { return get_member_urn(sa_to_ma_url($sa_url), $signer, $mid); }, $alist);
+}
+
+function _conv_mid2urn_map_s($sa_url, $signer, $amap)
+{
+  global $CS_ATTRIBUTE_TYPE_NAME;
+  $narr = array();
+  foreach ($amap as $mid => $v) {
+    $murn = get_member_urn(sa_to_ma_url($sa_url), $signer, $mid);
+    $role = strtoupper($CS_ATTRIBUTE_TYPE_NAME[$v]);
+    $narr[] = array('SLICE_MEMBER' => $murn, 'SLICE_ROLE' => $role);
+  }
+  return $narr;
+}
+
 // Modify slice membership according to given lists to add/change_role/remove
 // $members_to_add and $members_to_change role are both
 //     dictionaries of {member_id => role, ....}
 // $members_to_delete is a list of member_ids
 function modify_slice_membership($sa_url, $signer, $slice_id, 
 				 $members_to_add, 
-				 $members_to_change_role, 
+				 $members_to_change, 
 				 $members_to_remove)
 {
   $slice_urn = get_slice_urn($sa_url, $signer, $slice_id);
 
   $client = XMLRPCClient::get_client($sa_url, $signer);
-  $options = array('members_to_add' => $members_to_add,
-		   'members_to_remove' => $members_to_remove,
-		   'members_to_change' => $members_to_change_role,
-		   );
-  $client->modify_slice_membership($slice_urn, $client->get_credentials(), $options);
+  $members_to_add = _conv_mid2urn_map_s($sa_url, $signer, $members_to_add);
+  $members_to_change = _conv_mid2urn_map_s($sa_url, $signer, $members_to_change);
+  $members_to_remove = _conv_mid2urn_s($sa_url, $signer, $members_to_remove);
+  
+  $options = array('_dummy' => null);
+  if (sizeof($members_to_add)>0)    { $options['members_to_add']    = $members_to_add; }
+  if (sizeof($members_to_change)>0) { $options['members_to_change'] = $members_to_change; }
+  if (sizeof($members_to_remove)>0) { $options['members_to_remove'] = $members_to_remove; }
+  $res = $client->modify_slice_membership($slice_urn, $client->get_credentials(), $options);
+  return $res;
 }
 
 // Add a member of given role to given slice

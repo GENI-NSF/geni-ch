@@ -23,7 +23,7 @@
 
 from chapi.Exceptions import *
 import types
-import datetime
+from datetime import *
 
 # A set of utilities for dealing with SQL alchemy as the database backend
 # Convert between external (in get_version) and internal (in database) field names
@@ -108,7 +108,7 @@ def construct_result_row(row, columns, mapping):
             column_value = internal_name(row)
         else:
             column_value = eval("row.%s" % internal_name)
-        if isinstance(column_value, datetime.datetime):
+        if isinstance(column_value, datetime):
             column_value = str(column_value)
         result_row[column] = column_value
     return result_row
