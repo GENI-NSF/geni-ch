@@ -259,7 +259,7 @@ function modify_slice_membership($sa_url, $signer, $slice_id,
   $client = XMLRPCClient::get_client($sa_url, $signer);
   $options = array('members_to_add' => $members_to_add,
 		   'members_to_remove' => $members_to_remove,
-		   'members_to_change' => $members_to_change,
+		   'members_to_change' => $members_to_change_role,
 		   );
   $client->modify_slice_membership($slice_urn, $client->get_credentials(), $options);
 }
