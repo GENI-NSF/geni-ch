@@ -128,7 +128,7 @@ class Loggingv1Delegate(DelegateBase):
     def log_event(self, client_cert, message, attributes, user_id):
 
         session = self.db.getSession()
-        now = datetime.datetime.utcnow()
+        now = datetime.utcnow()
         # Record the event
         # Insert into logging_entry (event_time, user_id, message) values
         # (now, user_id, message)
@@ -151,7 +151,7 @@ class Loggingv1Delegate(DelegateBase):
         session = self.db.getSession()
         q = session.query(self.db.LOGGING_ENTRY_TABLE)
         q = q.filter(self.db.LOGGING_ENTRY_TABLE.c.user_id == user_id)
-        min_event_time = datetime.datetime.utcnow() - relativedelta(hours=num_hours)
+        min_event_time = datetime.utcnow() - relativedelta(hours=num_hours)
         q = q.filter(self.db.LOGGING_ENTRY_TABLE.c.event_time >= min_event_time)
         rows = q.all()
         session.close()
@@ -163,7 +163,7 @@ class Loggingv1Delegate(DelegateBase):
         session = self.db.getSession()
         q = session.query(self.db.LOGGING_ENTRY_TABLE)
         q = q.filter(self.db.LOGGING_ENTRY_TABLE.c.id == self.db.LOGGING_ENTRY_ATTRIBUTE_TABLE.c.event_id)
-        min_event_time = datetime.datetime.utcnow() - relativedelta(hours=num_hours)
+        min_event_time = datetime.utcnow() - relativedelta(hours=num_hours)
         q = q.filter(self.db.LOGGING_ENTRY_TABLE.c.event_time >= min_event_time)
         q = q.filter(self.db.LOGGING_ENTRY_ATTRIBUTE_TABLE.c.attribute_name == context_type_names[context_type])
         q = q.filter(self.db.LOGGING_ENTRY_ATTRIBUTE_TABLE.c.attribute_value == context_id)
@@ -177,7 +177,7 @@ class Loggingv1Delegate(DelegateBase):
         session = self.db.getSession()
         q = session.query(self.db.LOGGING_ENTRY_TABLE)
         q = q.filter(self.db.LOGGING_ENTRY_TABLE.c.id == self.db.LOGGING_ENTRY_ATTRIBUTE_TABLE.c.event_id)
-        min_event_time = datetime.datetime.utcnow() - relativedelta(hours=num_hours)
+        min_event_time = datetime.utcnow() - relativedelta(hours=num_hours)
         q = q.filter(self.db.LOGGING_ENTRY_TABLE.c.event_time >= min_event_time)
         conditions = []
         for attribute_set in attribute_sets:
