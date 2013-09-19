@@ -44,6 +44,12 @@ class LookupKeysInvocationCheck(SubjectInvocationCheck):
                         " than self. Limit match criteria or set filter" + 
                         " explicitly : " + member_urn)
 
+
+def member_id_extractor(options, arguments):
+    member_id = arguments['member_id']
+    member_urn = convert_member_uid_to_urn(member_id)
+    return {"MEMBER_URN" : member_urn}
+
 # Specific guard for GPO MA
 # Provide a set of invocation checks and row checks per method
 class MAv1Guard(ABACGuardBase):
@@ -97,7 +103,11 @@ class MAv1Guard(ABACGuardBase):
         'create_certificate' : \
             None,  
         'create_member' : \
-            None # Check is done in create_member itself
+            None, # Check is done in create_member itself
+
+        'list_clients' : None,
+        'list_authorized_clients' : None,
+        'authorize_client' : None,
         }
 
     # Set of invocation checks indexed by method name
@@ -155,6 +165,18 @@ class MAv1Guard(ABACGuardBase):
                 "ME.MAY_CREATE_MEMBER<-ME.IS_OPERATOR",
                 "ME.MAY_CREATE_MEMBER<-ME.IS_AUTHORITY"
                 ], None, None),
+
+        'list_clients' : None,
+        'list_authorized_clients' : \
+            SubjectInvocationCheck([
+                "ME.MAY_LIST_AUTHORIZED_CLIENTS<-ME.IS_AUTHORITY",
+                "ME.MAY_LIST_AUTHORIZED_CLIENTS_$SUBJECT<-ME.IS_$SUBJECT"
+                ], None, member_id_extractor),
+        'authorize_client' : \
+            SubjectInvocationCheck([
+                "ME.MAY_AUTHORIZE_CLIENT<-ME.IS_AUTHORITY",
+                "ME.MAY_AUTHORIZE_CLIENT_$SUBJECT<-ME.IS_$SUBJECT"
+                ], None, member_id_extractor),
         }
 
 

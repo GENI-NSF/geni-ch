@@ -40,6 +40,7 @@ import tempfile
 import subprocess
 import uuid
 import re
+from syslog import syslog
 
 # classes for mapping to sql tables
 
@@ -139,7 +140,6 @@ def parse_urn(urn):
         return m.group(1), m.group(2), m.group(3)
     else:
         return None
-
 
 def make_urn(authority, typ, name):
     return 'urn:publicid:IDN+'+authority+'+'+typ+'+'+name
@@ -286,6 +286,12 @@ class MAv1Implementation(MAv1DelegateBase):
         trusted_root = '/usr/share/geni-ch/portal/gcf.d/trusted_roots'
         self.trusted_roots = [os.path.join(trusted_root, f) \
             for f in os.listdir(trusted_root) if not f.startswith('CAT')]
+
+        self.logging_service = pm.getService('loggingv1handler')
+        # init for ClientAuth
+        self.kmcert = '/usr/share/geni-ch/km/km-cert.pem'
+        self.kmkey = '/usr/share/geni-ch/km/km-key.pem'
+
 
     # This call is unprotected: no checking of credentials
     def get_version(self):
@@ -535,7 +541,7 @@ class MAv1Implementation(MAv1DelegateBase):
         session.close()
 
         # Log the successful creation of member
-        self.logging_service = pm.getService('loggingv1handler')
+        #self.logging_service = pm.getService('loggingv1handler')
         msg = "Activated GENI user : %s" % member_id
         attrs = {"MEMBER" : member_id}
         self.logging_service.log_event(msg, attrs, member_id)
@@ -715,7 +721,75 @@ class MAv1Implementation(MAv1DelegateBase):
 
         return self._successReturn(True)
 
+    ### ClientAuth
 
+    # Dictionary of client_name => client_urn
+    def list_clients(self):
+        syslog("list_clients")
+        session = self.db.getSession()
+        q = session.query(self.db.MA_CLIENT_TABLE)
+        rows = q.all()
+        session.close()
+        entries = {}
+        for row in rows:
+            entries[row.client_name] = row.client_urn
+        return self._successReturn(entries)
 
+    # List of URN's of all tools for which a given user (by ID) has
+    # authorized use and has generated inside keys
+    def list_authorized_clients(self, client_cert, member_id):
+        syslog("list_authorized_clients "+member_id)
+        session = self.db.getSession()
+        q = session.query(self.db.INSIDE_KEY_TABLE.c.client_urn)
+        q = q.filter(self.db.INSIDE_KEY_TABLE.c.member_id == member_id)
+        rows = q.all()
+        session.close()
+        entries = [str(row.client_urn) for row in rows]
+        return self._successReturn(entries)
 
+    # Authorize/deauthorize a tool with respect to a user
+    def authorize_client(self, client_cert, member_id, \
+                             client_urn, authorize_sense):
+        member_urn = convert_member_uid_to_urn(member_id)
 
+        syslog("authorize_client "+member_id+' '+client_urn)
+        if authorize_sense:
+            private_key, csr_file = make_csr()
+            member_email = convert_member_uid_to_email(member_id)
+            cert_pem = make_cert(member_id, member_email, member_urn, \
+                                     self.kmcert, self.kmkey, csr_file)
+
+            signer_pem = open(self.cert).read()
+            cert_chain = cert_pem + signer_pem
+
+            # insert into MA_INSIDE_KEY_TABLENAME
+            # (member_id, client_urn, certificate, private_key)
+            # values 
+            # (member_id, client_urn, cert, key)
+            session = self.db.getSession()
+            insert_values = {'client_urn' : client_urn, 'member_id' : str(member_id), \
+                                 'private_key' : private_key, 'certificate' : cert_chain}
+            ins = self.db.INSIDE_KEY_TABLE.insert().values(insert_values)
+            session.execute(ins)
+            session.commit()
+            session.close()
+
+            # log_event
+            msg = "Authorizing client %s for member %s" % (client_urn, member_urn)
+            attribs = {"MEMBER" : member_id}
+            self.logging_service.log_event(msg, attribs, member_id)
+
+        else:
+            # delete from MA_INSIDE_KEY_TABLENAME
+            # where member_id = member_id and client_urn = client_urn
+            session = self.db.getSession()
+            q = q.filter(self.db.INSIDE_KEY_TABLE.c.member_id == member_id)
+            q = q.filter(self.db.INSIDE_KEY_TABLE.c.client_urn == client_urn)
+            q = q.delete()
+            session.commit()
+            session.close()
+
+            # log_event
+            msg = "Deauthorizing client %s for member %s" % (client_urn, member_urn)
+            attribs = {"MEMBER" : member_id}
+            self.logging_service.log_event(msg, attribs, member_id)
