@@ -541,7 +541,10 @@ function lookup_members_by_email($ma_url, $signer, $member_emails)
   $res = $client->lookup_identifying_member_info($client->get_credentials(), $options);
   $ret = array();
   foreach ($res	as $vals) {
-    $ret[$vals['MEMBER_EMAIL']] = $vals['MEMBER_UID'];
+    if (! $ret[$vals['MEMBER_EMAIL']]) {
+      $ret[$vals['MEMBER_EMAIL']] = array();
+    }
+    $ret[$vals['MEMBER_EMAIL']][] = $vals['MEMBER_UID'];
   }
   return $ret;
 }

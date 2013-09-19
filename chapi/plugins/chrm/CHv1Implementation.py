@@ -43,14 +43,14 @@ class CHv1Implementation(CHv1DelegateBase):
          'service_url' : 'https://server.com:12345', 
          'service_cert' : '<certificate>agg1</certificate', 
          'service_name' : 'AGG1',
-         'service_description' : 'Aggregate 1',
+         'service_description' : 'Agg 1',
          'service_urn' : 'urn:publicid:IDN+server.com+authority+am'
         },
         {"service_type" : AGGREGATE_SERVICE_TYPE, 
          'service_url' : 'https://backuup.com:12345', 
          'service_cert' : '<certificate>agg2</certificate', 
          'service_name' : 'AGG2',
-         'service_description' : 'Aggregate 2',
+         'service_description' : 'Agg 2',
          'service_urn' : 'urn:publicid:IDN+backup.com+authority+am'
         },
         {"service_type" : SA_SERVICE_TYPE, 

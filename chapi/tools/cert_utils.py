@@ -140,7 +140,8 @@ def make_cert(uuid, email, urn, \
                          '-cert', signer_cert_file,\
                          '-keyfile', signer_key_file, \
                          '-subj', subject ]
-#        print " ".join(sign_csr_args)
+    print " ".join(sign_csr_args)
+#    os.system(" ".join(sign_csr_args))
 
         # Grab cert from cert_file
     cert_pem = open(cert_file).read()
