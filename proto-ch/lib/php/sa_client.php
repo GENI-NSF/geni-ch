@@ -321,6 +321,8 @@ function get_slice_members($sa_url, $signer, $slice_id, $role=null)
 // 
 function get_slice_members_for_project($sa_url, $signer, $project_id, $role=null)
 {
+  // this probably wont work unless you are an operator
+  error_log("get_slice_members_for_project called");
   $client = XMLRPCClient::get_client($sa_url, $signer);
 
   // get all slices of project
@@ -401,12 +403,14 @@ function lookup_slice_details($sa_url, $signer, $slice_uuids)
   return $result;
 }
 
+// CHAPI: removed because it implies access that is no longer granted to all
+//function get_slices_for_projects($sa_url, $signer, $project_uuids, $allow_expired=false)
 
 // Return a dictionary of the list of slices (details) for a give
 // set of project uuids, indexed by project UUID
 // e.g.. [p1 => [s1_details, s2_details....], p2 => [s3_details, s4_details...]
 // Optinonally, allow expired slices (default=false)
-function get_slices_for_projects($sa_url, $signer, $project_uuids, $allow_expired=false)
+function get_slices_in_projects($sa_url, $signer, $slice_uuids, $project_uuids, $allow_expired=false)
 {
   $client = XMLRPCClient::get_client($sa_url, $signer);
   $projects = array();
@@ -414,17 +418,20 @@ function get_slices_for_projects($sa_url, $signer, $project_uuids, $allow_expire
     $projects[$project_uuid] = array();
   }
   //  error_log("GSFP.PROJECT_UUIDS = " . print_r($project_uuids, true));
-  $options = array('match' => array('_GENI_PROJECT_UID' => $project_uuids));
+  $options = array('match' => array('SLICE_UID' => $slice_uuids));
+  //error_log("GSFP match = " . print_r($options, true));
   $slices = $client->lookup_slices($client->get_credentials(), $options);
   $converted_slices = array();
   foreach( $slices as $slice) {
     $converted_slices[] = slice_details_chapi2portal($slice);
   }
   $slices = $converted_slices;
-  //  error_log("GSFP.SLICES = " . print_r($slices, true));
+  // error_log("GSFP.SLICES = " . print_r($slices, true));
   foreach($slices as $slice_urn => $slice) {
     $project_uid = $slice[SA_SLICE_TABLE_FIELDNAME::PROJECT_ID];
-    $projects[$project_uid][] = $slice;
+    if (in_array($project_uid, $project_uuids)) {
+      $projects[$project_uid][] = $slice;
+    }
   }
 
   // Convert from external to internal field names
@@ -433,6 +440,7 @@ function get_slices_for_projects($sa_url, $signer, $project_uuids, $allow_expire
 //                project_uid_2 => (slice_data_2, ..), ..)
   return $projects;  
 }
+
 
 // find the slice URN, given a slice UID
 function get_slice_urn($sa_url, $signer, $slice_uid) {

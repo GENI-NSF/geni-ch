@@ -29,6 +29,7 @@ import os
 import sys
 import tempfile
 import ABAC
+from syslog import syslog
 
 class ABACManager:
 
@@ -274,7 +275,7 @@ class ABACManager:
             id = ABAC.ID(name, self.ten_years)
 
         if self._verbose:
-            print "Registering ID: " + name + " " + str(cert_file)
+            syslog("Registering ID: " + name + " " + str(cert_file))
 
         if self._ids_by_name.has_key(name):
             raise Exception("ABACManager: name doubley defined " + name)
@@ -287,7 +288,7 @@ class ABACManager:
             id = self._ids_by_name[name]
             id.load_privkey(key_file)
             if self._verbose:
-                print "Registering key " + name + " " + key_file
+                syslog("Registering key " + name + " " + key_file)
 
 
     # Register a new assertion with the manager
@@ -336,14 +337,14 @@ class ABACManager:
         self._ctxt.load_attribute_chunk(P.cert_chunk())
 
         if self._verbose:
-            print "Registering assertion  " + assertion
+            syslog("Registering assertion  " + assertion)
 
         self._assertions.append(assertion)
         return P
 
     def register_assertion_file(self, assertion_file):
         if self._verbose:
-            print "Registering assertion file " + assertion_file
+            syslog("Registering assertion file " + assertion_file)
         self._assertion_files.append(assertion_file)
         self._ctxt.load_attribute_file(assertion_file)
 
