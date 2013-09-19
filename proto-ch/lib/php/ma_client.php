@@ -364,11 +364,7 @@ function ma_lookup_member_id($ma_url, $signer, $member_id_key, $member_id_value)
 {
   $chapi_member_id_key = _portalkey_to_attkey($member_id_key);
   $res = ma_lookup_members_by_identifying($ma_url, $signer, $chapi_member_id_key, $member_id_value);
-  if (count($res) > 0) {
-    return $res[0];
-  } else {
-    return null;
-  }
+  return $res; // it seems to want to return the list of members
 }
 
 // get the one member (or null) that matches the specified id
