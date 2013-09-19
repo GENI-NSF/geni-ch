@@ -33,6 +33,7 @@ from cert_utils import *
 from geni_constants import *
 from chapi.Memoize import memoize
 from chapi.Exceptions import *
+from syslog import syslog
 
 # context support
 _context = threading.local()
@@ -314,6 +315,7 @@ def lookup_pi_privilege(user_urn):
 # Generate an ME.SHARES_PROJECT_$subject<-caller assertion
 def assert_shares_project(caller_urn, member_urns, label, abac_manager):
     if isinstance(member_urns, list): 
+        if len(member_urns) == 0: return  # if empty, then we dont share the project.
         member_urn = member_urns[0] # Pull singleton URN from list
     else:
         member_urn = member_urns
