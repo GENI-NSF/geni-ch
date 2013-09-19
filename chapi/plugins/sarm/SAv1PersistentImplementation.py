@@ -689,8 +689,8 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         # first, do the removes
         if 'members_to_remove' in options:
             q = session.query(member_class)
-            ids = [self.get_member_id_for_urn(session, urn) \
-                   for urn in options['members_to_remove']]
+            ids = [self.get_member_id_for_urn(session, m_urn) \
+                   for m_urn in options['members_to_remove']]
             q = q.filter(member_class.member_id.in_(ids))
             q = q.filter(eval(id_str) == id)
             q.delete(synchronize_session='fetch')
