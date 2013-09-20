@@ -332,15 +332,11 @@ function ma_lookup_members_by_identifying($ma_url, $signer, $identifying_key, $i
 // cache identifying and public
 //function ma_lookup_members($ma_url, $signer, $lookup_attrs)
 
-// CHAPI: use CLIENTAUTH as the tail instead of MA
-function client_url($ma_url) {
-  return preg_replace("/MA$/", "CLIENTAUTH", $ma_url);
-}
 
 // List all clients
 function ma_list_clients($ma_url, $signer)
 {
-  $client = XMLRPCClient::get_client(client_url($ma_url), $signer);
+  $client = XMLRPCClient::get_client($ma_url, $signer);
   $res = $client->list_clients();
   return $res;
 }
@@ -348,7 +344,7 @@ function ma_list_clients($ma_url, $signer)
 // list all clients authorized by the member
 function ma_list_authorized_clients($ma_url, $signer, $member_id)
 {
-  $client = XMLRPCClient::get_client(client_url($ma_url), $signer);
+  $client = XMLRPCClient::get_client($ma_url, $signer);
   $res = $client->list_authorized_clients($member_id);
   return $res;
 }
@@ -357,7 +353,7 @@ function ma_list_authorized_clients($ma_url, $signer, $member_id)
 function ma_authorize_client($ma_url, $signer, $member_id, $client_urn,
 			     $authorize_sense)
 {
-  $client = XMLRPCClient::get_client(client_url($ma_url), $signer);
+  $client = XMLRPCClient::get_client($ma_url, $signer);
   $res = $client->authorize_client($member_id, $client_urn, $authorize_sense);
   return $res;
 }
@@ -368,11 +364,7 @@ function ma_lookup_member_id($ma_url, $signer, $member_id_key, $member_id_value)
 {
   $chapi_member_id_key = _portalkey_to_attkey($member_id_key);
   $res = ma_lookup_members_by_identifying($ma_url, $signer, $chapi_member_id_key, $member_id_value);
-  if (count($res) > 0) {
-    return $res[0];
-  } else {
-    return null;
-  }
+  return $res; // it seems to want to return the list of members
 }
 
 // get the one member (or null) that matches the specified id

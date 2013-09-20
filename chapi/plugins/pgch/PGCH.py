@@ -29,6 +29,7 @@ from chapi.DelegateBase import DelegateBase
 from chapi.HandlerBase import HandlerBase
 from chapi.Exceptions import *
 from tools.guard_utils import extract_user_urn
+from tools.cert_utils import get_uuid_from_cert
 import sfa.trust.gid as gid
 import geni.util.urn_util as urn_util
 
@@ -126,6 +127,7 @@ class PGCHv1Delegate(DelegateBase):
         # return value should be a struct with a bunch of entries
         return self._ch_handler.get_version()
 
+
     def GetCredential(self, client_cert, args):
         # all none means return user cred
         # else cred is user cred, id is uuid or urn of object, type=Slice
@@ -133,8 +135,22 @@ class PGCHv1Delegate(DelegateBase):
         # return is slice credential
         #args: credential, type, uuid, urn
 
+        # If no args, get a user credential
         if not args:
-            raise Exception("PGCH.Credential called with args=None")
+            client_uuid = get_uuid_from_cert(client_cert)
+            creds = []
+            options = {"match" : {"MEMBER_UID" : client_uuid},
+                       "fields" : ["_GENI_USER_CREDENTIAL"]}
+            public_info = \
+                self._ma_handler._delegate.lookup_public_member_info(creds, 
+                                                                     options)
+            client_urn = public_info['value'].keys()[0]
+            user_credential = \
+                public_info['value'][client_urn]['_GENI_USER_CREDENTIAL']
+            return self._successReturn(user_credential)
+
+#        if not args:
+#            raise Exception("PGCH.Credential called with args=None")
 
         cred_type = None
         if 'type' in args:
@@ -247,8 +263,8 @@ class PGCHv1Delegate(DelegateBase):
             options = {"match" : match_clause, "filter" : filter_clause}
             creds = []
             lookup_public_return = \
-                self._ma_handler._delegate.lookup_public_member_info(client_cert, \
-                                                                         creds, options)
+                self._ma_handler._delegate.lookup_public_member_info(creds, 
+                                                                     options)
             if lookup_public_return['code'] != NO_ERROR:
                 return lookup_public_return
             public_info = lookup_public_return['value']
@@ -289,7 +305,7 @@ class PGCHv1Delegate(DelegateBase):
             if not urn:
                 match_clause = {'SLICE_UID' : uuid}
             filter_clause = ["SLICE_UID", "SLICE_URN", "SLICE_NAME", \
-                                 "SLICE_OWNER"]
+                                 "_GENI_SLICE_OWNER"]
             options = {'match' : match_clause, 'filter' : filter_clause}
             creds = []
             lookup_slices_return = \
@@ -307,14 +323,14 @@ class PGCHv1Delegate(DelegateBase):
             slice_name = slice_info['SLICE_NAME']
             slice_urn = slice_info['SLICE_URN']
             slice_uuid = slice_info['SLICE_UID']
-            creator_uuid = slice_info['SLICE_OWNER']
+            creator_uuid = slice_info['_GENI_SLICE_OWNER']
 
             match_clause = {'MEMBER_UID' : creator_uuid}
             filter_clause = ['MEMBER_URN']
             options = {'match' : match_clause, 'filter' : filter_clause}
             lookup_member_return = \
-                self._ma_handler._delegate.lookup_public_member_info(client_cert, \
-                                                                         creds, options)
+                self._ma_handler._delegate.lookup_public_member_info(client_cert, options)
+
             if lookup_member_return['code'] != NO_ERROR:
                 return lookup_member_return
             creator_urn = lookup_member_return['value'].keys()[0]

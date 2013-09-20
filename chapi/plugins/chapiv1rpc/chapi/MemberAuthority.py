@@ -306,6 +306,38 @@ class MAv1Handler(HandlerBase):
         except Exception as e:
             return self._errorReturn(e)
 
+    # ClientAuth API
+    def list_clients(self):
+        return self._delegate.list_clients()
+
+    def list_authorized_clients(self, member_id):
+        method = 'list_authorized_clients'
+        client_cert = self.requestCertificate()
+        try:
+            self._guard.validate_call(client_cert, method, \
+                                          [], {}, {'member_id': member_id})
+            results = self._delegate.list_authorized_clients(client_cert, \
+                                                                 member_id)
+            return results;
+        except Exception as e:
+            return self._errorReturn(e)
+
+    def authorize_client(self, member_id, client_urn, authorize_sense):
+        method = 'authorize_client'
+        client_cert = self.requestCertificate()
+        try:
+            self._guard.validate_call(client_cert, method, [], {}, \
+                                          {'member_id' : member_id, \
+                                               'client_urn' : client_urn})
+            results = self._delegate.authorize_client(client_cert, \
+                                                           member_id, \
+                                                           client_urn, \
+                                                           authorize_sense)
+            return results;
+        except Exception as e:
+            return self._errorReturn(e)
+
+
 # Base class for implementations of MA API
 # Must be  implemented in a derived class, and that derived class
 # must call setDelegate on the handler
@@ -359,6 +391,16 @@ class MAv1DelegateBase(DelegateBase):
                                credentials, options):
         raise CHAPIv1NotImplementedError('')
 
+    # ClientAuth methods
+    def list_clients(self):
+        raise CHAPIv1NotImplementedError('')
 
+    # List of URN's of all tools for which a given user (by ID) has
+    # authorized use and has generated inside keys
+    def list_authorized_clients(self, client_cert, member_id):
+        raise CHAPIv1NotImplementedError('')
 
-
+    # Authorize/deauthorize a tool with respect to a user
+    def authorize_client(self, client_cert, member_id, \
+                             client_urn, authorize_sense):
+        raise CHAPIv1NotImplementedError('')
