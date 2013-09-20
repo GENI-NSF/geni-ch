@@ -38,7 +38,7 @@ from tools.cert_utils import *
 from tools.geni_constants import *
 from tools.geni_utils import *
 from tools.cs_utils import *
-
+from syslog import syslog
 
 # classes for mapping to sql tables
 
@@ -600,12 +600,12 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
 
     # get info on a set of projects
     def lookup_projects(self, client_cert, credentials, options):
-
         client_uuid = get_uuid_from_cert(client_cert)
         self.update_project_expirations(client_uuid)
 
         columns, match_criteria = \
             unpack_query_options(options, self.project_field_mapping)
+
         session = self.db.getSession()
         q = session.query(self.db.PROJECT_TABLE)
         q = add_filters(q, match_criteria, self.db.PROJECT_TABLE, \
