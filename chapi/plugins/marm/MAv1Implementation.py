@@ -34,7 +34,7 @@ import sfa.trust.gid as sfa_gid
 import sfa.trust.certificate as cert
 import geni.util.cred_util as cred_util
 from sqlalchemy.orm import mapper
-import datetime
+from datetime import datetime
 from dateutil.relativedelta import relativedelta
 import os
 import tempfile
