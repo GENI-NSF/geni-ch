@@ -25,6 +25,7 @@ import sfa.trust.certificate
 import subprocess
 import os
 import tempfile
+from syslog import syslog
 
 # A set of utilities to pull infomration out of X509 certs
 
@@ -140,12 +141,12 @@ def make_cert(uuid, email, urn, \
                          '-cert', signer_cert_file,\
                          '-keyfile', signer_key_file, \
                          '-subj', subject ]
-    print " ".join(sign_csr_args)
-#    os.system(" ".join(sign_csr_args))
+    #syslog("CERT args: "+" ".join(sign_csr_args))
+    os.system(" ".join(sign_csr_args))
 
-        # Grab cert from cert_file
+    # Grab cert from cert_file
     cert_pem = open(cert_file).read()
-#        print "CERT_PEM = " + cert_pem
+    #syslog("CERT_PEM = " + cert_pem)
 
     return cert_pem
 
