@@ -27,6 +27,7 @@ from amsoil.core import serviceinterface
 from DelegateBase import DelegateBase
 from HandlerBase import HandlerBase
 from Exceptions import *
+from syslog import syslog
 
 sa_logger = amsoil.core.log.getLogger('sav1')
 xmlrpc = pm.getService('xmlrpc')
