@@ -23,6 +23,7 @@
 
 # Implementation of the Member Authority
 
+import MA_constants as MA
 from chapi.MemberAuthority import MAv1DelegateBase
 from chapi.Exceptions import *
 import chapi.Parameters
@@ -68,6 +69,10 @@ def row_cert_to_public_key(row):
     cert_obj = cert.Certificate(string=raw_certificate)
     public_key = cert_obj.get_pubkey()
     return public_key.get_pubkey_string()
+
+MA.field_mapping["_GENI_MEMBER_SSL_PUBLIC_KEY"] = row_cert_to_public_key
+MA.field_mapping["_GENI_MEMBER_INSIDE_PUBLIC_KEY"] = row_cert_to_public_key
+
 
 def derive_username(email_address):
     # See http://www.linuxjournal.com/article/9585
@@ -147,125 +152,6 @@ def make_urn(authority, typ, name):
     return 'urn:publicid:IDN+'+authority+'+'+typ+'+'+name
 
 class MAv1Implementation(MAv1DelegateBase):
-
-    credential_types = ["SFA", "ABAC"]
-
-    standard_fields = {
-        "MEMBER_URN" : { "TYPE" : " URN" , 
-                             "UPDATE" : False, "PROTECT" : "PUBLIC"},
-        "MEMBER_UID": { "TYPE" : "UID", "UPDATE" : False, \
-                            "PROTECT" : "PUBLIC"},
-        "MEMBER_FIRSTNAME" : {"TYPE" : "STRING", "PROTECT" : "IDENTIFYING"},
-        "MEMBER_LASTNAME" : {"TYPE" : "STRING", "PROTECT" : "IDENTIFYING"},
-        "MEMBER_USERNAME" : {"TYPE" : "STRING", "PROTECT" : "PUBLIC"},
-        "MEMBER_EMAIL" : {"TYPE" : "STRING", "PROTECT" : "IDENTIFYING"}
-        }
-
-    optional_fields = {
-        "_GENI_MEMBER_DISPLAYNAME": {"TYPE": "STRING", "CREATE": "ALLOWED", \
-                               "UPDATE": True, "PROTECT": "IDENTIFYING"},
-        "_GENI_MEMBER_PHONE_NUMBER": {"TYPE": "STRING", "CREATE": "ALLOWED", \
-                                "UPDATE": True, "PROTECT": "IDENTIFYING"},
-        "_GENI_MEMBER_AFFILIATION": {"TYPE": "STRING", "CREATE": "ALLOWED", \
-                               "UPDATE": True, "PROTECT": "IDENTIFYING"},
-        "_GENI_MEMBER_EPPN": {"TYPE": "STRING", "CREATE": "ALLOWED", \
-                        "UPDATE": True, "PROTECT": "IDENTIFYING"},
-        "_GENI_MEMBER_SSL_PUBLIC_KEY": {"TYPE": "KEY"},
-        "_GENI_MEMBER_SSL_CERTIFICATE": {"TYPE": "CERTIFICATE"},
-        "_GENI_MEMBER_SSL_PRIVATE_KEY": \
-                      {"TYPE": "KEY", "PROTECT": "PRIVATE"},
-        "_GENI_MEMBER_INSIDE_PUBLIC_KEY": {"TYPE": "KEY"},
-        "_GENI_MEMBER_INSIDE_CERTIFICATE": {"TYPE": "CERTIFICATE"},
-        "_GENI_MEMBER_INSIDE_PRIVATE_KEY": \
-                      {"TYPE": "KEY", "PROTECT": "PRIVATE"},
-        "_GENI_USER_CREDENTIAL": {"TYPE": "CREDENTIAL"}
-        }
-
-    standard_key_fields = { 
-        "KEY_MEMBER" : \
-            {"TYPE" : "URN", "CREATE" : "REQUIRED"}, \
-            "KEY_ID" : {"TYPE" : "UID"}, \
-            "KEY_PUBLIC" : \
-            {"TYPE" : "KEY", "CREATE" : "REQUIRED"},  \
-            "KEY_PRIVATE" : \
-            {"TYPE" : "KEY", "CREATE" : "ALLOWED"}, \
-            "KEY_DESCRIPTION" : \
-            {"TYPE" : "STRING", "CREATE" : "ALLOWED", "UPDATE" : True} 
-    }
-
-    optional_key_fields = {
-        "_GENI_KEY_FILENAME" : {"TYPE" : "STRING", "UPDATE" : True, \
-                                    "CREATE" : "ALLOWED"}
-	}
-    
-    # Mapping from external to internal data schema
-    field_mapping = {
-        "MEMBER_URN": "urn",
-        "MEMBER_UID": "member_id",
-        "MEMBER_FIRSTNAME": "first_name",
-        "MEMBER_LASTNAME": "last_name",
-        "MEMBER_USERNAME": "username",
-        "MEMBER_EMAIL": "email_address",
-        "_GENI_MEMBER_DISPLAYNAME": "displayName",
-        "_GENI_MEMBER_PHONE_NUMBER": "telephone_number",
-        "_GENI_MEMBER_AFFILIATION": "affiliation",
-        "_GENI_MEMBER_EPPN": "eppn",
-        "_GENI_MEMBER_SSL_CERTIFICATE": "certificate",
-        "_GENI_MEMBER_SSL_PUBLIC_KEY": row_cert_to_public_key, 
-        "_GENI_MEMBER_SSL_PRIVATE_KEY": "private_key",
-        "_GENI_MEMBER_INSIDE_PUBLIC_KEY": row_cert_to_public_key,
-        "_GENI_MEMBER_INSIDE_CERTIFICATE": "certificate",
-        "_GENI_MEMBER_INSIDE_PRIVATE_KEY": "private_key",
-        "_GENI_USER_CREDENTIAL": "foo"
-        }
-
-    key_fields = ["KEY_MEMBER", "KEY_ID", "KEY_PUBLIC", "KEY_PRIVATE", 
-                  "KEY_DESCRIPTION", "_GENI_KEY_MEMBER_UID", 
-                  "_GENI_KEY_FILENAME" ]
-    key_field_mapping = {
-        "KEY_MEMBER": 'value',
-        "KEY_ID": 'id',
-        "KEY_PUBLIC": "public_key",
-        "KEY_PRIVATE": "private_key",
-        "KEY_DESCRIPTION":  "description",
-        "_GENI_KEY_MEMBER_UID": "member_id",
-        "_GENI_KEY_FILENAME": "filename"
-        }
-
-    objects = ["MEMBER", "KEY"]
-    services = ["MEMBER", "KEY"]
-
-    attributes = ["MEMBER_URN", "MEMBER_UID", "MEMBER_FIRSTNAME", \
-                      "MEMBER_LASTNAME", "MEMBER_USERNAME", "MEMBER_EMAIL", \
-                      "_GENI_MEMBER_DISPLAYNAME", "_GENI_MEMBER_PHONE_NUMBER", \
-                      "_GENI_MEMBER_AFFILIATION", "_GENI_MEMBER_EPPN", \
-                      "KEY_MEMBER", "KEY_ID", "KEY_PUBLIC", "KEY_PRIVATE", \
-                      "KEY_DESCRIPTION", "_GENI_KEY_MEMBER_UID", \
-                      "_GENI_KEY_FILENAME"]
-
-    public_fields = ["MEMBER_URN", "MEMBER_UID", "MEMBER_USERNAME", \
-                         "_GENI_MEMBER_SSL_PUBLIC_KEY", "_GENI_MEMBER_SSL_CERTIFICATE", \
-                         "_GENI_MEMBER_INSIDE_PUBLIC_KEY", "_GENI_MEMBER_INSIDE_CERTIFICATE", \
-                         "_GENI_USER_CREDENTIAL"]
-
-    identifying_fields = ["MEMBER_FIRSTNAME", "MEMBER_LASTNAME", \
-                              "MEMBER_USERNAME", \
-                              "MEMBER_EMAIL", \
-                              "MEMBER_URN", "MEMBER_UID", \
-                              "_GENI_MEMBER_DISPLAYNAME", "_GENI_MEMBER_PHONE_NUMBER", \
-                     "_GENI_MEMBER_AFFILIATION", "_GENI_MEMBER_EPPN"]
-
-    private_fields = ["_GENI_MEMBER_SSL_PRIVATE_KEY", \
-                          "MEMBER_URN", "MEMBER_UID", \
-                          "_GENI_MEMBER_INSIDE_PRIVATE_KEY"]
-
-    key_fields = ["KEY_MEMBER", "KEY_ID", "KEY_PUBLIC", "KEY_PRIVATE", 
-                  "KEY_DESCRIPTION", "_GENI_KEY_MEMBER_UID", 
-                  "_GENI_KEY_FILENAME" ]
-
-    required_create_key_fields = ["KEY_PUBLIC"]
-    allowed_create_key_fields = ["KEY_PUBLIC", "KEY_PRIVATE", "KEY_DESCRIPTION", "_GENI_KEY_FILENAME"]
-    updatable_key_fields = ["KEY_DESCRIPTION"]
     
     def __init__(self):
         super(MAv1Implementation, self).__init__()
@@ -297,19 +183,19 @@ class MAv1Implementation(MAv1DelegateBase):
 
     # This call is unprotected: no checking of credentials
     def get_version(self):
-        all_optional_fields = dict(self.optional_fields.items() + \
-                                   self.optional_key_fields.items())
+        all_optional_fields = dict(MA.optional_fields.items() + \
+                                   MA.optional_key_fields.items())
         version_info = {"VERSION": chapi.Parameters.VERSION_NUMBER,
-                        "CREDENTIAL_TYPES": self.credential_types,
-                        "OBJECTS" : self.objects,
-                        "SERVICES" : self.services,
+                        "CREDENTIAL_TYPES": MA.credential_types,
+                        "OBJECTS" : MA.objects,
+                        "SERVICES" : MA.services,
                         "FIELDS": all_optional_fields}
         return self._successReturn(version_info)
 
     # ensure that all of a set of entries are attributes
     def check_attributes(self, attrs):
         for attr in attrs:
-            if attr not in self.attributes:
+            if attr not in MA.attributes:
                 raise CHAPIv1ArgumentError('Unknown attribute ' + attr)
 
     # filter out all the users that have a particular value of an attribute
@@ -320,7 +206,7 @@ class MAv1Implementation(MAv1DelegateBase):
             else:
                 return [value]
         q = session.query(MemberAttribute.member_id)
-        q = q.filter(MemberAttribute.name == self.field_mapping[attr])
+        q = q.filter(MemberAttribute.name == MA.field_mapping[attr])
         if isinstance(value, types.ListType):
             q = q.filter(MemberAttribute.value.in_(value))
         else:
@@ -331,7 +217,7 @@ class MAv1Implementation(MAv1DelegateBase):
     # find the value of an attribute for a given user
     def get_attr_for_uid(self, session, attr, uid):
         q = session.query(MemberAttribute.value)
-        q = q.filter(MemberAttribute.name == self.field_mapping[attr])
+        q = q.filter(MemberAttribute.name == MA.field_mapping[attr])
         q = q.filter(MemberAttribute.member_id == uid)
         rows = q.all()
         return [row.value for row in rows]
@@ -370,7 +256,7 @@ class MAv1Implementation(MAv1DelegateBase):
         
         # preliminaries
         selected_columns, match_criteria = \
-            unpack_query_options(options, self.field_mapping)
+            unpack_query_options(options, MA.field_mapping)
         if not match_criteria:
             raise CHAPIv1ArgumentError('Missing a "match" option')
         self.check_attributes(match_criteria)
@@ -394,11 +280,11 @@ class MAv1Implementation(MAv1DelegateBase):
                     values[col] = uid
                 else:
                     vals = None
-                    if col in self.attributes:
+                    if col in MA.attributes:
                         vals = self.get_attr_for_uid(session, col, uid)
                     elif col in self.table_mapping:
                         vals = self.get_val_for_uid(session, \
-                            self.table_mapping[col], self.field_mapping[col], uid)
+                            self.table_mapping[col], MA.field_mapping[col], uid)
                     if vals:
                         values[col] = vals[0]
                     elif 'filter' in options:
@@ -410,15 +296,15 @@ class MAv1Implementation(MAv1DelegateBase):
 
     # This call is unprotected: no checking of credentials
     def lookup_public_member_info(self, credentials, options):
-        return self.lookup_member_info(options, self.public_fields)
+        return self.lookup_member_info(options, MA.public_fields)
 
     # This call is protected
     def lookup_private_member_info(self, client_cert, credentials, options):
-        return self.lookup_member_info(options, self.private_fields)
+        return self.lookup_member_info(options, MA.private_fields)
 
     # This call is protected
     def lookup_identifying_member_info(self, client_cert, credentials, options):
-        return self.lookup_member_info(options, self.identifying_fields)
+        return self.lookup_member_info(options, MA.identifying_fields)
 
     # This call is protected
     def update_member_info(self, client_cert, member_urn, credentials, options):
@@ -440,13 +326,13 @@ class MAv1Implementation(MAv1DelegateBase):
         # do the update
         all_keys = {}
         for attr, value in options['fields'].iteritems():
-            if attr in self.attributes:
+            if attr in MA.attributes:
                 self.update_attr(session, attr, value, uid, self_asserted)
             elif attr in self.table_mapping:
                 table = self.table_mapping[attr]
                 if table not in all_keys:
                     all_keys[table] = {}
-                all_keys[table][self.field_mapping[attr]] = value
+                all_keys[table][MA.field_mapping[attr]] = value
         for table, keys in all_keys.iteritems():
             self.update_keys(session, table, keys, uid)
             
@@ -457,11 +343,11 @@ class MAv1Implementation(MAv1DelegateBase):
     def update_attr(self, session, attr, value, uid, self_asserted):
         if len(self.get_attr_for_uid(session, attr, uid)) > 0:
             q = session.query(MemberAttribute)
-            q = q.filter(MemberAttribute.name == self.field_mapping[attr])
+            q = q.filter(MemberAttribute.name == MA.field_mapping[attr])
             q = q.filter(MemberAttribute.member_id == uid)
             q.update({"value": value})
         else:
-            obj = MemberAttribute(self.field_mapping[attr], value, \
+            obj = MemberAttribute(MA.field_mapping[attr], value, \
                                   uid, self_asserted)
             session.add(obj)
         session.commit()
@@ -558,10 +444,10 @@ class MAv1Implementation(MAv1DelegateBase):
         if 'fields' not in options:
             return self._errorReturn(CHAPIv1ArgumentError("No fields in create_key"))
         fields = options['fields']
-        validate_fields(fields, self.required_create_key_fields, \
-                            self.allowed_create_key_fields)
+        validate_fields(fields, MA.required_create_key_fields, \
+                            MA.allowed_create_key_fields)
         create_fields = \
-            convert_dict_to_internal(fields, self.key_field_mapping)
+            convert_dict_to_internal(fields, MA.key_field_mapping)
 
         # Add member_id to create_fields
         lookup_member_id_options = {'match' : {'MEMBER_URN' : member_urn},
@@ -622,9 +508,9 @@ class MAv1Implementation(MAv1DelegateBase):
         if 'fields' not in options:
             return self._errorReturn(CHAPIv1ArgumentError("No fields in update_key"))
         fields = options['fields']
-        validate_fields(fields, None, self.updatable_key_fields)
+        validate_fields(fields, None, MA.updatable_key_fields)
         update_fields = \
-            convert_dict_to_internal(fields, self.key_field_mapping)
+            convert_dict_to_internal(fields, MA.key_field_mapping)
         session = self.db.getSession()
         q = session.query(SshKey)
         q = q.filter(SshKey.id == key_id)
@@ -640,7 +526,7 @@ class MAv1Implementation(MAv1DelegateBase):
     def lookup_keys(self, client_cert, credentials, options):
 
         selected_columns, match_criteria = \
-            unpack_query_options(options, self.key_field_mapping)
+            unpack_query_options(options, MA.key_field_mapping)
         if not match_criteria:
             raise CHAPIv1ArgumentError('Missing a "match" option')
         self.check_attributes(match_criteria)
@@ -661,12 +547,12 @@ class MAv1Implementation(MAv1DelegateBase):
                 q = q.filter(self.db.MEMBER_ATTRIBUTE_TABLE.c.value == member_urn)
             del match_criteria['KEY_MEMBER']
 
-        q = add_filters(q, match_criteria, self.db.SSH_KEY_TABLE, self.key_field_mapping)
+        q = add_filters(q, match_criteria, self.db.SSH_KEY_TABLE, MA.key_field_mapping)
         rows = q.all()
         session.close()
 
         keys = [construct_result_row(row, selected_columns, \
-                                         self.key_field_mapping) \
+                                         MA.key_field_mapping) \
                     for row in rows]
         return self._successReturn(keys)
 
