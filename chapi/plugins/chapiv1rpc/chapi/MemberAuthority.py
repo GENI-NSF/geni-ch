@@ -40,7 +40,7 @@ class MAv1Handler(HandlerBase):
     # Override error return to log exception
     def _errorReturn(self, e):
         chapi_log_exception(MA_LOG_PREFIX, e)
-        return super(MAv1Handler, self)._errorReturn(self, e)
+        return super(MAv1Handler, self)._errorReturn(e)
 
     # This call is unprotected: no checking of credentials
     # Return version of MA API including object model
