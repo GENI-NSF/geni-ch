@@ -34,13 +34,6 @@ from CHv1Guard import CHv1Guard
 
 def setup():
 
-    # set up config keys
-    config = pm.getService('config')
-    config.install('chrm.db_url', 'postgresql://portal:portal@localhost/portal', 'database URL')
-
-    config.install("chrm.authority", "ch-mb.gpolab.bbn.com", \
-                       "name of CH/SA/MA authority")
-
     db_engine = CHDatabaseEngine()
     pm.registerService('chdbengine', db_engine)
 

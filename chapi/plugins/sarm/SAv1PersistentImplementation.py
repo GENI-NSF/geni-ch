@@ -24,6 +24,7 @@
 import os
 from sqlalchemy import *
 from chapi.Exceptions import *
+import chapi.Parameters
 import amsoil.core.pluginmanager as pm
 from chapi.SliceAuthority import SAv1DelegateBase
 import sfa.trust.gid as gid
@@ -56,8 +57,6 @@ class ProjectMember(object):
 
 # Implementation of SA that speaks to GPO Slice and projects table schema
 class SAv1PersistentImplementation(SAv1DelegateBase):
-
-    version_number = "1.0"
 
     services = ["SLICE", "PROJECT", "SLICE_MEMBER", "PROJECT_MEMBER", "SLIVER_INFO"]
 
@@ -155,17 +154,13 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         super(SAv1PersistentImplementation, self).__init__()
         self.db = pm.getService('chdbengine')
         self.config = pm.getService('config')
-        self.cert = self.config.get('chapiv1rpc.ch_cert')
-        self.key = self.config.get('chapiv1rpc.ch_key')
-
-        self.cert = '/usr/share/geni-ch/sa/sa-cert.pem'
-        self.key = '/usr/share/geni-ch/sa/sa-key.pem'
+        self.cert = self.config.get('chapi.sa_cert')
+        self.key = self.config.get('chapi.sa_key')
 
         self.logging_service = pm.getService('loggingv1handler')
 
         self.trusted_root = self.config.get('chapiv1rpc.ch_cert_root')
 
-        self.trusted_root = '/usr/share/geni-ch/portal/gcf.d/trusted_roots'
         self.trusted_root_files = \
             [os.path.join(self.trusted_root, f) \
                  for f in os.listdir(self.trusted_root) if not f.startswith('CAT')]
@@ -177,7 +172,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         mapper(ProjectMember, self.db.PROJECT_MEMBER_TABLE)
 
     def get_version(self):
-        version_info = {"VERSION" : self.version_number, 
+        version_info = {"VERSION" : chapi.Parameters.VERSION_NUMBER, 
                         "SERVICES" : self.services,
                         "CREDENTIAL_TYPES" : self.credential_types, 
                         "FIELDS": self.supplemental_fields}

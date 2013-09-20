@@ -25,6 +25,7 @@
 
 from chapi.MemberAuthority import MAv1DelegateBase
 from chapi.Exceptions import *
+import chapi.Parameters
 from geni.util.urn_util import URN
 import amsoil.core.pluginmanager as pm
 from tools.dbutils import *
@@ -146,7 +147,6 @@ def make_urn(authority, typ, name):
 
 class MAv1Implementation(MAv1DelegateBase):
 
-    version_number = "1.0"
     credential_types = ["SFA", "ABAC"]
 
     standard_fields = {
@@ -269,6 +269,7 @@ class MAv1Implementation(MAv1DelegateBase):
     def __init__(self):
         super(MAv1Implementation, self).__init__()
         self.db = pm.getService('chdbengine')
+        self.config = pm.getService('config')
         mapper(MemberAttribute, self.db.MEMBER_ATTRIBUTE_TABLE)
         mapper(OutsideCert, self.db.OUTSIDE_CERT_TABLE)
         mapper(InsideKey, self.db.INSIDE_KEY_TABLE)
@@ -281,9 +282,9 @@ class MAv1Implementation(MAv1DelegateBase):
             "_GENI_MEMBER_INSIDE_PUBLIC_KEY": InsideKey,
             "_GENI_MEMBER_INSIDE_PRIVATE_KEY": InsideKey
             }
-        self.cert = '/usr/share/geni-ch/ma/ma-cert.pem'
-        self.key = '/usr/share/geni-ch/ma/ma-key.pem'
-        trusted_root = '/usr/share/geni-ch/portal/gcf.d/trusted_roots'
+        self.cert = self.config.get('chapi.ma_cert')
+        self.key = self.config.get('chapi.ma_key')
+        trusted_root = self.config.get('chapiv1rpc.ch_cert_root')
         self.trusted_roots = [os.path.join(trusted_root, f) \
             for f in os.listdir(trusted_root) if not f.startswith('CAT')]
 
@@ -291,7 +292,7 @@ class MAv1Implementation(MAv1DelegateBase):
     def get_version(self):
         all_optional_fields = dict(self.optional_fields.items() + \
                                    self.optional_key_fields.items())
-        version_info = {"VERSION": self.version_number,
+        version_info = {"VERSION": chapi.Parameters.VERSION_NUMBER,
                         "CREDENTIAL_TYPES": self.credential_types,
                         "OBJECTS" : self.objects,
                         "SERVICES" : self.services,

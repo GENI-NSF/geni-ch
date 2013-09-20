@@ -22,31 +22,15 @@
 #----------------------------------------------------------------------
 
 import amsoil.core.pluginmanager as pm
-import os, os.path
 from chapi.Clearinghouse import CHv1Handler, CHv1DelegateBase
 from chapi.MemberAuthority import MAv1Handler, MAv1DelegateBase
 from chapi.SliceAuthority import SAv1Handler, SAv1DelegateBase
 from chapi.GuardBase import GuardBase
+from chapi.Parameters import set_parameters
 
 def setup():
-    # setup config keys
-    config = pm.getService("config")
-
-    gcf_root = "/usr/share/geni-ch/portal/gcf.d"
-    config.install('chapiv1rpc.gcf_root', gcf_root, \
-                       "Location of local GCF install")
-    config.install("chapiv1rpc.ch_cert_root", \
-                       os.path.join(gcf_root, 'trusted_roots'), \
-                       "Folder which includes trusted clearinghouse certificates for GENI API v3 (in .pem format). If relative path, the root is assumed to be git repo root.")
-    config.install("chapiv1rpc.rspec_validation", \
-                       True, \
-                       "Determines if RSpec shall be validated by the given xs:schemaLocations in the document (may cause downloads of the given schema from the given URL per request).")
-    config.install("chapiv1rpc.ch_cert", \
-                       os.path.join(gcf_root, "ch-cert.pem"), \
-                       "Location of CH certificate")
-    config.install("chapiv1rpc.ch_key", \
-                       os.path.join(gcf_root, "ch-key.pem"), \
-                       "Location of CH private key")
+    # load all the parameter values into the config database
+    set_parameters()
     
     # register xmlrpc endpoint
     xmlrpc = pm.getService('xmlrpc')
