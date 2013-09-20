@@ -30,6 +30,7 @@ from chapi.HandlerBase import HandlerBase
 from chapi.Exceptions import *
 from tools.guard_utils import extract_user_urn
 from tools.cert_utils import get_uuid_from_cert
+from tools.chapi_log import *
 import sfa.trust.gid as gid
 import geni.util.urn_util as urn_util
 
@@ -40,54 +41,88 @@ class PGCHv1Handler(HandlerBase):
     def __init__(self):
         super(PGCHv1Handler, self).__init__(pgch_logger)
 
+    # Override error return to log exception
+    def _errorReturn(self, e):
+        chapi_log_exception(PGCH_LOG_PREFIX, e)
+        return super(PGCHv1Handler, self)._errorReturn(e)
+
     def GetVersion(self):
+        method = 'GetVersion'
+        args = None
+        chapi_log_invocation(PGCH_LOG_PREFIX, method, [], {}, args)
         try:
             client_cert = self.requestCertificate()
-            return self._delegate.GetVersion(client_cert)
+            result = self._delegate.GetVersion(client_cert)
+            chapi_log_result(PGCH_LOG_PREFIX, method, result)
+            return result
         except Exception as e:
             return self._errorReturn(e)
 
 
     def GetCredential(self, args=None):
+        method = 'GetCredential'
+        chapi_log_invocation(PGCH_LOG_PREFIX, method, [], {}, args)
         try:
             client_cert = self.requestCertificate()
-            return self._delegate.GetCredential(client_cert, args)
+            result = self._delegate.GetCredential(client_cert, args)
+            chapi_log_result(PGCH_LOG_PREFIX, method, result)
+            return result
         except Exception as e:
             return self._errorReturn(e)
 
     def Resolve(self, args):
+        method = 'Resolve'
+        chapi_log_invocation(PGCH_LOG_PREFIX, method, [], {}, args)
         try:
             client_cert = self.requestCertificate()
-            return self._delegate.Resolve(client_cert, args)
+            result = self._delegate.Resolve(client_cert, args)
+            chapi_log_result(PGCH_LOG_PREFIX, method, result)
+            return result
         except Exception as e:
             return self._errorReturn(e)
 
     def Register(self, args):
+        method = 'Register'
+        chapi_log_invocation(PGCH_LOG_PREFIX, method, [], {}, args)
         try:
             client_cert = self.requestCertificate()
-            return self._delegate.Register(client_cert, args)
+            result = self._delegate.Register(client_cert, args)
+            chapi_log_result(PGCH_LOG_PREFIX, method, result)
+            return result
         except Exception as e:
             return self._errorReturn(e)
 
 
     def RenewSlice(self, args):
+        method = 'RenewSlice'
+        chapi_log_invocation(PGCH_LOG_PREFIX, method, [], {}, args)
         try:
             client_cert = self.requestCertificate()
-            return self._delegate.RenewSlice(client_cert, args)
+            result = self._delegate.RenewSlice(client_cert, args)
+            chapi_log_result(PGCH_LOG_PREFIX, method, result)
+            return result
         except Exception as e:
             return self._errorReturn(e)
 
     def GetKeys(self, args):
+        method = 'GetKeys'
+        chapi_log_invocation(PGCH_LOG_PREFIX, method, [], {}, args)
         try:
             client_cert = self.requestCertificate()
-            return self._delegate.GetKeys(client_cert, args)
+            result = self._delegate.GetKeys(client_cert, args)
+            chapi_log_result(PGCH_LOG_PREFIX, method, result)
+            return result
         except Exception as e:
             return self._errorReturn(e)
 
     def ListComponents(self, args):
+        method = 'ListComponents'
+        chapi_log_invocation(PGCH_LOG_PREFIX, method, [], {}, args)
         try:
             client_cert = self.requestCertificate()
-            return self._delegate.ListComponents(client_cert, args)
+            result = self._delegate.ListComponents(client_cert, args)
+            chapi_log_result(PGCH_LOG_PREFIX, method, result)
+            return result
         except Exception as e:
             return self._errorReturn(e)
 
