@@ -35,6 +35,7 @@ from dateutil.relativedelta import relativedelta
 from tools.guard_utils import *
 from tools.dbutils import *
 from tools.cert_utils import *
+from tools.chapi_log import *
 
 cs_logger = amsoil.core.log.getLogger('csv1')
 xmlrpc = pm.getService('xmlrpc')
@@ -47,37 +48,48 @@ class CSv1Handler(HandlerBase):
     def __init__(self):
         super(CSv1Handler, self).__init__(cs_logger)
 
+    # Override error return to log exception
+    def _errorReturn(self, e):
+        chapi_log_exception(CS_LOG_PREFIX, e)
+        return super(CSv1Handler, self)._errorReturn(e)
+
     def get_attributes(self, principal, context_type, context, \
                            credentials, options):
         client_cert = self.requestCertificate()
         method = 'get_attributes'
+        args = {'principal' : principal, \
+                    'context_type' : context_type, \
+                    'context' : context}
+        chapi_log_invocation(CS_LOG_PREFIX, method, credentials, options, args)
         try:
             self._guard.validate_call(client_cert, method, \
-                                          credentials, options,  \
-                                          {'principal' : principal, \
-                                               'context_type' : context_type, \
-                                               'context' : context})
+                                          credentials, options,  args)
             client_cert, options = \
                 self._guard.adjust_client_identity(client_cert, \
                                                        credentials, options)
-            return self._delegate.get_attributes(client_cert, principal, \
-                                                     context_type, context, \
-                                                     credentials, options)
+            result = self._delegate.get_attributes(client_cert, principal, \
+                                                       context_type, context, \
+                                                       credentials, options)
+            chapi_log_result(CS_LOG_PREFIX, method, result)
+            return result
         except Exception as e:
             return self._errorReturn(e)
 
     def get_permissions(self, principal, credentials, options):
         client_cert = self.requestCertificate()
         method = 'get_permissions'
+        args = {'principal' : principal}
+        chapi_log_invocation(CS_LOG_PREFIX, method, credentials, options, args)
         try:
             self._guard.validate_call(client_cert, method, \
-                                          credentials, options,  \
-                                          {'principal' : principal})
+                                          credentials, options, args)
             client_cert, options = \
                 self._guard.adjust_client_identity(client_cert, \
                                                        credentials, options);
-            return self._delegate.get_permissions(client_cert, principal, \
-                                                      credentials, options)
+            result = self._delegate.get_permissions(client_cert, principal, \
+                                                        credentials, options)
+            chapi_log_result(CS_LOG_PREFIX, method, result)
+            return result
         except Exception as e:
             return self._errorReturn(e)
 
