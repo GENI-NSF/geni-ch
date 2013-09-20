@@ -26,6 +26,7 @@ from chapi.Clearinghouse import CHv1Handler
 from CHv1PersistentImplementation import CHv1PersistentImplementation
 from chapi.Exceptions import *
 from tools.dbutils import *
+from tools.chapi_log import *
 
 # Class for extending the standard CHAPI CH (Clearinghouse i.e. Registry)
 # calls for legacy calls for ServiceRegistry: 
@@ -81,10 +82,21 @@ class SRv1Delegate(CHv1PersistentImplementation):
         super(SRv1Delegate, self).__init__()
 
     def get_services_of_type(self, service_type):
+        method = 'get_services_of_type'
+        args = {'service_type' : service_type}
+        chapi_log_invocation(SR_LOG_PREFIX, method, [], {}, args)
+
         options = {'match' : {}, 'filter' : self.field_mapping.keys()}
-        return self.lookup_authorities(service_type, options)
+
+        result = self.lookup_authorities(service_type, options)
+
+        chapi_log_result(SR_LOG_PREFIX, method, result)
+        return result
 
     def get_services(self):
+        method = 'get_services'
+        chapi_log_invocation(SR_LOG_PREFIX, method, [], {}, {})
+
         options = {'match' : {}, 'filter' : self.field_mapping.keys()}
         selected_columns, match_criteria = \
             unpack_query_options(options, self.field_mapping)
@@ -106,5 +118,8 @@ class SRv1Delegate(CHv1PersistentImplementation):
             if service_cert:
                 service['SERVICE_CERTIFICATE_CONTENTS'] = open(service_cert, 'r').read()
 
-        return self._successReturn(services)
+        result = self._successReturn(services)
+
+        chapi_log_result(SR_LOG_PREFIX, method, result)
+        return result
 

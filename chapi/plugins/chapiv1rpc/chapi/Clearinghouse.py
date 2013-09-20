@@ -35,6 +35,11 @@ xmlrpc = pm.getService('xmlrpc')
 class CHv1Handler(HandlerBase):
     def __init__(self):
         super(CHv1Handler, self).__init__(ch_logger)
+
+    # Override error return to log exception
+    def _errorReturn(self, e):
+        chapi_log_exception(SR_LOG_PREFIX, e)
+        return super(MAv1Handler, self)._errorReturn(self, e)
     
     # This call is unprotected: no checking of credentials
     # Return version of CH API including object model
