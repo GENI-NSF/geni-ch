@@ -501,11 +501,11 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         project_uuid = \
             self.get_project_id(session, 'project_name', project_name)
         attribs = {"PROJECT" : project_uuid, "SLICE" : slice_uuid}
-        self.logging_service.log_event("Updated slice " + name, 
+        self.logging_service.log_event("Updated slice " + slice_name, 
                                        attribs, client_uuid)
         if "SLICE_EXPIRATION" in options['fields']: 
             expiration = options['fields']['SLICE_EXPIRATION']
-            self.logging_service.log_event("Renewed slice %s until %s" \
+            self.logging_service.log_event("Renewed slice %s until %s" % \
                                                (slice_name, expiration), \
                                                attribs, client_uuid)
 
