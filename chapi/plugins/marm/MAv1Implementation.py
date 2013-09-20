@@ -497,14 +497,19 @@ class MAv1Implementation(MAv1DelegateBase):
     # build a user credential based on the user's cert
     def get_user_credential(self, session, uid):
         certs = self.get_val_for_uid(session, OutsideCert, "certificate", uid)
+        #syslog('GUC: outside certs = '+str(certs))
         if not certs:
             certs = self.get_val_for_uid(session, InsideKey, "certificate", uid)
+            #syslog('GUC: inside certs = '+str(certs))
         if not certs:
+            #syslog('GUC: no certs')
             return None
         gid = sfa_gid.GID(string = certs[0])
+        #syslog('GUC: gid = '+str(gid))
         expires = datetime.utcnow() + relativedelta(years=1)
         cred = cred_util.create_credential(gid, gid, expires, "user", \
                   self.key, self.cert, self.trusted_roots)
+        #syslog('GUC: cred = '+cred.save_to_string())
         return cred.save_to_string()
 
     def create_member(self, client_cert, attributes, credentials, options):
@@ -758,7 +763,7 @@ class MAv1Implementation(MAv1DelegateBase):
             private_key, csr_file = make_csr()
             member_email = convert_member_uid_to_email(member_id)
             cert_pem = make_cert(member_id, member_email, member_urn, \
-                                     self.kmcert, self.kmkey, csr_file)
+                                     self.cert, self.key, csr_file)
 
             signer_pem = open(self.cert).read()
             cert_chain = cert_pem + signer_pem
