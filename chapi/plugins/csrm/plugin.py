@@ -28,16 +28,6 @@ from CredentialStore import CSv1Delegate, CSv1Handler, CSv1Guard
 
 def setup():
 
-    # set up config keys
-    config = pm.getService('config')
-    config.install("chrm.db_url_filename", "/tmp/chrm_db_url.txt", \
-                       "file containing database URL")
-
-    config.install("chrm.authority", "ch-mb.gpolab.bbn.com", \
-                       "name of CH/SA/MA authority")
-
-    config.install("flask.debug.client_cert_file", "/home/mbrinn/.gcf/mbrinn-cert.pem", "Debug client cert file")
-
     cs_handler = CSv1Handler()
     pm.registerService('csv1handler', cs_handler)
 

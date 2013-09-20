@@ -239,7 +239,7 @@ function renew_slice($sa_url, $signer, $slice_id, $expiration)
   $slice_urn = get_slice_urn($sa_url, $signer, $slice_id);
 
   $client = XMLRPCClient::get_client($sa_url, $signer);
-  $options = array('update' => array('SLICE_EXPIRATION' => $expiration),
+  $options = array('fields' => array('SLICE_EXPIRATION' => $expiration),
 		   );
   $client->update_slice($slice_urn, $client->get_credentials(), $options);
   // no return

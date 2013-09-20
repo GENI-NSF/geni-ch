@@ -24,13 +24,14 @@
 import os
 from sqlalchemy import *
 from chapi.Exceptions import *
+import chapi.Parameters
 import amsoil.core.pluginmanager as pm
 from chapi.SliceAuthority import SAv1DelegateBase
 import sfa.trust.gid as gid
 import geni.util.cred_util as cred_util
 import geni.util.cert_util as cert_util
 from sqlalchemy.orm import mapper
-from datetime import *
+import datetime
 from dateutil.relativedelta import relativedelta
 import uuid
 from tools.dbutils import *
@@ -56,8 +57,6 @@ class ProjectMember(object):
 
 # Implementation of SA that speaks to GPO Slice and projects table schema
 class SAv1PersistentImplementation(SAv1DelegateBase):
-
-    version_number = "1.0"
 
     services = ["SLICE", "PROJECT", "SLICE_MEMBER", "PROJECT_MEMBER", "SLIVER_INFO"]
 
@@ -155,17 +154,13 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         super(SAv1PersistentImplementation, self).__init__()
         self.db = pm.getService('chdbengine')
         self.config = pm.getService('config')
-        self.cert = self.config.get('chapiv1rpc.ch_cert')
-        self.key = self.config.get('chapiv1rpc.ch_key')
-
-        self.cert = '/usr/share/geni-ch/sa/sa-cert.pem'
-        self.key = '/usr/share/geni-ch/sa/sa-key.pem'
+        self.cert = self.config.get('chapi.sa_cert')
+        self.key = self.config.get('chapi.sa_key')
 
         self.logging_service = pm.getService('loggingv1handler')
 
         self.trusted_root = self.config.get('chapiv1rpc.ch_cert_root')
 
-        self.trusted_root = '/usr/share/geni-ch/portal/gcf.d/trusted_roots'
         self.trusted_root_files = \
             [os.path.join(self.trusted_root, f) \
                  for f in os.listdir(self.trusted_root) if not f.startswith('CAT')]
@@ -177,7 +172,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         mapper(ProjectMember, self.db.PROJECT_MEMBER_TABLE)
 
     def get_version(self):
-        version_info = {"VERSION" : self.version_number, 
+        version_info = {"VERSION" : chapi.Parameters.VERSION_NUMBER, 
                         "SERVICES" : self.services,
                         "CREDENTIAL_TYPES" : self.credential_types, 
                         "FIELDS": self.supplemental_fields}
@@ -195,9 +190,9 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                                   Project.project_name)
         q = q.filter(table.expired == old_flag)
         if resurrect:
-            q = q.filter(table.expiration > datetime.utcnow())
+            q = q.filter(table.expiration > datetime.datetime.utcnow())
         else:
-            q = q.filter(table.expiration < datetime.utcnow())
+            q = q.filter(table.expiration < datetime.datetime.utcnow())
 
         return q
 
@@ -430,7 +425,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                     raise CHAPIv1ArgumentError('No project with urn ' + value)
             else:
                 setattr(slice, self.slice_field_mapping[key], value)
-        slice.creation = datetime.utcnow()
+        slice.creation = datetime.datetime.utcnow()
         if not slice.expiration:
             slice.expiration = slice.creation + relativedelta(days=7)
         slice.slice_id = str(uuid.uuid4())
@@ -506,11 +501,11 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         project_uuid = \
             self.get_project_id(session, 'project_name', project_name)
         attribs = {"PROJECT" : project_uuid, "SLICE" : slice_uuid}
-        self.logging_service.log_event("Updated slice " + name, 
+        self.logging_service.log_event("Updated slice " + slice_name, 
                                        attribs, client_uuid)
         if "SLICE_EXPIRATION" in options['fields']: 
             expiration = options['fields']['SLICE_EXPIRATION']
-            self.logging_service.log_event("Renewed slice %s until %s" \
+            self.logging_service.log_event("Renewed slice %s until %s" % \
                                                (slice_name, expiration), \
                                                attribs, client_uuid)
 
@@ -535,7 +530,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         project = Project()
         for key, value in options["fields"].iteritems():
             setattr(project, self.project_field_mapping[key], value)
-        project.creation = datetime.utcnow()
+        project.creation = datetime.datetime.utcnow()
         if project.expiration == "": project.expiration=None
         project.project_id = str(uuid.uuid4())
 
@@ -870,7 +865,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                 request_type = request_type, \
                 request_text = request_text, \
                 request_details = request_details, \
-                creation_timestamp = datetime.utcnow(), \
+                creation_timestamp = datetime.datetime.utcnow(), \
                 status = PENDING_STATUS, \
                 requestor = client_uuid)
         result = session.execute(ins)
@@ -890,7 +885,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         update_values = {'status' : resolution_status, 
                          'resolver' : client_uuid, 
                          'resolution_description' : resolution_description,
-                         'resolution_timestamp' : datetime.utcnow() 
+                         'resolution_timestamp' : datetime.datetime.utcnow() 
                          }
         update = self.db.PROJECT_REQUEST_TABLE.update(values=update_values)
         update = update.where(self.db.PROJECT_REQUEST_TABLE.c.id == request_id)
