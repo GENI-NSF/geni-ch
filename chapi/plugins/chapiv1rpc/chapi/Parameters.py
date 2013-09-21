@@ -65,6 +65,11 @@ parameters = [
         'desc': "Location of SA private key"
     },
     {
+        'name': "chapi.log_file",
+        'val': '/tmp/chapi.log',
+        'desc': "Location of chapi's log file"
+    },
+    {
         'name': "chrm.authority",
         'val': "ch-mb.gpolab.bbn.com",
         'desc': "name of CH/SA/MA authority"
