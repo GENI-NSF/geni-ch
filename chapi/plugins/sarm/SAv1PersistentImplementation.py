@@ -738,6 +738,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         q.delete(synchronize_session='fetch')
         session.commit()
         session.close()
+        return self._successReturn(True)
 
     def update_sliver_info(self, client_cert, sliver_urn, \
                                credentials, options):
@@ -750,6 +751,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         q.update(vals)
         session.commit()
         session.close()
+        return self._successReturn(True)
 
     def lookup_sliver_info(self, client_cert, credentials, options):
         selected_columns, match_criteria = \
