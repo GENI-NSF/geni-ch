@@ -52,6 +52,8 @@ class CHDatabaseEngine:
         self.SLICE_TABLE = Table('sa_slice', self.metadata, autoload=True)
         self.SLICE_MEMBER_TABLE = \
             Table('sa_slice_member', self.metadata, autoload=True)
+        self.SLIVER_INFO_TABLE = \
+            Table('sa_sliver_info', self.metadata, autoload=True)
         self.PROJECT_TABLE = Table('pa_project', self.metadata, autoload=True)
         self.PROJECT_MEMBER_TABLE = \
             Table('pa_project_member', self.metadata, autoload=True)
