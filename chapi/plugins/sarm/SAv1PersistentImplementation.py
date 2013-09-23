@@ -754,7 +754,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         return self._successReturn(True)
 
     def lookup_sliver_info(self, client_cert, credentials, options):
-        selected_columns, match_criteria = \
+        columns, match_criteria = \
             unpack_query_options(options, SA.sliver_info_field_mapping)
         session = self.db.getSession()
         q = session.query(self.db.SLIVER_INFO_TABLE)
