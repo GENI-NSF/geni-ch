@@ -39,8 +39,8 @@ class SAv1Handler(HandlerBase):
 
     # Override error return to log exception
     def _errorReturn(self, e):
-        chapi_log_exception(MA_LOG_PREFIX, e)
-        return super(MAv1Handler, self)._errorReturn(e)
+        chapi_log_exception(SA_LOG_PREFIX, e)
+        return super(SAv1Handler, self)._errorReturn(e)
 
     ## SLICE SERVICE methods
 
