@@ -27,6 +27,7 @@ from amsoil.core import serviceinterface
 from DelegateBase import DelegateBase
 from HandlerBase import HandlerBase
 from Exceptions import *
+from tools.chapi_log import *
 
 sa_logger = amsoil.core.log.getLogger('sav1')
 xmlrpc = pm.getService('xmlrpc')
@@ -35,6 +36,11 @@ xmlrpc = pm.getService('xmlrpc')
 class SAv1Handler(HandlerBase):
     def __init__(self):
         super(SAv1Handler, self).__init__(sa_logger)
+
+    # Override error return to log exception
+    def _errorReturn(self, e):
+        chapi_log_exception(MA_LOG_PREFIX, e)
+        return super(MAv1Handler, self)._errorReturn(e)
 
     ## SLICE SERVICE methods
 
