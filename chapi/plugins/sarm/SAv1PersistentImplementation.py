@@ -720,12 +720,15 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
     # Sliver Info API
 
     def create_sliver_info(self, client_cert, credentials, options):
+        session = self.db.getSession()
         sliver = SliverInfo()
         for field, value in options['fields'].iteritems():
            setattr(sliver, SA.sliver_info_field_mapping[field], value)
-        session.add(sliver)
-        session.commit()
-        session.close()
+        if not sliver.creation:
+            sliver.creation = datetime.datetime.utcnow()
+        if not sliver.expiration:
+            sliver.expiration = sliver.creation + relativedelta(days=7)
+        return self.finish_create(session, sliver, SA.sliver_info_field_mapping)
 
     def delete_sliver_info(self, client_cert, sliver_urn, \
                                credentials, options):
