@@ -21,16 +21,18 @@
 # IN THE WORK.
 #----------------------------------------------------------------------
 
+import SA_constants as SA
 import os
 from sqlalchemy import *
 from chapi.Exceptions import *
+import chapi.Parameters
 import amsoil.core.pluginmanager as pm
 from chapi.SliceAuthority import SAv1DelegateBase
 import sfa.trust.gid as gid
 import geni.util.cred_util as cred_util
 import geni.util.cert_util as cert_util
 from sqlalchemy.orm import mapper
-from datetime import *
+import datetime
 from dateutil.relativedelta import relativedelta
 import uuid
 from tools.dbutils import *
@@ -57,115 +59,17 @@ class ProjectMember(object):
 # Implementation of SA that speaks to GPO Slice and projects table schema
 class SAv1PersistentImplementation(SAv1DelegateBase):
 
-    version_number = "1.0"
-
-    services = ["SLICE", "PROJECT", "SLICE_MEMBER", "PROJECT_MEMBER", "SLIVER_INFO"]
-
-    credential_types = ["SFA", "ABAC"]
-
-    # The externally visible data schema for slices
-    slice_mandatory_fields  = {
-        "SLICE_URN": {"TYPE": "URN"},
-        "SLICE_UID": {"TYPE": "UID"},
-        "SLICE_NAME": {"TYPE": "STRING", "CREATE": "REQUIRED"},
-        "SLICE_DESCRIPTION": {"TYPE": "STRING", "CREATE": "ALLOWED", "UPDATE": True},
-        "SLICE_EXPIRATION": {"TYPE": "DATETIME", "CREATE" : "ALLOWED", "UPDATE": True},
-        "SLICE_EXPIRED": {"TYPE": "BOOLEAN"},
-        "SLICE_CREATION": {"TYPE": "DATETIME"},
-        "SLICE_PROJECT_URN": {"TYPE": "URN", \
-                                  "CREATE": "REQUIRED", "UPDATE": False},
-        }
-
-    slice_supplemental_fields = {
-        "_GENI_SLICE_OWNER" : {"TYPE" : "UUID", "UPDATE" : True},
-        "_GENI_SLICE_EMAIL": {"TYPE": "EMAIL", \
-                                  "CREATE": "REQUIRED", "UPDATE": True},
-        "_GENI_PROJECT_UID": {"TYPE" : "UID", "UPDATE" : False}
-    }
-
-    project_mandatory_fields = {
-        "PROJECT_URN" : {"TYPE" : "URN"},
-        "PROJECT_UID" : {"TYPE" : "UID"},
-        "PROJECT_NAME" : {"TYPE" : "STRING", "CREATE" : "REQUIRED"},
-        "PROJECT_DESCRIPTION" : {"TYPE" : "STRING", "CREATE" : "ALLOWED", "UPDATE" : True},
-        "PROJECT_EXPIRATION" : {"TYPE" : "DATETIME", "CREATE" : "ALLOWED", "UPDATE" : True},
-        "PROJECT_EXPIRED" : {"TYPE" : "BOOLEAN"},
-        "PROJECT_CREATION" : {"TYPE" : "DATETIME"},
-        }
-
-    project_supplemental_fields = {
-        "_GENI_PROJECT_OWNER" : {"TYPE" : "UUID", "CREATE" : "REQUIRED", "UPDATE" : True},
-        "_GENI_PROJECT_EMAIL": {"TYPE": "EMAIL", "CREATE": "REQUIRED", "UPDATE": True, "OBJECT" : "PROJECT"}
-        }
-
-    # Total set of supplemental fields
-    supplemental_fields = dict(slice_supplemental_fields.items() + \
-                                        project_supplemental_fields.items())
-
-    # Mapping from external to internal data schema (SLICE)
-    slice_field_mapping = {
-        "SLICE_URN" : "slice_urn",
-        "SLICE_UID" : "slice_id",
-        "SLICE_NAME" : "slice_name",
-        "SLICE_DESCRIPTION" :  "slice_description",
-        "SLICE_EXPIRATION" :  "expiration",
-        "SLICE_EXPIRED" :  "expired",
-        "SLICE_CREATION" :  "creation",
-        "SLICE_PROJECT_URN" : row_to_project_urn,
-        "_GENI_SLICE_EMAIL" : "slice_email",
-        "_GENI_SLICE_OWNER" : "owner_id", 
-        "_GENI_PROJECT_UID": 'project_id'
-        }
-
-    # Mapping from external to internal data schema (PROJECT)
-    project_field_mapping = {
-        "PROJECT_URN" : row_to_project_urn,
-        "PROJECT_UID" : "project_id",
-        "PROJECT_NAME" : "project_name",
-        "PROJECT_DESCRIPTION" : "project_purpose",
-        "PROJECT_EXPIRATION" : "expiration",
-        "PROJECT_EXPIRED" : "expired",
-        "PROJECT_CREATION" : "creation",
-        "_GENI_PROJECT_EMAIL" : "project_email",
-        "_GENI_PROJECT_OWNER" : "lead_id"
-        }
-
-    project_request_columns = ['id', 'context_type', 'context_id', 'request_text', \
-                                   'request_type', 'request_details', 'requestor', \
-                                   'status', 'creation_timestamp', 'resolver', \
-                                   'resolution_timestamp', 'resolution_description']
-    project_request_field_mapping = {
-        'id' : 'id', 
-        'context_type' : 'context_type', 
-        'context_id' : 'context_id', 
-        'request_text' : 'request_text', 
-        'request_type' : 'request_type', 
-        'request_details' : 'request_details', 
-        'requestor' : 'requestor', 
-        'status' : 'status', 
-        'creation_timestamp' : 'creation_timestamp', 
-        'resolver'  : 'resolver' , 
-        'resolution_timestamp' : 'resolution_timestamp', 
-        'resolution_description' : 'resolution_description'
-}
-
-
-
     def __init__(self):
         super(SAv1PersistentImplementation, self).__init__()
         self.db = pm.getService('chdbengine')
         self.config = pm.getService('config')
-        self.cert = self.config.get('chapiv1rpc.ch_cert')
-        self.key = self.config.get('chapiv1rpc.ch_key')
-
-        self.cert = '/usr/share/geni-ch/sa/sa-cert.pem'
-        self.key = '/usr/share/geni-ch/sa/sa-key.pem'
+        self.cert = self.config.get('chapi.sa_cert')
+        self.key = self.config.get('chapi.sa_key')
 
         self.logging_service = pm.getService('loggingv1handler')
 
         self.trusted_root = self.config.get('chapiv1rpc.ch_cert_root')
 
-        self.trusted_root = '/usr/share/geni-ch/portal/gcf.d/trusted_roots'
         self.trusted_root_files = \
             [os.path.join(self.trusted_root, f) \
                  for f in os.listdir(self.trusted_root) if not f.startswith('CAT')]
@@ -180,10 +84,10 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         method = 'get_version'
         chapi_log_invocation(SA_LOG_PREFIX, method, [], {}, {})
 
-        version_info = {"VERSION" : self.version_number, 
-                        "SERVICES" : self.services,
-                        "CREDENTIAL_TYPES" : self.credential_types, 
-                        "FIELDS": self.supplemental_fields}
+        version_info = {"VERSION" : chapi.Parameters.VERSION_NUMBER, 
+                        "SERVICES" : SA.services,
+                        "CREDENTIAL_TYPES" : SA.credential_types, 
+                        "FIELDS": SA.supplemental_fields}
         result = self._successReturn(version_info)
 
         chapi_log_result(SA_LOG_PREFIX, method, result)
@@ -201,9 +105,9 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                                   Project.project_name)
         q = q.filter(table.expired == old_flag)
         if resurrect:
-            q = q.filter(table.expiration > datetime.utcnow())
+            q = q.filter(table.expiration > datetime.datetime.utcnow())
         else:
-            q = q.filter(table.expiration < datetime.utcnow())
+            q = q.filter(table.expiration < datetime.datetime.utcnow())
 
         return q
 
@@ -266,14 +170,14 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         self.update_slice_expirations(client_uuid)
 
         selected_columns, match_criteria = \
-            unpack_query_options(options, self.slice_field_mapping)
+            unpack_query_options(options, SA.slice_field_mapping)
         session = self.db.getSession()
 
         q = session.query(self.db.SLICE_TABLE, self.db.PROJECT_TABLE.c.project_id, self.db.PROJECT_TABLE.c.project_name)
 
         q = q.filter(self.db.SLICE_TABLE.c.project_id == self.db.PROJECT_TABLE.c.project_id)
 
-        q = add_filters(q, match_criteria, self.db.SLICE_TABLE, self.slice_field_mapping)
+        q = add_filters(q, match_criteria, self.db.SLICE_TABLE, SA.slice_field_mapping)
         rows = q.all()
         session.close()
 
@@ -281,7 +185,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         slices = {}
         for row in rows:
             slices[row.slice_urn] = construct_result_row(row, \
-                selected_columns, self.slice_field_mapping)
+                selected_columns, SA.slice_field_mapping)
 
         result = self._successReturn(slices)
 
@@ -475,8 +379,8 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                     session.close()
                     raise CHAPIv1ArgumentError('No project with urn ' + value)
             else:
-                setattr(slice, self.slice_field_mapping[key], value)
-        slice.creation = datetime.utcnow()
+                setattr(slice, SA.slice_field_mapping[key], value)
+        slice.creation = datetime.datetime.utcnow()
         if not slice.expiration:
             slice.expiration = slice.creation + relativedelta(days=7)
         slice.slice_id = str(uuid.uuid4())
@@ -522,7 +426,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                                        attribs, client_uuid)
 
         # do the database write
-        result = self.finish_create(session, slice, self.slice_field_mapping)
+        result = self.finish_create(session, slice, SA.slice_field_mapping)
 
         chapi_log_result(SA_LOG_PREFIX, method, result)
         return result
@@ -545,7 +449,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         q = q.filter(getattr(Slice, "slice_urn") == slice_urn)
         updates = {}
         for field, value in options['fields'].iteritems():
-            updates[self.slice_field_mapping[field]] = value
+            updates[SA.slice_field_mapping[field]] = value
         q = q.update(updates)
         session.commit()
         session.close()
@@ -559,11 +463,11 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         project_uuid = \
             self.get_project_id(session, 'project_name', project_name)
         attribs = {"PROJECT" : project_uuid, "SLICE" : slice_uuid}
-        self.logging_service.log_event("Updated slice " + name, 
+        self.logging_service.log_event("Updated slice " + slice_name, 
                                        attribs, client_uuid)
         if "SLICE_EXPIRATION" in options['fields']: 
             expiration = options['fields']['SLICE_EXPIRATION']
-            self.logging_service.log_event("Renewed slice %s until %s" \
+            self.logging_service.log_event("Renewed slice %s until %s" % \
                                                (slice_name, expiration), \
                                                attribs, client_uuid)
 
@@ -593,8 +497,8 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         # fill in the fields of the object
         project = Project()
         for key, value in options["fields"].iteritems():
-            setattr(project, self.project_field_mapping[key], value)
-        project.creation = datetime.utcnow()
+            setattr(project, SA.project_field_mapping[key], value)
+        project.creation = datetime.datetime.utcnow()
         if project.expiration == "": project.expiration=None
         project.project_id = str(uuid.uuid4())
 
@@ -624,7 +528,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
 
 
         # do the database write
-        result = self.finish_create(session, project,  self.project_field_mapping, \
+        result = self.finish_create(session, project,  SA.project_field_mapping, \
                                         {"PROJECT_URN": row_to_project_urn(project)})
 
         chapi_log_result(SA_LOG_PREFIX, method, result)
@@ -649,7 +553,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         q = q.filter(getattr(Project, "project_name") == name)
         updates = {}
         for field, value in options['fields'].iteritems():
-            updates[self.project_field_mapping[field]] = value
+            updates[SA.project_field_mapping[field]] = value
         q = q.update(updates)
         session.commit()
         session.close()
@@ -677,17 +581,18 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         self.update_project_expirations(client_uuid)
 
         columns, match_criteria = \
-            unpack_query_options(options, self.project_field_mapping)
+            unpack_query_options(options, SA.project_field_mapping)
+
         session = self.db.getSession()
         q = session.query(self.db.PROJECT_TABLE)
         q = add_filters(q, match_criteria, self.db.PROJECT_TABLE, \
-                        self.project_field_mapping)
+                        SA.project_field_mapping)
         rows = q.all()
         session.close()
         projects = {}
         for row in rows:
             projects[row_to_project_urn(row)] = \
-                construct_result_row(row, columns, self.project_field_mapping)
+                construct_result_row(row, columns, SA.project_field_mapping)
         result = self._successReturn(projects)
 
         chapi_log_result(SA_LOG_PREFIX, method, result)
@@ -973,7 +878,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                 request_type = request_type, \
                 request_text = request_text, \
                 request_details = request_details, \
-                creation_timestamp = datetime.utcnow(), \
+                creation_timestamp = datetime.datetime.utcnow(), \
                 status = PENDING_STATUS, \
                 requestor = client_uuid)
         result = session.execute(ins)
@@ -1003,7 +908,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         update_values = {'status' : resolution_status, 
                          'resolver' : client_uuid, 
                          'resolution_description' : resolution_description,
-                         'resolution_timestamp' : datetime.utcnow() 
+                         'resolution_timestamp' : datetime.datetime.utcnow() 
                          }
         update = self.db.PROJECT_REQUEST_TABLE.update(values=update_values)
         update = update.where(self.db.PROJECT_REQUEST_TABLE.c.id == request_id)
@@ -1032,8 +937,8 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
             q = q.filter(self.db.PROJECT_REQUEST_TABLE.c.status == status)
         rows = q.all()
         session.close()
-        result = [construct_result_row(row, self.project_request_columns, 
-                                       self.project_request_field_mapping) \
+        result = [construct_result_row(row, SA.project_request_columns, 
+                                       SA.project_request_field_mapping) \
                       for row in rows]
         result = self._successReturn(result)
 
@@ -1060,8 +965,8 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         rows = q.all()
         session.close()
 #        print "ROWS = " + str(rows)
-        result = [construct_result_row(row, self.project_request_columns, \
-                                           self.project_request_field_mapping) \
+        result = [construct_result_row(row, SA.project_request_columns, \
+                                           SA.project_request_field_mapping) \
                       for row in rows]
         return self._successReturn(result)
 
@@ -1087,8 +992,8 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         rows = q.all()
         session.close()
 #        print "ROWS = " + str(rows)
-        result = [construct_result_row(row, self.project_request_columns, \
-                                           self.project_request_field_mapping) \
+        result = [construct_result_row(row, SA.project_request_columns, \
+                                           SA.project_request_field_mapping) \
                       for row in rows]
         result = self._successReturn(result)
 
@@ -1130,8 +1035,8 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
             return self._successReturn(None)
         result = \
             self._successReturn(construct_result_row(rows[0], 
-                                                     self.project_request_columns, 
-                                                     self.project_request_field_mapping))
+                                                     SA.project_request_columns, 
+                                                     SA.project_request_field_mapping))
 
         chapi_log_result(SA_LOG_PREFIX, method, result)
         return result

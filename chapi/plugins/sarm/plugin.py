@@ -29,16 +29,6 @@ from SAv1Guard import SAv1Guard
 
 def setup():
 
-    # set up config keys
-    config = pm.getService('config')
-    config.install("chrm.db_url_filename", "/tmp/chrm_db_url.txt", \
-                       "file containing database URL")
-
-    config.install("chrm.authority", "ch-mb.gpolab.bbn.com", \
-                       "name of CH/SA/MA authority")
-
-    config.install("flask.debug.client_cert_file", "/home/mbrinn/.gcf/mbrinn-cert.pem", "Debug client cert file")
-
     # Set the delegate to SAv1PersistentImplementation
     # and set the guard to SAv1Guard
     delegate = SAv1PersistentImplementation()
