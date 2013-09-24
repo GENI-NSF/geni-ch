@@ -175,9 +175,11 @@ def main():
                                     opts.uuid_arg, \
                                     opts.credentials, client_options)
     elif opts.method in ['get_attributes']:
+        context = 'None'
+        if opts.uuid2_arg: context = opts.uuid2_arg
         (result, msg) = _do_ssl(framework, suppress_errors, reason, fcn, \
                                     opts.uuid_arg, \
-                                    opts.int_arg, opts.uuid2_arg, \
+                                    opts.int_arg, context, \
                                     opts.credentials, client_options)
     elif opts.method in ['delete_key', 'update_key'] \
             and opts.int_arg and opts.urn:
