@@ -203,7 +203,8 @@ class XMLRPCClient
   // get the "credentials" blob needed for various CHAPI service calls,
   // mainly in support of SPEAKS-FOR functionality.
   // Some future use will likely want to use $this->signer
-  function get_credentials() {
+  // Note: this is creds() rather than get_credentials() because there is an sa->get_credentials()
+  function creds() {
     return array();
   }
 }
