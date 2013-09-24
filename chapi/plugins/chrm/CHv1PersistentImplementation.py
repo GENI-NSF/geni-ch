@@ -25,6 +25,7 @@ from sqlalchemy import *
 from chapi.Exceptions import *
 import amsoil.core.pluginmanager as pm
 from tools.dbutils import *
+from tools.chapi_log import *
 from CHv1Implementation import CHv1Implementation
 
 # Version of ClearingHouse that works with GPO CH Service Registry tables
@@ -36,19 +37,35 @@ class CHv1PersistentImplementation(CHv1Implementation):
 
     # Get all MAs (authorities of type MA)
     def get_member_authorities(self, options):
-        return self.lookup_authorities(self.MA_SERVICE_TYPE, options)
+        method = 'get_member_authorities'
+        chapi_log_invocation(SR_LOG_PREFIX, method, [], options, {})
+        result = self.lookup_authorities(self.MA_SERVICE_TYPE, options)
+        chapi_log_result(SR_LOG_PREFIX, method, result)
+        return result
 
     # Get all SA's (authorities of type SA)
     def get_slice_authorities(self, options):
-        return self.lookup_authorities(self.SA_SERVICE_TYPE, options)
+        method = 'get_slice_authorities'
+        chapi_log_invocation(SR_LOG_PREFIX, method, [], options, {})
+        result = self.lookup_authorities(self.SA_SERVICE_TYPE, options)
+        chapi_log_result(SR_LOG_PREFIX, method, result)
+        return result
 
     # Get all aggregates (authorities of type aggregate)
     def get_aggregates(self, options):
-        return self.lookup_authorities(self.AGGREGATE_SERVICE_TYPE, options)
+        method = 'get_aggregates'
+        chapi_log_invocation(SR_LOG_PREFIX, method, [], options, {})
+        result = self.lookup_authorities(self.AGGREGATE_SERVICE_TYPE, options)
+        chapi_log_result(SR_LOG_PREFIX, method, result)
+        return result
 
     # Lookup all authorities for given service type
     # Add on a service type filter clause before adding any option clauses
     def lookup_authorities(self, service_type, options):
+
+        method = 'lookup_authorities'
+        args = {'service_type' : service_type}
+        chapi_log_invocation(SR_LOG_PREFIX, method, [], options, args)
 
         selected_columns, match_criteria = unpack_query_options(options, self.field_mapping)
 
@@ -61,7 +78,9 @@ class CHv1PersistentImplementation(CHv1Implementation):
 
         authorities = [construct_result_row(row, selected_columns, self.field_mapping) for row in rows]
 
-        return self._successReturn(authorities)
+        result = self._successReturn(authorities)
+        chapi_log_result(SR_LOG_PREFIX, method, result)
+        return result
 
 
 

@@ -70,10 +70,15 @@ def chapi_critical(prefix, msg):
     chapi_log(prefix, msg, logging.CRITICAL)
 
 # Log a CHAPI exception
-def chapi_exception(prefix, e):
+def chapi_log_exception(prefix, e):
     msg = "Exception: %s" % e
     chapi_error(prefix, msg)
 
-def chapi_invocation(prefix, method, credentials, options, arguments):
+def chapi_log_invocation(prefix, method, credentials, options, arguments):
     msg = "Invoked %s Options %s Arguments %s" % (method, options, arguments)
     chapi_info(prefix, msg)
+
+def chapi_log_result(prefix, method, result):
+    msg = "Result from %s: %s" % (method, result)
+    chapi_info(prefix, msg)
+

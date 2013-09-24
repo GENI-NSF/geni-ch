@@ -27,6 +27,7 @@ from amsoil.core import serviceinterface
 from DelegateBase import DelegateBase
 from HandlerBase import HandlerBase
 from Exceptions import *
+from tools.chapi_log import *
 
 ma_logger = amsoil.core.log.getLogger('mav1')
 xmlrpc = pm.getService('xmlrpc')
@@ -35,6 +36,11 @@ xmlrpc = pm.getService('xmlrpc')
 class MAv1Handler(HandlerBase):
     def __init__(self):
         super(MAv1Handler, self).__init__(ma_logger)
+
+    # Override error return to log exception
+    def _errorReturn(self, e):
+        chapi_log_exception(MA_LOG_PREFIX, e)
+        return super(MAv1Handler, self)._errorReturn(e)
 
     # This call is unprotected: no checking of credentials
     # Return version of MA API including object model
@@ -308,7 +314,10 @@ class MAv1Handler(HandlerBase):
 
     # ClientAuth API
     def list_clients(self):
-        return self._delegate.list_clients()
+        try:
+            return self._delegate.list_clients()
+        except Exception as e:
+            return self._errorReturn(e)
 
     def list_authorized_clients(self, member_id):
         method = 'list_authorized_clients'
