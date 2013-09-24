@@ -116,7 +116,7 @@ class SAv1Guard(ABACGuardBase):
                 "ME.MAY_CREATE_SLICE_$SUBJECT<-ME.IS_LEAD_$SUBJECT", 
                 "ME.MAY_CREATE_SLICE_$SUBJECT<-ME.IS_ADMIN_$SUBJECT", 
                 "ME.MAY_CREATE_SLICE_$SUBJECT<-ME.IS_MEMBER_$SUBJECT"
-                ], assert_slice_role, project_urn_extractor),
+                ], assert_project_role, project_urn_extractor),
 
         'lookup_slices' : \
             SubjectInvocationCheck([
