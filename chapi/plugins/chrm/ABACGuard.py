@@ -103,11 +103,10 @@ class SubjectInvocationCheck(InvocationCheck):
     # If there are no subjects (and this is allowed by validate_arguments)
     #    Prove AUTHORITYMAY_$method<-CALLER
     def authorize_call(self, client_cert, method, credentials, options, arguments):
-        abac_manager = \
-            ABACManager(certs_by_name = {"CALLER" : client_cert}, 
-                        cert_files_by_name = {"ME" : self.cert_file}, 
-                        key_files_by_name = {"ME" : self.key_file});
-        # abac_manager._verbose = True
+        abac_manager =  ABACManager(certs_by_name = {"CALLER" : client_cert}, 
+                                    cert_files_by_name = {"ME" : self.cert_file}, 
+                                    key_files_by_name = {"ME" : self.key_file})
+        #abac_manager._verbose = True
 
         client_urn = get_urn_from_cert(client_cert)
 
