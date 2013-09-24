@@ -152,7 +152,8 @@ class SAv1Guard(ABACGuardBase):
         'lookup_slice_members' : 
             SubjectInvocationCheck([
                 "ME.MAY_LOOKUP_SLICE_MEMBERS<-ME.IS_OPERATOR",
-                "ME.MAY_LOOKUP_SLICE_MEMBERS_CREDENTIALS_$SUBJECT<-ME.BELONGS_TO_$SUBJECT"
+                #"ME.MAY_LOOKUP_SLICE_MEMBERS_CREDENTIALS_$SUBJECT<-ME.BELONGS_TO_$SUBJECT"
+                "ME.MAY_LOOKUP_SLICE_MEMBERS_$SUBJECT<-ME.BELONGS_TO_$SUBJECT"
                 ], assert_belongs_to_slice, slice_urn_extractor),
 
         'lookup_slices_for_member' :
