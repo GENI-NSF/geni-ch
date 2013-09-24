@@ -32,7 +32,7 @@ import sfa.trust.gid as gid
 import geni.util.cred_util as cred_util
 import geni.util.cert_util as cert_util
 from sqlalchemy.orm import mapper
-import datetime
+from datetime import datetime
 from dateutil.relativedelta import relativedelta
 import uuid
 from tools.dbutils import *
@@ -99,9 +99,9 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                                   Project.project_name)
         q = q.filter(table.expired == old_flag)
         if resurrect:
-            q = q.filter(table.expiration > datetime.datetime.utcnow())
+            q = q.filter(table.expiration > datetime.utcnow())
         else:
-            q = q.filter(table.expiration < datetime.datetime.utcnow())
+            q = q.filter(table.expiration < datetime.utcnow())
 
         return q
 
@@ -272,14 +272,26 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         return self._successReturn(slice_creds)
 
     # check whether a current slice exists, and if so return its id
-    def get_slice_id(self, session, field, value):
+    def get_slice_id(self, session, field, value, include_expired=False):
+        rows = self.get_slice_ids(session, field, value, include_expired)
+        if (rows is None or len(rows) == 0):
+            return None
+        else:
+            return rows[0]
+
+    def get_slice_ids(self, session, field, value, include_expired=False):
         q = session.query(Slice.slice_id)
         q = q.filter(getattr(Slice, field) == value)
-        q = q.filter(Slice.expired == "f")
+        if not include_expired:
+            q = q.filter(Slice.expired == "f")
+        q = q.order_by(Slice.expiration.desc()) # first return value will be newest
         rows = q.all()
         if (len(rows) == 0):
             return None
-        return rows[0].slice_id
+        results = array()
+        for row in rows:
+            results.append(row.slice_id)
+        return results
 
     # check whether a project exists, and if so return its id
     def get_project_id(self, session, field, value):
@@ -311,7 +323,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
 
         # check that slice does not already exist
         name = options["fields"]["SLICE_NAME"]
-        if self.get_slice_id(session, "slice_name", name):
+        if self.get_slice_id(session, "slice_name", name):  # MIK: only active slice
             session.close()
             raise CHAPIv1DuplicateError('Already exists a slice named ' + name)
 
@@ -334,7 +346,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                     raise CHAPIv1ArgumentError('No project with urn ' + value)
             else:
                 setattr(slice, SA.slice_field_mapping[key], value)
-        slice.creation = datetime.datetime.utcnow()
+        slice.creation = datetime.utcnow()
         if not slice.expiration:
             slice.expiration = slice.creation + relativedelta(days=7)
         slice.slice_id = str(uuid.uuid4())
@@ -389,7 +401,9 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         self.update_slice_expirations(client_uuid)
 
         session = self.db.getSession()
-        if not self.get_slice_id(session, "slice_urn", slice_urn):
+        slice_uuid = \
+            self.get_slice_id(session, 'slice_urn', slice_urn) # MIK: only non-expired slices
+        if not slice_uuid: 
             session.close()
             raise CHAPIv1ArgumentError('No slice with urn ' + slice_urn)
         q = session.query(Slice)
@@ -403,8 +417,6 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
 
         # Log the update project
         client_uuid = get_uuid_from_cert(client_cert)
-        slice_uuid = \
-            self.get_slice_id(session, 'slice_urn', slice_urn)
         project_name, authority, slice_name = \
             extract_data_from_slice_urn(slice_urn)
         project_uuid = \
@@ -439,7 +451,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         project = Project()
         for key, value in options["fields"].iteritems():
             setattr(project, SA.project_field_mapping[key], value)
-        project.creation = datetime.datetime.utcnow()
+        project.creation = datetime.utcnow()
         if project.expiration == "": project.expiration=None
         project.project_id = str(uuid.uuid4())
 
@@ -577,7 +589,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         self.update_slice_expirations(client_uuid)
 
         session = self.db.getSession()
-        slice_id = self.get_slice_id(session, "slice_urn", slice_urn)
+        slice_id = self.get_slice_id(session, "slice_urn", slice_urn) # MIK: only non-expired slice
         return self.modify_membership(session, SliceMember, client_uuid, \
                                           slice_id, slice_urn, \
                                           options, 'slice_id', \
@@ -774,7 +786,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                 request_type = request_type, \
                 request_text = request_text, \
                 request_details = request_details, \
-                creation_timestamp = datetime.datetime.utcnow(), \
+                creation_timestamp = datetime.utcnow(), \
                 status = PENDING_STATUS, \
                 requestor = client_uuid)
         result = session.execute(ins)
@@ -794,7 +806,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         update_values = {'status' : resolution_status, 
                          'resolver' : client_uuid, 
                          'resolution_description' : resolution_description,
-                         'resolution_timestamp' : datetime.datetime.utcnow() 
+                         'resolution_timestamp' : datetime.utcnow() 
                          }
         update = self.db.PROJECT_REQUEST_TABLE.update(values=update_values)
         update = update.where(self.db.PROJECT_REQUEST_TABLE.c.id == request_id)
