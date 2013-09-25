@@ -89,7 +89,10 @@ class MAv1Guard(ABACGuardBase):
             UpdateArgumentCheck({}, {}),
         
         'create_key' : \
-            CreateArgumentCheck(MA.standard_fields, MA.private_fields), 
+            CreateArgumentCheck(select_fields(MA.standard_key_fields, \
+                                           MA.allowed_create_key_fields), \
+                                    select_fields(MA.optional_key_fields, \
+                                           MA.allowed_create_key_fields)),
         'delete_key' : \
             None,
         'update_key' : \
