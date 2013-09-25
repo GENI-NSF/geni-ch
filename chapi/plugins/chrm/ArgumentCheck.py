@@ -23,7 +23,12 @@
 
 from chapi.Exceptions import *
 from geni.util.urn_util import is_valid_urn
+from tools.geni_constants import STANDARD_DATETIME_FORMAT
+from sfa.trust.certificate import Certificate
 import types
+import uuid
+from datetime import datetime
+
 
 # Create a subset 'fields' dictionary with only fields in given list
 def select_fields(field_definitions, field_list):
@@ -90,8 +95,71 @@ class FieldsArgumentCheck(ArgumentCheck):
             if not field in self._mandatory_fields and \
                     not field in self._supplemental_fields:
                 raise CHAPIv1ArgumentError("Unrecognized field : " + field)
+            self.validateFieldValueFormat(field, value)
 
-            # *** Write me: Do type checking on value
+    def validateFieldValueFormat(self, field, value):
+        field_type = None
+        if field in self._mandatory_fields and 'TYPE' in self._mandatory_fields[field]:
+            field_type = self._mandatory_fields[field]['TYPE']
+        if not field_type:
+            if field in self._supplemental_fields and 'TYPE' in self._supplemental_fields[field]:
+                field_type = self._supplemental_fields[field]['TYPE']
+        if not field_type:
+            raise CHAPIv1ArgumentError("No type defined for field: %s" % field)
+
+        properly_formed = True
+        if field_type == "URN":
+            if isinstance(value, list):
+                for v in value:
+                    if not is_valid_urn(v):
+                        properly_formed = False
+                        break
+            else:
+                properly_formed = is_valid_urn(value)
+        elif field_type == "UID":
+            try:
+                if isinstance(value, list):
+                    for v in value: uuid.UUID(v)
+                else:
+                    uuid.UUID(value)
+            except Exception as e:
+                properly_formed = False
+        elif field_type == "STRING":
+            pass # Always true
+        elif field_type == "INTEGER":
+            try:
+                int(value)
+            except Exception as e:
+                properly_formed = False
+        elif field_type == "DATETIME":
+            try:
+                datetime.strptime(value, STANDARD_DATETIME_FORMAT)
+            except Exception as e:
+                properly_formed = False
+        elif field_type == "EMAIL":
+            properly_formed = value.find('@')>= 0 and value.find('.') >= 0
+        elif field_type == "KEY":
+            pass # *** No standard format
+        elif field_type == "BOOLEAN":
+            properly_formed = value.lower() in ['t', 'f', 'true', 'false']
+        elif field_type == "CREDENTIALS":
+            try:
+                Credential(string=value)
+            except Exception as e:
+                properly_formed = False
+        elif field_type == "CERTIFICATE":
+            try:
+                cert = Certificate()
+                cert.load_from_string(value)
+            except Exception as e:
+                properly_formed = False
+        else:
+            raise CHAPIv1ArgumentError("Unsupported field type : %s %s" % (field, field_type))
+
+        if not properly_formed:
+            raise CHAPIv1ArgumentError("Ill-formed argument of type %s field %s: %s" % \
+                                           (field_type, field, value))
+                                 
 
     # Check that provided values are legitimate
     def checkAllowedFields(self, field_values, field_detail_key, \
@@ -185,6 +253,7 @@ class CreateArgumentCheck(FieldsArgumentCheck):
 
         if 'fields' in options:
             self.validateFieldList(options['fields'])
+            self.validateFieldValueDictionary(options['fields'])
             self.checkAllowedFields(options['fields'], \
                                         'CREATE', \
                                         ['REQUIRED', 'ALLOWED'])
@@ -212,6 +281,7 @@ class UpdateArgumentCheck(FieldsArgumentCheck):
 
         if 'fields' in options:
             self.validateFieldList(options['fields'])
+            self.validateFieldValueDictionary(options['fields'])
             self.checkAllowedFields(options['fields'], \
                                 'UPDATE', \
                                 [True])
