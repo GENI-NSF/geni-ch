@@ -71,7 +71,7 @@ parameters = [
     },
     {
         'name': "chrm.authority",
-        'val': "ch-mb.gpolab.bbn.com",
+        'val': "ch-mt.gpolab.bbn.com",
         'desc': "name of CH/SA/MA authority"
     },
     {
