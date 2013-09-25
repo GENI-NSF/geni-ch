@@ -340,7 +340,7 @@ function invoke_omni_function($am_url, $user, $args, $slice_users=array())
     }
     $command = implode(" ", $cmd_array);
 
-     error_log("am_client invoke_omni_function COMMAND = " . $command);
+    error_log("am_client invoke_omni_function COMMAND = " . $command);
      $handle = popen($command . " 2>&1", "r");
      $output= '';
      $read = fread($handle, 1024);
@@ -489,7 +489,7 @@ function create_sliver($am_url, $user, $slice_users, $slice_credential, $slice_u
     error_log("am_client cannot act on a slice without a credential");
     return("Missing slice credential");
   }
-  error_log("CS slice_credential = ".print_r(debug_backtrace(), True));
+  //error_log("CS slice_credential = ".print_r(debug_backtrace(), True));
   
   $member_id = $user->account_id;
   $msg = "User $member_id calling CreateSliver at $am_url on $slice_urn";

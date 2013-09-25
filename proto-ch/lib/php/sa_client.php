@@ -86,7 +86,7 @@ function slice_details_chapi2portal($row)
 
 
 
-/* Create a slice credential for given SLICE ID and user */
+/* return a slice credential for given SLICE ID and user */
 function get_slice_credential($sa_url, $signer, $slice_id, $cert=NULL)
 {
   $slice_urn = get_slice_urn($sa_url, $signer, $slice_id);
@@ -104,8 +104,14 @@ function get_slice_credential($sa_url, $signer, $slice_id, $cert=NULL)
   $options = array('_dummy' => null);
 
   $result = $client->get_credentials($slice_urn, $client->creds(), $options);
-  error_log("GSC result = ".print_r($result, True));
-  return $result; //MIK: was $result['slice_credential'];
+  if (!is_array($result)) {
+    return Null;
+  }
+
+  $result = $result[0]['geni_value'];
+
+  //error_log("GSC result = ".print_r($result, True));
+  return $result;
 }
 
 /* Create a new slice record in database, return slice_id */
@@ -345,7 +351,7 @@ function get_slice_members($sa_url, $signer, $slice_id, $role=null)
 function get_slice_members_for_project($sa_url, $signer, $project_id, $role=null)
 {
   // this probably wont work unless you are an operator
-  error_log("get_slice_members_for_project called");
+  //error_log("get_slice_members_for_project called");
   $client = XMLRPCClient::get_client($sa_url, $signer);
 
   // get all slices of project
