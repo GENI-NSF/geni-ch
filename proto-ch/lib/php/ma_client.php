@@ -63,14 +63,15 @@ function register_ssh_key($ma_url, $signer, $member_id, $filename,
 {
   $client = XMLRPCClient::get_client($ma_url, $signer);
   $member_urn = get_member_urn($ma_url, $signer, $member_id);
-  $pairs = array('SSH_FILENAME' => $filename,
-		 'SSH_DESCRIPTION' => $description,
-		 'SSH_PUBLIC_KEY' => $ssh_public_key);
+  $pairs = array('_GENI_KEY_FILENAME' => $filename,
+                 'KEY_DESCRIPTION' => $description,
+                 'KEY_PUBLIC' => $ssh_public_key);
   if (! is_null($ssh_private_key)) {
-    $pairs['SSH_PRIVATE_KEY'] = $ssh_private_key;
+    $pairs['KEY_PRIVATE'] = $ssh_private_key;
   }
-				    
-  $client->update_member_info($member_urn, $client->creds(), $pairs);
+
+  $client->create_key($member_urn, $client->get_credentials(),
+                      array('fields' => $pairs));
 }
 
 // Lookup public SSH keys associated with user
