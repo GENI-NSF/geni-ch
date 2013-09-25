@@ -127,15 +127,17 @@ function update_ssh_key($ma_url, $signer, $member_id, $ssh_key_id,
 {
   $client = XMLRPCClient::get_client($ma_url, $signer);
   $member_urn = get_member_urn($ma_url, $signer, $member_id);
-  $pairs = array('_dummy' => null);
-  if ($filename) {
+  $pairs = array();
+  if ($filename || $filename == '') {
     $pairs['_GENI_KEY_FILENAME'] = $filename;
   }
-  if ($description) {
+  if ($description || $description == '') {
     $pairs['KEY_DESCRIPTION'] = $description;
   }
-  $client->update_key($member_urn, $ssh_key_id, $client->get_credentials(),
+  if (sizeof($pairs) > 0) {
+    $client->update_key($member_urn, $ssh_key_id, $client->get_credentials(),
                       array('fields' => $pairs));
+  }
 
   //return $ssh_key;
   // CHAPI: no return for now.  If needed, we'll need to retrieve it

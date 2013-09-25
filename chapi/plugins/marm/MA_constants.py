@@ -139,4 +139,4 @@ required_create_key_fields = ["KEY_PUBLIC"]
 allowed_create_key_fields = [
     "KEY_PUBLIC", "KEY_PRIVATE", "KEY_DESCRIPTION", "_GENI_KEY_FILENAME"
 ]
-updatable_key_fields = ["KEY_DESCRIPTION"]
+updatable_key_fields = ["KEY_DESCRIPTION", "_GENI_KEY_FILENAME"]
