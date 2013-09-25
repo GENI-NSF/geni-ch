@@ -28,8 +28,7 @@ from amsoil.core import serviceinterface
 from chapi.DelegateBase import DelegateBase
 from chapi.HandlerBase import HandlerBase
 from chapi.Exceptions import *
-from tools.guard_utils import extract_user_urn
-from tools.cert_utils import get_uuid_from_cert
+from tools.cert_utils import get_uuid_from_cert, get_urn_from_cert
 from tools.chapi_log import *
 import sfa.trust.gid as gid
 import geni.util.urn_util as urn_util
@@ -489,7 +488,7 @@ class PGCHv1Delegate(DelegateBase):
         credential = args['credential']
         creds = [credential]
 
-        member_urn = extract_user_urn(client_cert)
+        member_urn = get_urn_from_cert(client_cert)
 
         options = {'match' : {'KEY_MEMBER' : member_urn},
                    "filter" : ['KEY_PUBLIC']
