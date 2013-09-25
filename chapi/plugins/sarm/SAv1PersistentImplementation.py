@@ -357,7 +357,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         rows = q.all()
         if (len(rows) == 0):
             return None
-        results = array()
+        results = []
         for row in rows:
             results.append(row.slice_id)
         return results
