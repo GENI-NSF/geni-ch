@@ -44,6 +44,7 @@ import subprocess
 import uuid
 import re
 from tools.guard_utils import *
+from tools.ABACManager import *
 from syslog import syslog
 
 # classes for mapping to sql tables
@@ -283,6 +284,8 @@ class MAv1Implementation(MAv1DelegateBase):
             for col in selected_columns:
                 if col == "_GENI_USER_CREDENTIAL":
                     values[col] = self.get_user_credential(session, uid)
+                elif col == "_GENI_CREDENTIALS":
+                    values[col] = self.get_credentials(session, uid)
                 elif col == "MEMBER_UID":
                     values[col] = uid
                 else:
@@ -413,6 +416,43 @@ class MAv1Implementation(MAv1DelegateBase):
                 setattr(obj, col, val)
             session.add(obj)
         session.commit()
+
+    # Construct a list of credentials in AM format
+    # [{'geni_type' : type, 'geni_version' : version, 'geni_value' : value}]
+    # where type is SFA for a UserCredential or ABAC for ABAC credentials
+    def get_credentials(self, session, uid):
+        creds = []
+        sfa_raw_creds = [self.get_user_credential(session, uid)]
+        abac_assertions = []
+        user_urn = convert_member_uid_to_urn(uid)
+                #syslog('GUC: outside certs = '+str(certs))                   
+        certs = self.get_val_for_uid(session, OutsideCert, "certificate", uid)
+        if not certs:
+            certs = self.get_val_for_uid(session, InsideKey, "certificate", 
+                                         uid)
+        user_cert = certs[0]
+
+        abac_manager = ABACManager(certs_by_name = {"CALLER" :user_cert},
+                                   cert_files_by_name = {"ME" :self.cert},
+                                   key_files_by_name = {"ME" :self.key})
+        abac_raw_creds = []
+        if lookup_operator_privilege(user_urn):
+           assertion = \
+               abac_manager.register_assertion("ME.IS_OPERATOR<-CALLER")
+           abac_raw_creds.append(assertion.cert_chunk())
+        if lookup_pi_privilege(user_urn):
+            assertion = \
+                abac_manager.register_assertion("ME.IS_PI<-CALLER")
+            abac_raw_creds.append(assertion.cert_chunk())
+        sfa_creds = \
+            [{'geni_type' : 'SFA', 'geni_version' : 1, 'geni_value' : cred} 
+             for cred in sfa_raw_creds]
+        abac_creds = \
+            [{'geni_type' : 'ABAC', 'geni_version' : 1, 'geni_value' : cred} 
+             for cred in abac_raw_creds]
+        creds = sfa_creds + abac_creds
+        return creds
+
 
     # build a user credential based on the user's cert
     def get_user_credential(self, session, uid):
