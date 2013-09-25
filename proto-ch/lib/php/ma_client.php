@@ -123,24 +123,24 @@ function lookup_public_ssh_key($ma_url, $signer, $member_id, $ssh_key_id)
 */
 
 function update_ssh_key($ma_url, $signer, $member_id, $ssh_key_id,
-			$filename, $description)
+                        $filename, $description)
 {
   $client = XMLRPCClient::get_client($ma_url, $signer);
   $member_urn = get_member_urn($ma_url, $signer, $member_id);
-  $pairs = array('SSH_KEY_ID' => $ssh_key_id);
+  $pairs = array('_dummy' => null);
   if ($filename) {
-    $pairs['SSH_FILENAME'] = $filename;
+    $pairs['_GENI_KEY_FILENAME'] = $filename;
   }
   if ($description) {
-    $pairs['SSH_DESCRIPTION'] = $description;
+    $pairs['KEY_DESCRIPTION'] = $description;
   }
-  $client->update_member_info($member_urn, $client->creds(), $pairs);
-    
+  $client->update_key($member_urn, $ssh_key_id, $client->get_credentials(),
+                      array('fields' => $pairs));
+
   //return $ssh_key;
   // CHAPI: no return for now.  If needed, we'll need to retrieve it
 }
 
-// CHAPI: unsupported
 function delete_ssh_key($ma_url, $signer, $member_id, $ssh_key_id)
 {
   $client = XMLRPCClient::get_client($ma_url, $signer);
