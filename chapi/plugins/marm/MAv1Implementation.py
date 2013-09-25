@@ -577,7 +577,7 @@ class MAv1Implementation(MAv1DelegateBase):
 
         method = 'delete_key'
         args = {'member_id' : member_id, 'key_id' : key_id}
-        chap_log_invocation(MA_LOG_PREFIX, method, credentials, options, args)
+        chapi_log_invocation(MA_LOG_PREFIX, method, credentials, options, args)
 
         session = self.db.getSession()
         q = session.query(SshKey)

@@ -143,9 +143,10 @@ function update_ssh_key($ma_url, $signer, $member_id, $ssh_key_id,
 // CHAPI: unsupported
 function delete_ssh_key($ma_url, $signer, $member_id, $ssh_key_id)
 {
-  $msg = "delete_ssh_key is unimplemented";
-  error_log($msg);
-  throw new Exception($msg);
+  $client = XMLRPCClient::get_client($ma_url, $signer);
+  $member_urn = get_member_urn($ma_url, $signer, $member_id);
+  $client->delete_key($member_urn, $ssh_key_id, $client->get_credentials(), arr\
+ay('_dummy' => null));
 }
 
 // Lookup inside keys/certs associated with a user UUID
