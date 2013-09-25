@@ -39,6 +39,8 @@ from tools.dbutils import *
 from tools.cert_utils import *
 from tools.geni_constants import *
 from tools.geni_utils import *
+from tools.guard_utils import *
+from tools.ABACManager import *
 from tools.cs_utils import *
 from tools.chapi_log import *
 
@@ -286,6 +288,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         q = q.filter(self.db.SLICE_TABLE.c.slice_urn == slice_urn)
         q = q.filter(self.db.SLICE_TABLE.c.expired == 'f')
         rows = q.all()
+        session.close()
         if len(rows) == 0:
             return self._errorReturn("Can't get slice credential " + \
                                          "on expired or non-existent slice %s"\
@@ -303,13 +306,35 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                                                      self.trusted_root_files, \
                                                      delegatable)
 
-        slice_cred_xml = slice_cred.xml
+        sfa_raw_creds = [slice_cred.xml]
+        abac_raw_creds = []
+        session = self.db.getSession()
+        q = session.query(self.db.SLICE_MEMBER_TABLE.c.role)
+        q = q.filter(self.db.SLICE_MEMBER_TABLE.c.slice_id == self.db.SLICE_TABLE.c.slice_id)
+        q = q.filter(self.db.SLICE_TABLE.c.slice_urn == slice_urn)
+        q = q.filter(self.db.SLICE_MEMBER_TABLE.c.member_id == client_uuid)
+        rows = q.all()
+        session.close()
+        if len(rows) > 0:
+            row = rows[0]
+            role_name = attribute_type_names[row.role]
+            slice_role_assertion = "ME.IS_%s_%s<-CALLER" % (role_name, flatten_urn(slice_urn))
+#            print "SRA = " + slice_role_assertion
+            abac_manager = ABACManager(certs_by_name = {"CALLER" :client_cert},
+                                       cert_files_by_name = {"ME" :self.cert},
+                                       key_files_by_name = {"ME" :self.key})
+            assertion = abac_manager.register_assertion(slice_role_assertion)
+            abac_raw_creds.append(assertion.cert_chunk())
 
-        slice_cred_tuple = \
-            {'geni_type' : 'SFA', 'geni_version' : '1', \
-                 'geni_value' : slice_cred_xml}
-        slice_creds = [slice_cred_tuple]
-        result =self._successReturn(slice_creds)
+        sfa_creds = \
+            [{'geni_type' : 'SFA', 'geni_version' : 1, 'geni_value' : cred} 
+             for cred in sfa_raw_creds]
+        abac_creds = \
+            [{'geni_type' : 'ABAC', 'geni_version' : 1, 'geni_value' : cred} 
+             for cred in abac_raw_creds]
+        creds = sfa_creds + abac_creds
+
+        result = self._successReturn(creds)
 
         chapi_log_result(SA_LOG_PREFIX, method, result)
         return result
