@@ -193,8 +193,7 @@ class CSv1Delegate(DelegateBase):
 #        print "SLICE = %d " % len(slice_rows)
 
         q = session.query(self.db.CS_ACTION_TABLE.c.name, 
-                          self.db.CS_POLICY_TABLE.c.context_type, 
-                          self.db.MEMBER_ATTRIBUTE_TABLE)
+                          self.db.CS_POLICY_TABLE.c.context_type)
         q = q.filter(self.db.MEMBER_ATTRIBUTE_TABLE.c.name == 'operator')
         q = q.filter(self.db.MEMBER_ATTRIBUTE_TABLE.c.member_id == principal)
         q = q.filter(self.db.CS_POLICY_TABLE.c.attribute == OPERATOR_ATTRIBUTE)
@@ -205,15 +204,14 @@ class CSv1Delegate(DelegateBase):
 #        print "OPERATOR = %d " % len(operator_rows)
 
         q = session.query(self.db.CS_ACTION_TABLE.c.name, 
-                          self.db.CS_POLICY_TABLE.c.context_type, 
-                          self.db.MEMBER_ATTRIBUTE_TABLE)
+                          self.db.CS_POLICY_TABLE.c.context_type)
         q = q.filter(self.db.MEMBER_ATTRIBUTE_TABLE.c.name == 'project_lead')
         q = q.filter(self.db.MEMBER_ATTRIBUTE_TABLE.c.member_id == principal)
         q = q.filter(self.db.CS_POLICY_TABLE.c.attribute == LEAD_ATTRIBUTE)
         q = q.filter(self.db.CS_POLICY_TABLE.c.context_type == RESOURCE_CONTEXT)
         q = q.filter(self.db.CS_ACTION_TABLE.c.privilege == self.db.CS_POLICY_TABLE.c.privilege)
         q = q.filter(self.db.CS_ACTION_TABLE.c.context_type == self.db.CS_POLICY_TABLE.c.context_type)
-
+        
         lead_rows = q.all()
 #        print "LEAD = %d " % len(lead_rows)
 
