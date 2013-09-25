@@ -67,8 +67,6 @@ class CHDatabaseEngine:
             Table('ma_inside_key', self.metadata, autoload=True)
         self.CS_ACTION_TABLE = Table('cs_action', self.metadata, \
                                          autoload=True)
-        self.CS_ASSERTION_TABLE = Table('cs_assertion', self.metadata, \
-                                         autoload=True)
         self.CS_ATTRIBUTE_TABLE = Table('cs_attribute', self.metadata, \
                                          autoload=True)
         self.CS_POLICY_TABLE = Table('cs_policy', self.metadata, \
