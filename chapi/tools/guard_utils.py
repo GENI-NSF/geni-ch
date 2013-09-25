@@ -38,6 +38,9 @@ from syslog import syslog
 # context support
 _context = threading.local()
 
+# Set up caching of constant relationships of different sorts
+
+# Get the cache of a given name (or create if doesn't exist)
 def cache_get(k):
     if not hasattr(_context, 'cache'):
         _context.cache = dict()
@@ -45,6 +48,7 @@ def cache_get(k):
         _context.cache[k] = dict()
     return _context.cache[k]
 
+# Remove cache 
 def cache_clear():
     if hasattr(_context, 'cache'):
         del _context.cache
@@ -52,20 +56,7 @@ def cache_clear():
 # Some helper methods
 
 @memoize
-def extract_user_urn(client_cert):
-    client_cert_object = \
-        sfa.trust.certificate.Certificate(string=client_cert)
-    user_urn = None
-    identifiers = client_cert_object.get_extension('subjectAltName')
-    identifier_parts = identifiers.split(',')
-    for identifier in identifier_parts:
-        identifier = identifier.strip()
-        if identifier.startswith('URI:urn:publicid'):
-            user_urn = identifier[4:]
-            break
-    return user_urn
-
-@memoize
+# Get the project name from a slice URN
 def lookup_project_name_for_slice(slice_urn):
     parts = slice_urn.split("+")
     authority = parts[1]
@@ -77,6 +68,8 @@ def lookup_project_name_for_slice(slice_urn):
 def flatten_urn(urn):
     return urn.replace(':', '_').replace('+', '_').replace('-', '_').replace('.', '_')
 
+
+# Return all names of projects for which a user (by urn) is a member
 def lookup_project_names_for_user(user_urn):
     cache = cache_get('project_names_for_user')
     if user_urn in cache:
@@ -260,6 +253,8 @@ def convert_member_email_to_uid(member_email):
     else:
         return [cache[em] for em in member_emails if em in cache]
 
+# Lookup whether given user (by urn) has 'operator' 
+# as an attribute in ma_member_attribute
 def lookup_operator_privilege(user_urn):
     cache = cache_get('operator_privilege')
     if user_urn in cache:
@@ -267,24 +262,28 @@ def lookup_operator_privilege(user_urn):
     db = pm.getService('chdbengine')
     session = db.getSession()
 
-    OPERATOR_ATTRIBUTE = 5
-    SLICE_CONTEXT = 2
+    ma1 = alias(db.MEMBER_ATTRIBUTE_TABLE)
+    ma2 = alias(db.MEMBER_ATTRIBUTE_TABLE)
+    q = session.query(ma2.c.value)
+    q = q.filter(ma1.c.member_id == ma2.c.member_id)
+    q = q.filter(ma1.c.name == 'urn')
+    q = q.filter(ma1.c.value == user_urn)
+    q = q.filter(ma2.c.name == 'operator')
 
-    q = session.query(db.CS_ASSERTION_TABLE, db.MEMBER_ATTRIBUTE_TABLE)
-    q = q.filter(db.CS_ASSERTION_TABLE.c.attribute == OPERATOR_ATTRIBUTE)
-    q = q.filter(db.CS_ASSERTION_TABLE.c.context_type == SLICE_CONTEXT)
-    q = q.filter(db.MEMBER_ATTRIBUTE_TABLE.c.member_id == db.CS_ASSERTION_TABLE.c.principal)
-    q = q.filter(db.MEMBER_ATTRIBUTE_TABLE.c.name == 'urn')
-    q = q.filter(db.MEMBER_ATTRIBUTE_TABLE.c.value == user_urn)
+#    print "Q = " + str(q)
 
     rows = q.all()
     session.close()
-    cache[user_urn] = (len(rows)>0)
-    return len(rows) > 0
+    is_operator = (len(rows)>0)
+    cache[user_urn] = is_operator
+    return is_operator
 
+# Is given user an authority?
 def lookup_authority_privilege(user_urn):
     return user_urn.find("+authority+")>= 0
 
+# Lookup whether given user (by urn) has 'project_lead' 
+# as an attribute in ma_member_attribute
 def lookup_pi_privilege(user_urn):
     cache = cache_get('pi_privilege')
     if user_urn in cache:
@@ -292,20 +291,22 @@ def lookup_pi_privilege(user_urn):
     db = pm.getService('chdbengine')
     session = db.getSession()
 
-    OPERATOR_ATTRIBUTE = 5
-    RESOURCE_CONTEXT = 3
+    ma1 = alias(db.MEMBER_ATTRIBUTE_TABLE)
+    ma2 = alias(db.MEMBER_ATTRIBUTE_TABLE)
+    q = session.query(ma2.c.value)
+    q = q.filter(ma1.c.member_id == ma2.c.member_id)
+    q = q.filter(ma1.c.name == 'urn')
+    q = q.filter(ma1.c.value == user_urn)
+    q = q.filter(ma2.c.name == 'project_lead')
 
-    q = session.query(db.CS_ASSERTION_TABLE, db.MEMBER_ATTRIBUTE_TABLE)
-    q = q.filter(db.CS_ASSERTION_TABLE.c.attribute == OPERATOR_ATTRIBUTE)
-    q = q.filter(db.CS_ASSERTION_TABLE.c.context_type == RESOURCE_CONTEXT)
-    q = q.filter(db.MEMBER_ATTRIBUTE_TABLE.c.member_id == db.CS_ASSERTION_TABLE.c.principal)
-    q = q.filter(db.MEMBER_ATTRIBUTE_TABLE.c.name == 'urn')
-    q = q.filter(db.MEMBER_ATTRIBUTE_TABLE.c.value == user_urn)
+#    print "Q = " + str(q)
 
     rows = q.all()
     session.close()
-    cache[user_urn] = (len(rows)>0)
-    return len(rows) > 0
+    is_project_lead = (len(rows)>0)
+    cache[user_urn] = is_project_lead
+    return is_project_lead
+
 
 # ATTRIBUTE EXTRACTORS:
 # Methods to generate assertions based on relationship between the CALLER 
@@ -401,6 +402,7 @@ def assert_slice_role(caller_urn, slice_urns, label, abac_manager):
         assertion = "ME.IS_%s_%s<-CALLER" % (role_name, flatten_urn(slice_urn))
         abac_manager.register_assertion(assertion)
 
+# Get role of member on each of list of projects
 def get_project_role_for_member(caller_urn, project_urns):
     db = pm.getService('chdbengine')
     session = db.getSession()
@@ -570,6 +572,7 @@ def standard_subject_extractor(options, arguments):
         extracted['MEMBER_URN'] = member_urns
     return extracted
 
+# For key info methods, extract the subject from options or arguments
 def key_subject_extractor(options, arguments):
     extracted = {}
     if 'match' not in options:
@@ -587,6 +590,7 @@ def key_subject_extractor(options, arguments):
     return extracted
         
 
+# Extract project URN(s) from options or arguments
 def project_urn_extractor(options, arguments):
     if 'project_urn' in arguments:
         project_urn = arguments['project_urn']
@@ -599,10 +603,12 @@ def project_urn_extractor(options, arguments):
         project_urn = options['fields']['SLICE_PROJECT_URN']
     return {"PROJECT_URN" : [project_urn]}
 
+# Extract slice urn from options or arguments
 def slice_urn_extractor(options, arguments):
     slice_urn = arguments['slice_urn']
     return {"SLICE_URN" : [slice_urn]}
 
+# Extract member urn from options or arguments
 def member_urn_extractor(options, arguments):
     member_urn = arguments['member_urn']
     return {"MEMBER_URN" : [member_urn]}
@@ -625,13 +631,13 @@ def request_context_extractor(options, arguments):
         extracted = {"PROJECT_URN" : project_urn}
     return extracted
 
-
 # Pull project_id out as the subject
 def request_id_context_extractor(options, arguments):
     request_id = arguments['request_id']
     extracted = {"REQUEST_ID" : request_id}
     return extracted
 
+# Extract member_id and convert to member_urn
 def request_member_extractor(options, arguments):
     member_uid = arguments['member_id']
     member_urn = convert_member_uid_to_urn(member_uid)

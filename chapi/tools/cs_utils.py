@@ -24,18 +24,14 @@
 # Helper methods for adding/removing attributes to cs_attribute table
 
 # Add an attribute to CS_ATTRIBUTE table
+# Obsolete: CS_ASSERTION table no longer supported
 def add_attribute(db, session, signer, principal, attribute, context_type, context):
-    ins_stmt = db.CS_ASSERTION_TABLE.insert().values(
-        signer=signer, principal=principal,attribute=attribute, \
-            context_type=context_type, context=context)
-    result = session.execute(ins_stmt)
+    pass
 
 # Remove an attribute from CS_ATTRIBUTE table
+# Obsolete: CS_ASSERTION table no longer supported
 def delete_attribute(db, session, principal, context_type, context):
-    q = session.query(db.CS_ASSERTION_TABLE)
-    q = q.filter(db.CS_ASSERTION_TABLE.principal == principal)
-    q = q.filter(db.CS_ASSERTION_TABLE.context_type == context_type)
-    q = q.filter(db.CS_ASSERTION_TABLE.context == context)
-    q = q.delete()
+    pass
+
 
 
