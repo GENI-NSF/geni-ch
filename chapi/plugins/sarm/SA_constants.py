@@ -40,11 +40,25 @@ slice_mandatory_fields  = {
 }
 
 slice_supplemental_fields = {
-    "_GENI_SLICE_OWNER" : {"TYPE" : "UUID", "UPDATE" : True},
+    "_GENI_SLICE_OWNER" : {"TYPE" : "UID", "UPDATE" : True},
     "_GENI_SLICE_EMAIL": {"TYPE": "EMAIL", "CREATE": "REQUIRED", "UPDATE": True},
     "_GENI_PROJECT_UID": {"TYPE" : "UID", "UPDATE" : False}
 }
 
+# The externally visible data schema for slivers
+sliver_info_mandatory_fields  = {
+    "SLIVER_INFO_URN": {"TYPE": "URN", "CREATE": "REQUIRED", "UPDATE": False},
+    "SLIVER_INFO_SLICE_URN": {"TYPE": "URN", "CREATE": "REQUIRED", "UPDATE": False},
+    "SLIVER_INFO_AGGREGATE_URN": {"TYPE": "URN", "CREATE": "REQUIRED", "UPDATE": False},
+    "SLIVER_INFO_CREATOR_URN": {"TYPE": "URN", "CREATE": "REQUIRED", "UPDATE": False},
+    "SLIVER_INFO_EXPIRATION": {"TYPE": "DATETIME", "CREATE" : "ALLOWED", "UPDATE": True},
+    "SLIVER_INFO_CREATION": {"TYPE": "DATETIME", "CREATE" : "ALLOWED", "UPDATE": False},
+}
+
+sliver_info_supplemental_fields = {
+}
+
+# The externally visible data schema for projects
 project_mandatory_fields = {
     "PROJECT_URN" : {"TYPE" : "URN"},
     "PROJECT_UID" : {"TYPE" : "UID"},
@@ -62,7 +76,8 @@ project_supplemental_fields = {
 
 # Total set of supplemental fields
 supplemental_fields = dict(slice_supplemental_fields.items() + \
-                                    project_supplemental_fields.items())
+                           project_supplemental_fields.items() + \
+                           sliver_info_supplemental_fields.items())
 
 # Mapping from external to internal data schema (SLICE)
 slice_field_mapping = {
@@ -77,6 +92,16 @@ slice_field_mapping = {
     "_GENI_SLICE_EMAIL" : "slice_email",
     "_GENI_SLICE_OWNER" : "owner_id", 
     "_GENI_PROJECT_UID": 'project_id'
+}
+
+# Mapping from external to internal data schema (SLIVER_INFO)
+sliver_info_field_mapping = {
+    "SLIVER_INFO_URN" : "sliver_urn",
+    "SLIVER_INFO_SLICE_URN" : "slice_urn",
+    "SLIVER_INFO_CREATOR_URN" : "creator_urn",
+    "SLIVER_INFO_AGGREGATE_URN" : "aggregate_urn",
+    "SLIVER_INFO_EXPIRATION" :  "expiration",
+    "SLIVER_INFO_CREATION" :  "creation",
 }
 
 # Mapping from external to internal data schema (PROJECT)

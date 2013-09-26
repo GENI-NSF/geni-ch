@@ -86,20 +86,22 @@ class MAv1Guard(ABACGuardBase):
                                     select_fields(MA.optional_fields, \
                                                       MA.identifying_fields)), 
         'update_member_info' :  \
-            UpdateArgumentCheck({}, {}),
+            UpdateArgumentCheck({}, {}, {'member_urn' : "URN"}),
         
         'create_key' : \
             CreateArgumentCheck(select_fields(MA.standard_key_fields, \
                                            MA.allowed_create_key_fields), \
                                     select_fields(MA.optional_key_fields, \
-                                           MA.allowed_create_key_fields)),
+                                           MA.allowed_create_key_fields),
+                                {'member_urn': 'URN'}), 
         'delete_key' : \
             None,
         'update_key' : \
             UpdateArgumentCheck(select_fields(MA.standard_key_fields, \
                                                   MA.updatable_key_fields), \
                                     select_fields(MA.optional_key_fields, \
-                                                      MA.updatable_key_fields)),
+                                                      MA.updatable_key_fields),
+                                {'member_urn' : 'URN', 'key_id' : 'STRING'}),
         'lookup_key' : \
             LookupArgumentCheck(MA.standard_key_fields, \
                                     MA.optional_key_fields),

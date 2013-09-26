@@ -58,6 +58,9 @@ class SliceMember(object):
 class ProjectMember(object):
     pass
 
+class SliverInfo(object):
+    pass
+
 # Implementation of SA that speaks to GPO Slice and projects table schema
 class SAv1PersistentImplementation(SAv1DelegateBase):
 
@@ -81,6 +84,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         mapper(SliceMember, self.db.SLICE_MEMBER_TABLE)
         mapper(Project, self.db.PROJECT_TABLE)
         mapper(ProjectMember, self.db.PROJECT_MEMBER_TABLE)
+        mapper(SliverInfo, self.db.SLIVER_INFO_TABLE)
 
     def get_version(self):
         method = 'get_version'
@@ -420,6 +424,8 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         slice.creation = datetime.utcnow()
         if not slice.expiration:
             slice.expiration = slice.creation + relativedelta(days=7)
+        else:
+            slice.expiration = datetime.strptime(slice.expiration, STANDARD_DATETIME_FORMAT)
         slice.slice_id = str(uuid.uuid4())
         slice.owner_id = client_uuid
         slice.slice_urn = urn_for_slice(slice.slice_name, project_name)
@@ -503,7 +509,8 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         self.logging_service.log_event("Updated slice " + slice_name, 
                                        attribs, client_uuid)
         if "SLICE_EXPIRATION" in options['fields']: 
-            expiration = options['fields']['SLICE_EXPIRATION']
+            expiration_string = options['fields']['SLICE_EXPIRATION']
+            expiration = datetime.strptime(expiration_string, STANDARD_DATETIME_FORMAT)
             self.logging_service.log_event("Renewed slice %s until %s" % \
                                                (slice_name, expiration), \
                                                attribs, client_uuid)
@@ -849,18 +856,53 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
     # Sliver Info API
 
     def create_sliver_info(self, client_cert, credentials, options):
-        raise CHAPIv1NotImplementedError('')
+        session = self.db.getSession()
+        sliver = SliverInfo()
+        for field, value in options['fields'].iteritems():
+           setattr(sliver, SA.sliver_info_field_mapping[field], value)
+        if not sliver.creation:
+            sliver.creation = datetime.utcnow()
+        if not sliver.expiration:
+            sliver.expiration = sliver.creation + relativedelta(days=7)
+        return self.finish_create(session, sliver, SA.sliver_info_field_mapping)
 
     def delete_sliver_info(self, client_cert, sliver_urn, \
                                credentials, options):
-        raise CHAPIv1NotImplementedError('')
+        session = self.db.getSession()
+        q = session.query(SliverInfo)
+        q = q.filter(SliverInfo.sliver_urn == sliver_urn)
+        q.delete(synchronize_session='fetch')
+        session.commit()
+        session.close()
+        return self._successReturn(True)
 
     def update_sliver_info(self, client_cert, sliver_urn, \
                                credentials, options):
-        raise CHAPIv1NotImplementedError('')
+        session = self.db.getSession()
+        q = session.query(SliverInfo)
+        q = q.filter(SliverInfo.sliver_urn == sliver_urn)
+        vals = {}
+        for field, value in options['fields'].iteritems():
+           vals[SA.sliver_info_field_mapping[field]] = value
+        q.update(vals)
+        session.commit()
+        session.close()
+        return self._successReturn(True)
 
     def lookup_sliver_info(self, client_cert, credentials, options):
-        raise CHAPIv1NotImplementedError('')
+        columns, match_criteria = \
+            unpack_query_options(options, SA.sliver_info_field_mapping)
+        session = self.db.getSession()
+        q = session.query(self.db.SLIVER_INFO_TABLE)
+        q = add_filters(q, match_criteria, self.db.SLIVER_INFO_TABLE, \
+                        SA.sliver_info_field_mapping)
+        rows = q.all()
+        session.close()
+        slivers = {}
+        for row in rows:
+            slivers[row.sliver_urn] = \
+                construct_result_row(row, columns, SA.sliver_info_field_mapping)
+        return self._successReturn(slivers)
 
 #     def register_aggregate(self, client_cert, \
 #                                slice_urn, aggregate_url, credentials, options):

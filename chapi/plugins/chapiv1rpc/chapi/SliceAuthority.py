@@ -246,7 +246,7 @@ class SAv1Handler(HandlerBase):
                 new_results_value = \
                     self._guard.protect_results(client_cert, method, \
                                                     credentials, results_value)
-                results = self._successReturn(new_resultss_value)
+                results = self._successReturn(new_results_value)
             return results
         except Exception as e:
             return self._errorReturn(e)
@@ -271,7 +271,7 @@ class SAv1Handler(HandlerBase):
                 new_results_value = \
                     self._guard.protect_results(client_cert, method, \
                                                     credentials, results_value)
-                results = self._successReturn(new_resultss_value)
+                results = self._successReturn(new_results_value)
             return results
         except Exception as e:
             return self._errorReturn(e)
@@ -296,7 +296,7 @@ class SAv1Handler(HandlerBase):
                 new_results_value = \
                     self._guard.protect_results(client_cert, method, \
                                                     credentials, results_value)
-                results = self._successReturn(new_resultss_value)
+                results = self._successReturn(new_results_value)
             return results
         except Exception as e:
             return self._errorReturn(e)
@@ -320,7 +320,7 @@ class SAv1Handler(HandlerBase):
                 new_results_value = \
                     self._guard.protect_results(client_cert, method, \
                                                     credentials, results_value)
-                results = self._successReturn(new_resultss_value)
+                results = self._successReturn(new_results_value)
             return results
         except Exception as e:
             return self._errorReturn(e)
