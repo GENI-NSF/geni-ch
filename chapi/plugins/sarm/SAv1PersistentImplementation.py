@@ -1017,7 +1017,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         session = self.db.getSession()
         # Filter those projects with pending requsts to those for which
         # Given member is lead or admin
-        q = session.query(self.db.PROJECT_REQUEST_TABLE, self.db.PROJECT_MEMBER_TABLE)
+        q = session.query(self.db.PROJECT_REQUEST_TABLE)
         q = q.filter(self.db.PROJECT_REQUEST_TABLE.c.context_id == self.db.PROJECT_MEMBER_TABLE.c.project_id)
         q = q.filter(self.db.PROJECT_MEMBER_TABLE.c.member_id == member_id)
         q = q.filter(self.db.PROJECT_MEMBER_TABLE.c.role.in_([LEAD_ATTRIBUTE, ADMIN_ATTRIBUTE]))
