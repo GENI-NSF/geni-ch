@@ -14,6 +14,8 @@ chmod 0600 $HOME/.pgpass
 wget http://www.gpolab.bbn.com/~tmitchel/ch-db-export.sql
 import_database.py --dump_file ch-db-export.sql --old_hostname ch.geni.net --new_hostname $1 --old_authority ch.geni.net --new_authority $1
 
+psql -U portal -h localhost portal < update-1.sql
+
 psql -U portal -h localhost portal << EOF
 update service_registry set service_url = 'https://{$1}/secure/kmhome.php' where service_url = 'https://portal.geni.net/secure/kmhome.php';
 update service_registry set service_type = service_type + 100 where service_type in (1, 2, 3, 5, 6, 9);
