@@ -506,7 +506,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                                        attribs, client_uuid)
         if "SLICE_EXPIRATION" in options['fields']: 
             expiration_string = options['fields']['SLICE_EXPIRATION']
-            expiration = strptime(expiration_string, STANDARD_DATETIME_FORMAT)
+            expiration = datetime.strptime(expiration_string, STANDARD_DATETIME_FORMAT)
             self.logging_service.log_event("Renewed slice %s until %s" % \
                                                (slice_name, expiration), \
                                                attribs, client_uuid)
