@@ -587,7 +587,8 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
 
         session = self.db.getSession()
         name = from_project_urn(project_urn)
-        if not self.get_project_id(session, "project_name", name):
+        project_uuid = self.get_project_id(session, 'project_name', name)
+        if not project_uuid:
             session.close()
             raise CHAPIv1ArgumentError('No project with urn ' + project_urn)
         q = session.query(Project)
@@ -601,8 +602,6 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
 
         # Log the update project
         client_uuid = get_uuid_from_cert(client_cert)
-        project_uuid = \
-            self.get_project_id(session, 'project_name', project_name)
         attribs = {"PROJECT" : project_uuid}
         self.logging_service.log_event("Updated project " + name, 
                                        attribs, client_uuid)

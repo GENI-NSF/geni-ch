@@ -237,11 +237,10 @@ function update_project($sa_url, $signer, $project_id, $project_name,
   $project_urn = get_project_urn($sa_url, $signer, $project_id);
 
   $client = XMLRPCClient::get_client($sa_url, $signer);
-  $options = array('fields'=>array('PROJECT_NAME'=>$project_name,
-				   'PROJECT_DESCRIPTION'=>$project_purpose,
-				   'PROJECT_EXPIRATION'=>$project_expiration));
+  $options = array('fields'=>array('PROJECT_DESCRIPTION'=>$project_purpose,
+				   'PROJECT_EXPIRATION'=>$expiration));
 
-  $res = $client->update_projects($project_urn, $client->creds(), $options);
+  $res = $client->update_project($project_urn, $client->creds(), $options);
   $results = array();
   return $results;
 }
