@@ -84,11 +84,14 @@ class SAv1Guard(ABACGuardBase):
         'lookup_projects_for_member' : SimpleArgumentCheck({'member_urn' : 'URN'}),
 
         # Argument checks for sliver info aggregate methods
-        'create_sliver_info' : None, 
-        'delete_sliver_info' : SimpleArgumentCheck({'slice_urn' : 'URN'}),
-        'update_sliver_info' : SimpleArgumentCheck({'slice_urn' : 'URN'}),
-        'lookup_sliver_info' : None,
-
+        'create_sliver_info' : CreateArgumentCheck(SA.sliver_info_mandatory_fields,
+                                                   SA.sliver_info_supplemental_fields), 
+        'update_sliver_info' : UpdateArgumentCheck(SA.sliver_info_mandatory_fields,
+                                                   SA.sliver_info_supplemental_fields), 
+        'delete_sliver_info' : SimpleArgumentCheck({'sliver_urn' : 'URN'}),
+        'lookup_sliver_info' : LookupArgumentCheckMatchOptional(SA.sliver_info_mandatory_fields,
+                                                                SA.sliver_info_supplemental_fields), 
+        
         # Argument checks for project request methods
         # No options required (context_type, request_id, resolution_status, resolution_description arguments)
         'create_request' :  None, 
@@ -202,11 +205,30 @@ class SAv1Guard(ABACGuardBase):
                 "ME.MAY_LOOKUP_PROJECTS_FOR_MEMBER_$SUBJECT<-ME.SHARES_PROJECT_$SUBJECT"
                 ], assert_shares_project, member_urn_extractor),
 
-        # *** WRITE ME: Guards for aggregate methods
-        'create_sliver_info' : None,
-        'delete_sliver_info' : None,
-        'update_sliver_info' : None,
-        'lookup_sliver_info' : None,
+        # sliver_info and aggregates
+        'create_sliver_info' : \
+            SubjectInvocationCheck([
+                    "ME.MAY_CREATE_SLIVER_INFO<-ME.IS_OPERATOR",
+                    "ME.MAY_CREATE_SLIVER_INFO_$SUBJECT<-ME.IS_LEAD_$SUBJECT", 
+                    "ME.MAY_CREATE_SLIVER_INFO_$SUBJECT<-ME.IS_ADMIN_$SUBJECT"
+                    "ME.MAY_CREATE_SLIVER_INFO_$SUBJECT<-ME.IS_MEMBER_$SUBJECT"
+                    ], assert_slice_role, slice_urn_extractor),
+
+        'delete_sliver_info' : \
+            SubjectInvocationCheck([
+                    "ME.MAY_DELETE_SLIVER_INFO<-ME.IS_OPERATOR",
+                    "ME.MAY_DELETE_SLIVER_INFO_$SUBJECT<-ME.IS_LEAD_$SUBJECT", 
+                    "ME.MAY_DELETE_SLIVER_INFO_$SUBJECT<-ME.IS_ADMIN_$SUBJECT"
+                    "ME.MAY_DELETE_SLIVER_INFO_$SUBJECT<-ME.IS_MEMBER_$SUBJECT"
+                    ], assert_slice_role, slice_urn_extractor),
+        'update_sliver_info' : \
+            SubjectInvocationCheck([
+                    "ME.MAY_UPDATE_SLIVER_INFO<-ME.IS_OPERATOR",
+                    "ME.MAY_UPDATE_SLIVER_INFO_$SUBJECT<-ME.IS_LEAD_$SUBJECT", 
+                    "ME.MAY_UPDATE_SLIVER_INFO_$SUBJECT<-ME.IS_ADMIN_$SUBJECT"
+                    "ME.MAY_UPDATE_SLIVER_INFO_$SUBJECT<-ME.IS_MEMBER_$SUBJECT"
+                    ], assert_slice_role, slice_urn_extractor),
+        'lookup_sliver_info' : None,  # open - anyone can lookup
 
         # 
         'create_request' :  None, # Open: anyone can request
