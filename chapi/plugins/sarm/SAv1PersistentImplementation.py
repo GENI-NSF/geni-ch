@@ -424,6 +424,8 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         slice.creation = datetime.utcnow()
         if not slice.expiration:
             slice.expiration = slice.creation + relativedelta(days=7)
+        else:
+            slice.expiration = datetime.strptime(slice.expiration, STANDARD_DATETIME_FORMAT)
         slice.slice_id = str(uuid.uuid4())
         slice.owner_id = client_uuid
         slice.slice_urn = urn_for_slice(slice.slice_name, project_name)
@@ -507,7 +509,8 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         self.logging_service.log_event("Updated slice " + slice_name, 
                                        attribs, client_uuid)
         if "SLICE_EXPIRATION" in options['fields']: 
-            expiration = options['fields']['SLICE_EXPIRATION']
+            expiration_string = options['fields']['SLICE_EXPIRATION']
+            expiration = datetime.strptime(expiration_string, STANDARD_DATETIME_FORMAT)
             self.logging_service.log_event("Renewed slice %s until %s" % \
                                                (slice_name, expiration), \
                                                attribs, client_uuid)
@@ -1056,7 +1059,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         session = self.db.getSession()
         # Filter those projects with pending requsts to those for which
         # Given member is lead or admin
-        q = session.query(self.db.PROJECT_REQUEST_TABLE, self.db.PROJECT_MEMBER_TABLE)
+        q = session.query(self.db.PROJECT_REQUEST_TABLE)
         q = q.filter(self.db.PROJECT_REQUEST_TABLE.c.context_id == self.db.PROJECT_MEMBER_TABLE.c.project_id)
         q = q.filter(self.db.PROJECT_MEMBER_TABLE.c.member_id == member_id)
         q = q.filter(self.db.PROJECT_MEMBER_TABLE.c.role.in_([LEAD_ATTRIBUTE, ADMIN_ATTRIBUTE]))

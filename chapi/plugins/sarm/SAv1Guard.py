@@ -58,14 +58,15 @@ class SAv1Guard(ABACGuardBase):
                                    SA.slice_supplemental_fields),
         'update_slice' : \
             UpdateArgumentCheck(SA.slice_mandatory_fields,\
-                                    SA.slice_supplemental_fields),
+                                    SA.slice_supplemental_fields, 
+                                {'slice_urn' : "URN"}),
         'lookup_slices' : \
             LookupArgumentCheck(SA.slice_mandatory_fields,\
                                     SA.slice_supplemental_fields),
-        'modify_slice_membership' : None, # No options required (slice_urn argument)
-        'lookup_slice_members' : None, # No options required (slice_urn argument)
-        'lookup_slices_for_member' : None, # No options required (member_urn argument)
-        'get_credentials' : None, # No options required (slice_urn argument)
+        'modify_slice_membership' : SimpleArgumentCheck({'slice_urn' : 'URN'}),
+        'lookup_slice_members' : SimpleArgumentCheck({'slice_urn' : 'URN'}),
+        'lookup_slices_for_member' : SimpleArgumentCheck({'member_urn' : 'URN'}),
+        'get_credentials' : SimpleArgumentCheck({'slice_urn' : 'URN'}),
 
         # Argument checks for project methods
 
@@ -78,14 +79,15 @@ class SAv1Guard(ABACGuardBase):
         'lookup_projects' : \
             LookupArgumentCheckMatchOptional(SA.project_mandatory_fields,\
                                     SA.project_supplemental_fields),
-        'modify_project_membership' : None, # No options required (project_urn argument)
-        'lookup_project_members' : None, # No options required (project_urn argument)
-        'lookup_projects_for_member' : None, # No options required (member_urn argument)
+        'modify_project_membership' : SimpleArgumentCheck({'project_urn' : 'URN'}),
+        'lookup_project_members' : SimpleArgumentCheck({'project_urn' : 'URN'}),
+        'lookup_projects_for_member' : SimpleArgumentCheck({'member_urn' : 'URN'}),
 
         # Argument checks for sliver info aggregate methods
-        'register_aggregate' : None, # No options required (slice_urn, aggregate_url arguments)
-        'remove_aggregate' : None, # No options required (slice_urn, aggregate_url arguments)
-        'lookup_slice_aggregates' : None,  # No options required (slice_urn argument)
+        'create_sliver_info' : None, 
+        'delete_sliver_info' : SimpleArgumentCheck({'slice_urn' : 'URN'}),
+        'update_sliver_info' : SimpleArgumentCheck({'slice_urn' : 'URN'}),
+        'lookup_sliver_info' : None,
 
         # Argument checks for project request methods
         # No options required (context_type, request_id, resolution_status, resolution_description arguments)
@@ -201,9 +203,10 @@ class SAv1Guard(ABACGuardBase):
                 ], assert_shares_project, member_urn_extractor),
 
         # *** WRITE ME: Guards for aggregate methods
-        'register_aggregate' : None,
-        'remove_aggregate' : None,
-        'lookup_slice_aggregates' : None,
+        'create_sliver_info' : None,
+        'delete_sliver_info' : None,
+        'update_sliver_info' : None,
+        'lookup_sliver_info' : None,
 
         # 
         'create_request' :  None, # Open: anyone can request

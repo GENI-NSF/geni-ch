@@ -40,7 +40,7 @@ slice_mandatory_fields  = {
 }
 
 slice_supplemental_fields = {
-    "_GENI_SLICE_OWNER" : {"TYPE" : "UUID", "UPDATE" : True},
+    "_GENI_SLICE_OWNER" : {"TYPE" : "UID", "UPDATE" : True},
     "_GENI_SLICE_EMAIL": {"TYPE": "EMAIL", "CREATE": "REQUIRED", "UPDATE": True},
     "_GENI_PROJECT_UID": {"TYPE" : "UID", "UPDATE" : False}
 }
