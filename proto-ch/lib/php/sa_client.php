@@ -248,8 +248,8 @@ function renew_slice($sa_url, $signer, $slice_id, $expiration)
   $client = XMLRPCClient::get_client($sa_url, $signer);
   $options = array('update' => array('SLICE_EXPIRATION' => $expiration),
 		   );
-  $client->update_slice($slice_urn, $client->creds(), $options);
-  return true;
+  $res = $client->update_slice($slice_urn, $client->creds(), $options);
+  return $res;
 }
 
 function _conv_mid2urn_s($sa_url, $signer, $alist)
