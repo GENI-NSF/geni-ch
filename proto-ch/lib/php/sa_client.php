@@ -249,7 +249,7 @@ function renew_slice($sa_url, $signer, $slice_id, $expiration)
   $options = array('update' => array('SLICE_EXPIRATION' => $expiration),
 		   );
   $client->update_slice($slice_urn, $client->creds(), $options);
-  // no return
+  return true;
 }
 
 function _conv_mid2urn_s($sa_url, $signer, $alist)
