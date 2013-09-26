@@ -82,9 +82,9 @@ function get_project_slice_member_info($sa_url, $ma_url, $user, $allow_expired=F
     $slice_data = get_slices_in_projects($sa_url, $user, $slice_member_ids, $projects, $allow_expired);
     
 
-    //    error_log("SLICE_MEMBER_IDS = " . print_r($slice_member_ids, true));
-    //    error_log("SLICE_DATA =  = " . print_r($slice_data, true));
-    //    error_log("PROJECTS = " . print_r($projects, true));
+    //error_log("SLICE_MEMBER_IDS = " . print_r($slice_member_ids, true));
+    //error_log("SLICE_DATA =  = " . print_r($slice_data, true));
+    //error_log("PROJECTS = " . print_r($projects, true));
     foreach ($project_objects as $project) {
       $project_id = $project[PA_PROJECT_TABLE_FIELDNAME::PROJECT_ID];
       $proj_lead_id = $project[PA_PROJECT_TABLE_FIELDNAME::LEAD_ID];
@@ -97,15 +97,16 @@ function get_project_slice_member_info($sa_url, $ma_url, $user, $allow_expired=F
 	$proj_slice_id_expired = $proj_slice[SA_SLICE_TABLE_FIELDNAME::EXPIRED];
 	if (!in_array($proj_slice_id, $slice_member_ids)) continue;
 	$proj_slice_ids[] = $proj_slice_id;
-	//	error_log("slice id = ". $proj_slice_id . " expired = " . $proj_slice_id_expired);
-	if ($proj_slice_id_expired=="f") {		
-	//	   error_log("Adding active slice to list ....");
-	   $proj_activeslice_ids[] = $proj_slice_id;		
+	//error_log("slice id = ". $proj_slice_id . " expired = " . $proj_slice_id_expired);
+	if (!$proj_slice_id_expired) {		
+	  //error_log("Adding active slice to list ....");
+	  $proj_activeslice_ids[] = $proj_slice_id;		
 	}
       }
       //	$proj_slice_ids = lookup_slice_ids($sa_url, $user, $project_id);  
       $project_slice_map[ $project_id ] = $proj_slice_ids;
       $project_activeslice_map[ $project_id ] = $proj_activeslice_ids;
+      //error_log("GPSMI: project ".$project_id." ids = ".print_r($proj_activeslice_ids,true));
       $slice_ids = array_merge( $slice_ids, $proj_slice_ids ); // is this ok
     }	      
   }
@@ -183,7 +184,7 @@ function get_all_members_of_slice_as_users( $sa_url, $ma_url, $user, $slice_id) 
 	// initialize members
 	$member = new Member();
 	$member->init_from_record($slice_member);
-	//	error_log("Member = " . print_r($member, TRUE));	
+	//error_log("Member = " . print_r($member, TRUE));	
 	// now as users 
 	$slice_user = new GeniUser();     
    	$slice_user->init_from_member($member);
