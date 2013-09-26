@@ -115,6 +115,10 @@ class ABACManager:
         if self._options:
             self.init_from_options()
 
+        # *** Hack Testing
+        self._all_assertions = []
+        self._all_links = {} # ABAC links : where can I get to from X (All Y st. Y<-X)
+
         
 
     def init_from_options(self):
@@ -237,10 +241,29 @@ class ABACManager:
             assertion = self.register_assertion(self._options.credential)
             self._dump_assertion(assertion, self._options.outfile)
 
+    # Traverse tree of ABAC expression finding path leading from 'from_expr' to 'to_expr'
+    # *** Hack
+    def find_path(self, from_expr, to_expr):
+        if from_expr not in self._all_links: return False
+        if to_expr in self._all_links[from_expr]: return True
+        for link in self._all_links[from_expr]: 
+            if self.find_path(link, to_expr):
+                return True
+        return False
+
     # Does given target have given role?
     # I.e. can we prove query statement Q (X.role<-target)
     # Return ok, proof
     def query(self, query_expression):
+
+        # *** Hack ***
+        # Sorry you gotta parse the expressions and go head-to-tail...
+        parts = query_expression.split('<-')
+        lhs = parts[0]
+        rhs = parts[1]
+        response = self.find_path(rhs, lhs)
+        return response, None
+
         query_expression = str(query_expression) # Avoid unicode
         query_expression_parts = query_expression.split("<-")
         if len(query_expression_parts) != 2:
@@ -262,11 +285,15 @@ class ABACManager:
 
     # Delete all the tempfiles create
     def __del__(self):
+        del self._ctxt
         for created_filename in self._created_filenames:
             os.remove(created_filename)
 
     # Register a new ID with the manager, loading into lookup table and context
     def register_id(self, name, cert_file):
+        # *** Hack ***
+        return
+
         if cert_file == '' or cert_file == 'None':
             cert_file = None
         if cert_file:
@@ -284,6 +311,9 @@ class ABACManager:
 
     # Load a private key with a principal
     def register_key(self, name, key_file):
+        # *** Hack ***
+        return
+
         if key_file and key_file != '' and key_file != 'None':
             id = self._ids_by_name[name]
             id.load_privkey(key_file)
@@ -296,6 +326,16 @@ class ABACManager:
     # into RT1_line/RT0 roles and principal keyids
     # Generate exception if a principal is referenced but not registered
     def register_assertion(self, assertion):
+        # *** Hack ***
+        self._all_assertions.append(assertion)
+        parts = assertion.split('<-')
+        subject_role= parts[0]
+        principal = parts[1]
+        if principal not in self._all_links: self._all_links[principal] = []
+        self._all_links[principal].append(subject_role)
+        return
+
+
         assertion = str(assertion) # Avoid unicode
         assertion_pieces = assertion.split("<-")
         if len(assertion_pieces) != 2:
@@ -343,6 +383,9 @@ class ABACManager:
         return P
 
     def register_assertion_file(self, assertion_file):
+        # *** Hack ***
+        return
+
         if self._verbose:
             syslog("Registering assertion file " + assertion_file)
         self._assertion_files.append(assertion_file)
