@@ -185,7 +185,7 @@ class SAv1Guard(ABACGuardBase):
                 "ME.MAY_UPDATE_PROJECT<-ME.IS_OPERATOR",
                 "ME.MAY_UPDATE_PROJECT_$SUBJECT<-ME.IS_LEAD_$SUBJECT", 
                 "ME.MAY_UPDATE_PROJECT_$SUBJECT<-ME.IS_ADMIN_$SUBJECT"
-                ], assert_slice_role, project_urn_extractor),
+                ], assert_project_role, project_urn_extractor),
 
         'modify_project_membership' : \
             SubjectInvocationCheck([

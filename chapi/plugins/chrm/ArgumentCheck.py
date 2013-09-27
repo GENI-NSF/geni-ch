@@ -23,7 +23,7 @@
 
 from chapi.Exceptions import *
 from geni.util.urn_util import is_valid_urn
-from tools.geni_constants import STANDARD_DATETIME_FORMAT
+from tools.geni_constants import *
 from sfa.trust.certificate import Certificate
 import types
 import uuid
@@ -153,9 +153,15 @@ class FieldsArgumentCheck(ArgumentCheck):
                 properly_formed = False
         elif field_type == "DATETIME":
             try:
-                datetime.strptime(value, STANDARD_DATETIME_FORMAT)
+                datetime.strptime(value, DATETIME_FORMAT_1)
             except Exception as e:
-                properly_formed = False
+                try:
+                    datetime.strptime(value, DATETIME_FORMAT_2)
+                except Exception as e:
+                    try:
+                        datetime.strptime(value, DATETIME_FORMAT_3)
+                    except Exception as e:
+                        properly_formed = False
         elif field_type == "EMAIL":
             properly_formed = value.find('@')>= 0 and value.find('.') >= 0
         elif field_type == "KEY":

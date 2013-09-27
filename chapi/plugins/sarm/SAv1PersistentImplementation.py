@@ -425,7 +425,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         if not slice.expiration:
             slice.expiration = slice.creation + relativedelta(days=7)
         else:
-            slice.expiration = datetime.strptime(slice.expiration, STANDARD_DATETIME_FORMAT)
+            slice.expiration = datetime.strptime(slice.expiration, DATETIME_FORMAT_1)
         slice.slice_id = str(uuid.uuid4())
         slice.owner_id = client_uuid
         slice.slice_urn = urn_for_slice(slice.slice_name, project_name)
@@ -510,7 +510,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                                        attribs, client_uuid)
         if "SLICE_EXPIRATION" in options['fields']: 
             expiration_string = options['fields']['SLICE_EXPIRATION']
-            expiration = datetime.strptime(expiration_string, STANDARD_DATETIME_FORMAT)
+            expiration = datetime.strptime(expiration_string, DATETIME_FORMAT_1)
             self.logging_service.log_event("Renewed slice %s until %s" % \
                                                (slice_name, expiration), \
                                                attribs, client_uuid)

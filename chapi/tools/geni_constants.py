@@ -51,7 +51,6 @@ attribute_type_names = { LEAD_ATTRIBUTE : "LEAD", ADMIN_ATTRIBUTE : "ADMIN",
 PENDING_STATUS = 0
 
 # Datetime format for parsing/creating dates
-STANDARD_DATETIME_FORMAT = "%Y-%m-%d %H:%M:%S"
-
-
-
+DATETIME_FORMAT_1 = "%Y-%m-%d %H:%M:%S"
+DATETIME_FORMAT_2 = "%m/%d/%Y %H:%M:%S"
+DATETIME_FORMAT_3 = "%m/%d/%Y"
