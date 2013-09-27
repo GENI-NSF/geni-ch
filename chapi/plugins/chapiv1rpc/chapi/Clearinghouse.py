@@ -27,6 +27,7 @@ from amsoil.core import serviceinterface
 from DelegateBase import DelegateBase
 from HandlerBase import HandlerBase
 from Exceptions import *
+from tools.chapi_log import *
 
 ch_logger = amsoil.core.log.getLogger('chv1')
 xmlrpc = pm.getService('xmlrpc')
