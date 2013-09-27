@@ -49,6 +49,7 @@ optional_fields = {
     "_GENI_MEMBER_INSIDE_PRIVATE_KEY": {"TYPE": "KEY", "PROTECT": "PRIVATE"},
     "_GENI_USER_CREDENTIAL": {"TYPE": "CREDENTIALS"},
     "_GENI_CREDENTIALS": {"TYPE": "CREDENTIALS"},
+    # TODO: perhaps allow _GENI_MEMBER_ENABLED?
 }
 
 standard_key_fields = { 
@@ -88,8 +89,8 @@ field_mapping = {
 }
 
 key_fields = ["KEY_MEMBER", "KEY_ID", "KEY_PUBLIC", "KEY_PRIVATE", 
-                 "KEY_DESCRIPTION", "_GENI_KEY_MEMBER_UID", 
-                 "_GENI_KEY_FILENAME" ]
+              "KEY_DESCRIPTION", "_GENI_KEY_MEMBER_UID", 
+              "_GENI_KEY_FILENAME" ]
 
 key_field_mapping = {
     "KEY_MEMBER": 'value',
@@ -109,8 +110,11 @@ attributes = [
     "MEMBER_USERNAME", "MEMBER_EMAIL", "_GENI_MEMBER_DISPLAYNAME",
     "_GENI_MEMBER_PHONE_NUMBER", "_GENI_MEMBER_AFFILIATION",
     "_GENI_MEMBER_EPPN", "KEY_MEMBER", "KEY_ID", "KEY_PUBLIC", "KEY_PRIVATE",
-    "KEY_DESCRIPTION", "_GENI_KEY_MEMBER_UID", "_GENI_KEY_FILENAME"
+    "KEY_DESCRIPTION", "_GENI_KEY_MEMBER_UID", "_GENI_KEY_FILENAME",
+    "_GENI_MEMBER_ENABLED"
 ]
+
+# TODO: _GENI_MEMBER_ENABLED is special - can it be searched?
 
 public_fields = [
     "MEMBER_URN", "MEMBER_UID", "MEMBER_USERNAME",

@@ -346,6 +346,26 @@ class MAv1Handler(HandlerBase):
         except Exception as e:
             return self._errorReturn(e)
 
+    # member disable API
+    def enable_user(self, member_urn, enable_sense, credentials, options):
+        client_cert = self.requestCertificate()
+        method = 'enable_user'
+        try:
+            self._guard.validate_call(client_cert, method,
+                                      credentials, options,
+                                      {'member_urn': member_urn})
+            client_cert, options = self._guard.adjust_client_identity(
+                client_cert, credentials, options)
+            results = self._delegate.enable_user(client_cert,
+                                                 member_urn, 
+                                                 enable_sense,
+                                                 credentials,
+                                                 options)
+            return results
+        except Exception as e:
+            return self._errorReturn(e)
+
+
 
 # Base class for implementations of MA API
 # Must be  implemented in a derived class, and that derived class
@@ -412,4 +432,9 @@ class MAv1DelegateBase(DelegateBase):
     # Authorize/deauthorize a tool with respect to a user
     def authorize_client(self, client_cert, member_id, \
                              client_urn, authorize_sense):
+        raise CHAPIv1NotImplementedError('')
+
+
+    def enable_user(self, client_cert, member_urn, enable_sense, 
+                    credentials, options):
         raise CHAPIv1NotImplementedError('')

@@ -820,3 +820,53 @@ class MAv1Implementation(MAv1DelegateBase):
         chapi_log_result(MA_LOG_PREFIX, method, result)
         return result
 
+    # enable/disable a user/member
+    def enable_user(self, member_urn, enable_sense, credentials, options):
+        '''Mark a member/user as enabled or disabled.
+        IFF enabled_sense is True, then user is unconditionally enabled, otherwise disabled.
+        returns the previous sense.'''
+        method = 'enable_user'
+        args = {'member_urn' : member_urn,
+                'enable_sense' : enable_sense}
+        chapi_log_invocation(MA_LOG_PREFIX, method, [], {}, args)
+
+        syslog(method+' '+member_urn+' '+str(enable_sense))
+
+        session = self.db.getSession()
+        # find the uid
+        uids = self.get_uids_for_attribute(session, "MEMBER_URN", member_urn)
+        if len(uids) == 0:
+            session.close()
+            raise CHAPIv1ArgumentError('No member with URN ' + member_urn)
+        member_id = uids[0]
+
+        # find the old value
+        q = session.query(MemberAttribute.value).\
+            filter(MemberAttribute.member_id == member_id).\
+            filter(MemberAttribute.name == '_GENI_MEMBER_ENABLED')
+        rows = q.all()
+
+        if count(rows)==0:
+            was_enabled = True
+        else:
+            was_enabled = (rows[0][0] == 'y')
+
+        # set the new value
+        enabled_str = 'y' if enable_sense else 'n'
+        ins = self.db.MEMBER_ATTRIBUTE_TABLE.insert().values({'member_id': str(member_id),
+                                                              'name': '_GENI_MEMBER_ENABLED',
+                                                              'value': enabled_str})
+        session.execute(ins)
+
+        session.commit()
+        session.close()
+
+        # log_event
+        msg = "Setting member %s status to %s" % \
+            (member_urn, 'enabled' if enable_sense else 'disabled')
+        attribs = {"MEMBER" : member_urn}
+        self.logging_service.log_event(msg, attribs, member_urn)
+
+        result = self._successReturn(was_enabled)
+        chapi_log_result(MA_LOG_PREFIX, method, result)
+        return result
