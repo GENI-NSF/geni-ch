@@ -74,8 +74,9 @@ class SAv1Guard(ABACGuardBase):
             CreateArgumentCheck(SA.project_mandatory_fields,\
                                    SA.project_supplemental_fields),
         'update_project' : \
-            UpdateArgumentCheck(SA.project_mandatory_fields,\
-                                    SA.project_supplemental_fields),
+            UpdateArgumentCheck(SA.project_mandatory_fields,
+                                SA.project_supplemental_fields,
+                                {'project_urn' : "URN"}),
         'lookup_projects' : \
             LookupArgumentCheckMatchOptional(SA.project_mandatory_fields,\
                                     SA.project_supplemental_fields),
