@@ -70,7 +70,7 @@ project_mandatory_fields = {
 }
 
 project_supplemental_fields = {
-    "_GENI_PROJECT_OWNER" : {"TYPE" : "UUID", "CREATE" : "REQUIRED", "UPDATE" : True},
+    "_GENI_PROJECT_OWNER" : {"TYPE" : "UID", "CREATE" : "REQUIRED", "UPDATE" : True},
     "_GENI_PROJECT_EMAIL": {"TYPE": "EMAIL", "CREATE": "REQUIRED", "UPDATE": True, "OBJECT" : "PROJECT"}
 }
 
