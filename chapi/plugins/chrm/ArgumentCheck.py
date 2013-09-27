@@ -161,7 +161,7 @@ class FieldsArgumentCheck(ArgumentCheck):
                     try:
                         datetime.strptime(value, DATETIME_FORMAT_3)
                     except Exception as e:
-                        properly_formed = False
+                        if value: properly_formed = False
         elif field_type == "EMAIL":
             properly_formed = value.find('@')>= 0 and value.find('.') >= 0
         elif field_type == "KEY":
