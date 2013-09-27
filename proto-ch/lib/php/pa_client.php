@@ -62,7 +62,7 @@ function create_project($sa_url, $signer, $project_name, $lead_id, $project_purp
     $expiration = "";
   }
 
-  $project_email = "project-" + $project_name + "@example.com";
+  $project_email = "project-" . $project_name . "@example.com";
 
   $fields = array('PROJECT_NAME'          => $project_name,
 		  '_GENI_PROJECT_EMAIL' => $project_email,
