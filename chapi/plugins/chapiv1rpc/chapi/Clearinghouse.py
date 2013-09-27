@@ -40,7 +40,7 @@ class CHv1Handler(HandlerBase):
     # Override error return to log exception
     def _errorReturn(self, e):
         chapi_log_exception(SR_LOG_PREFIX, e)
-        return super(MAv1Handler, self)._errorReturn(e)
+        return super(CHv1Handler, self)._errorReturn(e)
     
     # This call is unprotected: no checking of credentials
     # Return version of CH API including object model
