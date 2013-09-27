@@ -147,8 +147,8 @@ function delete_ssh_key($ma_url, $signer, $member_id, $ssh_key_id)
 {
   $client = XMLRPCClient::get_client($ma_url, $signer);
   $member_urn = get_member_urn($ma_url, $signer, $member_id);
-  $client->delete_key($member_urn, $ssh_key_id, $client->get_credentials(), arr\
-ay('_dummy' => null));
+  $client->delete_key($member_urn, $ssh_key_id, $client->get_credentials(),
+                      array('_dummy' => null));
 }
 
 // Lookup inside keys/certs associated with a user UUID
