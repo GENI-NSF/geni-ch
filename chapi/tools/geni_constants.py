@@ -50,7 +50,6 @@ attribute_type_names = { LEAD_ATTRIBUTE : "LEAD", ADMIN_ATTRIBUTE : "ADMIN",
 # Request status codes from rq_constants.php
 PENDING_STATUS = 0
 
-# Datetime format for parsing/creating dates
-DATETIME_FORMAT_1 = "%Y-%m-%d %H:%M:%S"
-DATETIME_FORMAT_2 = "%m/%d/%Y %H:%M:%S"
-DATETIME_FORMAT_3 = "%m/%d/%Y"
+# Datetime formats for parsing/creating dates
+DATETIME_FORMATS = ["%Y-%m-%d %H:%M:%S", "%m/%d/%Y %H:%M:%S",
+                    "%Y-%m-%d", "%m/%d/%Y"]
