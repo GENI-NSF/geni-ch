@@ -151,7 +151,7 @@ class FieldsArgumentCheck(ArgumentCheck):
             except Exception as e:
                 properly_formed = False
         elif field_type == "DATETIME":
-            if not parse_datetime(value):
+            if value and not parse_datetime(value):
                 properly_formed = False
         elif field_type == "EMAIL":
             properly_formed = value.find('@')>= 0 and value.find('.') >= 0
