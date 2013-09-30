@@ -562,7 +562,7 @@ class MAv1Implementation(MAv1DelegateBase):
         session.close()
 
         # Log the creation of the SSH key
-        client_uuid = get_uuid_from_cert(ciient_cert)
+        client_uuid = get_uuid_from_cert(client_cert)
         attrs = {"MEMBER" : client_uuid}
         msg = "%s registering SSH key %s" % (member_urn, key_id)
         self.logging_service.log_event(msg, attrs, client_uuid)
@@ -589,7 +589,7 @@ class MAv1Implementation(MAv1DelegateBase):
         session.close()
 
         # Log the deletion of the SSH key
-        client_uuid = get_uuid_from_cert(ciient_cert)
+        client_uuid = get_uuid_from_cert(client_cert)
         attrs = {"MEMBER" : client_uuid}
         msg = "%s deleting SSH key %s" % (member_urn, key_id)
         self.logging_service.log_event(msg, attrs, client_uuid)
