@@ -576,7 +576,7 @@ class MAv1Implementation(MAv1DelegateBase):
                        credentials, options):
 
         method = 'delete_key'
-        args = {'member_id' : member_id, 'key_id' : key_id}
+        args = {'member_urn' : member_urn, 'key_id' : key_id}
         chapi_log_invocation(MA_LOG_PREFIX, method, credentials, options, args)
 
         session = self.db.getSession()

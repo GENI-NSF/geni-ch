@@ -386,7 +386,7 @@ function get_projects_for_member($sa_url, $signer, $member_id, $is_member, $role
   //print "<p> cert ".print_r($signer->certificate(), true)."<\p>\n";
   $options = array('filter' => array('PROJECT_UID'));
   $rows = $client->lookup_projects($client->creds(), $options);
-  print "<p>GPFM allrows=".print_r($rows, true)."</p>\n";
+  //print "<p>GPFM allrows=".print_r($rows, true)."</p>\n";
 
   $all_uuids = array_map(function ($row) { return $row['PROJECT_UID']; }, array_values($rows));
   return array_values(array_diff($all_uuids, $project_uuids));
