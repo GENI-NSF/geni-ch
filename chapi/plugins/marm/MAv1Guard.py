@@ -143,17 +143,17 @@ class MAv1Guard(ABACGuardBase):
             SubjectInvocationCheck([
                 "ME.MAY_CREATE_KEY<-ME.IS_OPERATOR",
                 "ME.MAY_CREATE_KEY_$SUBJECT<-ME.IS_$SUBJECT",
-                ], None, standard_subject_extractor), 
+                ], None, member_urn_extractor), 
         'delete_key' : \
             SubjectInvocationCheck([
                 "ME.MAY_CREATE_KEY<-ME.IS_OPERATOR",
                 "ME.MAY_DELETE_KEY_$SUBJECT<-ME.IS_$SUBJECT",
-                ], None, standard_subject_extractor), 
+                ], None, member_urn_extractor), 
         'update_key' : \
             SubjectInvocationCheck([
                 "ME.MAY_CREATE_KEY<-ME.IS_OPERATOR",
                 "ME.MAY_CREATE_KEY_$SUBJECT<-ME.IS_$SUBJECT",
-                ], None, standard_subject_extractor), 
+                ], None, member_urn_extractor), 
         'lookup_keys' : \
             LookupKeysInvocationCheck([
                 "ME.MAY_LOOKUP_KEYS<-ME.IS_OPERATOR",

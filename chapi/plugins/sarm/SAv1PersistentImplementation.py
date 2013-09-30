@@ -328,7 +328,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                                        cert_files_by_name = {"ME" :self.cert},
                                        key_files_by_name = {"ME" :self.key})
             assertion = abac_manager.register_assertion(slice_role_assertion)
-            abac_raw_creds.append(assertion.cert_chunk())
+#            abac_raw_creds.append(assertion.cert_chunk())
 
         sfa_creds = \
             [{'geni_type' : 'SFA', 'geni_version' : 1, 'geni_value' : cred} 

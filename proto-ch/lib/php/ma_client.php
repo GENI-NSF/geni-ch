@@ -70,8 +70,7 @@ function register_ssh_key($ma_url, $signer, $member_id, $filename,
     $pairs['KEY_PRIVATE'] = $ssh_private_key;
   }
 
-  $client->create_key($member_urn, $client->get_credentials(),
-                      array('fields' => $pairs));
+  $client->create_key($member_urn, $client->creds(), array('fields' => $pairs));
 }
 
 // Lookup public SSH keys associated with user
@@ -135,7 +134,7 @@ function update_ssh_key($ma_url, $signer, $member_id, $ssh_key_id,
     $pairs['KEY_DESCRIPTION'] = $description;
   }
   if (sizeof($pairs) > 0) {
-    $client->update_key($member_urn, $ssh_key_id, $client->get_credentials(),
+    $client->update_key($member_urn, $ssh_key_id, $client->creds(),
                       array('fields' => $pairs));
   }
 
@@ -147,7 +146,7 @@ function delete_ssh_key($ma_url, $signer, $member_id, $ssh_key_id)
 {
   $client = XMLRPCClient::get_client($ma_url, $signer);
   $member_urn = get_member_urn($ma_url, $signer, $member_id);
-  $client->delete_key($member_urn, $ssh_key_id, $client->get_credentials(),
+  $client->delete_key($member_urn, $ssh_key_id, $client->creds(),
                       array('_dummy' => null));
 }
 
