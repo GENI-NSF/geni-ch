@@ -69,11 +69,11 @@ class MAv1Handler(HandlerBase):
         client_cert = self.requestCertificate()
         method = 'lookup_private_member_info'
         try:
-            self._guard.validate_call(client_cert, method, \
-                                          credentials, options)
             client_cert, options = \
                 self._guard.adjust_client_identity(client_cert, \
                                                        credentials, options)
+            self._guard.validate_call(client_cert, method, \
+                                          credentials, options)
             results = self._delegate.lookup_private_member_info(client_cert, \
                                                                     credentials, \
                                                                     options)
@@ -96,11 +96,11 @@ class MAv1Handler(HandlerBase):
         client_cert = self.requestCertificate()
         method = 'lookup_identifying_member_info'
         try:
-            self._guard.validate_call(client_cert, method, \
-                                          credentials, options)
             client_cert, options = \
                 self._guard.adjust_client_identity(client_cert, \
                                                        credentials, options)
+            self._guard.validate_call(client_cert, method, \
+                                          credentials, options)
             results = self._delegate.lookup_identifying_member_info(client_cert, \
                                                                         credentials, \
                                                                         options)
@@ -121,12 +121,12 @@ class MAv1Handler(HandlerBase):
         client_cert = self.requestCertificate()
         method = 'update_member_info'
         try:
-            self._guard.validate_call(client_cert, method,
-                                          credentials, options, \
-                                          {'member_urn' : member_urn})
             client_cert, options = \
                 self._guard.adjust_client_identity(client_cert, \
                                                        credentials, options)
+            self._guard.validate_call(client_cert, method,
+                                          credentials, options, \
+                                          {'member_urn' : member_urn})
             results = self._delegate.update_member_info(client_cert, member_urn, \
                                                             credentials, options)
             if results['code'] == NO_ERROR:
@@ -147,12 +147,12 @@ class MAv1Handler(HandlerBase):
         client_cert = self.requestCertificate()
         method = 'create_member'
         try:
-            self._guard.validate_call(client_cert, method, \
-                                          credentials, options, \
-                                          {'attributes' : attributes})
             client_cert, options = \
                 self._guard.adjust_client_identity(client_cert, \
                                                        credentials, options)
+            self._guard.validate_call(client_cert, method, \
+                                          credentials, options, \
+                                          {'attributes' : attributes})
             results =  self._delegate.create_member(client_cert, \
                                                     attributes, \
                                                     credentials, options)
@@ -181,12 +181,12 @@ class MAv1Handler(HandlerBase):
         client_cert = self.requestCertificate()
         method = 'create_key'
         try:
-            self._guard.validate_call(client_cert, method,
-                                      credentials, options, \
-                                          {'member_urn' : member_urn})
             client_cert, options = \
                 self._guard.adjust_client_identity(client_cert, \
                                                        credentials, options)
+            self._guard.validate_call(client_cert, method,
+                                      credentials, options, \
+                                          {'member_urn' : member_urn})
             results = self._delegate.create_key(client_cert, member_urn, \
                                                     credentials, options)
             if results['code'] == NO_ERROR:
@@ -210,13 +210,13 @@ class MAv1Handler(HandlerBase):
         client_cert = self.requestCertificate()
         method = 'delete_key'
         try:
+            client_cert, options = \
+                self._guard.adjust_client_identity(client_cert, \
+                                                       credentials, options)
             self._guard.validate_call(client_cert, method,
                                       credentials, options, \
                                           {'member_urn' : member_urn, 
                                            'key_id' : key_id})
-            client_cert, options = \
-                self._guard.adjust_client_identity(client_cert, \
-                                                       credentials, options)
             results = self._delegate.delete_key(client_cert, member_urn, \
                                                     key_id, \
                                                     credentials, options)
@@ -243,13 +243,13 @@ class MAv1Handler(HandlerBase):
         client_cert = self.requestCertificate()
         method = 'update_key'
         try:
+            client_cert, options = \
+                self._guard.adjust_client_identity(client_cert, \
+                                                       credentials, options)
             self._guard.validate_call(client_cert, method,
                                       credentials, options, \
                                           {'member_urn' : member_urn,
                                            'key_id' : key_id})
-            client_cert, options = \
-                self._guard.adjust_client_identity(client_cert, \
-                                                       credentials, options)
             results = self._delegate.update_key(client_cert, member_urn, \
                                                     key_id, \
                                                     credentials, options)
@@ -275,11 +275,11 @@ class MAv1Handler(HandlerBase):
         client_cert = self.requestCertificate()
         method = 'lookup_keys'
         try:
-            self._guard.validate_call(client_cert, method,
-                                      credentials, options)
             client_cert, options = \
                 self._guard.adjust_client_identity(client_cert, \
                                                        credentials, options)
+            self._guard.validate_call(client_cert, method,
+                                      credentials, options)
             results = self._delegate.lookup_keys(client_cert, \
                                                     credentials, options)
             if results['code'] == NO_ERROR:
@@ -298,12 +298,12 @@ class MAv1Handler(HandlerBase):
         client_cert = self.requestCertificate()
         method = 'create_certificate'
         try:
-            self._guard.validate_call(client_cert, method, \
-                                          credentials, options, \
-                                          {'member_urn': member_urn})
             client_cert, options = \
                 self._guard.adjust_client_identity(client_cert, \
                                                        credentials, options)
+            self._guard.validate_call(client_cert, method, \
+                                          credentials, options, \
+                                          {'member_urn': member_urn})
             results = self._delegate.create_certificate(client_cert, \
                                                             member_urn, 
                                                             credentials, \

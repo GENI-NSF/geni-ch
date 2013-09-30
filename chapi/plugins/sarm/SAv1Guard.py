@@ -74,8 +74,9 @@ class SAv1Guard(ABACGuardBase):
             CreateArgumentCheck(SA.project_mandatory_fields,\
                                    SA.project_supplemental_fields),
         'update_project' : \
-            UpdateArgumentCheck(SA.project_mandatory_fields,\
-                                    SA.project_supplemental_fields),
+            UpdateArgumentCheck(SA.project_mandatory_fields,
+                                SA.project_supplemental_fields,
+                                {'project_urn' : "URN"}),
         'lookup_projects' : \
             LookupArgumentCheckMatchOptional(SA.project_mandatory_fields,\
                                     SA.project_supplemental_fields),
@@ -184,7 +185,7 @@ class SAv1Guard(ABACGuardBase):
                 "ME.MAY_UPDATE_PROJECT<-ME.IS_OPERATOR",
                 "ME.MAY_UPDATE_PROJECT_$SUBJECT<-ME.IS_LEAD_$SUBJECT", 
                 "ME.MAY_UPDATE_PROJECT_$SUBJECT<-ME.IS_ADMIN_$SUBJECT"
-                ], assert_slice_role, project_urn_extractor),
+                ], assert_project_role, project_urn_extractor),
 
         'modify_project_membership' : \
             SubjectInvocationCheck([
@@ -209,6 +210,7 @@ class SAv1Guard(ABACGuardBase):
         'create_sliver_info' : \
             SubjectInvocationCheck([
                     "ME.MAY_CREATE_SLIVER_INFO<-ME.IS_OPERATOR",
+                    "ME.MAY_CREATE_SLIVER_INFO<-ME.IS_AUTHORITY",
                     "ME.MAY_CREATE_SLIVER_INFO_$SUBJECT<-ME.IS_LEAD_$SUBJECT", 
                     "ME.MAY_CREATE_SLIVER_INFO_$SUBJECT<-ME.IS_ADMIN_$SUBJECT"
                     "ME.MAY_CREATE_SLIVER_INFO_$SUBJECT<-ME.IS_MEMBER_$SUBJECT"
@@ -217,6 +219,7 @@ class SAv1Guard(ABACGuardBase):
         'delete_sliver_info' : \
             SubjectInvocationCheck([
                     "ME.MAY_DELETE_SLIVER_INFO<-ME.IS_OPERATOR",
+                    "ME.MAY_DELETE_SLIVER_INFO<-ME.IS_AUTHORITY",
                     "ME.MAY_DELETE_SLIVER_INFO_$SUBJECT<-ME.IS_LEAD_$SUBJECT", 
                     "ME.MAY_DELETE_SLIVER_INFO_$SUBJECT<-ME.IS_ADMIN_$SUBJECT"
                     "ME.MAY_DELETE_SLIVER_INFO_$SUBJECT<-ME.IS_MEMBER_$SUBJECT"
@@ -224,6 +227,7 @@ class SAv1Guard(ABACGuardBase):
         'update_sliver_info' : \
             SubjectInvocationCheck([
                     "ME.MAY_UPDATE_SLIVER_INFO<-ME.IS_OPERATOR",
+                    "ME.MAY_UPDATE_SLIVER_INFO<-ME.IS_AUTHORITY",
                     "ME.MAY_UPDATE_SLIVER_INFO_$SUBJECT<-ME.IS_LEAD_$SUBJECT", 
                     "ME.MAY_UPDATE_SLIVER_INFO_$SUBJECT<-ME.IS_ADMIN_$SUBJECT"
                     "ME.MAY_UPDATE_SLIVER_INFO_$SUBJECT<-ME.IS_MEMBER_$SUBJECT"

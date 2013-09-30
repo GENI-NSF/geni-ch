@@ -15,6 +15,7 @@ wget http://www.gpolab.bbn.com/~tmitchel/ch-db-export.sql
 import_database.py --dump_file ch-db-export.sql --old_hostname ch.geni.net --new_hostname $1 --old_authority ch.geni.net --new_authority $1
 
 psql -U portal -h localhost portal < update-1.sql
+./migrate_assertions.sh
 
 psql -U portal -h localhost portal << EOF
 update service_registry set service_url = 'https://{$1}/secure/kmhome.php' where service_url = 'https://portal.geni.net/secure/kmhome.php';

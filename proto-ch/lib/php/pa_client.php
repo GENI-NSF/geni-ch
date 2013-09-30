@@ -62,7 +62,7 @@ function create_project($sa_url, $signer, $project_name, $lead_id, $project_purp
     $expiration = "";
   }
 
-  $project_email = "project-" + $project_name + "@example.com";
+  $project_email = "project-" . $project_name . "@example.com";
 
   $fields = array('PROJECT_NAME'          => $project_name,
 		  '_GENI_PROJECT_EMAIL' => $project_email,
@@ -386,7 +386,7 @@ function get_projects_for_member($sa_url, $signer, $member_id, $is_member, $role
   //print "<p> cert ".print_r($signer->certificate(), true)."<\p>\n";
   $options = array('filter' => array('PROJECT_UID'));
   $rows = $client->lookup_projects($client->creds(), $options);
-  print "<p>GPFM allrows=".print_r($rows, true)."</p>\n";
+  //print "<p>GPFM allrows=".print_r($rows, true)."</p>\n";
 
   $all_uuids = array_map(function ($row) { return $row['PROJECT_UID']; }, array_values($rows));
   return array_values(array_diff($all_uuids, $project_uuids));

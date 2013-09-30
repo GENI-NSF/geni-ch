@@ -23,12 +23,11 @@
 
 from chapi.Exceptions import *
 from geni.util.urn_util import is_valid_urn
-from tools.geni_constants import STANDARD_DATETIME_FORMAT
+from tools.geni_constants import *
 from sfa.trust.certificate import Certificate
 import types
 import uuid
-from datetime import datetime
-
+from tools.geni_utils import parse_datetime
 
 # Create a subset 'fields' dictionary with only fields in given list
 def select_fields(field_definitions, field_list):
@@ -152,9 +151,7 @@ class FieldsArgumentCheck(ArgumentCheck):
             except Exception as e:
                 properly_formed = False
         elif field_type == "DATETIME":
-            try:
-                datetime.strptime(value, STANDARD_DATETIME_FORMAT)
-            except Exception as e:
+            if value and not parse_datetime(value):
                 properly_formed = False
         elif field_type == "EMAIL":
             properly_formed = value.find('@')>= 0 and value.find('.') >= 0
