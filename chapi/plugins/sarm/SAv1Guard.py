@@ -166,6 +166,7 @@ class SAv1Guard(ABACGuardBase):
         'lookup_slices_for_member' :
             SubjectInvocationCheck([
                 "ME.MAY_LOOKUP_SLICES_FOR_MEMBER<-ME.IS_OPERATOR",
+                "ME.MAY_LOOKUP_SLICES_FOR_MEMBER_$SUBJECT<-ME.IS_$SUBJECT",
                 "ME.MAY_LOOKUP_SLICES_FOR_MEMBER_$SUBJECT<-ME.SHARES_SLICE_$SUBJECT"
                 ], assert_shares_slice, member_urn_extractor),
 
@@ -203,6 +204,7 @@ class SAv1Guard(ABACGuardBase):
         'lookup_projects_for_member' : \
             SubjectInvocationCheck([
                 "ME.MAY_LOOKUP_PROJECTS_FOR_MEMBER<-ME.IS_OPERATOR",
+                "ME.MAY_LOOKUP_PROJECTS_FOR_MEMBER_$SUBJECT<-ME.IS_$SUBJECT",
                 "ME.MAY_LOOKUP_PROJECTS_FOR_MEMBER_$SUBJECT<-ME.SHARES_PROJECT_$SUBJECT"
                 ], assert_shares_project, member_urn_extractor),
 
