@@ -24,8 +24,9 @@
 from CHDatabaseEngine import CHDatabaseEngine
 import amsoil.core.log
 import amsoil.core.pluginmanager as pm
-from  sqlalchemy import *
-from  sqlalchemy.orm import aliased
+from sqlalchemy import *
+from sqlalchemy.orm import aliased
+from sqlalchemy.orm import mapper
 from tools.cert_utils import *
 from chapi.GuardBase import GuardBase
 from chapi.Exceptions import *
@@ -39,6 +40,8 @@ from tools.geni_constants import *
 from tools.geni_utils import *
 from tools.guard_utils import *
 from syslog import syslog
+import amsoil.core.pluginmanager as pm
+from tools.mapped_tables import MemberAttribute
 
 logger = amsoil.core.log.getLogger('ABAC')
 
@@ -177,7 +180,6 @@ class SubjectInvocationCheck(InvocationCheck):
 class RowCheck(object):
     def permit(self, client_cert, credentials, urn):
         raise CHAPIv1NotImplementedError("Abstract Base class: RowCheck")
-        
 
 # # An ABAC check gathers a set of assertions and then validates a set of queries
 # # If all queries pass, then the overall Check passes
@@ -187,6 +189,8 @@ class RowCheck(object):
 class ABACGuardBase(GuardBase):
     def __init__(self):
         GuardBase.__init__(self)
+        self.db = pm.getService('chdbengine')
+        #mapper(MemberAttribute, self.db.MEMBER_ATTRIBUTE_TABLE)
 
     # Base class: Provide a list of argument checks, 
     # invocation_checks and row_checks
@@ -201,6 +205,7 @@ class ABACGuardBase(GuardBase):
     def validate_call(self, client_cert, method, credentials, options, arguments = {}):
 #        print "ABACGuardBase.validate_call : " + method + " " + str(arguments) + " " + str(options)
 
+        self.user_check(client_cert)
 
         argument_check = self.get_argument_check(method)
         if argument_check:
@@ -210,6 +215,26 @@ class ABACGuardBase(GuardBase):
         if invocation_check:
             invocation_check.validate(client_cert, method, \
                                           credentials, options, arguments)
+
+    def user_check(self, client_cert):
+        client_urn = get_urn_from_cert(client_cert)
+        client_uuid = get_uuid_from_cert(client_cert)
+        client_name = get_name_from_urn(client_urn)
+
+        session = self.db.getSession()
+        q = session.query(MemberAttribute.value).\
+            filter(MemberAttribute.member_id == client_uuid).\
+            filter(MemberAttribute.name == '_GENI_MEMBER_ENABLED')
+        rows = q.all()
+        is_enabled = (len(rows)==0 or rows[0][0] == 'y')
+        session.close()
+
+        if is_enabled:
+            #syslog("UC: user '%s' (%s) enabled" % (client_name, client_urn))
+            pass
+        else:
+            syslog("UC: user '%s' (%s) disabled" % (client_name, client_urn))
+            raise CHAPIv1AuthorizationError("User %s (%s) disabled" % (client_name, client_urn));
 
     # Support speaks-for invocation:
     # If a speaks-for credential is provided and 
@@ -222,4 +247,3 @@ class ABACGuardBase(GuardBase):
 
     def protect_results(self, client_cert, method, credentials, results):
         return results
-

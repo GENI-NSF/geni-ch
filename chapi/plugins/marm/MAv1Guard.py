@@ -113,6 +113,7 @@ class MAv1Guard(ABACGuardBase):
         'list_clients' : None,
         'list_authorized_clients' : None,
         'authorize_client' : None,
+        'enable_user': None,
         }
 
     # Set of invocation checks indexed by method name
@@ -172,6 +173,7 @@ class MAv1Guard(ABACGuardBase):
                 ], None, None),
 
         'list_clients' : None,
+
         'list_authorized_clients' : \
             SubjectInvocationCheck([
                 "ME.MAY_LIST_AUTHORIZED_CLIENTS<-ME.IS_AUTHORITY",
@@ -182,6 +184,12 @@ class MAv1Guard(ABACGuardBase):
                 "ME.MAY_AUTHORIZE_CLIENT<-ME.IS_AUTHORITY",
                 "ME.MAY_AUTHORIZE_CLIENT_$SUBJECT<-ME.IS_$SUBJECT"
                 ], None, member_id_extractor),
+
+        # only operator may enable/disable users
+        'enable_user' :
+            SubjectInvocationCheck([
+                    "ME.MAY_ENABLE_USER<-ME.IS_OPERATOR", 
+                    ], None, standard_subject_extractor), 
         }
 
 

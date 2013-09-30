@@ -45,17 +45,10 @@ import uuid
 import re
 from tools.guard_utils import *
 from tools.ABACManager import *
+from tools.mapped_tables import *
 from syslog import syslog
 
 # classes for mapping to sql tables
-
-class MemberAttribute(object):
-    def __init__(self, name, value, member_id, self_asserted):
-        self.name = name
-        self.value = value
-        self.member_id = member_id
-        self.self_asserted = self_asserted
-        self.logging_service = pm.getService('loggingv1handler')
 
 class OutsideCert(object):
     pass
@@ -820,3 +813,74 @@ class MAv1Implementation(MAv1DelegateBase):
         chapi_log_result(MA_LOG_PREFIX, method, result)
         return result
 
+    # enable/disable a user/member
+    def enable_user(self, member_urn, enable_sense, credentials, options):
+        '''Mark a member/user as enabled or disabled.
+        IFF enabled_sense is True, then user is unconditionally enabled, otherwise disabled.
+        returns the previous sense.'''
+        method = 'enable_user'
+        args = {'member_urn' : member_urn,
+                'enable_sense' : enable_sense}
+        chapi_log_invocation(MA_LOG_PREFIX, method, [], {}, args)
+
+        syslog(method+' '+member_urn+' '+str(enable_sense))
+
+        session = self.db.getSession()
+        # find the uid
+        uids = self.get_uids_for_attribute(session, "MEMBER_URN", member_urn)
+        if len(uids) == 0:
+            session.close()
+            raise CHAPIv1ArgumentError('No member with URN ' + member_urn)
+        member_id = uids[0]
+
+        # find the old value
+        q = session.query(MemberAttribute.value).\
+            filter(MemberAttribute.member_id == member_id).\
+            filter(MemberAttribute.name == '_GENI_MEMBER_ENABLED')
+        rows = q.all()
+
+        if len(rows)==0:
+            was_enabled = True
+        else:
+            was_enabled = (rows[0][0] == 'y')
+
+        # set the new value
+        enabled_str = 'y' if enable_sense else 'n'
+        self.update_attr(session, '_GENI_MEMBER_ENABLED', enabled_str, member_id, 'f')
+        #ins = self.db.MEMBER_ATTRIBUTE_TABLE.insert().values({'member_id': str(member_id),
+        #'name': '_GENI_MEMBER_ENABLED',
+        #'value': enabled_str})
+        #session.execute(ins)
+
+        session.commit()
+        session.close()
+
+        # log_event
+        msg = "Setting member %s status to %s" % \
+            (member_urn, 'enabled' if enable_sense else 'disabled')
+        attribs = {"MEMBER" : member_urn}
+        self.logging_service.log_event(msg, attribs, member_urn)
+
+        result = self._successReturn(was_enabled)
+        chapi_log_result(MA_LOG_PREFIX, method, result)
+        return result
+
+    def check_user_enabled(self, client_cert):
+        client_urn = get_urn_from_cert(client_cert)
+        client_uuid = get_uuid_from_cert(client_cert)
+        client_name = get_name_from_urn(client_urn)
+
+        session = self.db.getSession()
+        q = session.query(MemberAttribute.value).\
+            filter(MemberAttribute.member_id == client_uuid).\
+            filter(MemberAttribute.name == '_GENI_MEMBER_ENABLED')
+        rows = q.all()
+        is_enabled = (count(rows)==0 or rows[0][0] == 'y')
+        session.close()
+
+        if is_enabled:
+            syslog("CUE: user '%s' (%s) enabled" % (client_name, client_urn))
+            pass
+        else:
+            syslog("CUE: user '%s' (%s) disabled" % (client_name, client_urn))
+            raise CHAPIv1AuthorizationError("User %s (%s) disabled" % (client_name, client_urn));
