@@ -280,7 +280,7 @@ class SAv1Guard(ABACGuardBase):
                 "ME.MAY_GET_REQUEST_BY_ID_$SUBJECT<-ME.IS_LEAD_$SUBJECT",
                 "ME.MAY_GET_REQUEST_BY_ID_$SUBJECT<-ME.IS_ADMIN_$SUBJECT",
                 "ME.MAY_GET_REQUEST_BY_ID<-ME.IS_REQUESTOR"
-                ], assert_request_id_requestor_and_project_role, request_id_context_extractor),
+                ], assert_request_id_requestor_and_project_role, request_id_extractor),
 
         }
 
