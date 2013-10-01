@@ -127,7 +127,8 @@ class MAv1Guard(ABACGuardBase):
             SubjectInvocationCheck([
                 "ME.MAY_LOOKUP_IDENTIFYING_MEMBER_INFO<-ME.IS_AUTHORITY",
                 "ME.MAY_LOOKUP_IDENTIFYING_MEMBER_INFO<-ME.IS_OPERATOR", 
-                "ME.MAY_LOOKUP_IDENTIFYING_MEMBER_INFO_$SUBJECT<-ME.SHARES_PROJECT_$SUBJECT"
+                "ME.MAY_LOOKUP_IDENTIFYING_MEMBER_INFO_$SUBJECT<-ME.SHARES_PROJECT_$SUBJECT",
+                "ME.MAY_LOOKUP_IDENTIFYING_MEMBER_INFO_$SUBJECT<-ME.HAS_PENDING_REQUEST_ON_SHARED_PROJECT_$SUBJECT"
                 ], assert_shares_project, standard_subject_extractor),
         'lookup_private_member_info' : \
             SubjectInvocationCheck([
