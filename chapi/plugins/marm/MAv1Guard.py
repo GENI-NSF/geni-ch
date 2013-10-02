@@ -85,6 +85,7 @@ class MAv1Guard(ABACGuardBase):
                                                   MA.identifying_fields), \
                                     select_fields(MA.optional_fields, \
                                                       MA.identifying_fields)), 
+        'get_credentials' : SimpleArgumentCheck({'member_urn' : 'URN'}),
         'update_member_info' :  \
             UpdateArgumentCheck({}, {}, {'member_urn' : "URN"}),
         
@@ -136,6 +137,12 @@ class MAv1Guard(ABACGuardBase):
                 "ME.MAY_LOOKUP_PRIVATE_MEMBER_INFO<-ME.IS_OPERATOR", 
                 "ME.MAY_LOOKUP_PRIVATE_MEMBER_INFO_$SUBJECT<-ME.IS_$SUBJECT"
                 ], None, standard_subject_extractor), 
+        'get_credentials' : \
+            SubjectInvocationCheck([
+                "ME.MAY_GET_CREDENTIALS<-ME.IS_AUTHORITY", 
+                "ME.MAY_GET_CREDENTIALS<-ME.IS_OPERATOR",
+                "ME.MAY_GET_CREDENTIALS_$SUBJECT<-ME.IS_$SUBJECT" 
+                ], None, standard_subject_extractor),
         'update_member_info' : \
             SubjectInvocationCheck([
             "ME.MAY_UPDATE_MEMBER_INFO<-ME.IS_OPERATOR", 

@@ -115,6 +115,30 @@ class MAv1Handler(HandlerBase):
             return self._errorReturn(e)
 
     # This call is protected
+    # Get credentials for given user
+    # Authorization based on client cert and given credentials
+    def get_credentials(self, member_urn, credentials, options):
+        client_cert = self.requestCertificate()
+        method = 'get_credentials'
+        try:
+            client_cert, options = \
+                self._guard.adjust_client_identity(client_cert, \
+                                                       credentials, options)
+            self._guard.validate_call(client_cert, method, \
+                                          credentials, options, \
+                                          {'member_urn' : member_urn})
+            results = self._delegate.get_credentials(client_cert, member_urn, \
+                                                         credentials, options)
+            if results['code'] == NO_ERROR:
+                results_value = results['value']
+                new_results_value = self._guard.protect_results(client_cert, method, credentials, results_value)
+                results = self._successReturn(new_results_value)
+
+            return results
+        except Exception as e:
+            return self._errorReturn(e)
+
+    # This call is protected
     # Update given member with new data provided in options
     # Authorized by client cert and credentials
     def update_member_info(self, member_urn, credentials, options):
@@ -391,6 +415,10 @@ class MAv1DelegateBase(DelegateBase):
 
     # This call is protected
     def lookup_identifying_member_info(self, client_cert, credentials, options):
+        raise CHAPIv1NotImplementedError('')
+
+    # This call is protected
+    def get_credentials(self, client_cert, member_urn, credentials, options):
         raise CHAPIv1NotImplementedError('')
 
     # This call is protected

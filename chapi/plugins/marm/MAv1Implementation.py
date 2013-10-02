@@ -278,7 +278,7 @@ class MAv1Implementation(MAv1DelegateBase):
                 if col == "_GENI_USER_CREDENTIAL":
                     values[col] = self.get_user_credential(session, uid)
                 elif col == "_GENI_CREDENTIALS":
-                    values[col] = self.get_credentials(session, uid)
+                    values[col] = self.get_all_credentials(session, uid)
                 elif col == "MEMBER_UID":
                     values[col] = uid
                 else:
@@ -410,10 +410,27 @@ class MAv1Implementation(MAv1DelegateBase):
             session.add(obj)
         session.commit()
 
+    # part of the API, mainly call get_all_credentials()
+    def get_credentials(self, client_cert, member_urn, credentials, options):
+        chapi_log_invocation(MA_LOG_PREFIX, 'get_credentials', credentials,
+                             options, {'member_urn' : member_urn})
+        session = self.db.getSession()
+
+        uids = self.get_uids_for_attribute(session, "MEMBER_URN", member_urn)
+        if len(uids) == 0:
+            session.close()
+            raise CHAPIv1ArgumentError('No member with URN ' + member_urn)
+        uid = uids[0]
+        creds = self.get_all_credentials(session, uid)
+
+        session.close()
+        chapi_log_result(MA_LOG_PREFIX, 'get_credentials', creds)
+        return self._successReturn(creds)
+
     # Construct a list of credentials in AM format
     # [{'geni_type' : type, 'geni_version' : version, 'geni_value' : value}]
     # where type is SFA for a UserCredential or ABAC for ABAC credentials
-    def get_credentials(self, session, uid):
+    def get_all_credentials(self, session, uid):
         creds = []
         sfa_raw_creds = [self.get_user_credential(session, uid)]
         abac_assertions = []
