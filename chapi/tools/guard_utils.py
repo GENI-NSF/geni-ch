@@ -340,10 +340,30 @@ def assert_shares_project(caller_urn, member_urns, label, abac_manager):
 
     rows = q.all()
 #    print "ROWS = " + str(len(rows)) + " " + str(rows)
-    session.close()
     if len(rows) > 0:
         assertion = "ME.SHARES_PROJECT_%s<-CALLER" % flatten_urn(member_urn)
         abac_manager.register_assertion(assertion)
+
+    q = session.query(db.PROJECT_REQUEST_TABLE.c.status)
+    q = q.filter(db.PROJECT_MEMBER_TABLE.c.member_id == ma1.c.member_id)
+    q = q.filter(db.PROJECT_REQUEST_TABLE.c.requestor == ma2.c.member_id)
+    q = q.filter(ma1.c.name == 'urn')
+    q = q.filter(ma2.c.name == 'urn')
+    q = q.filter(ma1.c.value == caller_urn)
+    q = q.filter(ma2.c.value == member_urn)
+    q = q.filter(db.PROJECT_REQUEST_TABLE.c.context_id ==
+                 db.PROJECT_MEMBER_TABLE.c.project_id)
+    q = q.filter(db.PROJECT_MEMBER_TABLE.c.role.in_
+                 ([LEAD_ATTRIBUTE, ADMIN_ATTRIBUTE]))
+    q = q.filter(db.PROJECT_REQUEST_TABLE.c.status == PENDING_STATUS)
+    rows = q.all()
+
+    if len(rows) > 0:
+        assertion = "ME.HAS_PENDING_REQUEST_ON_SHARED_PROJECT_%s<-CALLER" % \
+                    flatten_urn(member_urn)
+        abac_manager.register_assertion(assertion)
+    session.close()
+
 
 # If given caller and given subject share a common slice
 # Generate an ME.SHARES_SLICE(subject)<-caller assertion
@@ -633,6 +653,26 @@ def request_context_extractor(options, arguments):
 
 # Pull project_id out as the subject
 def request_id_context_extractor(options, arguments):
+    request_id = arguments['request_id']
+    db = pm.getService('chdbengine')
+    session = db.getSession()
+    q = session.query(db.PROJECT_TABLE.c.project_name)
+    q = q.filter(db.PROJECT_TABLE.c.project_id ==
+                 db.PROJECT_REQUEST_TABLE.c.context_id)
+    q = q.filter(request_id == db.PROJECT_REQUEST_TABLE.c.id)
+    rows = q.all()
+    session.close()
+    extracted = {}
+    if len(rows) > 0:
+        project_name = rows[0].project_name
+        config = pm.getService('config')
+        authority = config.get("chrm.authority")
+        project_urn = to_project_urn(authority, project_name)
+        extracted = {"PROJECT_URN" : project_urn}
+    return extracted
+
+# Pull project_id out as the subject
+def request_id_extractor(options, arguments):
     request_id = arguments['request_id']
     extracted = {"REQUEST_ID" : request_id}
     return extracted
