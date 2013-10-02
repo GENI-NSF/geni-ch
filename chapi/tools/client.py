@@ -119,8 +119,8 @@ def main():
     if opts.method in ['get_version', 'get_trust_roots']:
         (result, msg) = _do_ssl(framework, suppress_errors, reason, fcn)
     # Methods that take options argument
-    elif opts.method in ['get_member_authorities', 'get_slice_authorities', \
-                             'get_aggregates', \
+    elif opts.method in ['lookup_member_authorities', 'lookup_slice_authorities', \
+                             'lookup_aggregates', \
                              'lookup_authorities_for_urns' ]:
         (result, msg) = _do_ssl(framework, suppress_errors, reason, fcn, \
                                     client_options)

@@ -36,24 +36,24 @@ class CHv1PersistentImplementation(CHv1Implementation):
         self.db = pm.getService('chdbengine')
 
     # Get all MAs (authorities of type MA)
-    def get_member_authorities(self, options):
-        method = 'get_member_authorities'
+    def lookup_member_authorities(self, options):
+        method = 'lookup_member_authorities'
         chapi_log_invocation(SR_LOG_PREFIX, method, [], options, {})
         result = self.lookup_authorities(self.MA_SERVICE_TYPE, options)
         chapi_log_result(SR_LOG_PREFIX, method, result)
         return result
 
     # Get all SA's (authorities of type SA)
-    def get_slice_authorities(self, options):
-        method = 'get_slice_authorities'
+    def lookup_slice_authorities(self, options):
+        method = 'lookup_slice_authorities'
         chapi_log_invocation(SR_LOG_PREFIX, method, [], options, {})
         result = self.lookup_authorities(self.SA_SERVICE_TYPE, options)
         chapi_log_result(SR_LOG_PREFIX, method, result)
         return result
 
     # Get all aggregates (authorities of type aggregate)
-    def get_aggregates(self, options):
-        method = 'get_aggregates'
+    def lookup_aggregates(self, options):
+        method = 'lookup_aggregates'
         chapi_log_invocation(SR_LOG_PREFIX, method, [], options, {})
         result = self.lookup_authorities(self.AGGREGATE_SERVICE_TYPE, options)
         chapi_log_result(SR_LOG_PREFIX, method, result)
@@ -81,6 +81,7 @@ class CHv1PersistentImplementation(CHv1Implementation):
         result = self._successReturn(authorities)
         chapi_log_result(SR_LOG_PREFIX, method, result)
         return result
+
 
 
 

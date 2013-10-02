@@ -55,27 +55,27 @@ class CHv1Handler(HandlerBase):
     # This call is unprotected: no checking of credentials
     # Return list of member authorities with matching and filter criteria
     # specified in options
-    def get_member_authorities(self, options):
+    def lookup_member_authorities(self, options):
         try:
-            return self._delegate.get_member_authorities(options)
+            return self._delegate.lookup_member_authorities(options)
         except Exception as e:
             return self._errorReturn(e)
 
     # This call is unprotected: no checking of credentials
     # Return list of slice authorities with matching and filter criteria
     # specified in options
-    def get_slice_authorities(self, options):
+    def lookup_slice_authorities(self, options):
         try:
-            return self._delegate.get_slice_authorities(options)
+            return self._delegate.lookup_slice_authorities(options)
         except Exception as e:
             return self._errorReturn(e)
 
     # This call is unprotected: no checking of credentials
     # Return list of aggregates with matching and filter criteria`
     # specified in options
-    def get_aggregates(self, options):
+    def lookup_aggregates(self, options):
         try:
-            return self._delegate.get_aggregates(options)
+            return self._delegate.lookup_aggregates(options)
         except Exception as e:
             return self._errorReturn(e)
 
@@ -107,14 +107,14 @@ class CHv1DelegateBase(DelegateBase):
     def get_version(self):
         raise CHAPIv1NotImplementedError('')
 
-    def get_member_authorities(self, options):
+    def lookup_member_authorities(self, options):
         raise CHAPIv1NotImplementedError('')
 
 
-    def get_slice_authorities(self, options):
+    def lookup_slice_authorities(self, options):
         raise CHAPIv1NotImplementedError('')
 
-    def get_aggregates(self, options):
+    def lookup_aggregates(self, options):
         raise CHAPIv1NotImplementedError('')
 
     def lookup_authorities_for_urns(self, options):

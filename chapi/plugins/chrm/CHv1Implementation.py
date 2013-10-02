@@ -24,7 +24,7 @@
 # Simple persistence-free version of CH for testing/development
 from chapi.Clearinghouse import CHv1DelegateBase
 from chapi.Exceptions import *
-from ext.geni.util.urn_util import URN
+from geni.util.urn_util import URN
 from tools.dbutils import *
 
 # A simple fixed implemntation of the CH API. 
@@ -114,15 +114,15 @@ class CHv1Implementation(CHv1DelegateBase):
         version_info = {"VERSION": self.version_number, "FIELDS": self.supplemental_fields}
         return self._successReturn(version_info)
 
-    def get_member_authorities(self, options):
+    def lookup_member_authorities(self, options):
         member_authorities = self.select_services_of_type(self.MA_SERVICE_TYPE)
         return self.select_entries_and_fields(member_authorities, options)
 
-    def get_slice_authorities(self, options):
+    def lookup_slice_authorities(self, options):
         member_authorities = self.select_services_of_type(self.SA_SERVICE_TYPE)
         return self.select_entries_and_fields(member_authorities, options)
 
-    def get_aggregates(self, options):
+    def lookup__aggregates(self, options):
         member_authorities = self.select_services_of_type(self.AGGREGATE_SERVICE_TYPE)
         return self.select_entries_and_fields(member_authorities, options)
 

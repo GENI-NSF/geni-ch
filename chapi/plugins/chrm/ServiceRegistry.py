@@ -24,9 +24,11 @@
 import amsoil.core.pluginmanager as pm
 from chapi.Clearinghouse import CHv1Handler
 from CHv1PersistentImplementation import CHv1PersistentImplementation
+from geni.util.urn_util import URN
 from chapi.Exceptions import *
 from tools.dbutils import *
 from tools.chapi_log import *
+import os
 
 # Class for extending the standard CHAPI CH (Clearinghouse i.e. Registry)
 # calls for legacy calls for ServiceRegistry: 
@@ -80,6 +82,57 @@ class SRv1Delegate(CHv1PersistentImplementation):
 
     def __init__(self):
         super(SRv1Delegate, self).__init__()
+
+    # Take an option 'urns' with a list of urns to lookup
+    # Return a dictionary of each URN mapped to the URL of associated URN, or None if not found
+    def lookup_authorities_for_urns(self, options):
+        if not options.has_key('urns'):
+            raise CHAPIv1ArgumentError("No urns option provided to lookup_authorities_for_urns call")
+        urns = options['urns']
+        urns_to_authorities = {}
+        for urn in urns: 
+            urns_to_authorities[urn] = self.lookup_authority_for_urn(urn)
+        return self._successReturn(urns_to_authorities)
+
+    # Lookup authority URL for given URN
+    # If a slice URN, there may be a project sub-authority: strip this off to match
+    def lookup_authority_for_urn(self, urn):
+        urn_obj = URN(urn=urn)
+        urn_authority = urn_obj.getAuthority()
+        if len(urn_authority.split('/')) > 1:
+            urn_authority = urn_authority.split('/')[0]
+        authority = None
+
+        services = self.get_services()['value']
+        for service in services:
+            service_urn = service['SERVICE_URN']
+            if not service_urn: continue
+            service_urn_obj = URN(urn=str(service_urn))
+            service_authority = service_urn_obj.getAuthority()
+            if urn_obj.getType() == 'slice' and \
+                    service_urn_obj.getName() == 'sa' and \
+                    urn_authority == service_authority:
+                authority = service
+                break
+            elif urn_obj.getType() == 'user' and \
+                    service_urn_obj.getName() == 'ma' and \
+                    urn_authority == service_authority:
+                authority = service
+                break
+
+        authority_url = None
+        if authority:
+            authority_url = authority['SERVICE_URL']
+        return authority_url
+            
+
+    # Return list of trust roots for given Federation
+    def get_trust_roots(self):
+        config = pm.getService('config')
+        trust_roots = config.get('chapiv1rpc.ch_cert_root')
+        pem_files = os.listdir(trust_roots)
+        pems = [open(os.path.join(trust_roots, pem_file)).read() for pem_file in pem_files if pem_file != 'CATedCACerts.pem']
+        return self._successReturn(pems)
 
     def get_services_of_type(self, service_type):
         method = 'get_services_of_type'
