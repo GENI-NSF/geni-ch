@@ -20,6 +20,7 @@ mv /usr/share/geni-ch/abac-0.1.5 /usr/share/geni-ch/abac
 cp /usr/share/geni-ch/chapi/proto-ch/lib/php/*.php /usr/share/geni-ch/lib/php
 cp sr/certs/* /usr/share/geni-ch/sr/certs/
 cp portal/* /var/www/secure/
+cp /usr/share/geni-ch/chapi/chapi/tools/env_vars /usr/share/geni-ch/
 
 # patch the authority parameter
 sed -i "s/ch-mt.gpolab.bbn.com/${1}/g" /usr/share/geni-ch/chapi/chapi/plugins/chapiv1rpc/chapi/Parameters.py
@@ -47,7 +48,7 @@ patch --backup -p0 /etc/apache2/mods-available/fastcgi.conf << EOF
    AddHandler fastcgi-script .fcgi
    #FastCgiWrapper /usr/lib/apache2/suexec
    FastCgiIpcDir /var/lib/apache2/fastcgi
-+  FastCgiServer /usr/share/geni-ch/chapi/AMsoil/src/main.py -port 9003 -initial-env PYTHONPATH=/usr/share/geni-ch/chapi/chapi:/usr/share/geni-ch/chapi/chapi/tools:/usr/share/geni-ch/gcf/src
++  FastCgiServer /usr/share/geni-ch/chapi/AMsoil/src/main.py -port 9003 -initial-env PYTHONPATH=/usr/share/geni-ch/chapi/chapi:/usr/share/geni-ch/chapi/chapi/tools:/usr/share/geni-ch/gcf/src -initial-env GCFHOME=/usr/share/geni-ch/gcf/src -initial-env CHAPIHOME=/usr/share/geni-ch/chapi/chapi
  </IfModule>
 EOF
 
