@@ -15,9 +15,4 @@ else
     echo "delete from pa_project where project_id = '$PROJECT_ID'" | psql -U portal -h localhost portal
     echo "delete from logging_entry where id in (select event_id from logging_entry_attribute where attribute_name = 'PROJECT' and attribute_value = '$PROJECT_ID')" | psql -U portal -h localhost portal
     echo "delete from logging_entry_attribute where attribute_name = 'PROJECT' and attribute_value = '$PROJECT_ID'" | psql -U portal -h localhost portal
-    echo "delete from cs_assertion where context_type = 1 and context = '$PROJECT_ID'" | psql -U portal -h localhost portal
 fi
-
-
-
-
