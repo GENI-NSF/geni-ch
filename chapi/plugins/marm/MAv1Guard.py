@@ -165,7 +165,9 @@ class MAv1Guard(ABACGuardBase):
                 ], None, member_urn_extractor), 
         'lookup_keys' : \
             LookupKeysInvocationCheck([
-                "ME.MAY_LOOKUP_KEYS<-ME.IS_OPERATOR",
+                "ME.MAY_LOOKUP_KEYS<-ME.IS_AUTHORITY", 
+                "ME.MAY_LOOKUP_KEYS<-ME.IS_OPERATOR", 
+                "ME.MAY_LOOKUP_KEYS_$SUBJECT<-ME.IS_$SUBJECT",
                 "ME.MAY_LOOKUP_KEYS_$SUBJECT<-ME.SHARES_SLICE_$SUBJECT", 
                 ], assert_shares_slice, key_subject_extractor), 
         'create_certificate' : 
