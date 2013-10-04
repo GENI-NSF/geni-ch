@@ -51,7 +51,7 @@ from ABACManager import ABACManager
 #   agent_cert: Cert of actual (spoken for) speaker if 'speaks for', 
 #        client_cert if not.
 #   revised_options : Original options with 
-#       {'speaking-as' : original_client_cert} added if 'speaks for'
+#       {'speaking_as' : original_client_cert} added if 'speaks for'
 def determine_speaks_for(client_cert, credentials, options): 
     revised_options = dict(options) # Make a copy of original options
     agent_cert = client_cert
@@ -83,7 +83,7 @@ def determine_speaks_for(client_cert, credentials, options):
             (not speaks_for_credential and speaking_for):
         raise Exception("Must have both speaks-for-credential and speaking_for option")
 
-    # We are processing aspeaks-for request
+    # We are processing a speaks-for request
 
     # Get the agent_cert
     agent_cert = get_cert_from_credential(speaks_for_credential)
