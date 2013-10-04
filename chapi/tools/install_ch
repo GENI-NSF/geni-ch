@@ -20,7 +20,7 @@ mv /usr/share/geni-ch/abac-0.1.5 /usr/share/geni-ch/abac
 cp /usr/share/geni-ch/chapi/proto-ch/lib/php/*.php /usr/share/geni-ch/lib/php
 cp sr/certs/* /usr/share/geni-ch/sr/certs/
 cp portal/* /var/www/secure/
-cp /usr/share/geni-ch/chapi/chapi/tools/env_vars /usr/share/geni-ch/.bashrc
+cp /usr/share/geni-ch/chapi/chapi/tools/.bashrc /usr/share/geni-ch/
 
 # patch the authority parameter
 sed -i "s/ch-mt.gpolab.bbn.com/${1}/g" /usr/share/geni-ch/chapi/chapi/plugins/chapiv1rpc/chapi/Parameters.py
