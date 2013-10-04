@@ -40,17 +40,23 @@ from syslog import syslog
 # name=keyfile
 #
 # Return name of config file and any tempfiles created in this process
-def create_abac_manager_config_file(me_cert, me_key, id_certs):
+def create_abac_manager_config_file(id_cert_files, id_certs, id_key_files, \
+                                        raw_assertions):
     tempfiles = []
+    # Format
+    # [Principals]
     # The principals ("ME" and any in ID dictionary)
+    # [Keys]
     # The keys ("ME")
+    # [AssertionFiles]
     (fd, config_filename) = tempfile.mkstemp()
     tempfiles.append(config_filename)
 
     os.close(fd)
     file = open(config_filename, 'w')
     file.write('[Principals]\n')
-    file.write('ME=%s\n' % me_cert)
+    for id_name, id_cert_file in id_cert_files.items():
+        file.write('%s=%s\n' % (id_name, id_cert_file))
     for id_name, id_cert in id_certs.items():
         (id_fd, id_filename) = tempfile.mkstemp()
         tempfiles.append(id_filename)
@@ -59,8 +65,21 @@ def create_abac_manager_config_file(me_cert, me_key, id_certs):
         id_file.write(id_cert)
         id_file.close()
         file.write('%s=%s\n' % (id_name, id_filename))
+
     file.write('[Keys]\n')
-    file.write('ME=%s\n' % me_key)
+    for id_key_name, id_key_file in id_key_files.items():
+        file.write('%s=%s\n' % (id_key_name, id_key_file))
+
+    file.write('[AssertionFiles]\n')
+    for raw_assertion in raw_assertions:
+        (raw_fd, raw_filename) = tempfile.mkstemp()
+        tempfiles.append(raw_filename)
+        os.close(raw_fd)
+        raw_file = open(raw_filename, 'w')
+        raw_file.write(raw_assertion)
+        raw_file.close()
+        file.write('%s=None\n' % raw_filename)
+
     file.close()
 
     return config_filename, tempfiles
@@ -75,15 +94,43 @@ def grab_output_from_subprocess(args):
         chunk = proc.stdout.read()
     return result
 
+# Run a subprocess and execute and grab results of ABAC query evaluation
+def execute_abac_query(query, id_certs, raw_assertions = []):
+    config_filename, tempfiles = \
+        create_abac_manager_config_file({}, id_certs, {}, raw_assertions)
+
+    # Make the query call, pull result from stdout
+    chapi_home = os.getenv('CHAPIHOME')
+    chapi_tools = os.path.join(chapi_home, 'tools')
+    args = ['python', os.path.join(chapi_tools, 'ABACManager.py'),
+            '--config=%s' % config_filename,
+            '--query=%s' % query]
+    result = grab_output_from_subprocess(args)
+
+    result_parts = result.split('\n')
+
+    ok = result_parts[0].find('Succeeded') >= 0
+    proof = "\n".join(result_parts[1:])
+    
+    # Delete the tempfiles
+    for tfile in tempfiles:
+        os.unlink(tfile)
+
+    return ok, proof
+
+
+
 # Generate an ABAC credential of a given assertion signed by "ME"
 # with a set of id_certs (a dictionary of {name : cert}
 # Run this as a separate process to avoid memory corruption
 def generate_abac_credential(assertion, me_cert, me_key, id_certs):
     # Create config file
+    id_cert_files = {'ME' : me_cert}
+    id_key_files = {'ME' : me_key}
     config_filename, tempfiles = \
-        create_abac_manager_config_file(me_cert, me_key, id_certs)
+        create_abac_manager_config_file(id_cert_files, id_certs, id_key_files, [])
 
-     # Make the call, pull result from stderr
+     # Make the call, pull result from stdout
     chapi_home = os.getenv('CHAPIHOME')
     chapi_tools = os.path.join(chapi_home, 'tools')
     args = ['python', os.path.join(chapi_tools, 'ABACManager.py'), 
@@ -457,14 +504,11 @@ class ABACManager:
         return P
 
     def register_assertion_file(self, assertion_file):
-        # *** Hack ***
-        if not self._manage_context:
-            return
-
         if self._verbose:
             syslog("Registering assertion file " + assertion_file)
         self._assertion_files.append(assertion_file)
-#        self._ctxt.load_attribute_file(assertion_file) *** HACK ***
+        if self._manage_context:
+            self._ctxt.load_attribute_file(assertion_file) 
 
     # return list of user-readable credentials in proof chain
     def pretty_print_proof(self, proof):
