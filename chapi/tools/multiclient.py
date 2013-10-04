@@ -24,11 +24,19 @@
 import client
 import sys
 import threading
+from datetime import datetime
 
 def main():
-    thread = threading.Thread(target=client.main, args=[sys.argv])
-    thread.start()
-    thread.join()
+    threads = []
+    start = datetime.utcnow()
+    for i in range(100):
+        thread = threading.Thread(target=client.main, args=[sys.argv])
+        thread.start()
+        threads.append(thread)
+    for thread in threads:
+        thread.join()
+    end = datetime.utcnow()
+    print 'Time =', end - start
 
 if __name__ == "__main__":
     sys.exit(main())
