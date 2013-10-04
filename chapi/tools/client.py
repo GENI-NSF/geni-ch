@@ -38,7 +38,7 @@ class MAClientFramework(Framework_Base):
         self.fwtype = "MA Ciient"
         self.opts = opts
 
-def parseOptions():
+def parseOptions(args):
     parser = optparse.OptionParser()
 
     home = os.getenv('HOME')
@@ -80,7 +80,7 @@ def parseOptions():
                           help="List of comma-separated credential files", \
                           default="")
 
-    [opts, args] = parser.parse_args(sys.argv)
+    [opts, args] = parser.parse_args(args)
     if len(opts.credentials) > 0:
         credentials = "".join(opts.credentials.split())
         credentials = credentials.split(',')
@@ -93,9 +93,9 @@ def parseOptions():
 
     return opts, args
 
-def main():
+def main(args = sys.argv):
 
-    opts, args = parseOptions()
+    opts, args = parseOptions(args)
     client_options = json.loads(opts.options)
     if opts.options_file:
         client_options = json.load(open(opts.options_file, 'r'))
