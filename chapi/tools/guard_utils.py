@@ -314,7 +314,7 @@ def lookup_pi_privilege(user_urn):
 
 # If given caller and given subject share a common project
 # Generate an ME.SHARES_PROJECT_$subject<-caller assertion
-def assert_shares_project(caller_urn, member_urns, label, abac_manager):
+def assert_shares_project(caller_urn, member_urns, label, options, abac_manager):
     if isinstance(member_urns, list): 
         if len(member_urns) == 0: return  # if empty, then we dont share the project.
         member_urn = member_urns[0] # Pull singleton URN from list
@@ -345,29 +345,40 @@ def assert_shares_project(caller_urn, member_urns, label, abac_manager):
         abac_manager.register_assertion(assertion)
 
     q = session.query(db.PROJECT_REQUEST_TABLE.c.status)
-    q = q.filter(db.PROJECT_MEMBER_TABLE.c.member_id == ma1.c.member_id)
+    q = q.filter(pm1.c.member_id == ma1.c.member_id)
     q = q.filter(db.PROJECT_REQUEST_TABLE.c.requestor == ma2.c.member_id)
     q = q.filter(ma1.c.name == 'urn')
     q = q.filter(ma2.c.name == 'urn')
     q = q.filter(ma1.c.value == caller_urn)
     q = q.filter(ma2.c.value == member_urn)
-    q = q.filter(db.PROJECT_REQUEST_TABLE.c.context_id ==
-                 db.PROJECT_MEMBER_TABLE.c.project_id)
-    q = q.filter(db.PROJECT_MEMBER_TABLE.c.role.in_
-                 ([LEAD_ATTRIBUTE, ADMIN_ATTRIBUTE]))
+    q = q.filter(db.PROJECT_REQUEST_TABLE.c.context_id == pm1.c.project_id)
+    q = q.filter(pm1.c.role.in_([LEAD_ATTRIBUTE, ADMIN_ATTRIBUTE]))
     q = q.filter(db.PROJECT_REQUEST_TABLE.c.status == PENDING_STATUS)
-    rows = q.all()
 
+    rows = q.all()
     if len(rows) > 0:
         assertion = "ME.HAS_PENDING_REQUEST_ON_SHARED_PROJECT_%s<-CALLER" % \
                     flatten_urn(member_urn)
         abac_manager.register_assertion(assertion)
+
+    if 'match' in options and len(options['match']) == 1 and \
+       'MEMBER_EMAIL' in options['match']:
+        q = session.query(pm1.c.member_id)
+        q = q.filter(pm1.c.member_id == ma1.c.member_id)
+        q = q.filter(ma1.c.name == 'urn')
+        q = q.filter(ma1.c.value == caller_urn)
+        q = q.filter(pm1.c.role.in_([LEAD_ATTRIBUTE, ADMIN_ATTRIBUTE]))
+        rows = q.all()
+        if len(rows) > 0:
+            assertion = "ME.IS_LEAD_AND_SEARCHING_EMAIL<-CALLER"
+            abac_manager.register_assertion(assertion)
+
     session.close()
 
 
 # If given caller and given subject share a common slice
 # Generate an ME.SHARES_SLICE(subject)<-caller assertion
-def assert_shares_slice(caller_urn, member_urns, label, abac_manager):
+def assert_shares_slice(caller_urn, member_urns, label, options, abac_manager):
     if isinstance(member_urns, list): 
         member_urn = member_urns[0] # Pull singleton URN from list
     else:
@@ -400,7 +411,7 @@ def assert_shares_slice(caller_urn, member_urns, label, abac_manager):
 
 # Assert ME.IS_$ROLE(SLICE)<-CALLER for all slices of given set 
 # of which caller is a member
-def assert_slice_role(caller_urn, slice_urns, label, abac_manager):
+def assert_slice_role(caller_urn, slice_urns, label, options, abac_manager):
     db = pm.getService('chdbengine')
     session = db.getSession()
     q = session.query(db.SLICE_MEMBER_TABLE.c.role, \
@@ -443,7 +454,7 @@ def get_project_role_for_member(caller_urn, project_urns):
 
 # Assert ME.IS_$ROLE_$PROJECT<-CALLER for the projects among given set 
 # of which caller is a member
-def assert_project_role(caller_urn, project_urns, label, abac_manager):
+def assert_project_role(caller_urn, project_urns, label, options, abac_manager):
     if label != "PROJECT_URN": return
     rows = get_project_role_for_member(caller_urn, project_urns)
     config = pm.getService('config')
@@ -458,7 +469,7 @@ def assert_project_role(caller_urn, project_urns, label, abac_manager):
 
 
 # Assert ME.BELONGS_TO_$SLICE<-CALLER if caller is member of slice
-def assert_belongs_to_slice(caller_urn, slice_urns, label, abac_manager):
+def assert_belongs_to_slice(caller_urn, slice_urns, label, options, abac_manager):
     if label != "SLICE_URN": return
     db = pm.getService('chdbengine')
     session = db.getSession()
@@ -482,7 +493,8 @@ def assert_belongs_to_slice(caller_urn, slice_urns, label, abac_manager):
 
 
 # Assert ME.BELONGS_TO_$PROJECT<-CALLER if caller is member of project
-def assert_belongs_to_project(caller_urn, project_urns, label, abac_manager):
+def assert_belongs_to_project(caller_urn, project_urns, label, \
+                              options, abac_manager):
     if label != "PROJECT_URN": return
     db = pm.getService('chdbengine')
     session = db.getSession()
@@ -514,7 +526,8 @@ def assert_belongs_to_project(caller_urn, project_urns, label, abac_manager):
 # Take a request_id and from that determine the context(project) and requestor
 # From there, Assert whether the project membership requestor is the caller
 # And assert the role on the project of the caller (if any)
-def assert_request_id_requestor_and_project_role(caller_urn, request_id, label, abac_manager):
+def assert_request_id_requestor_and_project_role(caller_urn, request_id, \
+                                            label, options, abac_manager):
     request_id = request_id[0] # turn list back into singleton
     if label != "REQUEST_ID" : return
     db = pm.getService('chdbengine')
