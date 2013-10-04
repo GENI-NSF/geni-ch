@@ -442,18 +442,15 @@ class MAv1Implementation(MAv1DelegateBase):
                                          uid)
         user_cert = certs[0]
 
-        abac_manager = ABACManager(certs_by_name = {"CALLER" :user_cert},
-                                   cert_files_by_name = {"ME" :self.cert},
-                                   key_files_by_name = {"ME" :self.key})
         abac_raw_creds = []
         if lookup_operator_privilege(user_urn):
-           assertion = \
-               abac_manager.register_assertion("ME.IS_OPERATOR<-CALLER")
-           # abac_raw_creds.append(assertion.cert_chunk()) # *** HACK ***
+           assertion = generate_abac_credential("ME.IS_OPERATOR<-CALLER",
+                                                self.cert, self.key, {"CALLER" : user_cert})
+           abac_raw_creds.append(assertion)
         if lookup_pi_privilege(user_urn):
-            assertion = \
-                abac_manager.register_assertion("ME.IS_PI<-CALLER")
-            # abac_raw_creds.append(assertion.cert_chunk()) # *** HACK ***
+            assertion = generate_abac_credential("ME.IS_PI<-CALLER",
+                                                 self.cert, self.key, {"CALLER" : user_cert})
+            abac_raw_creds.append(assertion)
         sfa_creds = \
             [{'geni_type' : 'SFA', 'geni_version' : 1, 'geni_value' : cred} 
              for cred in sfa_raw_creds]
