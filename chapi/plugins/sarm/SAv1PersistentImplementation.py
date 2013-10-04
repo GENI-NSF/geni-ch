@@ -324,11 +324,11 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
             role_name = attribute_type_names[row.role]
             slice_role_assertion = "ME.IS_%s_%s<-CALLER" % (role_name, flatten_urn(slice_urn))
 #            print "SRA = " + slice_role_assertion
-            abac_manager = ABACManager(certs_by_name = {"CALLER" :client_cert},
-                                       cert_files_by_name = {"ME" :self.cert},
-                                       key_files_by_name = {"ME" :self.key})
-            assertion = abac_manager.register_assertion(slice_role_assertion)
-#            abac_raw_creds.append(assertion.cert_chunk())
+            slice_role_credential = generate_abac_credential(slice_role_assertion, 
+                                                              self.cert, self.key, 
+                                                              {"CALLER" : client_cert})
+                                                              
+            abac_raw_creds.append(slice_role_credential)
 
         sfa_creds = \
             [{'geni_type' : 'SFA', 'geni_version' : 1, 'geni_value' : cred} 

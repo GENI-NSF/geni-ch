@@ -26,10 +26,77 @@
 from ConfigParser import ConfigParser
 import optparse
 import os
+import subprocess
 import sys
 import tempfile
 import ABAC
 from syslog import syslog
+
+# Generate an ABACManager config file
+# [Principals]
+# name=certfile
+# ...
+# [Keys]
+# name=keyfile
+#
+# Return name of config file and any tempfiles created in this process
+def create_abac_manager_config_file(me_cert, me_key, id_certs):
+    tempfiles = []
+    # The principals ("ME" and any in ID dictionary)
+    # The keys ("ME")
+    (fd, config_filename) = tempfile.mkstemp()
+    tempfiles.append(config_filename)
+
+    os.close(fd)
+    file = open(config_filename, 'w')
+    file.write('[Principals]\n')
+    file.write('ME=%s\n' % me_cert)
+    for id_name, id_cert in id_certs.items():
+        (id_fd, id_filename) = tempfile.mkstemp()
+        tempfiles.append(id_filename)
+        os.close(id_fd)
+        id_file = open(id_filename, 'w')
+        id_file.write(id_cert)
+        id_file.close()
+        file.write('%s=%s\n' % (id_name, id_filename))
+    file.write('[Keys]\n')
+    file.write('ME=%s\n' % me_key)
+    file.close()
+
+    return config_filename, tempfiles
+
+# Run a subprocess and grab and return contents of standard output
+def grab_output_from_subprocess(args):
+    proc  = subprocess.Popen(args, stdout=subprocess.PIPE)
+    result = ''
+    chunk = proc.stdout.read()
+    while chunk:
+        result = result + chunk
+        chunk = proc.stdout.read()
+    return result
+
+# Generate an ABAC credential of a given assertion signed by "ME"
+# with a set of id_certs (a dictionary of {name : cert}
+# Run this as a separate process to avoid memory corruption
+def generate_abac_credential(assertion, me_cert, me_key, id_certs):
+    # Create config file
+    config_filename, tempfiles = \
+        create_abac_manager_config_file(me_cert, me_key, id_certs)
+
+     # Make the call, pull result from stderr
+    chapi_home = os.getenv('CHAPIHOME')
+    chapi_tools = os.path.join(chapi_home, 'tools')
+    args = ['python', os.path.join(chapi_tools, 'ABACManager.py'), 
+                                   '--config=%s' % config_filename, 
+                                   '--credential=%s' % assertion]
+    cred = grab_output_from_subprocess(args)
+
+    # Delete the tempfiles
+    for tfile in tempfiles:
+        os.unlink(tfile)
+
+    return cred
+
 
 class ABACManager:
 
@@ -48,7 +115,10 @@ class ABACManager:
     def __init__(self, certs_by_name={}, cert_files_by_name={}, \
                      key_files_by_name={}, \
                      assertions=[], raw_assertions=[], assertion_files=[],  \
-                     options=None):
+                     options=None, manage_context=True):
+
+        # For turning on/off integration with ABAC (for memory leak testing)
+        self._manage_context = manage_context
 
         # For verbose debug output
         self._verbose = False
@@ -119,8 +189,6 @@ class ABACManager:
         self._all_assertions = []
         self._all_links = {} # ABAC links : where can I get to from X (All Y st. Y<-X)
 
-        
-
     def init_from_options(self):
 
         # If a config file is provided, read it into the ABACManager
@@ -137,11 +205,13 @@ class ABACManager:
                 key_file = cp.get('Keys', name)
                 self.register_key(name, key_file)
 
-            for assertion in cp.options('Assertions'):
-                self.register_assertion(assertion)
+            if 'Assertions' in cp.sections():
+                for assertion in cp.options('Assertions'):
+                    self.register_assertion(assertion)
 
-            for assertion_file in cp.options("AssertionFiles"):
-                self.register_assertion_file(assertion_file)
+            if 'AssertionFiles' in cp.sections():
+                for assertion_file in cp.options("AssertionFiles"):
+                    self.register_assertion_file(assertion_file)
 
         # Use all the other command-line options to override/augment 
         # the values in the ABCManager
@@ -258,11 +328,12 @@ class ABACManager:
 
         # *** Hack ***
         # Sorry you gotta parse the expressions and go head-to-tail...
-        parts = query_expression.split('<-')
-        lhs = parts[0]
-        rhs = parts[1]
-        response = self.find_path(rhs, lhs)
-        return response, None
+        if not self._manage_context:
+            parts = query_expression.split('<-')
+            lhs = parts[0]
+            rhs = parts[1]
+            response = self.find_path(rhs, lhs)
+            return response, None
 
         query_expression = str(query_expression) # Avoid unicode
         query_expression_parts = query_expression.split("<-")
@@ -292,7 +363,8 @@ class ABACManager:
     # Register a new ID with the manager, loading into lookup table and context
     def register_id(self, name, cert_file):
         # *** Hack ***
-        return
+        if not self._manage_context:
+            return
 
         if cert_file == '' or cert_file == 'None':
             cert_file = None
@@ -307,12 +379,13 @@ class ABACManager:
         if self._ids_by_name.has_key(name):
             raise Exception("ABACManager: name doubley defined " + name)
         self._ids_by_name[name] = id
-        self._ctxt.load_id_chunk(id.cert_chunk())
+        self._ctxt.load_id_chunk(id.cert_chunk()) 
 
     # Load a private key with a principal
     def register_key(self, name, key_file):
         # *** Hack ***
-        return
+        if not self._manage_context:
+            return
 
         if key_file and key_file != '' and key_file != 'None':
             id = self._ids_by_name[name]
@@ -327,14 +400,14 @@ class ABACManager:
     # Generate exception if a principal is referenced but not registered
     def register_assertion(self, assertion):
         # *** Hack ***
-        self._all_assertions.append(assertion)
-        parts = assertion.split('<-')
-        subject_role= parts[0]
-        principal = parts[1]
-        if principal not in self._all_links: self._all_links[principal] = []
-        self._all_links[principal].append(subject_role)
-        return
-
+        if not self._manage_context:
+            self._all_assertions.append(assertion)
+            parts = assertion.split('<-')
+            subject_role= parts[0]
+            principal = parts[1]
+            if principal not in self._all_links: self._all_links[principal] = []
+            self._all_links[principal].append(subject_role)
+            return # *** HACK
 
         assertion = str(assertion) # Avoid unicode
         assertion_pieces = assertion.split("<-")
@@ -373,6 +446,7 @@ class ABACManager:
             P.linking_role(object.keyid(), linking_role_left,linking_role_right)
         else:
             raise Exception("Ill-formed assertion RHS: need < 2 . : " + rhs)
+
         P.bake()
         self._ctxt.load_attribute_chunk(P.cert_chunk())
 
@@ -384,12 +458,13 @@ class ABACManager:
 
     def register_assertion_file(self, assertion_file):
         # *** Hack ***
-        return
+        if not self._manage_context:
+            return
 
         if self._verbose:
             syslog("Registering assertion file " + assertion_file)
         self._assertion_files.append(assertion_file)
-        self._ctxt.load_attribute_file(assertion_file)
+#        self._ctxt.load_attribute_file(assertion_file) *** HACK ***
 
     # return list of user-readable credentials in proof chain
     def pretty_print_proof(self, proof):
@@ -464,7 +539,7 @@ class ABACManager:
         return string
 
 
-def main():
+def main(argv=sys.argv):
     parser = optparse.OptionParser(description='Produce an ABAC Assertion')
     parser.add_option("--assertion", 
                       help="ABAC-style assertion",
@@ -485,7 +560,7 @@ def main():
                       help="Name of config file with Principals/Keys/Assertions/AssertionFiles sections", 
                       default = None)
 
-    (options, args) = parser.parse_args(sys.argv)
+    (options, args) = parser.parse_args(argv)
 
     # We need either a query or credential expression
     if not options.query and not options.credential:
@@ -501,8 +576,6 @@ if __name__ == "__main__":
     sys.exit(0)
 
 
-# TTD
-# 1. Add support for conjunctions A.good_movie & B.good_movie as different roles
 
 
 
