@@ -29,8 +29,9 @@ from datetime import datetime
 def main():
     threads = []
     start = datetime.utcnow()
-    for i in range(100):
-        thread = threading.Thread(target=client.main, args=[sys.argv])
+    n = int(sys.argv.pop(1))
+    for i in range(n):
+        thread = threading.Thread(target=client.main, args=[sys.argv, False])
         thread.start()
         threads.append(thread)
     for thread in threads:

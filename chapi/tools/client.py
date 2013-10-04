@@ -93,7 +93,7 @@ def parseOptions(args):
 
     return opts, args
 
-def main(args = sys.argv):
+def main(args = sys.argv, do_print=True):
 
     opts, args = parseOptions(args)
     client_options = json.loads(opts.options)
@@ -102,8 +102,9 @@ def main(args = sys.argv):
     client_attributes = json.loads(opts.attributes)
     if opts.attributes_file:
         client_attributes = json.load(open(opts.attributes_file, 'r'))
-    print "CREDS = " + str(opts.credentials)
-    print "OPTIONS = " + str(client_options)
+    if do_print:
+        print "CREDS = " + str(opts.credentials)
+        print "OPTIONS = " + str(client_options)
     suppress_errors = None
     reason = "Testing"
     config = {'cert' : opts.cert, 'key' : opts.key}
@@ -263,9 +264,10 @@ def main(args = sys.argv):
         (result, msg) = _do_ssl(framework, suppress_errors, reason, fcn, \
                                     opts.credentials, client_options)
 
-    print "RESULT = " + str(result)
-    if msg:
-        print "MSG = " + str(msg)
+    if do_print:
+        print "RESULT = " + str(result)
+        if msg:
+            print "MSG = " + str(msg)
     
 if __name__ == "__main__":
     sys.exit(main())
