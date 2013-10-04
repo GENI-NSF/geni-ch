@@ -457,14 +457,11 @@ class ABACManager:
         return P
 
     def register_assertion_file(self, assertion_file):
-        # *** Hack ***
-        if not self._manage_context:
-            return
-
         if self._verbose:
             syslog("Registering assertion file " + assertion_file)
         self._assertion_files.append(assertion_file)
-#        self._ctxt.load_attribute_file(assertion_file) *** HACK ***
+        if self._manage_context:
+            self._ctxt.load_attribute_file(assertion_file) 
 
     # return list of user-readable credentials in proof chain
     def pretty_print_proof(self, proof):
