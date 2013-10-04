@@ -25,7 +25,7 @@ import optparse
 import os, sys
 import sfa.trust.certificate
 from cert_utils import *
-from ABACManager import ABACManager
+from ABACManager import *
 
 
 # Determine if the given method context is 'speaks-for'
@@ -95,11 +95,14 @@ def determine_speaks_for(client_cert, credentials, options):
     if agent_urn != speaking_for:
         raise Exception("Mismatch: speaking_for %s and agent URN %s" % (speaking_for, agent_urn))
 
-    # The speaks-for credential must assert the statement AGENT.speaks_for(AGENT)<-CLIENT
-    certs_by_name = {"CLIENT" : client_cert, "AGENT" : agent_cert}
+    # The speaks-for credential must assert the statement 
+    # AGENT.speaks_for(AGENT)<-CLIENT
     query = "AGENT.speaks_for(AGENT)<-CLIENT"
-    abac_manager = ABACManager(certs_by_name = certs_by_name, raw_assertions=[speaks_for_credential])
-    ok, proof = abac_manager.query(query)
+    certs_by_name = {"CLIENT" : client_cert, "AGENT" : agent_cert}
+
+    # Run the proof in a separate process to avoid memory issues
+    ok, proof = execute_abac_query(query, certs_by_name, [speaks_for_credential])
+
     if not ok:
         raise Exception("Speaks-For credential does not assert that agent allows client to speak for agent")
 

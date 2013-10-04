@@ -125,8 +125,8 @@ def execute_abac_query(query, id_certs, raw_assertions = []):
 # Run this as a separate process to avoid memory corruption
 def generate_abac_credential(assertion, me_cert, me_key, id_certs):
     # Create config file
-    id_cert_files['ME'] = me_cert
-    key_cert_files['ME'] = me_key
+    id_cert_files = {'ME' : me_cert}
+    id_key_files = {'ME' : me_key}
     config_filename, tempfiles = \
         create_abac_manager_config_file(id_cert_files, id_certs, id_key_files, [])
 
