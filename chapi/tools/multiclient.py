@@ -23,9 +23,12 @@
 
 import client
 import sys
+import threading
 
 def main():
-    client.main(sys.argv)
+    thread = threading.Thread(target=client.main, args=[sys.argv])
+    thread.start()
+    thread.join()
 
 if __name__ == "__main__":
     sys.exit(main())
