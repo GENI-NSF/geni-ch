@@ -24,7 +24,7 @@
 credential_types = ["SFA", "ABAC"]
 
 standard_fields = {
-    "MEMBER_URN" : {"TYPE" : " URN", "UPDATE" : False, "PROTECT" : "PUBLIC"},
+    "MEMBER_URN" : {"TYPE" : "URN", "UPDATE" : False, "PROTECT" : "PUBLIC"},
     "MEMBER_UID": {"TYPE" : "UID", "UPDATE" : False, "PROTECT" : "PUBLIC"},
     "MEMBER_FIRSTNAME" : {"TYPE" : "STRING", "PROTECT" : "IDENTIFYING"},
     "MEMBER_LASTNAME" : {"TYPE" : "STRING", "PROTECT" : "IDENTIFYING"},

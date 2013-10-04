@@ -82,9 +82,18 @@ def parseOptions(args):
 
     [opts, args] = parser.parse_args(args)
     if len(opts.credentials) > 0:
+        cred_structs = []
         credentials = "".join(opts.credentials.split())
         credentials = credentials.split(',')
-        opts.credentials = credentials
+        for credential in credentials:
+            cred_parts = credential.split(':')
+            cred_file = cred_parts[0]
+            cred_type = cred_parts[1]
+            cred_data = open(cred_file).read()
+            cred_struct= {'geni_type' : cred_type, 'geni_version' : 1, 
+                          'geni_value' : cred_data}
+            cred_structs.append(cred_struct)
+        opts.credentials = cred_structs
     else:
         opts.credentials = []
 
