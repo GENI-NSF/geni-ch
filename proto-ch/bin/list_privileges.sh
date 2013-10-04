@@ -9,7 +9,6 @@ exit
 fi
 
 PERSON=$1
-FILENAME="/tmp/lp.$USER.sql";
 
 # CS_POLICY : attribute, context_type, privilege
 # CS_PRIVILEGE : ID, NAME
@@ -17,56 +16,71 @@ FILENAME="/tmp/lp.$USER.sql";
 
 # List privileges with no context
 echo "Context-free Privileges:"
-echo "select ma_member_attribute.value, cs_attribute.name, cs_action.name " > $FILENAME
-echo " from ma_member_attribute, cs_attribute, cs_context_type, cs_assertion, cs_action, cs_policy " >> $FILENAME
-echo " where ma_member_attribute.value = '$PERSON'" >> $FILENAME
-echo " and ma_member_attribute.name = 'username'" >> $FILENAME
-echo " and ma_member_attribute.member_id = cs_assertion.principal " >> $FILENAME
-echo " and cs_attribute.id = cs_assertion.attribute " >> $FILENAME
-echo " and cs_context_type.id = cs_assertion.context_type" >> $FILENAME
-echo " and cs_assertion.context_type > 2" >> $FILENAME
-echo " and cs_policy.attribute = cs_assertion.attribute" >> $FILENAME
-echo " and cs_policy.context_type = cs_assertion.context_type" >> $FILENAME
-echo " and cs_policy.privilege = cs_action.privilege" >> $FILENAME
-echo " and cs_policy.context_type = cs_action.context_type" >> $FILENAME
-psql -U portal -h localhost < $FILENAME
+psql -U portal -h localhost <<EOF
+SELECT who.value, role.name, cs_action.name
+ FROM ma_privilege, cs_policy, cs_action, ma_member_attribute AS role
+INNER JOIN ma_member_attribute AS who
+ON who.member_id = role.member_id
+WHERE who.name = 'username'
+  AND who.value = '$PERSON'
+  AND role.name = 'operator'
+  AND role.value = 'true'
+  AND ma_privilege.privilege = upper(role.name)
+  AND cs_policy.attribute = 5
+  AND cs_policy.context_type IN (1,2,3,4,5)
+  AND cs_policy.privilege = cs_action.privilege
+  AND cs_policy.context_type = cs_action.context_type
+UNION
+SELECT who.value, role.name, cs_action.name
+ FROM ma_privilege, cs_policy, cs_action, ma_member_attribute AS role
+INNER JOIN ma_member_attribute AS who
+ON who.member_id = role.member_id
+WHERE who.name = 'username'
+  AND who.value = '$PERSON'
+  AND role.name = 'project_lead'
+  AND role.value = 'true'
+  AND ma_privilege.privilege = upper(role.name)
+  AND cs_policy.attribute = 3
+  AND cs_policy.context_type = 1
+  AND cs_policy.privilege = cs_action.privilege
+  AND cs_policy.context_type = cs_action.context_type
+;
+EOF
 
 # List project privileges
 echo ""
 echo "Project attributes"
-echo "select ma_member_attribute.value, cs_attribute.name, cs_action.name, pa_project.project_name " > $FILENAME
-echo " from ma_member_attribute, cs_attribute, cs_context_type, cs_assertion, cs_action, cs_policy, pa_project " >> $FILENAME
-echo " where ma_member_attribute.value = '$PERSON'" >> $FILENAME
-echo " and ma_member_attribute.name = 'username'" >> $FILENAME
-echo " and cs_context_type.id = cs_assertion.context_type" >> $FILENAME
-echo " and ma_member_attribute.member_id = cs_assertion.principal " >> $FILENAME
-echo " and cs_attribute.id = cs_assertion.attribute " >> $FILENAME
-echo " and cs_assertion.context_type = 1 " >> $FILENAME
-echo " and pa_project.project_id = cs_assertion.context " >> $FILENAME
-echo " and cs_policy.attribute = cs_assertion.attribute" >> $FILENAME
-echo " and cs_policy.context_type = cs_assertion.context_type" >> $FILENAME
-echo " and cs_policy.privilege = cs_action.privilege" >> $FILENAME
-echo " and cs_policy.context_type = cs_action.context_type" >> $FILENAME
-psql -U portal -h localhost < $FILENAME
+psql -U portal -h localhost <<EOF
+select ma_member_attribute.value, cs_attribute.name, cs_action.name, pa_project.project_name
+ from ma_member_attribute, cs_attribute, cs_context_type, pa_project_member, cs_action, cs_policy, pa_project 
+ where ma_member_attribute.value = '$PERSON'
+ and ma_member_attribute.name = 'username'
+ and cs_context_type.id = 3
+ and ma_member_attribute.member_id = pa_project_member.member_id
+ and cs_attribute.id = pa_project_member.role
+ and pa_project.project_id = pa_project_member.project_id
+ and cs_policy.attribute = pa_project_member.role
+ and cs_policy.context_type = 3
+ and cs_policy.privilege = cs_action.privilege
+ and cs_policy.context_type = cs_action.context_type;
+EOF
 
 # List slice  privileges
 echo ""
 echo "Slice privileges"
-echo "select ma_member_attribute.value, cs_attribute.name, cs_action.name, sa_slice.slice_name " > $FILENAME
-echo " from ma_member_attribute, cs_attribute, cs_context_type, cs_assertion, cs_action, cs_policy, sa_slice " >> $FILENAME
-echo " where ma_member_attribute.value = '$PERSON'" >> $FILENAME
-echo " and ma_member_attribute.name = 'username'" >> $FILENAME
-echo " and ma_member_attribute.member_id = cs_assertion.principal " >> $FILENAME
-echo " and cs_context_type.id = cs_assertion.context_type" >> $FILENAME
-echo " and cs_attribute.id = cs_assertion.attribute " >> $FILENAME
-echo " and cs_assertion.context_type = 2 " >> $FILENAME
-echo " and sa_slice.slice_id = cs_assertion.context " >> $FILENAME
-echo " and cs_policy.attribute = cs_assertion.attribute" >> $FILENAME
-echo " and cs_policy.context_type = cs_assertion.context_type" >> $FILENAME
-echo " and cs_policy.privilege = cs_action.privilege" >> $FILENAME
-echo " and cs_policy.context_type = cs_action.context_type" >> $FILENAME
-psql -U portal -h localhost < $FILENAME
-
-#rm $FILENAME
+psql -U portal -h localhost <<EOF
+select ma_member_attribute.value, cs_attribute.name, cs_action.name, sa_slice.slice_name
+ from ma_member_attribute, cs_attribute, cs_context_type, sa_slice_member, cs_action, cs_policy, sa_slice 
+ where ma_member_attribute.value = '$PERSON'
+ and ma_member_attribute.name = 'username'
+ and ma_member_attribute.member_id = sa_slice_member.member_id
+ and cs_context_type.id = 2
+ and cs_attribute.id = sa_slice_member.role
+ and sa_slice.slice_id = sa_slice_member.slice_id
+ and cs_policy.attribute = sa_slice_member.role
+ and cs_policy.context_type = 2
+ and cs_policy.privilege = cs_action.privilege
+ and cs_policy.context_type = cs_action.context_type;
+EOF
 
 
