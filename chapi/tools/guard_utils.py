@@ -638,7 +638,12 @@ def project_urn_extractor(options, arguments):
 
 # Extract slice urn from options or arguments
 def slice_urn_extractor(options, arguments):
-    slice_urn = arguments['slice_urn']
+    if 'slice_urn' in arguments:
+        slice_urn = arguments['slice_urn']
+    elif 'SLICE_URN' in options['fields']:
+        slice_urn = options['fields']['SLICE_URN']
+    elif 'SLIVER_INFO_SLICE_URN' in options['fields']:
+        slice_urn = options['fields']['SLIVER_INFO_SLICE_URN']
     return {"SLICE_URN" : [slice_urn]}
 
 # Extract member urn from options or arguments
