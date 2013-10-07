@@ -640,9 +640,9 @@ def project_urn_extractor(options, arguments):
 def slice_urn_extractor(options, arguments):
     if 'slice_urn' in arguments:
         slice_urn = arguments['slice_urn']
-    elif 'SLICE_URN' in options['fields']:
+    elif 'fields' in options and 'SLICE_URN' in options['fields']:
         slice_urn = options['fields']['SLICE_URN']
-    elif 'SLIVER_INFO_SLICE_URN' in options['fields']:
+    elif 'fields' in options and 'SLIVER_INFO_SLICE_URN' in options['fields']:
         slice_urn = options['fields']['SLIVER_INFO_SLICE_URN']
     elif 'sliver_urn' in arguments:
         db = pm.getService('chdbengine')
