@@ -18,6 +18,7 @@ git checkout chapidev
 cp -r sr ..
 cp -r portal/www/portal ..
 cp bin/migrate_assertions.sh ..
+cp -r bin ..
 cd ..
 
 # clone chapi
@@ -42,4 +43,4 @@ cd ../..
 tar cfpz chapi.tgz chapi
 cp chapi/chapi/tools/install_ch .
 cp chapi/chapi/tools/install_db .
-tar cfp chapi_installer.tar abac.tar.gz chapi.tgz gcf.tar.gz install_ch install_db update-1.sql sr portal migrate_assertions.sh
+tar cfp chapi_installer.tar abac.tar.gz chapi.tgz gcf.tar.gz install_ch install_db update-1.sql sr portal migrate_assertions.sh bin
