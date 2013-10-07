@@ -644,6 +644,15 @@ def slice_urn_extractor(options, arguments):
         slice_urn = options['fields']['SLICE_URN']
     elif 'SLIVER_INFO_SLICE_URN' in options['fields']:
         slice_urn = options['fields']['SLIVER_INFO_SLICE_URN']
+    elif 'sliver_urn' in arguments:
+        db = pm.getService('chdbengine')
+        session = db.getSession()
+        q = session.query(db.SLIVER_INFO_TABLE.c.slice_urn)
+        q = q.filter(db.SLIVER_INFO_TABLE.c.sliver_urn == arguments['sliver_urn'])
+        rows = q.all()
+        session.close()
+        if len(rows) > 0:
+            slice_urn = rows[0].slice_urn
     return {"SLICE_URN" : [slice_urn]}
 
 # Extract member urn from options or arguments
