@@ -390,6 +390,46 @@ class MAv1Handler(HandlerBase):
             return self._errorReturn(e)
 
 
+    # member privilege (private)
+    def add_member_privilege(self, member_uid, privilege, credentials, options):
+        client_cert = self.requestCertificate()
+        method = 'add_member_privilege'
+        try:
+            self._guard.validate_call(client_cert, method,
+                                      credentials, options,
+                                      {'member_uid': member_uid,
+                                       'privilege': privilege})
+            client_cert, options = self._guard.adjust_client_identity(
+                client_cert, credentials, options)
+            results = self._delegate.add_member_privilege(client_cert,
+                                                          member_urn, 
+                                                          privilege,
+                                                          enable_sense,
+                                                          credentials,
+                                                          options)
+            return results
+        except Exception as e:
+            return self._errorReturn(e)
+
+    def revoke_member_privilege(self, member_uid, privilege, credentials, options):
+        client_cert = self.requestCertificate()
+        method = 'revoke_member_privilege'
+        try:
+            self._guard.validate_call(client_cert, method,
+                                      credentials, options,
+                                      {'member_uid': member_uid,
+                                       'privilege': privilege})
+            client_cert, options = self._guard.adjust_client_identity(
+                client_cert, credentials, options)
+            results = self._delegate.revoke_member_privilege(client_cert,
+                                                             member_urn, 
+                                                             privilege,
+                                                             enable_sense,
+                                                             credentials,
+                                                             options)
+            return results
+        except Exception as e:
+            return self._errorReturn(e)
 
 # Base class for implementations of MA API
 # Must be  implemented in a derived class, and that derived class
@@ -462,7 +502,15 @@ class MAv1DelegateBase(DelegateBase):
                              client_urn, authorize_sense):
         raise CHAPIv1NotImplementedError('')
 
-
+    # Private API
     def enable_user(self, client_cert, member_urn, enable_sense, 
                     credentials, options):
+        raise CHAPIv1NotImplementedError('')
+
+    def add_member_privilege(self, client_cert, member_uid, privilege,
+                             credentials, options):
+        raise CHAPIv1NotImplementedError('')
+
+    def revoke_member_privilege(self, client_cert, member_uid, privilege,
+                                credentials, options):
         raise CHAPIv1NotImplementedError('')

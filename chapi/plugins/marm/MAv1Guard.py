@@ -115,6 +115,8 @@ class MAv1Guard(ABACGuardBase):
         'list_authorized_clients' : None,
         'authorize_client' : None,
         'enable_user': None,
+        'add_member_privilege': None,
+        'revoke_member_privilege': None,
         }
 
     # Set of invocation checks indexed by method name
@@ -198,6 +200,14 @@ class MAv1Guard(ABACGuardBase):
 
         # only operator may enable/disable users
         'enable_user' :
+            SubjectInvocationCheck([
+                    "ME.MAY_ENABLE_USER<-ME.IS_OPERATOR", 
+                    ], None, standard_subject_extractor), 
+        'add_member_privilege' :
+            SubjectInvocationCheck([
+                    "ME.MAY_ENABLE_USER<-ME.IS_OPERATOR", 
+                    ], None, standard_subject_extractor), 
+        'revoke_member_privilege' :
             SubjectInvocationCheck([
                     "ME.MAY_ENABLE_USER<-ME.IS_OPERATOR", 
                     ], None, standard_subject_extractor), 
