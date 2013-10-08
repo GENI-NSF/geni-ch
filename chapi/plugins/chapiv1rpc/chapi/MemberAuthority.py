@@ -402,7 +402,7 @@ class MAv1Handler(HandlerBase):
             client_cert, options = self._guard.adjust_client_identity(
                 client_cert, credentials, options)
             results = self._delegate.add_member_privilege(client_cert,
-                                                          member_urn, 
+                                                          member_uid, 
                                                           privilege,
                                                           enable_sense,
                                                           credentials,
@@ -422,7 +422,7 @@ class MAv1Handler(HandlerBase):
             client_cert, options = self._guard.adjust_client_identity(
                 client_cert, credentials, options)
             results = self._delegate.revoke_member_privilege(client_cert,
-                                                             member_urn, 
+                                                             member_uid, 
                                                              privilege,
                                                              enable_sense,
                                                              credentials,

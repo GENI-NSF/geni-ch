@@ -381,6 +381,15 @@ class MAv1Implementation(MAv1DelegateBase):
             session.add(obj)
         session.commit()
 
+    # delete attribute row if it is there
+    def delete_attr(self, session, attr, uid):
+        if len(self.get_attr_for_uid(session, attr, uid)) > 0:
+            q = session.query(MemberAttribute)
+            q = q.filter(MemberAttribute.name == MA.field_mapping[attr])
+            q = q.filter(MemberAttribute.member_id == uid)
+            q.delete()
+        session.commit()
+
     # update or insert into one of the two SSL key tables
     def update_keys(self, session, table, keys, uid):
         if self.get_val_for_uid(session, table, "certificate", uid):
@@ -827,7 +836,7 @@ class MAv1Implementation(MAv1DelegateBase):
         chapi_log_result(MA_LOG_PREFIX, method, result)
         return result
 
-    # enable/disable a user/member
+    # enable/disable a user/member  (private)
     def enable_user(self, member_urn, enable_sense, credentials, options):
         '''Mark a member/user as enabled or disabled.
         IFF enabled_sense is True, then user is unconditionally enabled, otherwise disabled.
@@ -898,3 +907,85 @@ class MAv1Implementation(MAv1DelegateBase):
         else:
             syslog("CUE: user '%s' (%s) disabled" % (client_name, client_urn))
             raise CHAPIv1AuthorizationError("User %s (%s) disabled" % (client_name, client_urn));
+
+
+    #  member_privilege (private)
+    def add_member_privilege(self, cert, member_uid, privilege, credentials, options):
+        '''Mark a member/user as having a particular contextless privilege.
+        privilege must be either OPERATOR or PROJECT_LEAD.'''
+        method = 'add_member_privilege'
+        args = {'member_id' : member_uid,
+                'privilege' : privilege}
+        chapi_log_invocation(MA_LOG_PREFIX, method, [], {}, args)
+
+        syslog(method+' '+member_uid+' '+privilege)
+
+        if not (privilege in ['OPERATOR', 'PROJECT_LEAD']):
+            raise CHAPIv1ArgumentError('Privilege %s undefined' % (privilege))
+
+        session = self.db.getSession()
+
+        # find the old value
+        q = session.query(MemberAttribute.value).\
+            filter(MemberAttribute.member_id == member_uid).\
+            filter(MemberAttribute.name == privilege)
+        rows = q.all()
+
+        if len(rows)==0:
+            was_enabled = False
+        else:
+            was_enabled = (rows[0][0] == 'true')
+
+        if not was_enabled:
+            self.update_attr(session, privilege, 'true', member_id, 'f')
+            session.commit()
+
+        session.close()
+
+        # log_event
+        msg = "Setting member %s privilege %s" %  (member_uid, privilege)
+        attribs = {"MEMBER" : member_uid}
+        self.logging_service.log_event(msg, attribs, member_uid)
+
+        result = self._successReturn(was_enabled)
+        chapi_log_result(MA_LOG_PREFIX, method, result)
+        return result
+
+    def revoke_member_privilege(self, cert, member_uid, privilege, credentials, options):
+        '''Mark a member/user as not having a particular contextless privilege.
+        privilege must be either OPERATOR or PROJECT_LEAD.'''
+        method = 'revoke_member_privilege'
+        args = {'member_id' : member_uid,
+                'privilege' : privilege}
+        chapi_log_invocation(MA_LOG_PREFIX, method, [], {}, args)
+        syslog(method+' '+member_uid+' '+privilege)
+
+        if not (privilege in ['OPERATOR', 'PROJECT_LEAD']):
+            raise CHAPIv1ArgumentError('Privilege %s undefined' % (privilege))
+
+        session = self.db.getSession()
+
+        # find the old value
+        q = session.query(MemberAttribute.value).\
+            filter(MemberAttribute.member_id == member_uid).\
+            filter(MemberAttribute.name == privilege)
+        rows = q.all()
+
+        if len(rows)==0:
+            was_enabled = False
+        else:
+            was_enabled = (rows[0][0] == 'true')
+
+        if was_enabled:
+            self.delete_attr(session, privilege, member_id)
+
+        session.close()
+
+        # log_event
+        msg = "Revoking member %s privilege %s" %  (member_uid, privilege)
+        attribs = {"MEMBER" : member_uid}
+        self.logging_service.log_event(msg, attribs, member_uid)
+
+        result = self._successReturn(was_enabled)
+        chapi_log_result(MA_LOG_PREFIX, method, result)
+        return result
