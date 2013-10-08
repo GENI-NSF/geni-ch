@@ -38,7 +38,7 @@ class MAClientFramework(Framework_Base):
         self.fwtype = "MA Ciient"
         self.opts = opts
 
-def parseOptions():
+def parseOptions(args):
     parser = optparse.OptionParser()
 
     home = os.getenv('HOME')
@@ -80,11 +80,20 @@ def parseOptions():
                           help="List of comma-separated credential files", \
                           default="")
 
-    [opts, args] = parser.parse_args(sys.argv)
+    [opts, args] = parser.parse_args(args)
     if len(opts.credentials) > 0:
+        cred_structs = []
         credentials = "".join(opts.credentials.split())
         credentials = credentials.split(',')
-        opts.credentials = credentials
+        for credential in credentials:
+            cred_parts = credential.split(':')
+            cred_file = cred_parts[0]
+            cred_type = cred_parts[1]
+            cred_data = open(cred_file).read()
+            cred_struct= {'geni_type' : cred_type, 'geni_version' : 1, 
+                          'geni_value' : cred_data}
+            cred_structs.append(cred_struct)
+        opts.credentials = cred_structs
     else:
         opts.credentials = []
 
@@ -93,17 +102,18 @@ def parseOptions():
 
     return opts, args
 
-def main():
+def main(args = sys.argv, do_print=True):
 
-    opts, args = parseOptions()
+    opts, args = parseOptions(args)
     client_options = json.loads(opts.options)
     if opts.options_file:
         client_options = json.load(open(opts.options_file, 'r'))
     client_attributes = json.loads(opts.attributes)
     if opts.attributes_file:
         client_attributes = json.load(open(opts.attributes_file, 'r'))
-    print "CREDS = " + str(opts.credentials)
-    print "OPTIONS = " + str(client_options)
+    if do_print:
+        print "CREDS = " + str(opts.credentials)
+        print "OPTIONS = " + str(client_options)
     suppress_errors = None
     reason = "Testing"
     config = {'cert' : opts.cert, 'key' : opts.key}
@@ -263,9 +273,10 @@ def main():
         (result, msg) = _do_ssl(framework, suppress_errors, reason, fcn, \
                                     opts.credentials, client_options)
 
-    print "RESULT = " + str(result)
-    if msg:
-        print "MSG = " + str(msg)
+    if do_print:
+        print "RESULT = " + str(result)
+        if msg:
+            print "MSG = " + str(msg)
     
 if __name__ == "__main__":
     sys.exit(main())

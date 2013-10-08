@@ -25,7 +25,7 @@ import optparse
 import os, sys
 import sfa.trust.certificate
 from cert_utils import *
-from ABACManager import ABACManager
+from ABACManager import *
 
 
 # Determine if the given method context is 'speaks-for'
@@ -51,7 +51,7 @@ from ABACManager import ABACManager
 #   agent_cert: Cert of actual (spoken for) speaker if 'speaks for', 
 #        client_cert if not.
 #   revised_options : Original options with 
-#       {'speaking-as' : original_client_cert} added if 'speaks for'
+#       {'speaking_as' : original_client_cert} added if 'speaks for'
 def determine_speaks_for(client_cert, credentials, options): 
     revised_options = dict(options) # Make a copy of original options
     agent_cert = client_cert
@@ -83,7 +83,7 @@ def determine_speaks_for(client_cert, credentials, options):
             (not speaks_for_credential and speaking_for):
         raise Exception("Must have both speaks-for-credential and speaking_for option")
 
-    # We are processing aspeaks-for request
+    # We are processing a speaks-for request
 
     # Get the agent_cert
     agent_cert = get_cert_from_credential(speaks_for_credential)
@@ -95,11 +95,14 @@ def determine_speaks_for(client_cert, credentials, options):
     if agent_urn != speaking_for:
         raise Exception("Mismatch: speaking_for %s and agent URN %s" % (speaking_for, agent_urn))
 
-    # The speaks-for credential must assert the statement AGENT.speaks_for(AGENT)<-CLIENT
-    certs_by_name = {"CLIENT" : client_cert, "AGENT" : agent_cert}
+    # The speaks-for credential must assert the statement 
+    # AGENT.speaks_for(AGENT)<-CLIENT
     query = "AGENT.speaks_for(AGENT)<-CLIENT"
-    abac_manager = ABACManager(certs_by_name = certs_by_name, raw_assertions=[speaks_for_credential])
-    ok, proof = abac_manager.query(query)
+    certs_by_name = {"CLIENT" : client_cert, "AGENT" : agent_cert}
+
+    # Run the proof in a separate process to avoid memory issues
+    ok, proof = execute_abac_query(query, certs_by_name, [speaks_for_credential])
+
     if not ok:
         raise Exception("Speaks-For credential does not assert that agent allows client to speak for agent")
 
