@@ -275,6 +275,7 @@ def lookup_operator_privilege(user_urn):
     rows = q.all()
     session.close()
     is_operator = (len(rows)>0)
+    syslog('lookup_operator_privilege: '+user_urn+" = "+str(is_operator))
     cache[user_urn] = is_operator
     return is_operator
 

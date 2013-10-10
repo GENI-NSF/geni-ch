@@ -86,6 +86,9 @@ field_mapping = {
     "_GENI_MEMBER_INSIDE_PRIVATE_KEY": "private_key",
     "_GENI_USER_CREDENTIAL": "foo",
     "_GENI_CREDENTIALS": "foo",
+    # these are special - used in the database but not fields specifiable in the API
+    "PROJECT_LEAD": "PROJECT_LEAD",
+    "OPERATOR": "OPERATOR"
 }
 
 key_fields = ["KEY_MEMBER", "KEY_ID", "KEY_PUBLIC", "KEY_PRIVATE", 
