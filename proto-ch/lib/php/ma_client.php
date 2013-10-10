@@ -316,7 +316,7 @@ function ma_lookup_members_by_identifying($ma_url, $signer, $identifying_key, $i
   foreach ($pubres as $urn => $pubrow) {
     //    error_log("   URN = " . $urn);
     //    error_log("   PUBROW = " . print_r($pubrow, true));
-    $id = $pubrow['MEMBER_UID'];
+    $id = $pubrow['_GENI_IDENTIFYING_MEMBER_UID'];
     $m = new Member($id);
     $m->init_from_record($pubrow);
     $m->init_from_record($idrow[$urn]);
@@ -535,7 +535,7 @@ function lookup_members_by_email($ma_url, $signer, $member_emails)
 {
   $client = XMLRPCClient::get_client($ma_url, $signer);
   $options = array('match'=> array('MEMBER_EMAIL'=>$member_emails),
-                   'filter'=>array('MEMBER_UID', 'MEMBER_EMAIL'));
+                   'filter'=>array('_GENI_IDENTIFYING_MEMBER_UID', 'MEMBER_EMAIL'));
 
   //error_log( " lmbe = " . print_r($member_emails, true));
   $res = $client->lookup_identifying_member_info($client->creds(), $options);
@@ -544,7 +544,7 @@ function lookup_members_by_email($ma_url, $signer, $member_emails)
     if (! $ret[$vals['MEMBER_EMAIL']]) {
       $ret[$vals['MEMBER_EMAIL']] = array();
     }
-    $ret[$vals['MEMBER_EMAIL']][] = $vals['MEMBER_UID'];
+    $ret[$vals['MEMBER_EMAIL']][] = $vals['_GENI_IDENTIFYING_MEMBER_UID'];
   }
   return $ret;
 }

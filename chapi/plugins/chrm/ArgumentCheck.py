@@ -59,12 +59,14 @@ class FieldsArgumentCheck(ArgumentCheck):
     #   addtional fields
     # argument_types: dictionary of additional arguments (not in options) and their required types
     def __init__(self, field_option, additional_required_options, \
-                     mandatory_fields, supplemental_fields, argument_types=None):
+                     mandatory_fields, supplemental_fields, \
+                     argument_types=None, matchable = []):
         self._field_option = field_option
         self._additional_required_options = additional_required_options
         self._mandatory_fields = mandatory_fields
         self._supplemental_fields = supplemental_fields
         self._argument_types = argument_types
+        self._matchable_fields = matchable
 
     def validate(self, options, arguments):
 
@@ -94,22 +96,26 @@ class FieldsArgumentCheck(ArgumentCheck):
     # Make sure all field name/value pairs are recognized and of proper type
     def validateFieldValueDictionary(self, field_values):
 
-        for field in field_values.keys():
-            value = field_values[field]
-            if not field in self._mandatory_fields and \
-                    not field in self._supplemental_fields:
+        for field, value in field_values.iteritems():
+            if self._matchable_fields and not field in self._matchable_fields:
+                raise CHAPIv1ArgumentError("Unrecognized field : " + field)
+            if not (self._matchable_fields or field in self._mandatory_fields \
+                    or field in self._supplemental_fields):
                 raise CHAPIv1ArgumentError("Unrecognized field : " + field)
             self.validateFieldValueFormat(field, value)
 
     # Validate that a given field has proper format by looking up type
     def validateFieldValueFormat(self, field, value):
-        field_type = None
-        if field in self._mandatory_fields and 'TYPE' in self._mandatory_fields[field]:
+        if field in self._mandatory_fields and \
+                 'TYPE' in self._mandatory_fields[field]:
             field_type = self._mandatory_fields[field]['TYPE']
-        if not field_type:
-            if field in self._supplemental_fields and 'TYPE' in self._supplemental_fields[field]:
-                field_type = self._supplemental_fields[field]['TYPE']
-        if not field_type:
+        elif field in self._supplemental_fields and \
+                 'TYPE' in self._supplemental_fields[field]:
+	    field_type = self._supplemental_fields[field]['TYPE']
+        elif field in self._matchable_fields and \
+                 'TYPE' in self._matchable_fields[field]:
+            field_type = self._matchable_fields[field]['TYPE']
+        else:
             raise CHAPIv1ArgumentError("No type defined for field: %s" % field)
         self.validateTypedField(field, field_type, value)
 
@@ -223,10 +229,9 @@ class FieldsArgumentCheck(ArgumentCheck):
 #        - 'filter' [FIELD, FIELD, FIELD]
 class LookupArgumentCheck(FieldsArgumentCheck):
 
-    def __init__(self, mandatory_fields, supplemental_fields):
-        FieldsArgumentCheck.__init__(self, 'match', \
-                                         None, \
-                                         mandatory_fields, supplemental_fields)
+    def __init__(self, mandatory_fields, supplemental_fields, matchable = []):
+        FieldsArgumentCheck.__init__(self, 'match', None, mandatory_fields, \
+                                     supplemental_fields, None, matchable)
 
     def validate(self, options, arguments):
         FieldsArgumentCheck.validate(self, options, arguments)
@@ -241,10 +246,9 @@ class LookupArgumentCheck(FieldsArgumentCheck):
 #        - 'filter' [FIELD, FIELD, FIELD]
 class LookupArgumentCheckMatchOptional(FieldsArgumentCheck):
 
-    def __init__(self, mandatory_fields, supplemental_fields):
-        FieldsArgumentCheck.__init__(self, None,
-                                         None, \
-                                         mandatory_fields, supplemental_fields)
+    def __init__(self, mandatory_fields, supplemental_fields, matchable = None):
+        FieldsArgumentCheck.__init__(self, None, None, mandatory_fields, \
+                                     supplemental_fields, None, matchable)
 
     def validate(self, options, arguments):
         FieldsArgumentCheck.validate(self, options, arguments)
