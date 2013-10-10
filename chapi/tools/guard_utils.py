@@ -268,7 +268,7 @@ def lookup_operator_privilege(user_urn):
     q = q.filter(ma1.c.member_id == ma2.c.member_id)
     q = q.filter(ma1.c.name == 'urn')
     q = q.filter(ma1.c.value == user_urn)
-    q = q.filter(ma2.c.name == 'operator')
+    q = q.filter(ma2.c.name == 'OPERATOR')
 
 #    print "Q = " + str(q)
 
@@ -297,7 +297,7 @@ def lookup_pi_privilege(user_urn):
     q = q.filter(ma1.c.member_id == ma2.c.member_id)
     q = q.filter(ma1.c.name == 'urn')
     q = q.filter(ma1.c.value == user_urn)
-    q = q.filter(ma2.c.name == 'project_lead')
+    q = q.filter(ma2.c.name == 'PROJECT_LEAD')
 
 #    print "Q = " + str(q)
 
