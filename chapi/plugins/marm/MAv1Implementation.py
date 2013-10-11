@@ -989,3 +989,87 @@ class MAv1Implementation(MAv1DelegateBase):
         result = self._successReturn(was_enabled)
         chapi_log_result(MA_LOG_PREFIX, method, result)
         return result
+
+    #  member_attribute (private)
+    def add_member_attribute(self, cert, member_urn, attr_name, attr_value, attr_self_assert,
+                             credentials, options):
+        method = 'add_member_attribute'
+        args = {'member_urn' : member_urn,
+                'name' : attr_name,
+                'value' : attr_value,
+                'self_assert' : attr_self_assert}
+        chapi_log_invocation(MA_LOG_PREFIX, method, [], {}, args)
+
+        syslog(method+' '+member_urn+' '+attr_name+' = '+attr_value)
+
+        session = self.db.getSession()
+        # find the uid
+        uids = self.get_uids_for_attribute(session, "MEMBER_URN", member_urn)
+        if len(uids) == 0:
+            session.close()
+            raise CHAPIv1ArgumentError('No member with URN ' + member_urn)
+        member_uid = uids[0]
+
+        # find the old value
+        q = session.query(MemberAttribute.value).\
+            filter(MemberAttribute.member_id == member_uid).\
+            filter(MemberAttribute.name == attr_name)
+        rows = q.all()
+
+        was_defined = (len(rows)==0)
+        old_value = None
+        if was_defined:
+            old_value = rows[0][0]
+
+        self.update_attr(session, attr_name, attr_value, member_id, attr_self_assert)
+        session.commit()
+        session.close()
+
+        # log_event
+        msg = "Setting member %s attribute %s to %s" %  (member_urn, attr_name, attr_value )
+        attribs = {"MEMBER" : member_urn}
+        self.logging_service.log_event(msg, attribs, member_urn)
+
+        result = self._successReturn(old_value)
+        chapi_log_result(MA_LOG_PREFIX, method, result)
+        return result
+
+    def remove_member_attribute(self, cert, member_urn, attr_name, credentials, options):
+        method = 'remove_member_attribute'
+        args = {'member_urn' : member_urn,
+                'name' : attr_name}
+        chapi_log_invocation(MA_LOG_PREFIX, method, [], {}, args)
+        syslog(method+' '+member_urn+' '+attr_name)
+
+        session = self.db.getSession()
+        # find the uid
+        uids = self.get_uids_for_attribute(session, "MEMBER_URN", member_urn)
+        if len(uids) == 0:
+            session.close()
+            raise CHAPIv1ArgumentError('No member with URN ' + member_urn)
+        member_uid = uids[0]
+
+        # find the old value
+        q = session.query(MemberAttribute.value).\
+            filter(MemberAttribute.member_id == member_uid).\
+            filter(MemberAttribute.name == privilege)
+        rows = q.all()
+
+        was_defined = (len(rows)==0)
+        old_value = None
+        if was_defined:
+            old_value = rows[0][0]
+
+        if not was_defined:
+            self.delete_attr(session, attr_name, member_id)
+
+        session.close()
+
+        # log_event
+        msg = "Removing member %s attribute %s" %  (member_urn, attr_name)
+        attribs = {"MEMBER" : member_urn}
+        self.logging_service.log_event(msg, attribs, member_urn)
+
+        result = self._successReturn(old_value)
+        chapi_log_result(MA_LOG_PREFIX, method, result)
+        return result
