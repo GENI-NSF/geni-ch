@@ -431,6 +431,63 @@ class MAv1Handler(HandlerBase):
         except Exception as e:
             return self._errorReturn(e)
 
+    # add/remove_member_attribute (private)
+
+    # This call is protected
+    # Update given member with new data provided in options
+    # Authorized by client cert and credentials
+    def add_member_attribute(self,
+                             member_urn, name, value, self_asserted,
+                             credentials, options):
+        client_cert = self.requestCertificate()
+        method = 'add_member_attribute'
+        try:
+            client_cert, options = \
+                self._guard.adjust_client_identity(client_cert,
+                                                   credentials, options)
+            self._guard.validate_call(client_cert, 
+                                      method,
+                                      credentials, 
+                                      options,
+                                      {'member_urn' : member_urn})
+            results = self._delegate.add_member_attribute(client_cert, member_urn, name, value,
+                                                          self_asserted,
+                                                          credentials, options)
+            if results['code'] == NO_ERROR:
+                results_value = results['value']
+                new_results_value = self._guard.protect_results(client_cert, method, credentials, results_value)
+                results = self._successReturn(new_results_value)
+
+            return results
+        except Exception as e:
+            return self._errorReturn(e)
+
+    def remove_member_attribute(self, 
+                                member_urn, name,
+                                credentials, options):
+        client_cert = self.requestCertificate()
+        method = 'remove_member_attribute'
+        try:
+            client_cert, options = \
+                self._guard.adjust_client_identity(client_cert,
+                                                   credentials, options)
+            self._guard.validate_call(client_cert, 
+                                      method,
+                                      credentials, 
+                                      options,
+                                      {'member_urn' : member_urn})
+            results = self._delegate.remove_member_attribute(client_cert, member_urn, name,
+                                                             credentials, options)
+            if results['code'] == NO_ERROR:
+                results_value = results['value']
+                new_results_value = self._guard.protect_results(client_cert, method, credentials, results_value)
+                results = self._successReturn(new_results_value)
+
+            return results
+        except Exception as e:
+            return self._errorReturn(e)
+
+
 # Base class for implementations of MA API
 # Must be  implemented in a derived class, and that derived class
 # must call setDelegate on the handler
@@ -513,4 +570,12 @@ class MAv1DelegateBase(DelegateBase):
 
     def revoke_member_privilege(self, client_cert, member_uid, privilege,
                                 credentials, options):
+        raise CHAPIv1NotImplementedError('')
+
+    def add_member_attribute(self, client_cert, member_urn, att_name, \
+                                 att_value, att_self_asserted, credentials, options):
+        raise CHAPIv1NotImplementedError('')
+
+    def remove_member_attribute(self, client_cert, member_urn, att_name, \
+                                    credentials, options):
         raise CHAPIv1NotImplementedError('')
