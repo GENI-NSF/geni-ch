@@ -157,7 +157,7 @@ class MAv1Guard(ABACGuardBase):
                 "ME.MAY_GET_CREDENTIALS<-ME.IS_AUTHORITY", 
                 "ME.MAY_GET_CREDENTIALS<-ME.IS_OPERATOR",
                 "ME.MAY_GET_CREDENTIALS_$SUBJECT<-ME.IS_$SUBJECT" 
-                ], None, standard_subject_extractor),
+                ], None, member_urn_extractor),
         'update_member_info' : \
             SubjectInvocationCheck([
             "ME.MAY_UPDATE_MEMBER_INFO<-ME.IS_OPERATOR", 
