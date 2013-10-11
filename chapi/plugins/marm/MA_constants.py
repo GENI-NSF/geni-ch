@@ -34,22 +34,24 @@ standard_fields = {
 
 optional_fields = {
     "_GENI_MEMBER_DISPLAYNAME": {"TYPE": "STRING", "CREATE": "ALLOWED", \
-                                "UPDATE": True, "PROTECT": "IDENTIFYING"},
+               "OBJECT": "MEMBER", "UPDATE": True, "PROTECT": "IDENTIFYING"},
     "_GENI_MEMBER_PHONE_NUMBER": {"TYPE": "STRING", "CREATE": "ALLOWED", \
-                                "UPDATE": True, "PROTECT": "IDENTIFYING"},
+               "OBJECT": "MEMBER", "UPDATE": True, "PROTECT": "IDENTIFYING"},
     "_GENI_MEMBER_AFFILIATION": {"TYPE": "STRING", "CREATE": "ALLOWED", \
-                               "UPDATE": True, "PROTECT": "IDENTIFYING"},
+              "OBJECT": "MEMBER", "UPDATE": True, "PROTECT": "IDENTIFYING"},
     "_GENI_MEMBER_EPPN": {"TYPE": "STRING", "CREATE": "ALLOWED", \
-                        "UPDATE": True, "PROTECT": "IDENTIFYING"},
-    "_GENI_MEMBER_SSL_PUBLIC_KEY": {"TYPE": "KEY"},
-    "_GENI_MEMBER_SSL_CERTIFICATE": {"TYPE": "CERTIFICATE"},
-    "_GENI_MEMBER_SSL_PRIVATE_KEY": {"TYPE": "KEY", "PROTECT": "PRIVATE"},
-    "_GENI_MEMBER_INSIDE_PUBLIC_KEY": {"TYPE": "KEY"},
-    "_GENI_MEMBER_INSIDE_CERTIFICATE": {"TYPE": "CERTIFICATE"},
-    "_GENI_MEMBER_INSIDE_PRIVATE_KEY": {"TYPE": "KEY", "PROTECT": "PRIVATE"},
-    "_GENI_USER_CREDENTIAL": {"TYPE": "CREDENTIALS"},
-    "_GENI_CREDENTIALS": {"TYPE": "CREDENTIALS"},
-    "_GENI_IDENTIFYING_MEMBER_UID": {"TYPE" : "UID", "UPDATE" : False, "PROTECT" : "IDENTIFYING"},
+       "OBJECT": "MEMBER", "UPDATE": True, "PROTECT": "IDENTIFYING"},
+    "_GENI_MEMBER_SSL_PUBLIC_KEY": {"OBJECT": "MEMBER", "TYPE": "KEY"},
+    "_GENI_MEMBER_SSL_CERTIFICATE": {"OBJECT": "MEMBER", \
+                  "TYPE": "CERTIFICATE"},
+    "_GENI_MEMBER_SSL_PRIVATE_KEY": {"OBJECT": "MEMBER", "TYPE": "KEY", "PROTECT": "PRIVATE"},
+    "_GENI_MEMBER_INSIDE_PUBLIC_KEY": {"OBJECT": "MEMBER", "TYPE": "KEY"},
+    "_GENI_MEMBER_INSIDE_CERTIFICATE": {"OBJECT": "MEMBER", "TYPE": "CERTIFICATE"},
+    "_GENI_MEMBER_INSIDE_PRIVATE_KEY": {"OBJECT": "MEMBER", "TYPE": "KEY", "PROTECT": "PRIVATE"},
+    "_GENI_USER_CREDENTIAL": {"OBJECT": "MEMBER", "TYPE": "CREDENTIALS"},
+    "_GENI_CREDENTIALS": {"OBJECT": "MEMBER", "TYPE": "CREDENTIALS"},
+    "_GENI_IDENTIFYING_MEMBER_UID": {"OBJECT": "MEMBER", "TYPE" : "UID", \
+          "UPDATE" : False, "PROTECT" : "IDENTIFYING"},
     # TODO: perhaps allow _GENI_MEMBER_ENABLED?
 }
 
@@ -65,8 +67,9 @@ standard_key_fields = {
 }
 
 optional_key_fields = {
-    "_GENI_KEY_FILENAME" : \
-        {"TYPE" : "STRING", "UPDATE" : True, "CREATE" : "ALLOWED"}
+    "_GENI_KEY_FILENAME" : {"OBJECT" : "KEY", "TYPE" : "STRING", \
+            "UPDATE" : True, "CREATE" : "ALLOWED"},
+    "_GENI_KEY_MEMBER_UID" : {"OBJECT" : "KEY", "TYPE" : "UID"}
 }
     
     # Mapping from external to internal data schema
@@ -141,11 +144,6 @@ private_fields = [
 match_fields = [
     "MEMBER_URN", "MEMBER_UID", "MEMBER_FIRSTNAME", "MEMBER_LASTNAME",
     "MEMBER_USERNAME", "MEMBER_EMAIL"
-]
-
-key_fields = [
-    "KEY_MEMBER", "KEY_ID", "KEY_PUBLIC", "KEY_PRIVATE", "KEY_DESCRIPTION",
-    "_GENI_KEY_MEMBER_UID", "_GENI_KEY_FILENAME"
 ]
 
 required_create_key_fields = ["KEY_PUBLIC"]
