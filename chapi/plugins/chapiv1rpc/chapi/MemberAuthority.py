@@ -205,7 +205,7 @@ class MAv1Handler(HandlerBase):
 
     # KEY service methods
 
-    def create_key(self, member_urn, credentials, options):
+    def create_key(self, credentials, options):
         """Create a record for a key pair for given member
         Arguments:
             member_urn: URN of member for which to retrieve credentials
@@ -223,9 +223,8 @@ class MAv1Handler(HandlerBase):
                 self._guard.adjust_client_identity(client_cert, \
                                                        credentials, options)
             self._guard.validate_call(client_cert, method,
-                                      credentials, options, \
-                                          {'member_urn' : member_urn})
-            results = self._delegate.create_key(client_cert, member_urn, \
+                                      credentials, options, {})
+            results = self._delegate.create_key(client_cert, \
                                                     credentials, options)
             if results['code'] == NO_ERROR:
                 results_value = results['value']
@@ -557,7 +556,7 @@ class MAv1DelegateBase(DelegateBase):
 
     # KEY service methods
 
-    def create_key(self, client_cert, member_urn, credentials, options):
+    def create_key(self, client_cert, credentials, options):
         raise CHAPIv1NotImplementedError('')
 
     def delete_key(self, client_cert, member_urn, key_id, credentials, options):

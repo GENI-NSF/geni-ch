@@ -146,8 +146,9 @@ match_fields = [
     "MEMBER_USERNAME", "MEMBER_EMAIL"
 ]
 
-required_create_key_fields = ["KEY_PUBLIC"]
+required_create_key_fields = ["KEY_PUBLIC", "KEY_MEMBER"]
 allowed_create_key_fields = [
-    "KEY_PUBLIC", "KEY_PRIVATE", "KEY_DESCRIPTION", "_GENI_KEY_FILENAME"
+    "KEY_PUBLIC", "KEY_PRIVATE", "KEY_DESCRIPTION",
+    "_GENI_KEY_FILENAME", "KEY_MEMBER"
 ]
 updatable_key_fields = ["KEY_DESCRIPTION", "_GENI_KEY_FILENAME"]

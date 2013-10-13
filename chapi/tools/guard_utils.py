@@ -608,9 +608,12 @@ def standard_subject_extractor(options, arguments):
 # For key info methods, extract the subject from options or arguments
 def key_subject_extractor(options, arguments):
     extracted = {}
-    if 'match' not in options:
-        raise CHAPIv1ArgumentError("No match option for query")
-    match_option = options['match']
+    if 'match' in options:
+        match_option = options['match']
+    elif 'fields' in options:
+        match_option = options['fields']
+    else:
+        raise CHAPIv1ArgumentError("No match/fields option for query")
     if 'KEY_MEMBER' in match_option:
         member_urns = match_option['KEY_MEMBER']
         if not isinstance(member_urns, list): member_urns = [member_urns]

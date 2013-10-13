@@ -540,10 +540,10 @@ class MAv1Implementation(MAv1DelegateBase):
 
     # Implementation of KEY Service methods
 
-    def create_key(self, client_cert, member_urn, credentials, options):
+    def create_key(self, client_cert, credentials, options):
         
         method = 'create_key'
-        args = {'member_urn' : member_urn}
+        args = {}
         chapi_log_invocation(MA_LOG_PREFIX, method, credentials, options, args)
 
        # Check that all the fields are allowed to be updated
@@ -552,6 +552,8 @@ class MAv1Implementation(MAv1DelegateBase):
         fields = options['fields']
         validate_fields(fields, MA.required_create_key_fields, \
                             MA.allowed_create_key_fields)
+        member_urn = fields['KEY_MEMBER']
+        del fields['KEY_MEMBER']
         create_fields = \
             convert_dict_to_internal(fields, MA.key_field_mapping)
 

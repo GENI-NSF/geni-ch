@@ -99,8 +99,7 @@ class MAv1Guard(ABACGuardBase):
             CreateArgumentCheck(select_fields(MA.standard_key_fields, \
                                            MA.allowed_create_key_fields), \
                                     select_fields(MA.optional_key_fields, \
-                                           MA.allowed_create_key_fields),
-                                {'member_urn': 'URN'}), 
+                                           MA.allowed_create_key_fields)), 
         'delete_key' : \
             None,
         'update_key' : \
@@ -167,7 +166,7 @@ class MAv1Guard(ABACGuardBase):
             SubjectInvocationCheck([
                 "ME.MAY_CREATE_KEY<-ME.IS_OPERATOR",
                 "ME.MAY_CREATE_KEY_$SUBJECT<-ME.IS_$SUBJECT",
-                ], None, member_urn_extractor), 
+                ], None, key_subject_extractor), 
         'delete_key' : \
             SubjectInvocationCheck([
                 "ME.MAY_DELETE_KEY<-ME.IS_OPERATOR",
