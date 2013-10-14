@@ -183,7 +183,7 @@ class MAv1Guard(ABACGuardBase):
                 "ME.MAY_LOOKUP_KEYS<-ME.IS_OPERATOR", 
                 "ME.MAY_LOOKUP_KEYS_$SUBJECT<-ME.IS_$SUBJECT",
                 "ME.MAY_LOOKUP_KEYS_$SUBJECT<-ME.SHARES_SLICE_$SUBJECT", 
-                ], assert_shares_slice, key_subject_extractor), 
+                ], assert_shares_slice, key_subject_extractor, True), 
         'create_certificate' : 
             SubjectInvocationCheck([
                 "ME.MAY_CREATE_CERTIFICATE<-ME.IS_OPERATOR",
