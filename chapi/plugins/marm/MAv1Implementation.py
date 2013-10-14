@@ -23,7 +23,7 @@
 
 # Implementation of the Member Authority
 
-import MA_constants as MA
+import tools.MA_constants as MA
 from chapi.MemberAuthority import MAv1DelegateBase
 from chapi.Exceptions import *
 import chapi.Parameters

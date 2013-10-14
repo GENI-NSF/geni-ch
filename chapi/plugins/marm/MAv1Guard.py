@@ -23,7 +23,7 @@
 
 from ABACGuard import *
 from ArgumentCheck import *
-import MA_constants as MA
+import tools.MA_constants as MA
 
 # Special class to make sure no one can ask for SSH private keys
 # other that for self
@@ -183,7 +183,7 @@ class MAv1Guard(ABACGuardBase):
                 "ME.MAY_LOOKUP_KEYS<-ME.IS_OPERATOR", 
                 "ME.MAY_LOOKUP_KEYS_$SUBJECT<-ME.IS_$SUBJECT",
                 "ME.MAY_LOOKUP_KEYS_$SUBJECT<-ME.SHARES_SLICE_$SUBJECT", 
-                ], assert_shares_slice, key_subject_extractor), 
+                ], assert_shares_slice, key_subject_extractor, True), 
         'create_certificate' : 
             SubjectInvocationCheck([
                 "ME.MAY_CREATE_CERTIFICATE<-ME.IS_OPERATOR",

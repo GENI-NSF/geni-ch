@@ -23,7 +23,7 @@
 
 from ABACGuard import *
 from ArgumentCheck import *
-import SA_constants as SA
+import tools.SA_constants as SA
 
 # Specific guard for GPO SA
 # Provide a set of invocation checks and row checks per method

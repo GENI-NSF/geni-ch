@@ -69,12 +69,14 @@ class InvocationCheck(object):
 # the subjects of a given method invocation
 class SubjectInvocationCheck(InvocationCheck):
 
-    def __init__(self, policies, attribute_extractors, subject_extractor):
+    def __init__(self, policies, attribute_extractors,
+                 subject_extractor, pass_empty_subject = False):
         self._policies = policies
         self._attribute_extractors = attribute_extractors
         if attribute_extractors and not isinstance(attribute_extractors, list): 
             self._attribute_extractors = [attribute_extractors]
         self._subject_extractor = subject_extractor
+        self._pass_empty_subject = pass_empty_subject
         self._subjects = None
         self.config = pm.getService('config')
         self.key_file = self.config.get("chapiv1rpc.ch_key")
@@ -129,6 +131,9 @@ class SubjectInvocationCheck(InvocationCheck):
             subjects_of_type = self._subjects[subject_type]
             if not isinstance(subjects_of_type, list) : 
                 subjects_of_type = [subjects_of_type]
+            # empty subject list means not returning anything, so okay          
+            if not subjects_of_type and self._pass_empty_subject:
+                return
 
             # Register assertions for the user 
             if self._attribute_extractors:
