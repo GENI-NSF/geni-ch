@@ -13,13 +13,15 @@ set -x
 
 # untar everything in the right place
 tar pxfz chapi.tgz -C /usr/share/geni-ch
-tar pxfz gcf.tar.gz -C /usr/share/geni-ch
+#tar pxfz gcf.tar.gz -C /usr/share/geni-ch
+GCFDIR=$(readlink /usr/share/geni-ch/portal/gcf)
+ln -s $GCFDIR /usr/share/geni-ch/gcf
 tar xfz abac.tar.gz -C /usr/share/geni-ch
-mv /usr/share/geni-ch/gcf-2.3.3 /usr/share/geni-ch/gcf
+#mv /usr/share/geni-ch/gcf-2.3.3 /usr/share/geni-ch/gcf
 mv /usr/share/geni-ch/abac-0.1.5 /usr/share/geni-ch/abac
-cp /usr/share/geni-ch/chapi/proto-ch/lib/php/*.php /usr/share/geni-ch/lib/php
-cp sr/certs/* /usr/share/geni-ch/sr/certs/
-cp portal/* /var/www/secure/
+#cp /usr/share/geni-ch/chapi/proto-ch/lib/php/*.php /usr/share/geni-ch/lib/php
+#cp sr/certs/* /usr/share/geni-ch/sr/certs/
+#cp portal/* /var/www/secure/
 cp /usr/share/geni-ch/chapi/chapi/tools/.bashrc /usr/share/geni-ch/
 
 # patch the authority parameter
