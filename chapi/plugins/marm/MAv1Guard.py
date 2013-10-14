@@ -108,7 +108,7 @@ class MAv1Guard(ABACGuardBase):
                                     select_fields(MA.optional_key_fields, \
                                                       MA.updatable_key_fields),
                                 {'member_urn' : 'URN', 'key_id' : 'STRING'}),
-        'lookup_key' : \
+        'lookup_keys' : \
             LookupArgumentCheck(MA.standard_key_fields, \
                                     MA.optional_key_fields),
         'create_certificate' : \
