@@ -59,7 +59,7 @@ standard_plus_optional = dict(standard_fields.items() + optional_fields.items())
 
 standard_key_fields = { 
     "KEY_MEMBER" : {"TYPE" : "URN", "CREATE" : "REQUIRED"}, \
-    "KEY_ID" : {"TYPE" : "UID"}, \
+    "KEY_ID" : {"TYPE" : "STRING"}, \
     "KEY_PUBLIC" : {"TYPE" : "KEY", "CREATE" : "REQUIRED"},  \
     "KEY_PRIVATE" : {"TYPE" : "KEY", "CREATE" : "ALLOWED"}, \
     "KEY_DESCRIPTION" : \

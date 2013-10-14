@@ -21,7 +21,7 @@
 # IN THE WORK.
 #----------------------------------------------------------------------
 
-import SA_constants as SA
+import tools.SA_constants as SA
 import os
 from sqlalchemy import *
 from chapi.Exceptions import *

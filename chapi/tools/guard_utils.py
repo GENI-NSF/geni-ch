@@ -34,6 +34,8 @@ from geni_constants import *
 from chapi.Memoize import memoize
 from chapi.Exceptions import *
 from syslog import syslog
+import MA_constants as MA
+from dbutils import add_filters
 
 # context support
 _context = threading.local()
@@ -618,11 +620,23 @@ def key_subject_extractor(options, arguments):
         member_urns = match_option['KEY_MEMBER']
         if not isinstance(member_urns, list): member_urns = [member_urns]
         extracted['MEMBER_URN'] = member_urns
-    if '_GENI_KEY_MEMBER_UID' in match_option:
+    elif '_GENI_KEY_MEMBER_UID' in match_option:
         member_uids = match_option['_GENI_KEY_MEMBER_UID']
         if not isinstance(member_uids, list): member_uids = [member_uids]
         member_urns = [convert_member_uid_to_urn(member_uid) for member_uid in member_uids]
         extracted['MEMBER_URN'] = member_urns
+    else:
+        db = pm.getService('chdbengine')
+        session = db.getSession()
+        q = session.query(db.MEMBER_ATTRIBUTE_TABLE.c.value)
+        q = q.filter(db.SSH_KEY_TABLE.c.member_id ==
+                     db.MEMBER_ATTRIBUTE_TABLE.c.member_id)
+        q = q.filter(db.MEMBER_ATTRIBUTE_TABLE.c.name=='urn')
+        q = add_filters(q, match_option, db.SSH_KEY_TABLE, MA.key_field_mapping)
+        rows = q.all()
+        session.close()
+        extracted['MEMBER_URN'] = [row.value for row in rows]
+
     return extracted
         
 

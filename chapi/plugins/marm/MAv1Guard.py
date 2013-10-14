@@ -23,7 +23,7 @@
 
 from ABACGuard import *
 from ArgumentCheck import *
-import MA_constants as MA
+import tools.MA_constants as MA
 
 # Special class to make sure no one can ask for SSH private keys
 # other that for self
