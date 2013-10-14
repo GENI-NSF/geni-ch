@@ -572,7 +572,7 @@ class MAv1Implementation(MAv1DelegateBase):
         session = self.db.getSession()
         ins = self.db.SSH_KEY_TABLE.insert().values(create_fields)
         result = session.execute(ins)
-        key_id = result.inserted_primary_key[0]
+        key_id = str(result.inserted_primary_key[0])
         fields["KEY_ID"] = key_id
         fields["KEY_MEMBER"] = member_urn
 
