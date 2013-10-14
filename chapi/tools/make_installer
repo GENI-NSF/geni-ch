@@ -24,8 +24,10 @@ cd ..
 # clone chapi
 git clone git+ssh://trac.gpolab.bbn.com/srv/git/chapi.git
 
-# get gpo branch of local amsoil repo inside of chapi directory
 cd chapi
+# NOTE: this should be removed after the branch is merged!!!
+git checkout install-chapi
+# get gpo branch of local amsoil repo inside of chapi directory
 git clone git+ssh://trac.gpolab.bbn.com/srv/git/amsoil.git
 mv amsoil AMsoil
 cd AMsoil
