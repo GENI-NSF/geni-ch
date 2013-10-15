@@ -99,12 +99,12 @@ class CHv1Implementation(CHv1DelegateBase):
         "SERVICE_URN": {"TYPE": "URN"},
         "SERVICE_URL": {"TYPE": "URL"},
         "SERVICE_CERTIFICATE": {"TYPE": "CERTIFICATE"},
-        "SERVICE_NAME" : {"TYPE" : "STRING"}
+        "SERVICE_NAME" : {"TYPE" : "STRING"},
+        "SERVICE_DESCRIPTION": {"TYPE" : "STRING"}
         }
 
     supplemental_fields = { 
-        "SERVICE_ID" : {"TYPE" : "INTEGER"},
-        "SERVICE_DESCRIPTION": {"TYPE" : "STRING"}
+        "SERVICE_ID" : {"TYPE" : "INTEGER"}
         }
 
 
