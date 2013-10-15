@@ -63,7 +63,7 @@ class SRv1Handler(CHv1Handler):
         if services['code'] != NO_ERROR:
             return services
         for service in services['value']:
-            if service['SERVICE_ID'] == service_id:
+            if service['_GENI_SERVICE_ID'] == service_id:
                 return self._successReturn(service)
         return self._errorReturn(\
             CHAPIv1DatabaseError("No service of ID %d found" % service_id))
