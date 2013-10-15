@@ -279,7 +279,7 @@ class MAv1Implementation(MAv1DelegateBase):
                     values[col] = self.get_user_credential(session, uid)
                 elif col == "_GENI_CREDENTIALS":
                     values[col] = self.get_all_credentials(session, uid)
-                elif col == "MEMBER_UID":
+                elif col in ["MEMBER_UID", "_GENI_IDENTIFYING_MEMBER_UID"]:
                     values[col] = uid
                 else:
                     vals = None

@@ -72,19 +72,25 @@ class MAv1Guard(ABACGuardBase):
         {
         'lookup_public_member_info' : \
             LookupArgumentCheck(select_fields(MA.standard_fields, \
-                                                  MA.public_fields), \
-                                    select_fields(MA.optional_fields, \
-                                                      MA.public_fields)), 
+                                              MA.public_fields), \
+                                select_fields(MA.optional_fields, \
+                                              MA.public_fields), \
+                                select_fields(MA.standard_plus_optional, \
+                                              MA.match_fields)), 
         'lookup_private_member_info' : \
             LookupArgumentCheck(select_fields(MA.standard_fields, \
-                                                  MA.private_fields), \
-                                    select_fields(MA.optional_fields, \
-                                                      MA.private_fields)), 
+                                              MA.private_fields), \
+                                select_fields(MA.optional_fields, \
+                                              MA.private_fields), \
+                                select_fields(MA.standard_plus_optional, \
+                                              MA.match_fields)), 
         'lookup_identifying_member_info' : \
             LookupArgumentCheck(select_fields(MA.standard_fields, \
-                                                  MA.identifying_fields), \
-                                    select_fields(MA.optional_fields, \
-                                                      MA.identifying_fields)), 
+                                              MA.identifying_fields), \
+                                select_fields(MA.optional_fields, \
+                                              MA.identifying_fields), \
+                                select_fields(MA.standard_plus_optional, \
+                                              MA.match_fields)), 
         'get_credentials' : SimpleArgumentCheck({'member_urn' : 'URN'}),
         'update_member_info' :  \
             UpdateArgumentCheck({}, {}, {'member_urn' : "URN"}),

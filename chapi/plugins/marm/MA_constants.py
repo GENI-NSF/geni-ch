@@ -49,8 +49,11 @@ optional_fields = {
     "_GENI_MEMBER_INSIDE_PRIVATE_KEY": {"TYPE": "KEY", "PROTECT": "PRIVATE"},
     "_GENI_USER_CREDENTIAL": {"TYPE": "CREDENTIALS"},
     "_GENI_CREDENTIALS": {"TYPE": "CREDENTIALS"},
+    "_GENI_IDENTIFYING_MEMBER_UID": {"TYPE" : "UID", "UPDATE" : False, "PROTECT" : "IDENTIFYING"},
     # TODO: perhaps allow _GENI_MEMBER_ENABLED?
 }
+
+standard_plus_optional = dict(standard_fields.items() + optional_fields.items())
 
 standard_key_fields = { 
     "KEY_MEMBER" : {"TYPE" : "URN", "CREATE" : "REQUIRED"}, \
@@ -86,6 +89,8 @@ field_mapping = {
     "_GENI_MEMBER_INSIDE_PRIVATE_KEY": "private_key",
     "_GENI_USER_CREDENTIAL": "foo",
     "_GENI_CREDENTIALS": "foo",
+    "_GENI_IDENTIFYING_MEMBER_UID": "member_id",
+
     # these are special - used in the database but not fields specifiable in the API
     "PROJECT_LEAD": "PROJECT_LEAD",
     "OPERATOR": "OPERATOR"
@@ -127,14 +132,19 @@ public_fields = [
 ]
 
 identifying_fields = [
-    "MEMBER_FIRSTNAME", "MEMBER_LASTNAME", "MEMBER_USERNAME", "MEMBER_EMAIL",
-    "MEMBER_URN", "MEMBER_UID", "_GENI_MEMBER_DISPLAYNAME",
-    "_GENI_MEMBER_PHONE_NUMBER", "_GENI_MEMBER_AFFILIATION", "_GENI_MEMBER_EPPN"
+    "MEMBER_FIRSTNAME", "MEMBER_LASTNAME", "MEMBER_EMAIL",
+    "_GENI_MEMBER_DISPLAYNAME", "_GENI_MEMBER_PHONE_NUMBER",
+    "_GENI_MEMBER_AFFILIATION", "_GENI_MEMBER_EPPN",
+    "_GENI_IDENTIFYING_MEMBER_UID"
 ]
 
 private_fields = [
-    "_GENI_MEMBER_SSL_PRIVATE_KEY", "MEMBER_URN", "MEMBER_UID",
-    "_GENI_MEMBER_INSIDE_PRIVATE_KEY"
+    "_GENI_MEMBER_SSL_PRIVATE_KEY", "_GENI_MEMBER_INSIDE_PRIVATE_KEY"
+]
+
+match_fields = [
+    "MEMBER_URN", "MEMBER_UID", "MEMBER_FIRSTNAME", "MEMBER_LASTNAME",
+    "MEMBER_USERNAME", "MEMBER_EMAIL"
 ]
 
 key_fields = [

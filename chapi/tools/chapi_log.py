@@ -28,6 +28,8 @@
 # files, what format) can be abstracted away from the rest of the code
 
 import logging
+import sys
+import traceback
 
 SA_LOG_PREFIX = "SA"
 MA_LOG_PREFIX = "MA"
@@ -71,7 +73,9 @@ def chapi_critical(prefix, msg):
 
 # Log a CHAPI exception
 def chapi_log_exception(prefix, e):
-    msg = "Exception: %s" % e
+    exc_type, exc_value, exc_traceback = sys.exc_info()
+    tb_info = traceback.format_tb(exc_traceback)
+    msg = "Exception: %s\n%s" % (e, "".join(tb_info))
     chapi_error(prefix, msg)
 
 def chapi_log_invocation(prefix, method, credentials, options, arguments):
