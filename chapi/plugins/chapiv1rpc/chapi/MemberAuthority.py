@@ -434,7 +434,6 @@ class MAv1Handler(HandlerBase):
             results = self._delegate.add_member_privilege(client_cert,
                                                           member_uid, 
                                                           privilege,
-                                                          enable_sense,
                                                           credentials,
                                                           options)
             return results
@@ -455,7 +454,6 @@ class MAv1Handler(HandlerBase):
             results = self._delegate.revoke_member_privilege(client_cert,
                                                              member_uid, 
                                                              privilege,
-                                                             enable_sense,
                                                              credentials,
                                                              options)
             return results

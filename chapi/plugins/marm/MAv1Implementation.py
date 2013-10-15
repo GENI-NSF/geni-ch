@@ -941,7 +941,7 @@ class MAv1Implementation(MAv1DelegateBase):
             was_enabled = (rows[0][0] == 'true')
 
         if not was_enabled:
-            self.update_attr(session, privilege, 'true', member_id, 'f')
+            self.update_attr(session, privilege, 'true', member_uid, 'f')
             session.commit()
 
         session.close()
@@ -981,7 +981,7 @@ class MAv1Implementation(MAv1DelegateBase):
             was_enabled = (rows[0][0] == 'true')
 
         if was_enabled:
-            self.delete_attr(session, privilege, member_id)
+            self.delete_attr(session, privilege, member_uid)
 
         session.close()
 

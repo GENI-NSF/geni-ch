@@ -93,6 +93,10 @@ field_mapping = {
     "_GENI_USER_CREDENTIAL": "foo",
     "_GENI_CREDENTIALS": "foo",
     "_GENI_IDENTIFYING_MEMBER_UID": "member_id",
+
+    # these are special - used in the database but not fields specifiable in the API
+    "PROJECT_LEAD": "PROJECT_LEAD",
+    "OPERATOR": "OPERATOR"
 }
 
 key_fields = ["KEY_MEMBER", "KEY_ID", "KEY_PUBLIC", "KEY_PRIVATE", 
