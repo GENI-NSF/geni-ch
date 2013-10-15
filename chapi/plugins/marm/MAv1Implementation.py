@@ -677,9 +677,11 @@ class MAv1Implementation(MAv1DelegateBase):
         rows = q.all()
         session.close()
 
-        keys = [construct_result_row(row, selected_columns, \
-                                         MA.key_field_mapping) \
-                    for row in rows]
+        keys = {}
+        for row in rows:
+            row.id = str(row.id)
+            keys[row.id] = construct_result_row(row, selected_columns, \
+                                         MA.key_field_mapping)
         result = self._successReturn(keys)
 
         chapi_log_result(MA_LOG_PREFIX, method, result)

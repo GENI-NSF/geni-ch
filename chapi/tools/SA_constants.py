@@ -32,17 +32,20 @@ slice_mandatory_fields  = {
     "SLICE_URN": {"TYPE": "URN"},
     "SLICE_UID": {"TYPE": "UID"},
     "SLICE_NAME": {"TYPE": "STRING", "CREATE": "REQUIRED"},
-    "SLICE_DESCRIPTION": {"TYPE": "STRING", "CREATE": "ALLOWED", "UPDATE": True},
-    "SLICE_EXPIRATION": {"TYPE": "DATETIME", "CREATE" : "ALLOWED", "UPDATE": True},
+    "SLICE_DESCRIPTION": {"TYPE": "STRING", "CREATE": "ALLOWED",
+                          "UPDATE": True},
+    "SLICE_EXPIRATION": {"TYPE": "DATETIME", "CREATE" : "ALLOWED",
+                         "UPDATE": True},
     "SLICE_EXPIRED": {"TYPE": "BOOLEAN"},
     "SLICE_CREATION": {"TYPE": "DATETIME"},
     "SLICE_PROJECT_URN": {"TYPE": "URN", "CREATE": "REQUIRED", "UPDATE": False}
 }
 
 slice_supplemental_fields = {
-    "_GENI_SLICE_OWNER" : {"TYPE" : "UID", "UPDATE" : True},
-    "_GENI_SLICE_EMAIL": {"TYPE": "EMAIL", "CREATE": "REQUIRED", "UPDATE": True},
-    "_GENI_PROJECT_UID": {"TYPE" : "UID", "UPDATE" : False}
+    "_GENI_SLICE_OWNER" : {"OBJECT": "SLICE", "TYPE" : "UID", "UPDATE" : True},
+    "_GENI_SLICE_EMAIL": {"OBJECT": "SLICE", "TYPE": "EMAIL",
+                          "CREATE": "REQUIRED", "UPDATE": True},
+    "_GENI_PROJECT_UID": {"OBJECT": "SLICE", "TYPE" : "UID", "UPDATE" : False}
 }
 
 # The externally visible data schema for slivers
@@ -70,8 +73,10 @@ project_mandatory_fields = {
 }
 
 project_supplemental_fields = {
-    "_GENI_PROJECT_OWNER" : {"TYPE" : "UID", "CREATE" : "REQUIRED", "UPDATE" : True},
-    "_GENI_PROJECT_EMAIL": {"TYPE": "EMAIL", "CREATE": "REQUIRED", "UPDATE": True, "OBJECT" : "PROJECT"}
+    "_GENI_PROJECT_OWNER" : {"OBJECT": "PROJECT", "TYPE" : "UID",
+                             "CREATE" : "REQUIRED", "UPDATE" : True},
+    "_GENI_PROJECT_EMAIL": {"OBJECT": "PROJECT", "TYPE": "EMAIL",
+                            "CREATE": "REQUIRED", "UPDATE": True}
 }
 
 # Total set of supplemental fields
