@@ -126,7 +126,7 @@ class MAv1Guard(ABACGuardBase):
                                                      'name' : 'STRING',
                                                      'value' : 'STRING',
                                                      'self_asserted' : 'STRING'}),
-        'remove_member_attribute': SimpleArgumentCheck({'member_urn' : 'URN'
+        'remove_member_attribute': SimpleArgumentCheck({'member_urn' : 'URN',
                                                      'name' : 'STRING'}),
         }
 
