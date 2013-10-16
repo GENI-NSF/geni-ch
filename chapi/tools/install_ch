@@ -30,11 +30,10 @@ sed -i "s/ch-mt.gpolab.bbn.com/${1}/g" /usr/share/geni-ch/chapi/chapi/plugins/ch
 # install required modules
 apt-get update
 apt-get -y install libapache2-mod-fastcgi python-setuptools \
-    python-dev python-m2crypto python-openssl python-flup nginx \
-    python-dateutil python-openssl libxmlsec1 \
-    xmlsec1 libxmlsec1-openssl libxmlsec1-dev libxml2-dev libxslt-dev \
-    autoconf-archive automake g++ git-core libtool swig php5-xmlrpc
-easy_install flask Flask-XML-RPC python-dateutil blinker pika sqlalchemy lxml
+    python-dev python-openssl python-flup nginx libxslt-dev \
+    autoconf-archive g++ swig php5-xmlrpc python-sqlalchemy \
+    python-lxml
+easy_install flask Flask-XML-RPC blinker pika
 
 # build abac
 cd /usr/share/geni-ch/abac/
