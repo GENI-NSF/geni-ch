@@ -126,7 +126,7 @@ class MAv1Guard(ABACGuardBase):
                                                      'name' : 'STRING',
                                                      'value' : 'STRING',
                                                      'self_asserted' : 'STRING'}),
-        'remove_member_attribute': SimpleArgumentCheck({'member_urn' : 'URN'
+        'remove_member_attribute': SimpleArgumentCheck({'member_urn' : 'URN',
                                                      'name' : 'STRING'}),
         }
 
@@ -212,13 +212,14 @@ class MAv1Guard(ABACGuardBase):
         # only operator may enable/disable users
         'enable_user' :
             SubjectInvocationCheck([
+                    "ME.MAY_ENABLE_USER<-ME.IS_AUTHORITY",
                     "ME.MAY_ENABLE_USER<-ME.IS_OPERATOR", 
-                    ], None, standard_subject_extractor), 
-
+                    ], None, None), 
         'add_member_privilege' :
             SubjectInvocationCheck([
-                    "ME.MAY_ENABLE_USER<-ME.IS_OPERATOR", 
-                    ], None, standard_subject_extractor), 
+                    "ME.MAY_ADD_MEMBER_PRIVILEGE<-ME.IS_AUTHORITY",
+                    "ME.MAY_ADD_MEMBER_PRIVILEGE<-ME.IS_OPERATOR", 
+                    ], None, None), 
         'revoke_member_privilege' :
             SubjectInvocationCheck([
                     "ME.MAY_ENABLE_USER<-ME.IS_OPERATOR", 

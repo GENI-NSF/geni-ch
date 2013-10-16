@@ -85,7 +85,7 @@ class CHv1Implementation(CHv1DelegateBase):
 
     # Mapping from external to internal data schema
     field_mapping = {
-        "SERVICE_ID" : "id",
+        "_GENI_SERVICE_ID" : "id",
         "SERVICE_URN": 'service_urn',
         "SERVICE_URL": 'service_url',
         "SERVICE_CERTIFICATE": 'service_cert',
@@ -99,12 +99,12 @@ class CHv1Implementation(CHv1DelegateBase):
         "SERVICE_URN": {"TYPE": "URN"},
         "SERVICE_URL": {"TYPE": "URL"},
         "SERVICE_CERTIFICATE": {"TYPE": "CERTIFICATE"},
-        "SERVICE_NAME" : {"TYPE" : "STRING"}
+        "SERVICE_NAME" : {"TYPE" : "STRING"},
+        "SERVICE_DESCRIPTION": {"TYPE" : "STRING"}
         }
 
     supplemental_fields = { 
-        "SERVICE_ID" : {"TYPE" : "INTEGER"},
-        "SERVICE_DESCRIPTION": {"TYPE" : "STRING"}
+        "_GENI_SERVICE_ID" : {"TYPE" : "INTEGER"}
         }
 
 

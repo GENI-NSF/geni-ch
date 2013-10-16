@@ -677,9 +677,11 @@ class MAv1Implementation(MAv1DelegateBase):
         rows = q.all()
         session.close()
 
-        keys = [construct_result_row(row, selected_columns, \
-                                         MA.key_field_mapping) \
-                    for row in rows]
+        keys = {}
+        for row in rows:
+            row.id = str(row.id)
+            keys[row.id] = construct_result_row(row, selected_columns, \
+                                         MA.key_field_mapping)
         result = self._successReturn(keys)
 
         chapi_log_result(MA_LOG_PREFIX, method, result)
@@ -939,7 +941,7 @@ class MAv1Implementation(MAv1DelegateBase):
             was_enabled = (rows[0][0] == 'true')
 
         if not was_enabled:
-            self.update_attr(session, privilege, 'true', member_id, 'f')
+            self.update_attr(session, privilege, 'true', member_uid, 'f')
             session.commit()
 
         session.close()
@@ -979,7 +981,7 @@ class MAv1Implementation(MAv1DelegateBase):
             was_enabled = (rows[0][0] == 'true')
 
         if was_enabled:
-            self.delete_attr(session, privilege, member_id)
+            self.delete_attr(session, privilege, member_uid)
 
         session.close()
 
