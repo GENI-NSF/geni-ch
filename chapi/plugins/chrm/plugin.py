@@ -28,7 +28,7 @@ from CHv1PersistentImplementation import CHv1PersistentImplementation
 from CHDatabaseEngine import CHDatabaseEngine
 from CHv1Guard import CHv1Guard
 
-# This plugin sets the delgate for the CH handler to be the CH Persistent
+# This plugin sets the delegate for the CH handler to be the CH Persistent
 # Implementation. There are no guards for this handler: all methods
 # are public
 
