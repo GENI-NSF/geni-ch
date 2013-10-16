@@ -1,6 +1,6 @@
 {
   "name" : "RM (test) Clearinghouse",
-  "author" : "Narshall Brinn",
+  "author" : "Marshall Brinn",
   "author-email" : "mbrinn@bbn.com",
   "version" : 1,
   "implements" : ["chdbengine", "srv1handler"],
