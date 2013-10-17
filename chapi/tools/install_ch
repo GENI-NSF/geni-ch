@@ -16,7 +16,7 @@ sudo tar pxfz chapi.tgz -C /usr/share/geni-ch
 GCFDIR=$(readlink /usr/share/geni-ch/portal/gcf)
 sudo ln -s $GCFDIR /usr/share/geni-ch/gcf
 sudo tar xfz abac.tar.gz -C /usr/share/geni-ch
-sudo mv /usr/share/geni-ch/abac-0.1.5 /usr/share/geni-ch/abac
+sudo ln -s /usr/share/geni-ch/abac-0.1.5 /usr/share/geni-ch/abac
 sudo cp /usr/share/geni-ch/chapi/chapi/tools/.bashrc /usr/share/geni-ch/
 
 # patch the authority parameter
@@ -61,7 +61,7 @@ sudo patch --backup -p0 /etc/apache2/mods-available/deflate.conf << EOF
            AddOutputFilterByType DEFLATE text/css
 EOF
 
-sudo chmod 644 /etc/apache2/sites-available/ch-ssl
+sudo chown www-data /etc/apache2/sites-available/ch-ssl
 sudo patch --backup -p0 /etc/apache2/sites-available/ch-ssl << EOF
 --- ch-ssl	2013-09-06 08:54:59.234460479 -0400
 +++ /etc/apache2/sites-available/ch-ssl	2013-09-06 08:46:59.526437589 -0400
@@ -86,7 +86,7 @@ sudo patch --backup -p0 /etc/apache2/sites-available/ch-ssl << EOF
  # Catch-all default virtual host, so other CNAMEs to this IP are not
 EOF
 
-sudo chmod +w /etc/geni-ch/settings.php
+sudo chown www-data /etc/geni-ch/settings.php
 sudo sed -i 's/sr\/sr_controller.php/SR/g' /etc/geni-ch/settings.php
 
 # restart apache
