@@ -10,7 +10,7 @@ psql -U portal -h localhost portal < update-1.sql
 ./migrate_assertions.sh
 
 psql -U portal -h localhost portal << EOF
-update service_registry set service_url = 'https://{$1}/secure/kmhome.php' where service_url = 'https://portal.geni.net/secure/kmhome.php';
+update service_registry set service_url = 'https://${1}/secure/kmhome.php' where service_url = 'https://portal.geni.net/secure/kmhome.php';
 update service_registry set service_type = service_type + 100 where service_type in (1, 2, 3, 5, 6, 9);
 insert into service_registry (service_type, service_url, service_urn)
        values (1, 'https://${1}/SA', 'urn:publicid:IDN+${1}+authority+sa');

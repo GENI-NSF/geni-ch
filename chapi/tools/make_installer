@@ -1,5 +1,11 @@
 #!/bin/bash
 
+if [ -z $1 ]
+  then
+    echo 'Need to supply a VM name'
+    exit -1
+fi
+
 # Exit on error
 set -e
 # Echo commands with variables expanded
@@ -7,7 +13,6 @@ set -x
 
 # download abac and gcf
 wget --output-document abac.tar.gz http://abac.deterlab.net/src/abac-0.1.5.tar.gz
-#wget --output-document gcf.tar.gz --post-data "software=gcf-2.3.3.tar.gz&accept=I+have+read+and+accept+the+GPO+terms+of+service+and+disclaimer" http://software.geni.net/local-sw/real_download
 
 # get the update-1.sql file and certs from the proto-ch tree
 git clone git+ssh://trac.gpolab.bbn.com/srv/git/proto-ch.git
@@ -15,10 +20,7 @@ cd proto-ch
 #git checkout sliverinfo
 git checkout chapidev
 cp sa/db/postgresql/update-1.sql ..
-#cp -r sr ..
-cp -r portal/www/portal ..
 cp bin/migrate_assertions.sh ..
-cp -r bin ..
 cd ..
 
 # clone chapi
@@ -45,4 +47,6 @@ cd ../..
 tar cfpz chapi.tgz chapi
 cp chapi/chapi/tools/install_ch .
 cp chapi/chapi/tools/install_db .
-tar cfp chapi_installer.tar abac.tar.gz chapi.tgz install_ch install_db update-1.sql portal migrate_assertions.sh bin
+tar cfp chapi_installer.tar abac.tar.gz chapi.tgz install_ch install_db update-1.sql migrate_assertions.sh
+
+./install_db ${1}
