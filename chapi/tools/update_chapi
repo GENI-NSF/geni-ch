@@ -1,0 +1,22 @@
+#!/bin/bash
+
+# Exit on error
+set -e
+# Echo commands with variables expanded
+set -x
+
+# clone chapi
+git clone git+ssh://trac.gpolab.bbn.com/srv/git/chapi.git
+cd chapi
+git checkout develop
+
+# tar up chapi 
+cd ..
+tar cfpz chapi.tgz chapi
+
+# untar in the right place
+sudo tar pxfz chapi.tgz -C /usr/share/geni-ch
+sudo cp /usr/share/geni-ch/chapi/chapi/tools/.bashrc /usr/share/geni-ch/
+
+# patch the authority parameter
+sudo sed -i "s/ch-mt.gpolab.bbn.com/${1}/g" /usr/share/geni-ch/chapi/chapi/plugins/chapiv1rpc/chapi/Parameters.py

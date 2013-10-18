@@ -61,7 +61,7 @@ sudo patch --backup -p0 /etc/apache2/mods-available/deflate.conf << EOF
            AddOutputFilterByType DEFLATE text/css
 EOF
 
-sudo chown www-data /etc/apache2/sites-available/ch-ssl
+sudo chmod 644 /etc/apache2/sites-available/ch-ssl
 sudo patch --backup -p0 /etc/apache2/sites-available/ch-ssl << EOF
 --- ch-ssl	2013-09-06 08:54:59.234460479 -0400
 +++ /etc/apache2/sites-available/ch-ssl	2013-09-06 08:46:59.526437589 -0400
@@ -86,7 +86,7 @@ sudo patch --backup -p0 /etc/apache2/sites-available/ch-ssl << EOF
  # Catch-all default virtual host, so other CNAMEs to this IP are not
 EOF
 
-sudo chown www-data /etc/geni-ch/settings.php
+sudo chmod +w /etc/geni-ch/settings.php
 sudo sed -i 's/sr\/sr_controller.php/SR/g' /etc/geni-ch/settings.php
 
 # restart apache
