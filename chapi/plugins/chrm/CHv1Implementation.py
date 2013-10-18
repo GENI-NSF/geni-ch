@@ -88,7 +88,8 @@ class CHv1Implementation(CHv1DelegateBase):
         "_GENI_SERVICE_ID" : "id",
         "SERVICE_URN": 'service_urn',
         "SERVICE_URL": 'service_url',
-        "SERVICE_CERTIFICATE": 'service_cert',
+        "_GENI_SERVICE_CERT_FILENAME": 'service_cert',
+        "SERVICE_CERT": 'service_cert',
         "SERVICE_NAME": 'service_name',
         "SERVICE_DESCRIPTION": 'service_description',
         "SERVICE_TYPE": "service_type"
@@ -98,12 +99,13 @@ class CHv1Implementation(CHv1DelegateBase):
     mandatory_fields = { 
         "SERVICE_URN": {"TYPE": "URN"},
         "SERVICE_URL": {"TYPE": "URL"},
-        "SERVICE_CERTIFICATE": {"TYPE": "CERTIFICATE"},
+        "SERVICE_CERT": {"TYPE": "CERTIFICATE"},
         "SERVICE_NAME" : {"TYPE" : "STRING"},
         "SERVICE_DESCRIPTION": {"TYPE" : "STRING"}
         }
 
     supplemental_fields = { 
+        "_GENI_SERVICE_CERT_FILENAME": {"TYPE": "STRING"},
         "_GENI_SERVICE_ID" : {"TYPE" : "INTEGER"}
         }
 

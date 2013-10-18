@@ -520,8 +520,7 @@ class PGCHv1Delegate(DelegateBase):
         aggregates = get_aggregates_result['value']
         components = []
         for aggregate in aggregates:
-            cert_file = aggregate['SERVICE_CERTIFICATE']
-            gid = open(cert_file).read()
+            gid = aggregate['SERVICE_CERT']
             urn = aggregate['SERVICE_URN']
             hrn = sfa.util.xrn.urn_to_hrn(urn)
             url = aggregate['SERVICE_URL']

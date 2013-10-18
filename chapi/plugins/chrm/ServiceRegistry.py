@@ -166,10 +166,11 @@ class SRv1Delegate(CHv1PersistentImplementation):
                         for row in rows]
 
         # Fill in the service_cert_contents
-        for service in services:
-            service_cert = service['SERVICE_CERTIFICATE']
-            if service_cert:
-                service['SERVICE_CERTIFICATE_CONTENTS'] = open(service_cert, 'r').read()
+        if 'SERVER_CERT' in selected_columns:
+            for service in services:
+                if service['SERVICE_CERT']:
+                    service['SERVICE_CERT'] = \
+                        open(service['SERVICE_CERT'], 'r').read()
 
         result = self._successReturn(services)
 
