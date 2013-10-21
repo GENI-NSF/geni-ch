@@ -44,7 +44,7 @@ slice_mandatory_fields  = {
 slice_supplemental_fields = {
     "_GENI_SLICE_OWNER" : {"OBJECT": "SLICE", "TYPE" : "UID", "UPDATE" : True},
     "_GENI_SLICE_EMAIL": {"OBJECT": "SLICE", "TYPE": "EMAIL",
-                          "CREATE": "REQUIRED", "UPDATE": True},
+                          "CREATE": "ALLOWED", "UPDATE": True},
     "_GENI_PROJECT_UID": {"OBJECT": "SLICE", "TYPE" : "UID", "UPDATE" : False}
 }
 
@@ -74,9 +74,9 @@ project_mandatory_fields = {
 
 project_supplemental_fields = {
     "_GENI_PROJECT_OWNER" : {"OBJECT": "PROJECT", "TYPE" : "UID",
-                             "CREATE" : "REQUIRED", "UPDATE" : True},
+                             "CREATE" : "ALLOWED", "UPDATE" : True},
     "_GENI_PROJECT_EMAIL": {"OBJECT": "PROJECT", "TYPE": "EMAIL",
-                            "CREATE": "REQUIRED", "UPDATE": True}
+                            "CREATE": "ALLOWED", "UPDATE": True}
 }
 
 # Total set of supplemental fields

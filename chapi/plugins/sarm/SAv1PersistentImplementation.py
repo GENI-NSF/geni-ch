@@ -403,13 +403,14 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
             raise CHAPIv1DuplicateError('Already exists a slice named ' + name)
 
         # Create email if not provided
-        if not 'SLICE_EMAIL' in options or not options['SLICE_EMAIL']:
-            options['SLICE_EMAIL'] = 'slice-%s@example.com' % name
+        if not '_GENI_SLICE_EMAIL' in options['fields'] or \
+           not options['fields']['_GENI_SLICE_EMAIL']:
+            options['fields']['_GENI_SLICE_EMAIL'] = \
+                'slice-%s@example.com' % name
 
         # fill in the fields of the object
         slice = Slice()
         project_urn = None
-        slice.email = options['SLICE_EMAIL']
         for key, value in options["fields"].iteritems():
             if key == "SLICE_PROJECT_URN":
                 project_urn = value
