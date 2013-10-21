@@ -27,8 +27,7 @@ cd ..
 git clone git+ssh://trac.gpolab.bbn.com/srv/git/chapi.git
 
 cd chapi
-# NOTE: this should be removed after the branch is merged!!!
-git checkout install-chapi
+git checkout develop
 # get gpo branch of local amsoil repo inside of chapi directory
 git clone git+ssh://trac.gpolab.bbn.com/srv/git/amsoil.git
 mv amsoil AMsoil
@@ -40,7 +39,7 @@ for pl in chrm chapiv1rpc sarm marm csrm logging pgch
 do
     ln -s ../../../chapi/plugins/$pl src/plugins/$pl
 done
-chown www-data deploy log
+sudo chown www-data deploy log
 
 # tar up chapi and then the whole package
 cd ../..
@@ -50,3 +49,4 @@ cp chapi/chapi/tools/install_db .
 tar cfp chapi_installer.tar abac.tar.gz chapi.tgz install_ch install_db update-1.sql migrate_assertions.sh
 
 ./install_db ${1}
+./install_ch ${1}
