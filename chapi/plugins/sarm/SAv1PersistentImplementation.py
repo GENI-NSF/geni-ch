@@ -627,6 +627,14 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         columns, match_criteria = \
             unpack_query_options(options, SA.project_field_mapping)
 
+        if match_criteria.has_key('PROJECT_URN'):
+            urns = match_criteria['PROJECT_URN']
+            del match_criteria['PROJECT_URN']
+            if not isinstance(urns, list):
+                urns = [urns]
+            match_criteria['PROJECT_NAME'] = \
+                [from_project_urn(urn) for urn in urns]
+
         session = self.db.getSession()
         q = session.query(self.db.PROJECT_TABLE)
         q = add_filters(q, match_criteria, self.db.PROJECT_TABLE, \
