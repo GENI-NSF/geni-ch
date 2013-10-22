@@ -331,10 +331,10 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
             abac_raw_creds.append(slice_role_credential)
 
         sfa_creds = \
-            [{'geni_type' : 'SFA', 'geni_version' : 1, 'geni_value' : cred} 
+            [{'geni_type' : 'geni_sfa', 'geni_version' : 1, 'geni_value' : cred} 
              for cred in sfa_raw_creds]
         abac_creds = \
-            [{'geni_type' : 'ABAC', 'geni_version' : 1, 'geni_value' : cred} 
+            [{'geni_type' : 'geni_abac', 'geni_version' : 1, 'geni_value' : cred} 
              for cred in abac_raw_creds]
         creds = sfa_creds + abac_creds
 
@@ -403,13 +403,14 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
             raise CHAPIv1DuplicateError('Already exists a slice named ' + name)
 
         # Create email if not provided
-        if not 'SLICE_EMAIL' in options or not options['SLICE_EMAIL']:
-            options['SLICE_EMAIL'] = 'slice-%s@example.com' % name
+        if not '_GENI_SLICE_EMAIL' in options['fields'] or \
+           not options['fields']['_GENI_SLICE_EMAIL']:
+            options['fields']['_GENI_SLICE_EMAIL'] = \
+                'slice-%s@example.com' % name
 
         # fill in the fields of the object
         slice = Slice()
         project_urn = None
-        slice.email = options['SLICE_EMAIL']
         for key, value in options["fields"].iteritems():
             if key == "SLICE_PROJECT_URN":
                 project_urn = value
@@ -625,6 +626,14 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
 
         columns, match_criteria = \
             unpack_query_options(options, SA.project_field_mapping)
+
+        if match_criteria.has_key('PROJECT_URN'):
+            urns = match_criteria['PROJECT_URN']
+            del match_criteria['PROJECT_URN']
+            if not isinstance(urns, list):
+                urns = [urns]
+            match_criteria['PROJECT_NAME'] = \
+                [from_project_urn(urn) for urn in urns]
 
         session = self.db.getSession()
         q = session.query(self.db.PROJECT_TABLE)

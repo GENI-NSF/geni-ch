@@ -461,10 +461,10 @@ class MAv1Implementation(MAv1DelegateBase):
                                                  self.cert, self.key, {"CALLER" : user_cert})
             abac_raw_creds.append(assertion)
         sfa_creds = \
-            [{'geni_type' : 'SFA', 'geni_version' : 1, 'geni_value' : cred} 
+            [{'geni_type' : 'geni_sfa', 'geni_version' : 1, 'geni_value' : cred} 
              for cred in sfa_raw_creds]
         abac_creds = \
-            [{'geni_type' : 'ABAC', 'geni_version' : 1, 'geni_value' : cred} 
+            [{'geni_type' : 'geni_abac', 'geni_version' : 1, 'geni_value' : cred} 
              for cred in abac_raw_creds]
         creds = sfa_creds + abac_creds
         return creds
@@ -680,8 +680,10 @@ class MAv1Implementation(MAv1DelegateBase):
         keys = {}
         for row in rows:
             row.id = str(row.id)
-            keys[row.id] = construct_result_row(row, selected_columns, \
-                                         MA.key_field_mapping)
+            if not hasattr(keys, row.value):
+                keys[row.value] = []
+            keys[row.value].append(construct_result_row(row, \
+                         selected_columns, MA.key_field_mapping))
         result = self._successReturn(keys)
 
         chapi_log_result(MA_LOG_PREFIX, method, result)
