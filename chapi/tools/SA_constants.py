@@ -25,7 +25,7 @@ from tools.geni_utils import row_to_project_urn
 
 services = ["SLICE", "PROJECT", "SLICE_MEMBER", "PROJECT_MEMBER", "SLIVER_INFO"]
 
-credential_types = ["SFA", "ABAC"]
+credential_types = ["geni_sfa", "geni_abac"]
 
 # The externally visible data schema for slices
 slice_mandatory_fields  = {
