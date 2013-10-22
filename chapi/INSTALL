@@ -1,0 +1,21 @@
+To install chapi on a machine running the old clearinghouse:
+
+1 - First install the chapidev branch of proto-ch in the usual way (using Makefile.sync on your own laptop and do-make-install.sh on your portal)
+
+2 - Checkout the chapi repository, develop branch on your laptop.
+
+3 - From chapi/chapi/tools, scp the "install_chapi" script to your portal VM
+
+4 - make an empty directory on your portal VM
+
+5 - cd into the new directory and run:
+~/install_chapi <VM name e.g. ch-ph.gpolab.bbn.com>
+
+To update the chapi code with a newer version:
+
+1 - From chapi/chapi/tools. scp the "update_chapi" script to your portal VM
+
+2 - make an empty directory on your portal VM
+
+3 - cd into the new directory and run:
+~/update_chapi 
