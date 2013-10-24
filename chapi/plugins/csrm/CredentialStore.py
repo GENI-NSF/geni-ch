@@ -131,17 +131,17 @@ class CSv1Delegate(DelegateBase):
         # Operator attributes
         operator_rows = []
         if not context:
-            q = session.query(self.db.CS_ATTRIBUTE_TABLE.c.name)
-            q = q.filter(self.db.MEMBER_ATTRIBUTE_TABLE.c.name == 'operator')
+            q = session.query(self.db.MEMBER_ATTRIBUTE_TABLE.c.name)
+            q = q.filter(self.db.MEMBER_ATTRIBUTE_TABLE.c.name == 'OPERATOR')
             q = q.filter(self.db.MEMBER_ATTRIBUTE_TABLE.c.member_id == principal)
             operator_rows = q.all()
 #            print "OPS = %d" % len(operator_rows)
 
         # Project lead attributes
         project_lead_rows = []
-        if not context and context_type == RESOURCE_CONTEXT:
-            q = session.query(self.db.CS_ATTRIBUTE_TABLE.c.name)
-            q = q.filter(self.db.MEMBER_ATTRIBUTE_TABLE.c.name == 'project_lead')
+        if not context and int(context_type) == RESOURCE_CONTEXT:
+            q = session.query(self.db.MEMBER_ATTRIBUTE_TABLE.c.name)
+            q = q.filter(self.db.MEMBER_ATTRIBUTE_TABLE.c.name == 'PROJECT_LEAD')
             q = q.filter(self.db.MEMBER_ATTRIBUTE_TABLE.c.member_id == principal)
             project_lead_rows = q.all()
 #            print "PIs = %d" % len(project_lead_rows)
@@ -194,7 +194,7 @@ class CSv1Delegate(DelegateBase):
 
         q = session.query(self.db.CS_ACTION_TABLE.c.name, 
                           self.db.CS_POLICY_TABLE.c.context_type)
-        q = q.filter(self.db.MEMBER_ATTRIBUTE_TABLE.c.name == 'operator')
+        q = q.filter(self.db.MEMBER_ATTRIBUTE_TABLE.c.name == 'OPERATOR')
         q = q.filter(self.db.MEMBER_ATTRIBUTE_TABLE.c.member_id == principal)
         q = q.filter(self.db.CS_POLICY_TABLE.c.attribute == OPERATOR_ATTRIBUTE)
         q = q.filter(self.db.CS_ACTION_TABLE.c.privilege == self.db.CS_POLICY_TABLE.c.privilege)
@@ -205,7 +205,7 @@ class CSv1Delegate(DelegateBase):
 
         q = session.query(self.db.CS_ACTION_TABLE.c.name, 
                           self.db.CS_POLICY_TABLE.c.context_type)
-        q = q.filter(self.db.MEMBER_ATTRIBUTE_TABLE.c.name == 'project_lead')
+        q = q.filter(self.db.MEMBER_ATTRIBUTE_TABLE.c.name == 'PROJECT_LEAD')
         q = q.filter(self.db.MEMBER_ATTRIBUTE_TABLE.c.member_id == principal)
         q = q.filter(self.db.CS_POLICY_TABLE.c.attribute == LEAD_ATTRIBUTE)
         q = q.filter(self.db.CS_POLICY_TABLE.c.context_type == RESOURCE_CONTEXT)
