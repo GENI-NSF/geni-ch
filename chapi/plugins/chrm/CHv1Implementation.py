@@ -105,15 +105,18 @@ class CHv1Implementation(CHv1DelegateBase):
         }
 
     supplemental_fields = { 
-        "_GENI_SERVICE_CERT_FILENAME": {"TYPE": "STRING"},
-        "_GENI_SERVICE_ID" : {"TYPE" : "INTEGER"}
+        "_GENI_SERVICE_CERT_FILENAME": {"TYPE": "STRING", "OBJECT": "SERVICE"},
+        "_GENI_SERVICE_ID" : {"TYPE" : "INTEGER", "OBJECT": "SERVICE"}
         }
 
 
     version_number = "1.0"
 
     def get_version(self):
-        version_info = {"VERSION": self.version_number, "FIELDS": self.supplemental_fields}
+        version_info = {"VERSION": self.version_number, 
+                        "SERVICES": ["SERVICE"],
+                        "OBJECTS": ["SERVICE"],
+                        "FIELDS": self.supplemental_fields}
         return self._successReturn(version_info)
 
     def lookup_member_authorities(self, options):
