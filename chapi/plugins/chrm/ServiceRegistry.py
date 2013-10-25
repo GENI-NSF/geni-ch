@@ -85,10 +85,7 @@ class SRv1Delegate(CHv1PersistentImplementation):
 
     # Take an option 'urns' with a list of urns to lookup
     # Return a dictionary of each URN mapped to the URL of associated URN, or None if not found
-    def lookup_authorities_for_urns(self, options):
-        if not options.has_key('urns'):
-            raise CHAPIv1ArgumentError("No urns option provided to lookup_authorities_for_urns call")
-        urns = options['urns']
+    def lookup_authorities_for_urns(self, urns):
         urns_to_authorities = {}
         for urn in urns: 
             urns_to_authorities[urn] = self.lookup_authority_for_urn(urn)

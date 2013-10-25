@@ -81,9 +81,9 @@ class CHv1Handler(HandlerBase):
 
     # This call is unprotected: no checking of credentials
     # Return URL of authority (slice or member) for given URN
-    def lookup_authorities_for_urns(self, options):
+    def lookup_authorities_for_urns(self, urns):
         try:
-            return self._delegate.lookup_authorities_for_urns(options)
+            return self._delegate.lookup_authorities_for_urns(urns)
         except Exception as e:
             return self._errorReturn(e)
 
@@ -117,7 +117,7 @@ class CHv1DelegateBase(DelegateBase):
     def lookup_aggregates(self, options):
         raise CHAPIv1NotImplementedError('')
 
-    def lookup_authorities_for_urns(self, options):
+    def lookup_authorities_for_urns(self, urns):
         raise CHAPIv1NotImplementedError('')
 
     def get_trust_roots(self):
