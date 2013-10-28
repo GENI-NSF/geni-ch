@@ -25,7 +25,6 @@
 # schema
 
 import amsoil.core.pluginmanager as pm
-from geni_constants import DATETIME_FORMATS
 from datetime import datetime
 
 # Turn a project URN into a project name
@@ -49,12 +48,3 @@ def urn_for_slice(slice_name, project_name):
     authority = config.get("chrm.authority")
     return "urn:publicid:IDN+%s:%s+slice+%s" % \
         (authority, project_name, slice_name)
-
-# turn a datetime string into a datetime object 
-def parse_datetime(time_string):
-    for format in DATETIME_FORMATS:
-        try:
-            return datetime.strptime(time_string, format)
-        except Exception as e:
-            pass
-    return None

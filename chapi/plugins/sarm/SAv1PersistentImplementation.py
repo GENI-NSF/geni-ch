@@ -34,6 +34,7 @@ import geni.util.cert_util as cert_util
 from sqlalchemy.orm import mapper
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
+import dateutil.parser
 import uuid
 from tools.dbutils import *
 from tools.cert_utils import *
@@ -426,7 +427,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         if not slice.expiration:
             slice.expiration = slice.creation + relativedelta(days=7)
         else:
-            slice.expiration = parse_datetime(slice.expiration)
+            slice.expiration = dateutil.parser.parse(slice.expiration)
         slice.slice_id = str(uuid.uuid4())
         slice.owner_id = client_uuid
         slice.slice_urn = urn_for_slice(slice.slice_name, project_name)
@@ -511,7 +512,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                                        attribs, client_uuid)
         if "SLICE_EXPIRATION" in options['fields']: 
             expiration_string = options['fields']['SLICE_EXPIRATION']
-            expiration = parse_datetime(expiration_string)
+            expiration = dateutil.parser.parse(expiration_string)
             self.logging_service.log_event("Renewed slice %s until %s" % \
                                                (slice_name, expiration), \
                                                attribs, client_uuid)

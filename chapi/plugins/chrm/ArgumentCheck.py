@@ -27,7 +27,7 @@ from tools.geni_constants import *
 from sfa.trust.certificate import Certificate
 import types
 import uuid
-from tools.geni_utils import parse_datetime
+import dateutil.parser
 
 # Create a subset 'fields' dictionary with only fields in given list
 def select_fields(field_definitions, field_list):
@@ -157,7 +157,7 @@ class FieldsArgumentCheck(ArgumentCheck):
             except Exception as e:
                 properly_formed = False
         elif field_type == "DATETIME":
-            if value and not parse_datetime(value):
+            if value and not dateutil.parser.parse(value):
                 properly_formed = False
         elif field_type == "EMAIL":
             properly_formed = value.find('@')>= 0 and value.find('.') >= 0
