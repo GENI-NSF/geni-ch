@@ -44,6 +44,7 @@ from tools.guard_utils import *
 from tools.ABACManager import *
 from tools.cs_utils import *
 from tools.chapi_log import *
+from sfa.trust.certificate import Certificate
 
 # classes for mapping to sql tables
 
@@ -433,7 +434,8 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         slice.slice_urn = urn_for_slice(slice.slice_name, project_name)
         cert, k = cert_util.create_cert(slice.slice_urn, \
             issuer_key = self.key, issuer_cert = self.cert, \
-            lifeDays = (slice.expiration - slice.creation).days + 1, \
+            lifeDays = (slice.expiration - slice.creation).days + \
+                       SA.SLICE_CERT_LIFETIME, \
             email = slice.slice_email, uuidarg=slice.slice_id)
         slice.certificate = cert.save_to_string()
 
@@ -492,9 +494,29 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         if not slice_uuid: 
             session.close()
             raise CHAPIv1ArgumentError('No slice with urn ' + slice_urn)
+        updates = {}
+
+        # regenerate cert if necessary
+        if options['fields'].has_key('SLICE_EXPIRATION'):
+            q = session.query(Slice)
+            q = q.filter(getattr(Slice, "slice_urn") == slice_urn)
+            rows = q.all()
+            if len(rows) > 0:
+                new_exp = options['fields']['SLICE_EXPIRATION']
+                cert = Certificate(string = rows[0].certificate)
+                t1 = dateutil.parser.parse(cert.cert.get_notAfter())
+                t2 = dateutil.parser.parse(new_exp)
+                t1 = t1.replace(tzinfo = t2.tzinfo)
+                if (t1 < t2):
+                    t3 = rows[0].creation
+                    cert, k = cert_util.create_cert(slice_urn, \
+                        issuer_key = self.key, issuer_cert = self.cert, \
+                        lifeDays = (t2 - t3).days + SA.SLICE_CERT_LIFETIME, \
+                        email = rows[0].slice_email, uuidarg=rows[0].slice_id)
+                    updates['certificate'] = cert.save_to_string()
+
         q = session.query(Slice)
         q = q.filter(getattr(Slice, "slice_urn") == slice_urn)
-        updates = {}
         for field, value in options['fields'].iteritems():
             updates[SA.slice_field_mapping[field]] = value
         q = q.update(updates)
