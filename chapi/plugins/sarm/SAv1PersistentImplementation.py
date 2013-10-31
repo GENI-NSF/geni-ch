@@ -888,10 +888,8 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
     # Lookup attributes for project
     def lookup_project_attributes(self, client_cert, project_urn, \
                                       credentials, options):
-        sys.stderr.write("ENTERING LOOKUP_PROJECT_ATTRIBUTES")
         method = 'lookup_project_attributes'
         args = {'project_urn' : project_urn}
-        chapi_log_invocation(SA_LOG_PREFIX, method, credentials, options, args)
 
         client_uuid = get_uuid_from_cert(client_cert)
         self.update_project_expirations(client_uuid)
