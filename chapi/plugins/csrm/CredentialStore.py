@@ -108,9 +108,9 @@ class CSv1Delegate(DelegateBase):
         session = self.db.getSession()
 
         # Project attributes
-        q = session.query(self.db.CS_ATTRIBUTE_TABLE.c.name, self.db.PROJECT_MEMBER_TABLE.c.project_id)
+        q = session.query(self.db.MEMBER_ATTRIBUTE_TABLE.c.name, self.db.PROJECT_MEMBER_TABLE.c.project_id)
         q = q.filter(self.db.PROJECT_MEMBER_TABLE.c.member_id == principal)
-        q = q.filter(self.db.CS_ATTRIBUTE_TABLE.c.id == self.db.PROJECT_MEMBER_TABLE.c.role)
+        q = q.filter(self.db.MEMBER_ATTRIBUTE_TABLE.c.id == self.db.PROJECT_MEMBER_TABLE.c.role)
         if context:
             q = q.filter(self.db.PROJECT_MEMBER_TABLE.c.project_id == context)
 
@@ -119,9 +119,9 @@ class CSv1Delegate(DelegateBase):
         print "PROJ = %d" % len(proj_rows)
 
         # Slice attributes
-        q = session.query(self.db.CS_ATTRIBUTE_TABLE.c.name, self.db.SLICE_MEMBER_TABLE.c.slice_id)
+        q = session.query(self.db.MEMBER_ATTRIBUTE_TABLE.c.name, self.db.SLICE_MEMBER_TABLE.c.slice_id)
         q = q.filter(self.db.SLICE_MEMBER_TABLE.c.member_id == principal)
-        q = q.filter(self.db.CS_ATTRIBUTE_TABLE.c.id == self.db.SLICE_MEMBER_TABLE.c.role)
+        q = q.filter(self.db.MEMBER_ATTRIBUTE_TABLE.c.id == self.db.SLICE_MEMBER_TABLE.c.role)
         if context:
             q = q.filter(self.db.SLICE_MEMBER_TABLE.c.slice_id == context)
 

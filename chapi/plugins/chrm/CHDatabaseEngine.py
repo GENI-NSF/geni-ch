@@ -57,6 +57,8 @@ class CHDatabaseEngine:
         self.PROJECT_TABLE = Table('pa_project', self.metadata, autoload=True)
         self.PROJECT_MEMBER_TABLE = \
             Table('pa_project_member', self.metadata, autoload=True)
+        self.PROJECT_ATTRIBUTE_TABLE = \
+            Table('pa_project_attribute', self.metadata, autoload=True)
         self.MEMBER_TABLE = \
             Table('ma_member', self.metadata, autoload=True)
         self.MEMBER_ATTRIBUTE_TABLE = \

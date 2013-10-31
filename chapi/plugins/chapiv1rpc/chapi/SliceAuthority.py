@@ -482,6 +482,35 @@ class SAv1Handler(HandlerBase):
         except Exception as e:
             return self._errorReturn(e)
 
+    ## PROJECT ATTRIBUTE SERVICE methods
+        
+    # Lookup, add, or remove project attributes
+    # of members with respect to given project
+    # The name and value of the attribute to add
+    #    are fields in the options directionary
+    # 'attribute_to_add' : NAME,VALUE
+    # 'attribute_to_remove' : NAME
+    def lookup_project_attributes(self, project_urn, 
+                                 credentials, options):
+        sys.stderr.write("SA: ENTERING LOOKUP_PROJEC_ATTRIBUTES")
+        client_cert = self.requestCertificate()
+        method = 'lookup_project_attributes'
+        try:
+            client_cert, options = \
+                self._guard.adjust_client_identity(client_cert, \
+                                                       credentials, options)
+            self._guard.validate_call(client_cert, method, \
+                                          credentials, options, \
+                                          {'project_urn' : project_urn})
+            results = \
+                self._delegate.lookup_project_attributes(client_cert, \
+                                                             project_urn, \
+                                                             credentials, \
+                                                             options)
+            return results
+        except Exception as e:
+            return self._errorReturn(e)
+
     # Methods for handling pending project / slice requests
     # Note: Not part of standard Federation API
     
@@ -726,6 +755,23 @@ class SAv1DelegateBase(DelegateBase):
         raise CHAPIv1NotImplementedError('')
 
     def lookup_projects_for_member(self, \
+                                     client_cert, member_urn, \
+                                     credentials, options):
+        raise CHAPIv1NotImplementedError('')
+
+    ## PROJECT ATTRIBUTE SERVICE methods
+    
+    def lookup_project_attributes(self,  \
+                                      client_cert, project_urn,  \
+                                      credentials, options):
+        raise CHAPIv1NotImplementedError('')
+
+    def add_project_attribute(self, \
+                                  client_cert, project_urn, \
+                                  credentials, options):
+        raise CHAPIv1NotImplementedError('')
+
+    def remove_project_attribute(self, \
                                      client_cert, member_urn, \
                                      credentials, options):
         raise CHAPIv1NotImplementedError('')
