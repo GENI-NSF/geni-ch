@@ -885,6 +885,27 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
            return rows[0].id
         return None
 
+    # Lookup attributes for project
+    def lookup_project_attributes(self, client_cert, project_urn, \
+                                      credentials, options):
+        sys.stderr.write("ENTERING LOOKUP_PROJECT_ATTRIBUTES")
+        method = 'lookup_project_attributes'
+        args = {'project_urn' : project_urn}
+        chapi_log_invocation(SA_LOG_PREFIX, method, credentials, options, args)
+
+        client_uuid = get_uuid_from_cert(client_cert)
+        self.update_project_expirations(client_uuid)
+
+        session = self.db.getSession()
+        name = from_project_urn(project_urn)
+        project_id = self.get_project_id(session, "project_name", name)
+        q = session.query(self.db.PROJECT_ATTRIBUTE_TABLE )
+        q = q.filter(self.db.PROJECT_ATTRIBUTE_TABLE.c.project_id==project_id)
+        rows = q.all()
+        session.close()
+        return rows
+
+
     # Sliver Info API
 
     def create_sliver_info(self, client_cert, credentials, options):
