@@ -398,13 +398,8 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
 
         session = self.db.getSession()
 
-        # check that slice does not already exist
-        name = options["fields"]["SLICE_NAME"]
-        if self.get_slice_id(session, "slice_name", name):  # MIK: only active slice
-            session.close()
-            raise CHAPIv1DuplicateError('Already exists a slice named ' + name)
-
         # Create email if not provided
+        name = options["fields"]["SLICE_NAME"]
         if not '_GENI_SLICE_EMAIL' in options['fields'] or \
            not options['fields']['_GENI_SLICE_EMAIL']:
             options['fields']['_GENI_SLICE_EMAIL'] = \
@@ -424,6 +419,17 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                     raise CHAPIv1ArgumentError('No project with urn ' + value)
             else:
                 setattr(slice, SA.slice_field_mapping[key], value)
+
+        # before fill in rest, check that slice does not already exist
+        same_name = self.get_slice_ids(session, "slice_name", name)
+        if same_name:
+            same_project = self.get_slice_ids(session, "project_id",
+                                              slice.project_id)
+            if same_project and (set(same_name) & set(same_project)):
+                session.close()
+                raise CHAPIv1DuplicateError('Already exists a slice named ' +
+                                            name + ' in project ' + project_name)
+
         slice.creation = datetime.utcnow()
         if not slice.expiration:
             slice.expiration = slice.creation + relativedelta(days=7)
