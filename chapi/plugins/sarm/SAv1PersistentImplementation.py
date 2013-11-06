@@ -784,6 +784,10 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                 setattr(member_obj, id_field, id)
                 member_obj.member_id = self.get_member_id_for_urn \
                                    (session, member[member_str])
+                if not member_obj.member_id:
+                    session.close()
+                    raise CHAPIv1ArgumentError('No such member ' + \
+                        member[member_str])
                 member_obj.role = self.get_role_id(session, member[role_str])
                 session.add(member_obj)
                 # check that this is not a duplicate
