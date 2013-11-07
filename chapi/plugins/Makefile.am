@@ -26,9 +26,6 @@ nobase_dist_plugin_DATA = \
 	chrm/MANIFEST.json \
 	chrm/ServiceRegistry.py \
 	chrm/plugin.py \
-	client_auth/ClientAuthorization.py \
-	client_auth/MANIFEST.json \
-	client_auth/plugin.py \
 	csrm/CredentialStore.py \
 	csrm/MANIFEST.json \
 	csrm/plugin.py \
