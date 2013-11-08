@@ -38,79 +38,81 @@ DESC_KEY = 'desc'
 
 default_parameters = [
     {
-        'name': 'chapiv1rpc.ch_cert_root', 
-        'val': os.path.join(GCF_ROOT, 'trusted_roots'),
-        'desc': "Folder which includes trusted clearinghouse certificates for GENI API v3 (in .pem format). If relative path, the root is assumed to be git repo root."
+        NAME_KEY: 'chapiv1rpc.ch_cert_root', 
+        VALUE_KEY: os.path.join(GCF_ROOT, 'trusted_roots'),
+        DESC_KEY: ("Folder which includes trusted clearinghouse certificates"
+                   + " for GENI API v3 (in .pem format). If relative path,"
+                   + " the root is assumed to be git repo root.")
     },
     {
-        'name': "chapiv1rpc.ch_cert",
-        'val': os.path.join(GCF_ROOT, "ch-cert.pem"),
-        'desc': "Location of CH certificate"
+        NAME_KEY: "chapiv1rpc.ch_cert",
+        VALUE_KEY: os.path.join(GCF_ROOT, "ch-cert.pem"),
+        DESC_KEY: "Location of CH certificate"
     },
     {
-        'name': "chapiv1rpc.ch_key",
-        'val': os.path.join(GCF_ROOT, "ch-key.pem"),
-        'desc': "Location of CH private key"
+        NAME_KEY: "chapiv1rpc.ch_key",
+        VALUE_KEY: os.path.join(GCF_ROOT, "ch-key.pem"),
+        DESC_KEY: "Location of CH private key"
     },
     {
-        'name': "chapi.ma_cert",
-        'val': '/usr/share/geni-ch/ma/ma-cert.pem',
-        'desc': "Location of MA certificate"
+        NAME_KEY: "chapi.ma_cert",
+        VALUE_KEY: '/usr/share/geni-ch/ma/ma-cert.pem',
+        DESC_KEY: "Location of MA certificate"
     },
     {
-        'name': "chapi.ma_key",
-        'val': '/usr/share/geni-ch/ma/ma-key.pem',
-        'desc': "Location of MA private key"
+        NAME_KEY: "chapi.ma_key",
+        VALUE_KEY: '/usr/share/geni-ch/ma/ma-key.pem',
+        DESC_KEY: "Location of MA private key"
     },
     {
-        'name': "chapi.sa_cert",
-        'val': '/usr/share/geni-ch/sa/sa-cert.pem',
-        'desc': "Location of SA certificate"
+        NAME_KEY: "chapi.sa_cert",
+        VALUE_KEY: '/usr/share/geni-ch/sa/sa-cert.pem',
+        DESC_KEY: "Location of SA certificate"
     },
     {
-        'name': "chapi.sa_key",
-        'val': '/usr/share/geni-ch/sa/sa-key.pem',
-        'desc': "Location of SA private key"
+        NAME_KEY: "chapi.sa_key",
+        VALUE_KEY: '/usr/share/geni-ch/sa/sa-key.pem',
+        DESC_KEY: "Location of SA private key"
     },
     {
-        'name': "chapi.log_file",
-        'val': '/tmp/chapi.log',
-        'desc': "Location of chapi's log file"
+        NAME_KEY: "chapi.log_file",
+        VALUE_KEY: '/tmp/chapi.log',
+        DESC_KEY: "Location of chapi's log file"
     },
     {
-        'name': "chrm.authority",
-        'val': "ch-mt.gpolab.bbn.com",
-        'desc': "name of CH/SA/MA authority"
+        NAME_KEY: "chrm.authority",
+        VALUE_KEY: "ch-mt.gpolab.bbn.com",
+        DESC_KEY: "name of CH/SA/MA authority"
     },
     {
-        'name': "flask.debug.client_cert_file",
-        'val': "/home/mbrinn/.gcf/mbrinn-cert.pem",
-        'desc': "Debug client cert file"
+        NAME_KEY: "flask.debug.client_cert_file",
+        VALUE_KEY: "/home/mbrinn/.gcf/mbrinn-cert.pem",
+        DESC_KEY: "Debug client cert file"
     },
     {
-        'name': 'chrm.db_url',
-        'val': 'postgresql://portal:portal@localhost/portal',
-        'desc': 'database URL'
+        NAME_KEY: 'chrm.db_url',
+        VALUE_KEY: 'postgresql://portal:portal@localhost/portal',
+        DESC_KEY: 'database URL'
     },
     {
-        'name': "flask.fcgi",
-        'val': True,
-        'desc': "Use FCGI server instead of the development server."
+        NAME_KEY: "flask.fcgi",
+        VALUE_KEY: True,
+        DESC_KEY: "Use FCGI server instead of the development server."
     },
     {
-        'name': "flask.fcgi_port",
-        'val': 0,
-        'desc': "Port to bind the Flask RPC to (FCGI server)."
+        NAME_KEY: "flask.fcgi_port",
+        VALUE_KEY: 0,
+        DESC_KEY: "Port to bind the Flask RPC to (FCGI server)."
     },
     {
-        'name': "flask.app_port",
-        'val': 8001,
-        'desc': "Port to bind the Flask RPC to (standalone server)."
+        NAME_KEY: "flask.app_port",
+        VALUE_KEY: 8001,
+        DESC_KEY: "Port to bind the Flask RPC to (standalone server)."
     },
     {
-        'name': "flask.debug",
-        'val': True,
-        'desc': "Write logging messages for the Flask RPC server."
+        NAME_KEY: "flask.debug",
+        VALUE_KEY: True,
+        DESC_KEY: "Write logging messages for the Flask RPC server."
     }
 ]
 
