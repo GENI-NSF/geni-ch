@@ -11,6 +11,11 @@ GCFDIR=$(readlink /usr/share/geni-ch/portal/gcf)
 sudo ln -s $GCFDIR /usr/share/geni-ch/gcf
 sudo cp /usr/share/geni-ch/chapi/chapi/tools/.bashrc /usr/share/geni-ch/
 
+# allow www-data to write to some AMsoil directories
+sudo chown www-data.www-data /usr/share/geni-ch/chapi/AMsoil/deploy
+sudo chown www-data.www-data /usr/share/geni-ch/chapi/AMsoil/log
+
+
 # install required modules
 sudo apt-get update
 sudo apt-get -y install libapache2-mod-fastcgi python-setuptools \
