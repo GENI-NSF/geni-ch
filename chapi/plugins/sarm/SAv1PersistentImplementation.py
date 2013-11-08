@@ -398,13 +398,8 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
 
         session = self.db.getSession()
 
-        # check that slice does not already exist
-        name = options["fields"]["SLICE_NAME"]
-        if self.get_slice_id(session, "slice_name", name):  # MIK: only active slice
-            session.close()
-            raise CHAPIv1DuplicateError('Already exists a slice named ' + name)
-
         # Create email if not provided
+        name = options["fields"]["SLICE_NAME"]
         if not '_GENI_SLICE_EMAIL' in options['fields'] or \
            not options['fields']['_GENI_SLICE_EMAIL']:
             options['fields']['_GENI_SLICE_EMAIL'] = \
@@ -424,6 +419,17 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                     raise CHAPIv1ArgumentError('No project with urn ' + value)
             else:
                 setattr(slice, SA.slice_field_mapping[key], value)
+
+        # before fill in rest, check that slice does not already exist
+        same_name = self.get_slice_ids(session, "slice_name", name)
+        if same_name:
+            same_project = self.get_slice_ids(session, "project_id",
+                                              slice.project_id)
+            if same_project and (set(same_name) & set(same_project)):
+                session.close()
+                raise CHAPIv1DuplicateError('Already exists a slice named ' +
+                                            name + ' in project ' + project_name)
+
         slice.creation = datetime.utcnow()
         if not slice.expiration:
             slice.expiration = slice.creation + relativedelta(days=7)
@@ -779,6 +785,10 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                 setattr(member_obj, id_field, id)
                 member_obj.member_id = self.get_member_id_for_urn \
                                    (session, member[member_str])
+                if not member_obj.member_id:
+                    session.close()
+                    raise CHAPIv1ArgumentError('No such member ' + \
+                        member[member_str])
                 member_obj.role = self.get_role_id(session, member[role_str])
                 session.add(member_obj)
                 # check that this is not a duplicate
@@ -891,7 +901,6 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                                       credentials, options):
         method = 'lookup_project_attributes'
         args = {'project_urn' : project_urn}
-        chapi_log_invocation(SA_LOG_PREFIX, method, credentials, options, args)
 
         client_uuid = get_uuid_from_cert(client_cert)
         self.update_project_expirations(client_uuid)
