@@ -11,9 +11,6 @@ set -e
 # Echo commands with variables expanded
 set -x
 
-# download abac and gcf
-wget --output-document abac.tar.gz http://abac.deterlab.net/src/abac-0.1.5.tar.gz
-
 # get the update-1.sql file and certs from the proto-ch tree
 git clone git+ssh://trac.gpolab.bbn.com/srv/git/proto-ch.git
 cd proto-ch
@@ -46,7 +43,7 @@ cd ../..
 tar cfpz chapi.tgz chapi
 cp chapi/chapi/tools/install_ch .
 cp chapi/chapi/tools/install_db .
-tar cfp chapi_installer.tar abac.tar.gz chapi.tgz install_ch install_db update-1.sql migrate_assertions.sh
+tar cfp chapi_installer.tar chapi.tgz install_ch install_db update-1.sql migrate_assertions.sh
 
 ./install_db ${1}
 ./install_ch
