@@ -28,7 +28,11 @@ from tools.chapi_log import *
 
 CONFIG_FILE = '/etc/geni-chapi/chapi.ini'
 
-GCF_ROOT = "/usr/share/geni-ch/portal/gcf.d"
+GENI_CH_DIR = '/usr/share/geni-ch'
+CA_DIR = os.path.join(GENI_CH_DIR, 'CA')
+MA_DIR = os.path.join(GENI_CH_DIR, 'ma')
+SA_DIR = os.path.join(GENI_CH_DIR, 'sa')
+GCF_ROOT = os.path.join(GENI_CH_DIR, 'portal', 'gcf.d')
 
 VERSION_NUMBER = '1.0'
 
@@ -46,32 +50,32 @@ default_parameters = [
     },
     {
         NAME_KEY: "chapiv1rpc.ch_cert",
-        VALUE_KEY: os.path.join(GCF_ROOT, "ch-cert.pem"),
+        VALUE_KEY: os.path.join(CA_DIR, 'cacert.pem'),
         DESC_KEY: "Location of CH certificate"
     },
     {
         NAME_KEY: "chapiv1rpc.ch_key",
-        VALUE_KEY: os.path.join(GCF_ROOT, "ch-key.pem"),
+        VALUE_KEY: os.path.join(CA_DIR, 'cakey.pem'),
         DESC_KEY: "Location of CH private key"
     },
     {
         NAME_KEY: "chapi.ma_cert",
-        VALUE_KEY: '/usr/share/geni-ch/ma/ma-cert.pem',
+        VALUE_KEY: os.path.join(MA_DIR, 'ma-cert.pem'),
         DESC_KEY: "Location of MA certificate"
     },
     {
         NAME_KEY: "chapi.ma_key",
-        VALUE_KEY: '/usr/share/geni-ch/ma/ma-key.pem',
+        VALUE_KEY: os.path.join(MA_DIR, 'ma-key.pem'),
         DESC_KEY: "Location of MA private key"
     },
     {
         NAME_KEY: "chapi.sa_cert",
-        VALUE_KEY: '/usr/share/geni-ch/sa/sa-cert.pem',
+        VALUE_KEY: os.path.join(SA_DIR, 'sa-cert.pem'),
         DESC_KEY: "Location of SA certificate"
     },
     {
         NAME_KEY: "chapi.sa_key",
-        VALUE_KEY: '/usr/share/geni-ch/sa/sa-key.pem',
+        VALUE_KEY: os.path.join(SA_DIR, 'sa-key.pem'),
         DESC_KEY: "Location of SA private key"
     },
     {
@@ -81,17 +85,17 @@ default_parameters = [
     },
     {
         NAME_KEY: "chrm.authority",
-        VALUE_KEY: "ch-mt.gpolab.bbn.com",
+        VALUE_KEY: "host.example.com",
         DESC_KEY: "name of CH/SA/MA authority"
     },
     {
         NAME_KEY: "flask.debug.client_cert_file",
-        VALUE_KEY: "/home/mbrinn/.gcf/mbrinn-cert.pem",
+        VALUE_KEY: "/path/to/developer/cert.pem",
         DESC_KEY: "Debug client cert file"
     },
     {
         NAME_KEY: 'chrm.db_url',
-        VALUE_KEY: 'postgresql://portal:portal@localhost/portal',
+        VALUE_KEY: 'postgresql://scott:tiger@localhost/chapi',
         DESC_KEY: 'database URL'
     },
     {
