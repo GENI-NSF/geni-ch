@@ -1,9 +1,0 @@
-{
-  "name" : "Client Authorization service",
-  "author" : "Marshall Brinn",
-  "author-email" : "mbrinn@bbn.com",
-  "version" : 1,
-  "implements" : ["clientauthv1handler"],
-  "loads-after" : ["chdbengine","mav1handler"],
-  "requires" : []
-}
