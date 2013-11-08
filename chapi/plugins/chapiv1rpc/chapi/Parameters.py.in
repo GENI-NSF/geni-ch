@@ -174,7 +174,7 @@ def set_parameters():
             if parser.has_option(section, option):
                 value_type = type(param[VALUE_KEY])
                 value = get_typed_value(parser, section, option, value_type)
-                if value:
+                if value is not None:
                     # If a value was extracted, set it
                     msg = 'Setting parameter %s to %s from %s'
                     chapi_debug('PARAMETERS',
