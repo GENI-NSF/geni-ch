@@ -1,6 +1,6 @@
 ## Process this file with automake to produce Makefile.in
 
-SUBDIRS = plugins tools
+SUBDIRS = plugins tools etc
 
 .PHONY: $(SUBDIRS)
 
