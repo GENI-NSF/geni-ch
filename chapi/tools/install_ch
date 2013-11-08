@@ -1,26 +1,17 @@
 #!/bin/bash
 
-if [ -z $1 ]
-  then
-    echo 'Need to supply a VM name'
-    exit -1
-fi
-
 # Exit on error
 set -e
 # Echo commands with variables expanded
 set -x
 
 # untar everything in the right place
-sudo tar pxfz chapi.tgz -C /usr/share/geni-ch
+sudo tar pxfz chapi.tgz -o -C /usr/share/geni-ch
 GCFDIR=$(readlink /usr/share/geni-ch/portal/gcf)
 sudo ln -s $GCFDIR /usr/share/geni-ch/gcf
-sudo tar xfz abac.tar.gz -C /usr/share/geni-ch
+sudo tar xfz abac.tar.gz -o -C /usr/share/geni-ch
 sudo ln -s /usr/share/geni-ch/abac-0.1.5 /usr/share/geni-ch/abac
 sudo cp /usr/share/geni-ch/chapi/chapi/tools/.bashrc /usr/share/geni-ch/
-
-# patch the authority parameter
-sudo sed -i "s/ch-mt.gpolab.bbn.com/${1}/g" /usr/share/geni-ch/chapi/chapi/plugins/chapiv1rpc/chapi/Parameters.py
 
 # install required modules
 sudo apt-get update
