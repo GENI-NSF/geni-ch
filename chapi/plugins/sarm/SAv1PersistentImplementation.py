@@ -760,6 +760,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
     def modify_membership(self, session, member_class, client_uuid, id, urn, 
                           options, id_field,
                           member_str, role_str, text_str):
+
         id_str = '%s.%s' % (member_class.__name__, id_field)
 
         # first, do the removes
@@ -888,7 +889,6 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
     # Lookup attributes for project
     def lookup_project_attributes(self, client_cert, project_urn, \
                                       credentials, options):
-        sys.stderr.write("ENTERING LOOKUP_PROJECT_ATTRIBUTES")
         method = 'lookup_project_attributes'
         args = {'project_urn' : project_urn}
         chapi_log_invocation(SA_LOG_PREFIX, method, credentials, options, args)
