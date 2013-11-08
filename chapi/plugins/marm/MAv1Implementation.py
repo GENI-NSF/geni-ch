@@ -213,6 +213,8 @@ class MAv1Implementation(MAv1DelegateBase):
         else:
             q = q.filter(MemberAttribute.value == value)
         rows = q.all()
+#        sys.stderr.write("rows=" + str(rows))
+#        sys.stderr.write("q=" + str(q))
         return [row.member_id for row in rows]
 
     # find the value of an attribute for a given user
@@ -265,6 +267,7 @@ class MAv1Implementation(MAv1DelegateBase):
         session = self.db.getSession()
 
         # first, get all the member ids of matches
+        #sys.stderr.write("attr: %s, value: %s" %(attr,value))
         uids = [set(self.get_uids_for_attribute(session, attr, value)) \
                 for attr, value in match_criteria.iteritems()]
         uids = set.intersection(*uids)
@@ -272,7 +275,8 @@ class MAv1Implementation(MAv1DelegateBase):
         # then, get the values
         members = {}
         for uid in uids:
-            urn = self.get_attr_for_uid(session, "MEMBER_URN", uid)[0]
+            row = self.get_attr_for_uid(session,"MEMBER_URN",uid)
+            urn = row[0]
             values = {}
             for col in selected_columns:
                 if col == "_GENI_USER_CREDENTIAL":

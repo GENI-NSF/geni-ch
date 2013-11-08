@@ -766,6 +766,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
     def modify_membership(self, session, member_class, client_uuid, id, urn, 
                           options, id_field,
                           member_str, role_str, text_str):
+
         id_str = '%s.%s' % (member_class.__name__, id_field)
 
         # first, do the removes
