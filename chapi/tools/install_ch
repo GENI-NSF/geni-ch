@@ -9,22 +9,20 @@ set -x
 sudo tar pxfz chapi.tgz -o -C /usr/share/geni-ch
 GCFDIR=$(readlink /usr/share/geni-ch/portal/gcf)
 sudo ln -s $GCFDIR /usr/share/geni-ch/gcf
-sudo tar xfz abac.tar.gz -o -C /usr/share/geni-ch
-sudo ln -s /usr/share/geni-ch/abac-0.1.5 /usr/share/geni-ch/abac
 sudo cp /usr/share/geni-ch/chapi/chapi/tools/.bashrc /usr/share/geni-ch/
+
+# allow www-data to write to some AMsoil directories
+sudo chown www-data.www-data /usr/share/geni-ch/chapi/AMsoil/deploy
+sudo chown www-data.www-data /usr/share/geni-ch/chapi/AMsoil/log
+
 
 # install required modules
 sudo apt-get update
 sudo apt-get -y install libapache2-mod-fastcgi python-setuptools \
     python-dev python-openssl python-flup nginx libxslt-dev \
-    autoconf-archive g++ swig php5-xmlrpc
+    php5-xmlrpc
+sudo apt-get -y --allow-unauthenticated install abac-0.1.6
 sudo easy_install flask Flask-XML-RPC blinker pika sqlalchemy lxml
-
-# build abac
-cd /usr/share/geni-ch/abac/
-sudo ./configure --prefix=/usr
-sudo make
-sudo make install
 
 # patch the apache configuration files
 sudo patch --backup -p0 /etc/apache2/mods-available/fastcgi.conf << EOF
