@@ -35,10 +35,8 @@ dist_tool_SCRIPTS = \
 	install_ch \
 	install_chapi \
 	install_db \
-	make_installer \
 	pgch_testall.sh \
-	testall.sh \
-	update_chapi
+	testall.sh
 
 dist_example_SCRIPTS = \
 	.bashrc
