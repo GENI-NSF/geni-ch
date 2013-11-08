@@ -1,7 +1,25 @@
+pkgsysconfdir = $(sysconfdir)/$(PACKAGE)
+
 # TODO: change this to a more sane directory like
 #       $(pkgdatadir)/plugins where $pkgdatadir is
 #       /usr/share/geni-chapi or similar
 plugindir = $(pkgdatadir)/../geni-ch/chapi/chapi/plugins
+
+edit = sed \
+	-e 's|@bindir[@]|$(bindir)|g' \
+	-e 's|@pkgdatadir[@]|$(pkgdatadir)|g' \
+	-e 's|@pkgsysconfdir[@]|$(pkgsysconfdir)|g' \
+	-e 's|@prefix[@]|$(prefix)|g'
+
+chapiv1rpc/chapi/Parameters.py: Makefile
+	rm -f $@ $@.tmp
+	srcdir=''; \
+	  test -f ./$@.in || srcdir=$(srcdir)/; \
+	  $(edit) $${srcdir}$@.in >$@.tmp
+	chmod a-w $@.tmp
+	mv $@.tmp $@
+
+chapiv1rpc/chapi/Parameters.py: $(srcdir)/chapiv1rpc/chapi/Parameters.py.in
 
 nobase_dist_plugin_DATA = \
 	chapiv1rpc/MANIFEST.json \

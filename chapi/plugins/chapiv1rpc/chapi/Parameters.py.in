@@ -26,7 +26,7 @@ import os.path
 import ConfigParser
 from tools.chapi_log import *
 
-CONFIG_FILE = '/etc/geni-chapi/chapi.ini'
+CONFIG_FILE = '@pkgsysconfdir@/chapi.ini'
 
 GENI_CH_DIR = '/usr/share/geni-ch'
 CA_DIR = os.path.join(GENI_CH_DIR, 'CA')
