@@ -737,6 +737,18 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                                           'PROJECT_MEMBER', 'PROJECT_ROLE', \
                                           'project')
 
+        # now delete all removed members from slices
+        if 'members_to_remove' in options:
+            q = session.query(self.db.SLICE_TABLE.slice_id)
+            q = q.filter(self.db.SLICE_TABLE.c.project_id == project_id)
+            rows = q.all()
+            slices = [row.slice_id for row in rows]
+            for member in options['members_to_remove']:
+                result3 = self.lookup_slices_for_member(client_cert, member, credentials, {})
+
+        session.commit()
+        session.close()
+
         chapi_log_result(SA_LOG_PREFIX, method, result)
         return result
 
@@ -758,6 +770,8 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                                           options, 'slice_id', \
                                           'SLICE_MEMBER', 'SLICE_ROLE', \
                                           'slice')
+        session.commit()
+        session.close()
 
         chapi_log_result(SA_LOG_PREFIX, method, result)
         return result
@@ -821,10 +835,6 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
             session.close()
             raise CHAPIv1ArgumentError('This would result in ' + \
                           str(num_leads) + ' leads for the ' + text_str)
-
-        # finish up
-        session.commit()
-        session.close()
 
 
         # Now log the removals, adds, changes
