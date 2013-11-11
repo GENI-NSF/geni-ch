@@ -222,7 +222,8 @@ class MAv1Guard(ABACGuardBase):
                     ], None, None), 
         'revoke_member_privilege' :
             SubjectInvocationCheck([
-                    "ME.MAY_ENABLE_USER<-ME.IS_OPERATOR", 
+                    "ME.MAY_REVOKE_MEMBER_PRIVILEGE<-ME.IS_AUTHORITY", 
+                    "ME.MAY_REVOKE_MEMBER_PRIVILEGE<-ME.IS_OPERATOR"
                     ], None, None), 
 
         'add_member_attribute' :
