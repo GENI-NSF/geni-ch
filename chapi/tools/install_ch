@@ -19,8 +19,7 @@ sudo chown www-data.www-data /usr/share/geni-ch/chapi/AMsoil/log
 # install required modules
 sudo apt-get update
 sudo apt-get -y install libapache2-mod-fastcgi python-setuptools \
-    python-dev python-openssl python-flup nginx libxslt-dev \
-    php5-xmlrpc
+    python-dev python-openssl python-flup libxslt-dev php5-xmlrpc
 sudo apt-get -y --allow-unauthenticated install abac-0.1.6
 sudo easy_install flask Flask-XML-RPC blinker pika sqlalchemy lxml
 
