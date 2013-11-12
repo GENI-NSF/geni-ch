@@ -739,12 +739,24 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
 
         # now delete all removed members from slices
         if 'members_to_remove' in options:
-            q = session.query(self.db.SLICE_TABLE.slice_id)
+            q = session.query(self.db.SLICE_TABLE.c.slice_id)
             q = q.filter(self.db.SLICE_TABLE.c.project_id == project_id)
             rows = q.all()
             slices = [row.slice_id for row in rows]
             for member in options['members_to_remove']:
-                result3 = self.lookup_slices_for_member(client_cert, member, credentials, {})
+                options = {'members_to_remove': [member]}
+                result3 = self.lookup_slices_for_member(client_cert, member, \
+                                                        credentials, {})
+                for slice in result3['value']:
+                    # skip slices that are not part of the current project
+                    if not slice['SLICE_UID'] in slices:
+                        continue
+                    self.modify_membership(session, SliceMember, client_uuid, \
+                             slice['SLICE_UID'], slice['SLICE_URN'], options, \
+                             'slice_id', 'SLICE_MEMBER', 'SLICE_ROLE', 'slice')
+                    if slice['SLICE_ROLE'] == 'LEAD':
+                        pass # WHAT TO DO IF DELETING LEAD FROM SLICE????
+                             # MAKE PROJECT LEAD NEW SLICE LEAD????
 
         session.commit()
         session.close()
