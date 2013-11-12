@@ -739,24 +739,45 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
 
         # now delete all removed members from slices
         if 'members_to_remove' in options:
+            # first identify all slices in project
             q = session.query(self.db.SLICE_TABLE.c.slice_id)
             q = q.filter(self.db.SLICE_TABLE.c.project_id == project_id)
             rows = q.all()
             slices = [row.slice_id for row in rows]
+
+            # then identify project lead in case need to replace slice lead
+            q = session.query(ProjectMember.member_id)
+            q = q.filter(ProjectMember.project_id == project_id)
+            lead_role = str(self.get_role_id(session, "LEAD"))
+            q = q.filter(ProjectMember.role == lead_role)
+            project_lead = q.all()[0].member_id
+            project_lead_urn = self.get_member_urn_for_id(session, project_lead)
+
+            # now loop over members removed from project to remove from slices
             for member in options['members_to_remove']:
-                options = {'members_to_remove': [member]}
                 result3 = self.lookup_slices_for_member(client_cert, member, \
                                                         credentials, {})
                 for slice in result3['value']:
                     # skip slices that are not part of the current project
                     if not slice['SLICE_UID'] in slices:
                         continue
+                    options = {'members_to_remove': [member]}
+
+                    # if member is lead on the slice, make a new lead
+                    if slice['SLICE_ROLE'] == 'LEAD':
+                        opt = [{'SLICE_MEMBER': project_lead_urn,
+                                'SLICE_ROLE': 'LEAD'}]
+                        q = session.query(SliceMember.member_id)
+                        q = q.filter(SliceMember.slice_id == slice['SLICE_UID'])
+                        q = q.filter(SliceMember.member_id == project_lead)
+                        if len(q.all()) > 0:
+                            options['members_to_change'] = opt
+                        else:
+                            options['members_to_add'] = opt
+                    
                     self.modify_membership(session, SliceMember, client_uuid, \
                              slice['SLICE_UID'], slice['SLICE_URN'], options, \
                              'slice_id', 'SLICE_MEMBER', 'SLICE_ROLE', 'slice')
-                    if slice['SLICE_ROLE'] == 'LEAD':
-                        pass # WHAT TO DO IF DELETING LEAD FROM SLICE????
-                             # MAKE PROJECT LEAD NEW SLICE LEAD????
 
         session.commit()
         session.close()
@@ -907,6 +928,15 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         rows = q.all()
         if len(rows) > 0:
            return rows[0].member_id
+        return None
+
+    def get_member_urn_for_id(self, session, id):
+        q = session.query(self.db.MEMBER_ATTRIBUTE_TABLE.c.value)
+        q = q.filter(self.db.MEMBER_ATTRIBUTE_TABLE.c.name == "urn")
+        q = q.filter(self.db.MEMBER_ATTRIBUTE_TABLE.c.member_id == id)
+        rows = q.all()
+        if len(rows) > 0:
+           return rows[0].value
         return None
 
     def get_role_id(self, session, role):
