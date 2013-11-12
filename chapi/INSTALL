@@ -45,6 +45,7 @@ To install chapi on a machine running the old clearinghouse:
   * edit /etc/geni-chapi/chapi.ini
    - Set chrm.authority to your VM CNAME
    - Set db_url if necessary
+   - Review and update other settings as appropriate
 
  9. Restart apache one more time
 
