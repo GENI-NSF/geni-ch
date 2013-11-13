@@ -742,8 +742,11 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         q = session.query(self.db.SLICE_TABLE)
         q = q.filter(self.db.SLICE_TABLE.c.project_id == project_id)
         rows = q.all()
+    
         slices = [row.slice_id for row in rows]
-        slices2 = [(row.slice_id, row.slice_urn) for row in rows]
+        slice_urns = {}
+        for row in rows:
+            slice_urns[row.slice_id] = row.slice_urn
         project_lead = self.get_project_lead(session, project_id)
         project_lead_urn = self.get_member_urn_for_id(session, project_lead)
 
@@ -758,18 +761,18 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                 # skip slice if not in current project
                 if slice['SLICE_UID'] not in slices:
                     continue
-                slices.remove(slice['SLICE_UID'])
-                if slice['SLICE_ROLE'] in ['LEAD', 'ADMIN']:
+                del(slice_urns[slice['SLICE_UID']])
+                if slice['SLICE_ROLE'] not in ['LEAD', 'ADMIN']:
                     options = {'members_to_change': opt}
                     self.modify_membership(session, SliceMember, client_uuid, \
                            slice['SLICE_UID'], slice['SLICE_URN'], options, \
                            'slice_id', 'SLICE_MEMBER', 'SLICE_ROLE', 'slice')
                     
             # add lead to slices not yet a member of
-            for slice in slices2:
+            for slice_id, slice_urn in slice_urns.iteritems():
                  options = {'members_to_add': opt}
                  self.modify_membership(session, SliceMember, client_uuid, \
-                           slice[0], slice[1], options, \
+                           slice_id, slice_urn, options, \
                            'slice_id', 'SLICE_MEMBER', 'SLICE_ROLE', 'slice')
 
         # now delete all removed members from slices
