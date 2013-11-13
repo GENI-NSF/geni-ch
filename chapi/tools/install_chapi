@@ -36,6 +36,7 @@ git checkout "${CHAPI_BRANCH}"
 AMSOIL_VERSION=AMsoil-gpo-0.3.2
 AMSOIL_FILE=${AMSOIL_VERSION}.tar.gz
 wget http://www.gpolab.bbn.com/internal/projects/chapi/${AMSOIL_FILE}
+tar zxf "${AMSOIL_FILE}"
 ln -s "${AMSOIL_VERSION}" AMsoil
 cd AMsoil
 
