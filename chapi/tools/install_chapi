@@ -32,11 +32,12 @@ git clone trac.gpolab.bbn.com:/srv/git/chapi.git
 cd chapi
 git checkout "${CHAPI_BRANCH}"
 
-# get gpo branch of local amsoil repo inside of chapi directory
-git clone trac.gpolab.bbn.com:/srv/git/amsoil.git
-mv amsoil AMsoil
+# Get GPO version of AMsoil from local web site
+AMSOIL_VERSION=AMsoil-gpo-0.3.2
+AMSOIL_FILE=${AMSOIL_VERSION}.tar.gz
+wget http://www.gpolab.bbn.com/internal/projects/chapi/${AMSOIL_FILE}
+ln -s "${AMSOIL_VERSION}" AMsoil
 cd AMsoil
-git checkout gpo
 
 # fix up the amsoil directory
 for pl in chrm chapiv1rpc sarm marm csrm logging pgch
