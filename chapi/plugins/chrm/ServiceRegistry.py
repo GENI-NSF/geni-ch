@@ -138,7 +138,11 @@ class SRv1Delegate(CHv1PersistentImplementation):
 
         options = {'match' : {}, 'filter' : self.field_mapping.keys()}
 
-        result = self.lookup_authorities(service_type, options)
+        services = self.get_services()
+        if services['code'] != NO_ERROR:
+            return services
+        result = [s for s in services['value'] \
+                                 if s['SERVICE_TYPE'] == service_type] 
 
         chapi_log_result(SR_LOG_PREFIX, method, result)
         return result
@@ -163,7 +167,7 @@ class SRv1Delegate(CHv1PersistentImplementation):
                         for row in rows]
 
         # Fill in the service_cert_contents
-        if 'SERVER_CERT' in selected_columns:
+        if 'SERVICE_CERT' in selected_columns:
             for service in services:
                 if service['SERVICE_CERT']:
                     service['SERVICE_CERT'] = \
