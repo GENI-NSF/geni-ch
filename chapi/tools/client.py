@@ -257,11 +257,24 @@ def main(args = sys.argv, do_print=True):
             _do_ssl(framework, suppress_errors, reason, fcn, opts.urn,
                     opts.credentials, options)
 
+    # MA add/revoke privilege methods
+    elif opts.method in ['add_member_privilege', 'revoke_member_privilege']:
+        options = {}
+        (result, msg) = \
+            _do_ssl(framework, suppress_errors, reason, fcn, opts.uuid_arg, \
+                        opts.string_arg, \
+                        opts.credentials, options)
+
+#    def add_member_privilege(self, cert, member_uid, privilege, credentials, options):
+
+
     # Methods that take attributes and options
     elif client_attributes:
         (result, msg) = _do_ssl(framework, suppress_errors, reason, fcn, \
                                     client_attributes, \
                                     opts.credentials, client_options)
+
+    
                              
     # Methods that take credentials and options and urn arguments
     elif opts.urn:
