@@ -213,8 +213,6 @@ class MAv1Implementation(MAv1DelegateBase):
         else:
             q = q.filter(MemberAttribute.value == value)
         rows = q.all()
-#        sys.stderr.write("rows=" + str(rows))
-#        sys.stderr.write("q=" + str(q))
         return [row.member_id for row in rows]
 
     # find the value of an attribute for a given user
@@ -267,7 +265,6 @@ class MAv1Implementation(MAv1DelegateBase):
         session = self.db.getSession()
 
         # first, get all the member ids of matches
-        #sys.stderr.write("attr: %s, value: %s" %(attr,value))
         uids = [set(self.get_uids_for_attribute(session, attr, value)) \
                 for attr, value in match_criteria.iteritems()]
         uids = set.intersection(*uids)
@@ -680,16 +677,14 @@ class MAv1Implementation(MAv1DelegateBase):
         q = add_filters(q, match_criteria, self.db.SSH_KEY_TABLE, MA.key_field_mapping)
         rows = q.all()
         session.close()
-
-        keys = {}
+        keys = []
         for row in rows:
             row.id = str(row.id)
-            if not hasattr(keys, row.value):
-                keys[row.value] = []
-            keys[row.value].append(construct_result_row(row, \
+#            if not hasattr(keys, row.id):
+#                keys[row.id] = []
+            keys.append(construct_result_row(row, \
                          selected_columns, MA.key_field_mapping))
         result = self._successReturn(keys)
-
         chapi_log_result(MA_LOG_PREFIX, method, result)
         return result
 
