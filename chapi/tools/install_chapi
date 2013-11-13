@@ -12,13 +12,6 @@ if [ -z $1 ]; then
   exit 1
 fi
 
-# Accept optional second arg to specify chapi branch
-if [ -z $2 ]; then
-  CHAPI_BRANCH=develop
-else
-  CHAPI_BRANCH=$2
-fi
-
 # install required modules
 sudo apt-get update
 sudo apt-get -y install libapache2-mod-fastcgi python-pip \
@@ -43,6 +36,8 @@ mkdir "${TMP_DIR}"
 cd "${TMP_DIR}"
 mkdir chapi
 cp -r "${CHAPI_DIR}" chapi
+# Clean up any git cruft that got copied
+find chapi -name '.git*' -delete
 cd chapi
 
 # Get GPO version of AMsoil from local web site
