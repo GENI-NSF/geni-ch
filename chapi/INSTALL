@@ -5,50 +5,21 @@ To install chapi on a machine running the old clearinghouse:
   * use Makefile.sync on your own laptop
   * do-make-install.sh on your portal
 
- 2. Checkout the chapi repository, develop branch on your laptop
+ 2. Copy the chapi tree from your laptop onto your VM
 
-  * git clone trac.gpolab.bbn.com:/srv/git/chapi.git
-  * cd chapi
-  * git checkout develop
+  * rsync -aztv /path/to/chapi/chapi your-host.example.com:
 
- 3. Copy chapi/chapi/tools/install_chapi your portal VM
+ 3. Run the installer on your VM
 
-  * scp chapi/tools/install_chapi your-host.example.com:
+  * $HOME/chapi/tools/install_chapi <VM CNAME e.g. ch-ph.gpolab.bbn.com>
 
- 4. Make an empty directory on your portal VM
-
-  * mkdir /tmp/chapi
-  * cp /path/to/install_chapi /tmp/chapi
-
- 5. Run the installer
-
-  * cd /tmp/chapi
-  * ./install_chapi <VM name e.g. ch-ph.gpolab.bbn.com>
-
- 6. Copy the chapi package from your laptop onto your VM
-
-  * rsync -aztv /path/to/chapi/chapi your-host.example.com
-
- 7. Build chapi on your VM
-
-  * cd "${HOME}"/chapi
-  * autoreconf --install
-  * ./configure --prefix=/usr --sysconfdir=/etc \
-          --bindir=/usr/local/bin --sbindir=/usr/local/sbin
-  * make
-  * sudo make install
-  * sudo service apache2 restart
-
- 8. Create a chapi config file
+ 4. Create a chapi config file if you don't already have one
 
   * cp /etc/geni-chapi/example-chapi.ini /etc/geni-chapi/chapi.ini
   * edit /etc/geni-chapi/chapi.ini
    - Set chrm.authority to your VM CNAME
    - Set db_url if necessary
    - Review and update other settings as appropriate
-
- 9. Restart apache one more time
-
   * sudo service apache2 restart
 
 
@@ -62,7 +33,8 @@ To update the chapi code with a newer version:
 
   * cd "${HOME}"/chapi
   * autoreconf --install
-  * ./configure --prefix=/usr --sysconfdir=/etc --bindir=/usr/local/bin --sbindir=/usr/local/sbin
+  * ./configure --prefix=/usr --sysconfdir=/etc --bindir=/usr/local/bin \
+                --sbindir=/usr/local/sbin
   * make
   * sudo make install
   * sudo service apache2 restart
