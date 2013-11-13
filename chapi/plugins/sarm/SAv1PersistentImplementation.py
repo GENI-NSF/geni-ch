@@ -750,6 +750,15 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         project_lead = self.get_project_lead(session, project_id)
         project_lead_urn = self.get_member_urn_for_id(session, project_lead)
 
+        # if project lead has changed, make sure new project lead authorized
+        if project_lead != old_project_lead:
+            q = session.query(self.db.MEMBER_ATTRIBUTE_TABLE.c.value).\
+                filter(self.db.MEMBER_ATTRIBUTE_TABLE.c.member_id == project_lead).\
+                filter(self.db.MEMBER_ATTRIBUTE_TABLE.c.name == 'PROJECT_LEAD')
+            rows = q.all()
+            if len(rows) == 0 or rows[0][0] != 'true':
+                raise CHAPIv1ArgumentError('New project lead not authorized')
+
         # if project lead has changed, make new project lead admin on slices
         if project_lead != old_project_lead:
             opt = [{'SLICE_MEMBER': project_lead_urn, 'SLICE_ROLE': 'ADMIN'}]
