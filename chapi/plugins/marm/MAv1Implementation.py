@@ -677,12 +677,11 @@ class MAv1Implementation(MAv1DelegateBase):
         q = add_filters(q, match_criteria, self.db.SSH_KEY_TABLE, MA.key_field_mapping)
         rows = q.all()
         session.close()
-        keys = []
+        keys = {}
         for row in rows:
-            row.id = str(row.id)
-#            if not hasattr(keys, row.id):
-#                keys[row.id] = []
-            keys.append(construct_result_row(row, \
+            if row.value not in keys:
+                keys[row.value] = []
+            keys[row.value].append(construct_result_row(row, \
                          selected_columns, MA.key_field_mapping))
         result = self._successReturn(keys)
         chapi_log_result(MA_LOG_PREFIX, method, result)
