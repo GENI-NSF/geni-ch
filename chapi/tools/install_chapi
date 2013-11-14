@@ -1,38 +1,52 @@
 #!/bin/bash
 
-if [ -z $1 ]
-  then
-    echo 'Need to supply a VM name'
-    exit -1
-fi
+echoerr() { echo "$@" 1>&2; }
 
 # Exit on error
 set -e
 # Echo commands with variables expanded
 set -x
 
-# download abac and gcf
-wget --output-document abac.tar.gz http://abac.deterlab.net/src/abac-0.1.5.tar.gz
+if [ -z $1 ]; then
+  echoerr 'Need to supply a VM name'
+  exit 1
+fi
 
-# get the update-1.sql file and certs from the proto-ch tree
-git clone git+ssh://trac.gpolab.bbn.com/srv/git/proto-ch.git
-cd proto-ch
-#git checkout sliverinfo
-git checkout chapidev
-cp sa/db/postgresql/update-1.sql ..
-cp bin/migrate_assertions.sh ..
-cd ..
+# install required modules
+sudo apt-get update
+sudo apt-get -y install libapache2-mod-fastcgi python-pip \
+    python-dev python-flup libxslt-dev php5-xmlrpc
+sudo apt-get -y --allow-unauthenticated install abac-0.1.6
+sudo pip install flask==0.10.1 Flask-XML-RPC==0.1.2 blinker==1.3 \
+    sqlalchemy==0.8.3 lxml==3.2.4
 
-# clone chapi
-git clone git+ssh://trac.gpolab.bbn.com/srv/git/chapi.git
+TMP_DIR=/tmp/chapi-install
+if [ -x "${TMP_DIR}" ]; then
+  echoerr "Temporary build directory '${TMP_DIR}' exists."
+  echoerr "Please remove it and run this script again."
+  exit 1
+fi
 
+# Find out where this script lives. It should be in the
+# "tools" directory of a chapi tree.
+TOOLS_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+CHAPI_DIR="${TOOLS_DIR}"/../../chapi
+
+mkdir "${TMP_DIR}"
+cd "${TMP_DIR}"
+mkdir chapi
+cp -r "${CHAPI_DIR}" chapi
+# Clean up any git cruft that got copied
+find chapi -name '.git*' -delete
 cd chapi
-git checkout develop
-# get gpo branch of local amsoil repo inside of chapi directory
-git clone git+ssh://trac.gpolab.bbn.com/srv/git/amsoil.git
-mv amsoil AMsoil
+
+# Get GPO version of AMsoil from local web site
+AMSOIL_VERSION=AMsoil-gpo-0.3.2
+AMSOIL_FILE=${AMSOIL_VERSION}.tar.gz
+wget http://www.gpolab.bbn.com/internal/projects/chapi/${AMSOIL_FILE}
+tar zxf "${AMSOIL_FILE}"
+ln -s "${AMSOIL_VERSION}" AMsoil
 cd AMsoil
-git checkout gpo
 
 # fix up the amsoil directory
 for pl in chrm chapiv1rpc sarm marm csrm logging pgch
@@ -45,8 +59,17 @@ sudo chown www-data deploy log
 cd ../..
 tar cfpz chapi.tgz chapi
 cp chapi/chapi/tools/install_ch .
-cp chapi/chapi/tools/install_db .
-tar cfp chapi_installer.tar abac.tar.gz chapi.tgz install_ch install_db update-1.sql migrate_assertions.sh
+tar cfp chapi_installer.tar chapi.tgz install_ch
 
-./install_db ${1}
-./install_ch ${1}
+chapi/chapi/tools/install_db ${1}
+./install_ch
+
+# Clean up the temp directory
+sudo rm -rf "${TMP_DIR}"
+
+cd "${CHAPI_DIR}"
+autoreconf --install
+./configure --prefix=/usr --sysconfdir=/etc --bindir=/usr/local/bin --sbindir=/usr/local/sbin
+make
+sudo make install
+sudo service apache2 restart

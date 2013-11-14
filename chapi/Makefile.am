@@ -1,6 +1,6 @@
 ## Process this file with automake to produce Makefile.in
 
-SUBDIRS = plugins tools
+SUBDIRS = plugins tools etc
 
 .PHONY: $(SUBDIRS)
 
@@ -8,12 +8,11 @@ SUBDIRS = plugins tools
 #       the installation moves from geni-ch to geni-chapi
 chapidir = $(pkgdatadir)/../geni-ch/chapi/chapi
 
-# I don't know if either of these files is required on
-# installation. Putting them here for backward compatibility.
-# TODO: Find out if these files are needed.
-dist_chapi_SCRIPTS = \
-	linkamsoil.sh
+# I don't know if either of this files is required on
+# installation. Putting it here for backward compatibility.
+# TODO: Find out if this file is needed.
+dist_chapi_SCRIPTS = linkamsoil.sh
 
-# This should really go in /usr/share/doc
-dist_chapi_DATA = \
-	INSTALL
+dist_pkgdata_DATA = apache2.conf
+
+doc_DATA = INSTALL

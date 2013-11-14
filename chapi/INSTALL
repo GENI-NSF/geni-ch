@@ -1,21 +1,40 @@
 To install chapi on a machine running the old clearinghouse:
 
-1 - First install the chapidev branch of proto-ch in the usual way (using Makefile.sync on your own laptop and do-make-install.sh on your portal)
+ 1. Install the chapidev branch of proto-ch in the usual way:
 
-2 - Checkout the chapi repository, develop branch on your laptop.
+  * use Makefile.sync on your own laptop
+  * do-make-install.sh on your portal
 
-3 - From chapi/chapi/tools, scp the "install_chapi" script to your portal VM
+ 2. Copy the chapi tree from your laptop onto your VM
 
-4 - make an empty directory on your portal VM
+  * rsync -aztv /path/to/chapi/chapi your-host.example.com:
 
-5 - cd into the new directory and run:
-~/install_chapi <VM name e.g. ch-ph.gpolab.bbn.com>
+ 3. Run the installer on your VM
+
+  * $HOME/chapi/tools/install_chapi <VM CNAME e.g. ch-ph.gpolab.bbn.com>
+
+ 4. Create a chapi config file if you don't already have one
+
+  * cp /etc/geni-chapi/example-chapi.ini /etc/geni-chapi/chapi.ini
+  * edit /etc/geni-chapi/chapi.ini
+   - Set chrm.authority to your VM CNAME
+   - Set db_url if necessary
+   - Review and update other settings as appropriate
+  * sudo service apache2 restart
+
 
 To update the chapi code with a newer version:
 
-1 - From chapi/chapi/tools. scp the "update_chapi" script to your portal VM
+ 1. Copy the chapi package from your laptop onto your VM
 
-2 - make an empty directory on your portal VM
+  * rsync -aztv /path/to/chapi/chapi your-host.example.com
 
-3 - cd into the new directory and run:
-~/update_chapi 
+ 2. Build chapi on your VM
+
+  * cd "${HOME}"/chapi
+  * autoreconf --install
+  * ./configure --prefix=/usr --sysconfdir=/etc --bindir=/usr/local/bin \
+                --sbindir=/usr/local/sbin
+  * make
+  * sudo make install
+  * sudo service apache2 restart
