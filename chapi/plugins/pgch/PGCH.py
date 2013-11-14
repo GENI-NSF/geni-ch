@@ -514,7 +514,7 @@ class PGCHv1Delegate(DelegateBase):
 
         self.logger.info("Called ListComponents")
         options = dict()
-        get_aggregates_result = self._ch_handler.get_aggregates(options)
+        get_aggregates_result = self._ch_handler.lookup_aggregates(options)
         if get_aggregates_result['code'] != NO_ERROR:
             return get_aggregates_result
         aggregates = get_aggregates_result['value']
