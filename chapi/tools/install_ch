@@ -15,60 +15,35 @@ sudo cp /usr/share/geni-ch/chapi/chapi/tools/.bashrc /usr/share/geni-ch/
 sudo chown www-data.www-data /usr/share/geni-ch/chapi/AMsoil/deploy
 sudo chown www-data.www-data /usr/share/geni-ch/chapi/AMsoil/log
 
-
-# patch the apache configuration files
-sudo patch --backup -p0 /etc/apache2/mods-available/fastcgi.conf << EOF
---- fastcgi.conf	2013-09-03 15:51:58.606431660 -0400
-+++ /etc/apache2/mods-available/fastcgi.conf	2013-09-06 08:46:20.682426270 -0400
-@@ -2,4 +2,5 @@
-   AddHandler fastcgi-script .fcgi
-   #FastCgiWrapper /usr/lib/apache2/suexec
-   FastCgiIpcDir /var/lib/apache2/fastcgi
-+  FastCgiServer /usr/share/geni-ch/chapi/AMsoil/src/main.py -port 9003 -initial-env PYTHONPATH=/usr/share/geni-ch/chapi/chapi:/usr/share/geni-ch/chapi/chapi/tools:/usr/share/geni-ch/gcf/src -initial-env GCFHOME=/usr/share/geni-ch/gcf/src -initial-env CHAPIHOME=/usr/share/geni-ch/chapi/chapi
- </IfModule>
-EOF
-
-sudo patch --backup -p0 /etc/apache2/mods-available/deflate.conf << EOF
---- /etc/apache2/mods-enabled/deflate.conf	2013-07-12 09:39:20.000000000 -0400
-+++ chapi/deflate.conf	2013-09-03 16:12:34.894429239 -0400
-@@ -1,6 +1,7 @@
- <IfModule mod_deflate.c>
-           # these are known to be safe with MSIE 6
--          AddOutputFilterByType DEFLATE text/html text/plain text/xml
-+#          AddOutputFilterByType DEFLATE text/html text/plain text/xml
-+          AddOutputFilterByType DEFLATE text/plain
- 
-           # everything else may cause problems with MSIE 6
-           AddOutputFilterByType DEFLATE text/css
-EOF
-
 sudo chmod 644 /etc/apache2/sites-available/ch-ssl
-sudo patch --backup -p0 /etc/apache2/sites-available/ch-ssl << EOF
---- ch-ssl	2013-09-06 08:54:59.234460479 -0400
-+++ /etc/apache2/sites-available/ch-ssl	2013-09-06 08:46:59.526437589 -0400
-@@ -190,6 +190,18 @@
- 	Include /usr/share/geni-ch/cs/apache2.conf
- 	Include /usr/share/geni-ch/logging/apache2.conf
- 
-+        SSLOptions +ExportCertData
-+        SSLCACertificateFile /usr/share/geni-ch/CA/cacert.pem
-+        SSLVerifyClient optional_no_ca
-+        SSLVerifyDepth 3
-+        ScriptAlias /SA /usr/share/geni-ch/chapi/AMsoil/src/main.py
-+        ScriptAlias /MA /usr/share/geni-ch/chapi/AMsoil/src/main.py 
-+        ScriptAlias /CS /usr/share/geni-ch/chapi/AMsoil/src/main.py 
-+        ScriptAlias /CH /usr/share/geni-ch/chapi/AMsoil/src/main.py 
-+        ScriptAlias /LOG /usr/share/geni-ch/chapi/AMsoil/src/main.py 
-+        ScriptAlias /PGCH /usr/share/geni-ch/chapi/AMsoil/src/main.py 
-+        ScriptAlias /SR /usr/share/geni-ch/chapi/AMsoil/src/main.py 
-+
+sudo patch --backup --ignore-whitespace -p0 /etc/apache2/sites-available/ch-ssl << EOF
+--- /etc/apache2/sites-available/ch-ssl.orig    2013-10-08 11:18:46.447848440 -0400
++++ /etc/apache2/sites-available/ch-ssl 2013-11-14 12:31:03.722755485 -0500
+@@ -182,14 +182,11 @@
+        # MSIE 7 and newer should be able to use keepalive
+        BrowserMatch "MSIE [17-9]" ssl-unclean-shutdown
+
+-       # Include configuration files for clearinghouse services
+-       Include /usr/share/geni-ch/sa/apache2.conf
+-       Include /usr/share/geni-ch/ma/apache2.conf
+-       Include /usr/share/geni-ch/pa/apache2.conf
+-       Include /usr/share/geni-ch/sr/apache2.conf
+-       Include /usr/share/geni-ch/cs/apache2.conf
+-       Include /usr/share/geni-ch/logging/apache2.conf
+-       Include /usr/share/xml-signer/etc/apache2.conf
++       SSLOptions +ExportCertData
++       SSLCACertificateFile /usr/share/geni-ch/CA/cacert.pem
++       SSLVerifyClient optional_no_ca
++       SSLVerifyDepth 3
++       Include /usr/share/geni-chapi/apache2.conf
+
  </VirtualHost>
- 
- # Catch-all default virtual host, so other CNAMEs to this IP are not
+
 EOF
 
 sudo chmod +w /etc/geni-ch/settings.php
 sudo sed -i 's/sr\/sr_controller.php/SR/g' /etc/geni-ch/settings.php
 
-# restart apache
-sudo service apache2 restart
+# At this point apache needs a restart, but that will get done
+# by the invoking script (install_chapi)
+#sudo service apache2 restart
