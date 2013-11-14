@@ -499,8 +499,10 @@ class PGCHv1Delegate(DelegateBase):
         if ssh_keys_result['code'] != NO_ERROR:
             return ssh_keys_result
 
+        ssh_keys_value = ssh_keys_result['value']
+
         keys = [{'type' : 'ssh' , 'key' : ssh_key['KEY_PUBLIC']} \
-                    for ssh_key in ssh_keys_result['value']]
+                    for ssh_key in ssh_keys_value[member_urn]]
         
         return self._successReturn(keys)
 
