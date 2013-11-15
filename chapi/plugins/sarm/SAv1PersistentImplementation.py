@@ -730,6 +730,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         name = from_project_urn(project_urn)
         project_id = self.get_project_id(session, "project_name", name)
         old_project_lead = self.get_project_lead(session, project_id)
+        new_project_lead = old_project_lead;
         old_lead_urn = self.get_member_urn_for_id(session, old_project_lead)
         client_uuid = get_uuid_from_cert(client_cert)
 
@@ -756,8 +757,8 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                             rows = q.all()
                             if len(rows) == 0 or rows[0][0] != 'true':
                                 continue
-                            new_lead_uuid = row['PROJECT_MEMBER_UID']
-                            new_lead_urn = self.get_member_urn_for_id(session, new_lead_uuid)
+                            new_project_lead = row['PROJECT_MEMBER_UID']
+                            new_lead_urn = self.get_member_urn_for_id(session, new_project_lead)
                             
                             role_options = {'members_to_change': [{'PROJECT_MEMBER': old_lead_urn, 'PROJECT_ROLE': 'ADMIN'},{'PROJECT_MEMBER': new_lead_urn, 'PROJECT_ROLE': 'LEAD'}]}
                             result = self.modify_membership(session, ProjectMember, client_uuid, \
@@ -770,7 +771,6 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                     if new_lead_urn==None:
                         raise CHAPIv1ArgumentError('New project lead not authorized')
                     
-
         if 'members_to_change' in options:
             # if project lead will change, make sure new project lead authorized
             for change in options['members_to_change']:
@@ -802,8 +802,14 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         project_lead = self.get_project_lead(session, project_id)
         project_lead_urn = self.get_member_urn_for_id(session, project_lead)
 
-        # if project lead has changed, make new project lead admin on slices
-        if project_lead != old_project_lead:
+        # if project lead has changed, change in pa_project table
+        if new_project_lead != old_project_lead:
+            q = session.query(Project)
+            q = q.filter(Project.project_id == project_id)
+            q = q.update({"lead_id" : new_project_lead})
+
+ 
+        # make new project lead admin on slices
             opt = [{'SLICE_MEMBER': project_lead_urn, 'SLICE_ROLE': 'ADMIN'}]
             result3 = self.lookup_slices_for_member(client_cert, \
                                  project_lead_urn, credentials, {})
@@ -1083,7 +1089,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         vals = {}
         for field, value in options['fields'].iteritems():
            vals[SA.sliver_info_field_mapping[field]] = value
-        q.update(vals)
+        q.update1(vals)
         session.commit()
         session.close()
         return self._successReturn(True)
