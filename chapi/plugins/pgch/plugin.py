@@ -29,21 +29,22 @@ from PGCH import PGCHv1Handler, PGCHv1Delegate
 
 def setup():
 
-    # set up config keys
-    config = pm.getService('config')
+   # set up config keys                                                        
+   config = pm.getService('config')
 
-    # register xmlrpc endpoint
-    xmlrpc = pm.getService('xmlrpc')
+   # register xmlrpc endpoint                                                  
+   xmlrpc = pm.getService('xmlrpc')
 
-    pgch_handler = PGCHv1Handler()
-    pgch_delegate = PGCHv1Delegate()
-    pgch_handler.setDelegate(pgch_delegate)
+   pgch_handler = PGCHv1Handler()
+   pgch_delegate = PGCHv1Delegate()
+   pgch_handler.setDelegate(pgch_delegate)
 
-    pm.registerService('pgchv1handler', pgch_handler)
+   pgch_handler2 = PGCHv1Handler()
+   pgch_delegate2 = PGCHv1Delegate()
+   pgch_handler2.setDelegate(pgch_delegate2)
 
-    # name, handler, endpoint
-    xmlrpc.registerXMLRPC('pgchv1', pgch_handler, '/PGCH') 
+   pm.registerService('pgchv1handler', pgch_handler)
 
-
-
-
+   # name, handler, endpoint                                                   
+   xmlrpc.registerXMLRPC('pgch2v1', pgch_handler2, '/PGCH')
+   xmlrpc.registerXMLRPC('pgchv1', pgch_handler, '/')
