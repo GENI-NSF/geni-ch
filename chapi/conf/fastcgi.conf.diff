@@ -1,0 +1,8 @@
+--- fastcgi.conf.orig	2008-06-01 16:07:18.000000000 -0400
++++ fastcgi.conf	2013-11-15 10:51:48.889435678 -0500
+@@ -2,4 +2,5 @@
+   AddHandler fastcgi-script .fcgi
+   #FastCgiWrapper /usr/lib/apache2/suexec
+   FastCgiIpcDir /var/lib/apache2/fastcgi
++  FastCgiServer /usr/share/geni-ch/chapi/AMsoil/src/main.py -port 9003 -initial-env PYTHONPATH=/usr/share/geni-ch/chapi/chapi:/usr/share/geni-ch/chapi/chapi/tools:/usr/share/geni-ch/gcf/src -initial-env GCFHOME=/usr/share/geni-ch/gcf/src -initial-env CHAPIHOME=/usr/share/geni-ch/chapi/chapi
+ </IfModule>
