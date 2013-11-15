@@ -8,38 +8,51 @@ set -x
 # untar everything in the right place
 sudo tar pxfz chapi.tgz -o -C /usr/share/geni-ch
 GCFDIR=$(readlink /usr/share/geni-ch/portal/gcf)
-sudo ln -s $GCFDIR /usr/share/geni-ch/gcf
+if [ ! -h /usr/share/geni-ch/gcf ]; then
+  sudo ln -s $GCFDIR /usr/share/geni-ch/gcf
+fi
 sudo cp /usr/share/geni-ch/chapi/chapi/tools/.bashrc /usr/share/geni-ch/
 
 # allow www-data to write to some AMsoil directories
 sudo chown www-data.www-data /usr/share/geni-ch/chapi/AMsoil/deploy
 sudo chown www-data.www-data /usr/share/geni-ch/chapi/AMsoil/log
 
-sudo chmod 644 /etc/apache2/sites-available/ch-ssl
-sudo patch --backup --ignore-whitespace -p0 /etc/apache2/sites-available/ch-ssl << EOF
---- /etc/apache2/sites-available/ch-ssl.orig    2013-10-08 11:18:46.447848440 -0400
-+++ /etc/apache2/sites-available/ch-ssl 2013-11-14 12:31:03.722755485 -0500
-@@ -182,14 +182,11 @@
-        # MSIE 7 and newer should be able to use keepalive
-        BrowserMatch "MSIE [17-9]" ssl-unclean-shutdown
+# patch the apache configuration files
+# sudo patch --backup -p0 /etc/apache2/mods-available/fastcgi.conf << EOF
+# --- fastcgi.conf	2013-09-03 15:51:58.606431660 -0400
+# +++ /etc/apache2/mods-available/fastcgi.conf	2013-09-06 08:46:20.682426270 -0400
+# @@ -2,4 +2,5 @@
+#    AddHandler fastcgi-script .fcgi
+#    #FastCgiWrapper /usr/lib/apache2/suexec
+#    FastCgiIpcDir /var/lib/apache2/fastcgi
+# +  FastCgiServer /usr/share/geni-ch/chapi/AMsoil/src/main.py -port 9003 -initial-env PYTHONPATH=/usr/share/geni-ch/chapi/chapi:/usr/share/geni-ch/chapi/chapi/tools:/usr/share/geni-ch/gcf/src -initial-env GCFHOME=/usr/share/geni-ch/gcf/src -initial-env CHAPIHOME=/usr/share/geni-ch/chapi/chapi
+#  </IfModule>
+# EOF
 
--       # Include configuration files for clearinghouse services
--       Include /usr/share/geni-ch/sa/apache2.conf
--       Include /usr/share/geni-ch/ma/apache2.conf
--       Include /usr/share/geni-ch/pa/apache2.conf
--       Include /usr/share/geni-ch/sr/apache2.conf
--       Include /usr/share/geni-ch/cs/apache2.conf
--       Include /usr/share/geni-ch/logging/apache2.conf
--       Include /usr/share/xml-signer/etc/apache2.conf
-+       SSLOptions +ExportCertData
-+       SSLCACertificateFile /usr/share/geni-ch/CA/cacert.pem
-+       SSLVerifyClient optional_no_ca
-+       SSLVerifyDepth 3
-+       Include /usr/share/geni-chapi/apache2.conf
-
- </VirtualHost>
-
-EOF
+# sudo chmod 644 /etc/apache2/sites-available/ch-ssl
+# sudo patch --backup -p0 /etc/apache2/sites-available/ch-ssl << EOF
+# --- ch-ssl	2013-09-06 08:54:59.234460479 -0400
+# +++ /etc/apache2/sites-available/ch-ssl	2013-09-06 08:46:59.526437589 -0400
+# @@ -190,6 +190,18 @@
+#  	Include /usr/share/geni-ch/cs/apache2.conf
+#  	Include /usr/share/geni-ch/logging/apache2.conf
+ 
+# +        SSLOptions +ExportCertData
+# +        SSLCACertificateFile /usr/share/geni-ch/CA/cacert.pem
+# +        SSLVerifyClient optional_no_ca
+# +        SSLVerifyDepth 3
+# +        ScriptAlias /SA /usr/share/geni-ch/chapi/AMsoil/src/main.py
+# +        ScriptAlias /MA /usr/share/geni-ch/chapi/AMsoil/src/main.py 
+# +        ScriptAlias /CS /usr/share/geni-ch/chapi/AMsoil/src/main.py 
+# +        ScriptAlias /CH /usr/share/geni-ch/chapi/AMsoil/src/main.py 
+# +        ScriptAlias /LOG /usr/share/geni-ch/chapi/AMsoil/src/main.py 
+# +        ScriptAlias /PGCH /usr/share/geni-ch/chapi/AMsoil/src/main.py 
+# +        ScriptAlias /SR /usr/share/geni-ch/chapi/AMsoil/src/main.py 
+# +
+#  </VirtualHost>
+ 
+#  # Catch-all default virtual host, so other CNAMEs to this IP are not
+# EOF
 
 sudo chmod +w /etc/geni-ch/settings.php
 sudo sed -i 's/sr\/sr_controller.php/SR/g' /etc/geni-ch/settings.php

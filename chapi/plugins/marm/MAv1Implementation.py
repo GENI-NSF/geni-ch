@@ -450,6 +450,9 @@ class MAv1Implementation(MAv1DelegateBase):
         if not certs:
             certs = self.get_val_for_uid(session, InsideKey, "certificate", 
                                          uid)
+        if not certs:
+            return creds
+
         user_cert = certs[0]
 
         abac_raw_creds = []
