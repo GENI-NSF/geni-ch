@@ -1,0 +1,14 @@
+#!/bin/sh
+
+# exit on error
+set -e
+
+# echo commands
+set -x
+
+cd "${HOME}"/chapi
+autoreconf --install
+./configure --prefix=/usr --sysconfdir=/etc --bindir=/usr/local/bin --sbindir=/usr/local/sbin
+make
+sudo make install
+sudo service apache2 restart

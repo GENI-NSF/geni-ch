@@ -64,12 +64,31 @@ tar cfp chapi_installer.tar chapi.tgz install_ch
 chapi/chapi/tools/install_db ${1}
 ./install_ch
 
+
+# Update the apache configuration if necessary
+APACHE_SITE=/etc/apache2/sites-available/ch-ssl
+APACHE_DIFF="${CHAPI_DIR}"/conf/ch-ssl.diff
+#grep -q AMsoil "${APACHE_SITE}"
+grep -q AMsoil "${APACHE_SITE}" \
+    || sudo patch --backup -p0 "${APACHE_SITE}" < "${APACHE_DIFF}"
+
+
+# Update the fastcgi module configuration if necessary
+FASTCGI_CONF=/etc/apache2/mods-available/fastcgi.conf
+FASTCGI_DIFF="${CHAPI_DIR}"/conf/fastcgi.conf.diff
+grep -q AMsoil "${FASTCGI_CONF}" \
+    || sudo patch --backup -p0 "${FASTCGI_CONF}" < "${FASTCGI_DIFF}"
+
+
 # Clean up the temp directory
 sudo rm -rf "${TMP_DIR}"
 
+# Really install chapi
 cd "${CHAPI_DIR}"
 autoreconf --install
 ./configure --prefix=/usr --sysconfdir=/etc --bindir=/usr/local/bin --sbindir=/usr/local/sbin
 make
 sudo make install
+
+# Finally, restart apache
 sudo service apache2 restart

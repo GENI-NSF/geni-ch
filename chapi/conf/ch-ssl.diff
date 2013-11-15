@@ -1,0 +1,28 @@
+--- ch-ssl.orig	2013-11-15 10:42:50.462915117 -0500
++++ ch-ssl	2013-11-15 10:44:34.417905250 -0500
+@@ -182,14 +182,17 @@
+ 	# MSIE 7 and newer should be able to use keepalive
+ 	BrowserMatch "MSIE [17-9]" ssl-unclean-shutdown
+ 
+-	# Include configuration files for clearinghouse services
+-	Include /usr/share/geni-ch/sa/apache2.conf
+-	Include /usr/share/geni-ch/ma/apache2.conf
+-	Include /usr/share/geni-ch/pa/apache2.conf
+-	Include /usr/share/geni-ch/sr/apache2.conf
+-	Include /usr/share/geni-ch/cs/apache2.conf
+-	Include /usr/share/geni-ch/logging/apache2.conf
+-	Include /usr/share/xml-signer/etc/apache2.conf
++        SSLOptions +ExportCertData
++        SSLCACertificateFile /usr/share/geni-ch/CA/cacert.pem
++        SSLVerifyClient optional_no_ca
++        SSLVerifyDepth 3
++        ScriptAlias /SA /usr/share/geni-ch/chapi/AMsoil/src/main.py
++        ScriptAlias /MA /usr/share/geni-ch/chapi/AMsoil/src/main.py 
++        ScriptAlias /CS /usr/share/geni-ch/chapi/AMsoil/src/main.py 
++        ScriptAlias /CH /usr/share/geni-ch/chapi/AMsoil/src/main.py 
++        ScriptAlias /LOG /usr/share/geni-ch/chapi/AMsoil/src/main.py 
++        ScriptAlias /PGCH /usr/share/geni-ch/chapi/AMsoil/src/main.py 
++        ScriptAlias /SR /usr/share/geni-ch/chapi/AMsoil/src/main.py 
+ 
+ </VirtualHost>
+ 
