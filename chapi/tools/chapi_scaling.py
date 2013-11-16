@@ -107,7 +107,7 @@ def parseOptions(args):
     parser.add_option("--match_field", help="Name of object field to match", 
                       default="SLICE_UID")
     parser.add_option("--filter_fields", help="List of object fields to select",
-                      default="SLICE_NAME")
+                      default=None)
     parser.add_option("--client_location", help="Location of client.py",
                       default = "client.py")
     parser.add_option("--num_concurrent", 
@@ -131,9 +131,11 @@ def main(args = sys.argv):
                            opts.match_field, opts.filter_fields, \
                            opts.method, opts.client_location)
 
-    for iter in range(opts.num_iterations):
+    num_iters = int(opts.num_iterations)
+    for iter in range(num_iters):
         st.invoke(int(opts.num_concurrent))
-        time.sleep(int(opts.frequency))
+        if iter < num_iters-1:
+            time.sleep(int(opts.frequency))
     
 
 if __name__ == "__main__":
