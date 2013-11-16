@@ -186,6 +186,7 @@ class PGCHv1Delegate(DelegateBase):
             creds = self._ma_handler._delegate.get_credentials(client_cert,
                                                               client_urn,
                                                               [], {})
+            if creds['code'] != NO_ERROR: return creds
 
             # Extract the SFA user credential from the returned set
             user_credential = None
