@@ -723,7 +723,6 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         method = 'modify_project_membership'
         args = {'project_urn' : project_urn}
         chapi_log_invocation(SA_LOG_PREFIX, method, credentials, options, args)
-
         client_uuid = get_uuid_from_cert(client_cert)
         self.update_project_expirations(client_uuid)
 
@@ -731,7 +730,60 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         name = from_project_urn(project_urn)
         project_id = self.get_project_id(session, "project_name", name)
         old_project_lead = self.get_project_lead(session, project_id)
+        new_project_lead = old_project_lead;
+        old_lead_urn = self.get_member_urn_for_id(session, old_project_lead)
         client_uuid = get_uuid_from_cert(client_cert)
+
+        # If we are removing the lead, make sure there is an authorized admin on the project
+        #   If yes, make the admin be the lead, and the current lead be an admin
+        #   If no, FAIL
+
+        if 'members_to_remove' in options:
+            for member in options['members_to_remove']:
+                if (member==old_lead_urn):
+                    lookup_result = self.lookup_project_members(client_cert, \
+                                                        project_urn, \
+                                                        credentials, \
+                                                        {})
+                    if lookup_result['code'] != NO_ERROR:
+                        return lookup_result   # Shouldn't happen: Should raise an exception
+                    new_lead_urn = None
+                    for row in lookup_result['value']:
+                        if row['PROJECT_ROLE'] == 'ADMIN':
+                            # check if admin had lead privileges
+                            q = session.query(self.db.MEMBER_ATTRIBUTE_TABLE.c.value).\
+                                filter(self.db.MEMBER_ATTRIBUTE_TABLE.c.member_id == row['PROJECT_MEMBER_UID']). \
+                                filter(self.db.MEMBER_ATTRIBUTE_TABLE.c.name == 'PROJECT_LEAD')
+                            rows = q.all()
+                            if len(rows) == 0 or rows[0][0] != 'true':
+                                continue
+                            new_project_lead = row['PROJECT_MEMBER_UID']
+                            new_lead_urn = self.get_member_urn_for_id(session, new_project_lead)
+                            
+                            role_options = {'members_to_change': [{'PROJECT_MEMBER': old_lead_urn, 'PROJECT_ROLE': 'ADMIN'},{'PROJECT_MEMBER': new_lead_urn, 'PROJECT_ROLE': 'LEAD'}]}
+                            result = self.modify_membership(session, ProjectMember, client_uuid, \
+                                                                project_id, project_urn, \
+                                                                role_options, 'project_id', \
+                                                                'PROJECT_MEMBER', 'PROJECT_ROLE', \
+                                                                'project')
+
+                            break
+                    if new_lead_urn==None:
+                        raise CHAPIv1ArgumentError('New project lead not authorized')
+                    
+        if 'members_to_change' in options:
+            # if project lead will change, make sure new project lead authorized
+            for change in options['members_to_change']:
+                if change['PROJECT_ROLE'] == 'LEAD':
+                    new_project_lead = change['PROJECT_MEMBER']
+                    q = session.query(self.db.MEMBER_ATTRIBUTE_TABLE.c.value).\
+                    filter(self.db.MEMBER_ATTRIBUTE_TABLE.c.member_id == new_project_lead).\
+                    filter(self.db.MEMBER_ATTRIBUTE_TABLE.c.name == 'PROJECT_LEAD')
+                    rows = q.all()
+                    if len(rows) == 0 or rows[0][0] != 'true':
+                        raise CHAPIv1ArgumentError('New project lead not authorized')
+
+
         result = self.modify_membership(session, ProjectMember, client_uuid, \
                                           project_id, project_urn, \
                                           options, 'project_id', \
@@ -750,17 +802,14 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         project_lead = self.get_project_lead(session, project_id)
         project_lead_urn = self.get_member_urn_for_id(session, project_lead)
 
-        # if project lead has changed, make sure new project lead authorized
-        if project_lead != old_project_lead:
-            q = session.query(self.db.MEMBER_ATTRIBUTE_TABLE.c.value).\
-                filter(self.db.MEMBER_ATTRIBUTE_TABLE.c.member_id == project_lead).\
-                filter(self.db.MEMBER_ATTRIBUTE_TABLE.c.name == 'PROJECT_LEAD')
-            rows = q.all()
-            if len(rows) == 0 or rows[0][0] != 'true':
-                raise CHAPIv1ArgumentError('New project lead not authorized')
+        # if project lead has changed, change in pa_project table
+        if new_project_lead != old_project_lead:
+            q = session.query(Project)
+            q = q.filter(Project.project_id == project_id)
+            q = q.update({"lead_id" : new_project_lead})
 
-        # if project lead has changed, make new project lead admin on slices
-        if project_lead != old_project_lead:
+ 
+        # make new project lead admin on slices
             opt = [{'SLICE_MEMBER': project_lead_urn, 'SLICE_ROLE': 'ADMIN'}]
             result3 = self.lookup_slices_for_member(client_cert, \
                                  project_lead_urn, credentials, {})
@@ -1040,7 +1089,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         vals = {}
         for field, value in options['fields'].iteritems():
            vals[SA.sliver_info_field_mapping[field]] = value
-        q.update(vals)
+        q.update1(vals)
         session.commit()
         session.close()
         return self._successReturn(True)

@@ -64,12 +64,51 @@ tar cfp chapi_installer.tar chapi.tgz install_ch
 chapi/chapi/tools/install_db ${1}
 ./install_ch
 
+
+# Update the apache configuration if necessary
+APACHE_SITE=/etc/apache2/sites-available/ch-ssl
+APACHE_DIFF="${CHAPI_DIR}"/conf/ch-ssl.diff
+TMP_DIFF=/tmp/ch-ssl.diff
+# Perform some string replacements to localize for the current host
+IP=`grep NameVirtualHost "${APACHE_SITE}" | sed 's/^NameVirtualHost \([1-9\.]*\):443$/\1/'`
+cp "${APACHE_DIFF}" "${TMP_DIFF}"
+sed -i "s/%IP_ADDR%/${IP}/g" "${TMP_DIFF}"
+sed -i "s/%FQDN%/${1}/g" "${TMP_DIFF}"
+grep -q AMsoil "${APACHE_SITE}" \
+    || sudo patch --backup -p0 "${APACHE_SITE}" < "${TMP_DIFF}"
+
+
+# Update the fastcgi module configuration if necessary
+FASTCGI_CONF=/etc/apache2/mods-available/fastcgi.conf
+FASTCGI_DIFF="${CHAPI_DIR}"/conf/fastcgi.conf.diff
+grep -q AMsoil "${FASTCGI_CONF}" \
+    || sudo patch --backup -p0 "${FASTCGI_CONF}" < "${FASTCGI_DIFF}"
+
+
+# Update the ports configuration if necessary
+PORTS_CONF=/etc/apache2/ports.conf
+PORTS_DIFF="${CHAPI_DIR}"/conf/ports.conf.diff
+grep -q 8443 "${PORTS_CONF}" \
+    || sudo patch --backup -p0 "${PORTS_CONF}" < "${PORTS_DIFF}"
+
+
+# return home, we're in TMP_DIR and it's about to be deleted
+cd
 # Clean up the temp directory
 sudo rm -rf "${TMP_DIR}"
 
+
+# Shut down old pgch service
+sudo service geni-pgch stop
+sudo update-rc.d -f geni-pgch remove
+
+
+# Really install chapi
 cd "${CHAPI_DIR}"
 autoreconf --install
 ./configure --prefix=/usr --sysconfdir=/etc --bindir=/usr/local/bin --sbindir=/usr/local/sbin
 make
 sudo make install
+
+# Finally, restart apache
 sudo service apache2 restart

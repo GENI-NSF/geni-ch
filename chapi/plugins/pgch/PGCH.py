@@ -526,7 +526,7 @@ class PGCHv1Delegate(DelegateBase):
             urn = aggregate['SERVICE_URN']
             hrn = sfa.util.xrn.urn_to_hrn(urn)
             url = aggregate['SERVICE_URL']
-            component = {'gid' : gid, 'hrn' : hrn, 'url' : url}
+            component = {'gid' : gid, 'urn' : urn, 'hrn' : hrn, 'url' : url}
             components.append(component)
         return self._successReturn(components)
 
