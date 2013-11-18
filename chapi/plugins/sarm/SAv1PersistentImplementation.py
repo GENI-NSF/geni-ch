@@ -272,7 +272,8 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                   self.db.SLICE_MEMBER_TABLE, "slice_urn", "slice_id")
         slices = [{"SLICE_ROLE" : row.name, \
                        "SLICE_UID" : row.slice_id, \
-                       "SLICE_URN": row.slice_urn} \
+                       "SLICE_URN": row.slice_urn, \
+                      "EXPIRED": row.expired } \
                   for row in rows]
         result = self._successReturn(slices)
 
@@ -694,7 +695,9 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                   self.db.PROJECT_MEMBER_TABLE, "project_name", "project_id")
         projects = [{"PROJECT_ROLE" : row.name, \
                          "PROJECT_UID" : row.project_id, \
-                     "PROJECT_URN": row_to_project_urn(row)} for row in rows]
+                         "PROJECT_URN": row_to_project_urn(row), \
+                         "EXPIRED" : row.expired } \
+                        for row in rows]
         result = self._successReturn(projects)
 
         chapi_log_result(SA_LOG_PREFIX, method, result)
@@ -705,7 +708,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                           name_field, id_field):
         session = self.db.getSession()
         q = session.query(member_table, self.db.MEMBER_ATTRIBUTE_TABLE,
-                          table.c[name_field], self.db.ROLE_TABLE.c.name)
+                          table.c[name_field], self.db.ROLE_TABLE.c.name, table.c['expired'])
         q = q.filter(self.db.MEMBER_ATTRIBUTE_TABLE.c.name == 'urn')
         q = q.filter(self.db.MEMBER_ATTRIBUTE_TABLE.c.value == member_urn)
         q = q.filter(member_table.c.member_id == \
