@@ -92,6 +92,13 @@ grep -q 8443 "${PORTS_CONF}" \
     || sudo patch --backup -p0 "${PORTS_CONF}" < "${PORTS_DIFF}"
 
 
+# Update the deflate module configuration if necessary
+DEFLATE_CONF=/etc/apache2/mods-available/deflate.conf
+DEFLATE_DIFF="${CHAPI_DIR}"/conf/deflate.conf.diff
+grep -q 'text/xml' "${DEFLATE_CONF}" \
+    && sudo patch --backup -p0 "${DEFLATE_CONF}" < "${DEFLATE_DIFF}"
+
+
 # return home, we're in TMP_DIR and it's about to be deleted
 cd
 # Clean up the temp directory
