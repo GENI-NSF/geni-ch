@@ -778,13 +778,31 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
             # if project lead will change, make sure new project lead authorized
             for change in options['members_to_change']:
                 if change['PROJECT_ROLE'] == 'LEAD':
-                    new_project_lead = change['PROJECT_MEMBER']
-                    q = session.query(self.db.MEMBER_ATTRIBUTE_TABLE.c.value).\
-                    filter(self.db.MEMBER_ATTRIBUTE_TABLE.c.member_id == new_project_lead).\
-                    filter(self.db.MEMBER_ATTRIBUTE_TABLE.c.name == 'PROJECT_LEAD')
-                    rows = q.all()
-                    if len(rows) == 0 or rows[0][0] != 'true':
-                        raise CHAPIv1ArgumentError('New project lead not authorized')
+                    lookup_result = self.lookup_project_members(client_cert, \
+                                                        project_urn, \
+                                                        credentials, \
+                                                        {})
+                    if lookup_result['code'] != NO_ERROR:
+                        return lookup_result   # Shouldn't happen: Should raise an exception
+                    new_lead_urn = change['PROJECT_MEMBER']
+                    for row in lookup_result['value']:
+                        if row['PROJECT_MEMBER'] == new_lead_urn:
+                            # check if member had lead privileges
+                            q = session.query(self.db.MEMBER_ATTRIBUTE_TABLE.c.value).\
+                                filter(self.db.MEMBER_ATTRIBUTE_TABLE.c.member_id == row['PROJECT_MEMBER_UID']). \
+                                filter(self.db.MEMBER_ATTRIBUTE_TABLE.c.name == 'PROJECT_LEAD')
+                            rows = q.all()
+                            if len(rows) == 0 or rows[0][0] != 'true':
+                                raise CHAPIv1ArgumentError('New project lead not authorized')
+                            new_project_lead = row['PROJECT_MEMBER_UID']
+                            break
+
+#                    q = session.query(self.db.MEMBER_ATTRIBUTE_TABLE.c.value).\
+#                    filter(self.db.MEMBER_ATTRIBUTE_TABLE.c.member_id == new_project_lead).\
+#                    filter(self.db.MEMBER_ATTRIBUTE_TABLE.c.name == 'PROJECT_LEAD')
+#                    rows = q.all()
+#                    if len(rows) == 0 or rows[0][0] != 'true':
+#                        raise CHAPIv1ArgumentError('New project lead not authorized')
 
 
         result = self.modify_membership(session, ProjectMember, client_uuid, \

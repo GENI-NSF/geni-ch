@@ -985,7 +985,6 @@ class MAv1Implementation(MAv1DelegateBase):
             # if yes, look for an admin with lead authorization and make him/her lead on the project
             # if there isn't an authorized admin, don't revoke lead privilege
             if privilege=="PROJECT_LEAD":
-                new_project_lead = None
                 row = self.get_attr_for_uid(session,"MEMBER_URN",member_uid)
                 member_urn = row[0]
                 #get projects for which member is lead
@@ -993,43 +992,35 @@ class MAv1Implementation(MAv1DelegateBase):
                 projects = self._sa_handler._delegate.lookup_projects_for_member(cert, member_urn, credentials, {})
 
                 for project in projects['value']:
-                    sys.stderr.write("\n\nPROJECT ROLE: " + str(project['PROJECT_ROLE']))
+                    new_lead_urn = None
                     if (project['EXPIRED'] == False and project['PROJECT_ROLE'] == 'LEAD'):
-                        sys.stderr.write("\nFOUND ONE: " + str(project['PROJECT_URN']))
                         project_urn = project['PROJECT_URN']
                         #look for authorized admin to be new lead
                         members = self._sa_handler._delegate.lookup_project_members(cert, project_urn, credentials, {})
                         for member in members['value']:
-                            sys.stderr.write("\nMEMBER: " + str(member))
-                            sys.stderr.write("\nROLE: " + str(member['PROJECT_ROLE']))
                             if member['PROJECT_ROLE'] == 'ADMIN':
                                 q = session.query(MemberAttribute.value).\
                                     filter(MemberAttribute.member_id == member['PROJECT_MEMBER_UID']).\
                                     filter(MemberAttribute.name == 'PROJECT_LEAD')
                                 rows = q.all()
-                                sys.stderr.write("ROWS:" + str(rows))
                                 if rows[0][0] == 'true':
                                     row = self.get_attr_for_uid(session,"MEMBER_URN",member['PROJECT_MEMBER_UID'])
                                     new_lead_urn = row[0]
                                     
                                     options = {'members_to_change':[{'PROJECT_MEMBER': member_urn,'PROJECT_ROLE':'ADMIN'}, \
                                                                         {'PROJECT_MEMBER': new_lead_urn,'PROJECT_ROLE':'LEAD'}]}
-                                    sys.stderr.write("\nOPTIONS: " + str(options))
                                     result = self._sa_handler._delegate.modify_project_membership(cert, project['PROJECT_URN'], credentials, options)
-                                    sys.stderr.write("\nRESULT: " + str(result))
                                     break
-
-
-        if not was_enabled:
-            self.update_attr(session, privilege, 'true', member_uid, 'f')
-            session.commit()
-
-        session.close()
-
+                        if new_lead_urn == None:
+                            raise CHAPIv1ArgumentError('Cannot revoke lead privilege.  No authorized admin to take lead role on project %s' %project_urn)                            
+        if was_enabled:
+            self.delete_attr(session, privilege, member_uid)
         # log_event
-        msg = "Setting member %s privilege %s" %  (member_uid, privilege)
-        attribs = {"MEMBER" : member_uid}
-        self.logging_service.log_event(msg, attribs, member_uid)
+            msg = "Revoking member %s privilege %s" %  (member_uid, privilege)
+            attribs = {"MEMBER" : member_uid}
+            self.logging_service.log_event(msg, attribs, member_uid)
+                
+        session.close()
 
         result = self._successReturn(was_enabled)
         chapi_log_result(MA_LOG_PREFIX, method, result)
