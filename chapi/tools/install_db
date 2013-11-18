@@ -2,6 +2,11 @@
 
 echoerr() { echo "$@" 1>&2; }
 
+# Exit on error
+set -e
+# Echo commands with variables expanded
+set -x
+
 if [ -z $1 ]
   then
     echoerr 'Need to supply a VM name'
@@ -35,8 +40,12 @@ fi
 #------------------------------------------------------------
 $PSQL -f "${DB_DIR}"/migrate-assertions.sql
 
+CA_SQL=/etc/geni-chapi/update_service_registry.01.sql
+if [ -f $CA_SQL ]; then
+  $PSQL -f "${CA_SQL}"
+fi
 
-psql -U portal -h localhost portal << EOF
+$PSQL << EOF
 update service_registry set service_url = 'https://${1}/secure/kmhome.php'
        where service_url = 'https://portal.geni.net/secure/kmhome.php';
 update service_registry set service_type = service_type + 100
