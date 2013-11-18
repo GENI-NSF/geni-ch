@@ -276,11 +276,7 @@ class MAv1Implementation(MAv1DelegateBase):
             urn = row[0]
             values = {}
             for col in selected_columns:
-                if col == "_GENI_USER_CREDENTIAL":
-                    values[col] = self.get_user_credential(session, uid)
-                elif col == "_GENI_CREDENTIALS":
-                    values[col] = self.get_all_credentials(session, uid)
-                elif col in ["MEMBER_UID", "_GENI_IDENTIFYING_MEMBER_UID"]:
+                if col in ["MEMBER_UID", "_GENI_IDENTIFYING_MEMBER_UID"]:
                     values[col] = uid
                 else:
                     vals = None
