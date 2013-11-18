@@ -286,53 +286,72 @@ class PGCHv1Delegate(DelegateBase):
 
         if type == 'user':
             # User
+            ma = self._ma_handler._delegate
             match_clause = {'MEMBER_URN' : urn}
             if not urn:
                 match_clause = {'MEMBER_UID' : uuid}
-            filter_clause = \
-                ['MEMBER_UID', 'MEMBER_URN', 'MEMBER_USERNAME', 'MEMBER_EMAIL', \
-                     'USER_CREDENTIAL']
-            identifying_filter_clause = \
-                ['MEMBER_UID', 'MEMBER_URN', 'MEMBER_USERNAME', 'MEMBER_EMAIL']
-            options = {"match" : match_clause, "filter" : filter_clause}
+            public_filter_clause = ['MEMBER_UID', 'MEMBER_URN',
+                                    'MEMBER_USERNAME', '_GENI_USER_CREDENTIAL']
+            public_options = {"match" : match_clause,
+                              "filter" : public_filter_clause}
             creds = []
             lookup_public_return = \
-                self._ma_handler._delegate.lookup_public_member_info(creds, 
-                                                                     options)
+                ma.lookup_public_member_info(creds, public_options)
             if lookup_public_return['code'] != NO_ERROR:
                 return lookup_public_return
             public_info = lookup_public_return['value']
             this_urn = public_info.keys()[0]
             public_info = public_info[this_urn]
 
+            identifying_filter_clause = ['MEMBER_EMAIL']
+            identifying_options = {'match' : match_clause,
+                                   'filter' : identifying_filter_clause }
             lookup_identifying_return = \
-                self._ma_handler._delegate.lookup_identifying_member_info(client_cert, \
-                                                                              creds, options)
+                ma.lookup_identifying_member_info(client_cert, creds,
+                                                  identifying_options)
             if lookup_identifying_return['code'] != NO_ERROR:
                 return lookup_identifying_return
             identifying_info = lookup_identifying_return['value']
             identifying_info = identifying_info[this_urn]
-            
-
-            print "LPR = " + str(lookup_public_return)
-            print "LIR = " + str(lookup_identifying_return)
 
             member_uuid = public_info['MEMBER_UID']
             member_hrn = sfa.util.xrn.urn_to_hrn(public_info['MEMBER_URN'])[0]
             member_uuid = public_info['MEMBER_UID']
             member_email = identifying_info['MEMBER_EMAIL']
-            user_gid = gid.GID(public_info['USER_CREDENTIAL'])
+            user_gid = gid.GID(public_info['_GENI_USER_CREDENTIAL'])
             member_name = public_info['MEMBER_USERNAME']
+
+            # Slices
+            sa = self._sa_handler._delegate
+            lookup_slices_return = sa.lookup_slices_for_member(client_cert,
+                                                               urn, [], {})
+            if lookup_slices_return['code'] != NO_ERROR:
+                return lookup_slices_return
+            slice_info = lookup_slices_return['value']
+            slices = [s['SLICE_URN'] for s in slice_info]
+
+            # Now determine which slices are active...
+            options = { 'match' : { 'SLICE_URN' : slices},
+                        'filter' : ['SLICE_EXPIRED'] }
+            expired_return = sa.lookup_slices(client_cert, [], options)
+            if expired_return['code'] != NO_ERROR:
+                return expired_return
+            slice_info = expired_return['value']
+            # slices = []
+            # for urn in slice_info.keys():
+            #     if not slice_info[urn]['SLICE_EXPIRED']:
+            #         slices.append(urn)
+            slices = [urn for urn in slice_info
+                      if not slice_info[urn]['SLICE_EXPIRED']]
 
             resolve = {'uid' : member_uuid,  # login(Emulab) ID of user \
                            'hrn' : member_hrn, \
                            'uuid' : member_uuid, \
                            'email' : member_email, \
                            'gid' : user_gid.save_to_string(), # user_cred
-                           'name' : member_name  # Common Name
+                           'name' : member_name,  # Common Name
+                       'slices' : slices
                        }
-                       
-            pass
         else:
             # Slice
             match_clause = {'SLICE_URN' : urn, 'SLICE_EXPIRED' : 'f'} 
