@@ -1,0 +1,10 @@
+--- deflate.conf.orig	2013-03-08 11:42:27.000000000 -0500
++++ deflate.conf	2013-11-15 16:23:04.360043519 -0500
+@@ -1,6 +1,6 @@
+ <IfModule mod_deflate.c>
+           # these are known to be safe with MSIE 6
+-          AddOutputFilterByType DEFLATE text/html text/plain text/xml
++          AddOutputFilterByType DEFLATE text/html text/plain
+ 
+           # everything else may cause problems with MSIE 6
+           AddOutputFilterByType DEFLATE text/css
