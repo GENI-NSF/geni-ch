@@ -473,17 +473,30 @@ class PGCHv1Delegate(DelegateBase):
         # Set the slice email name (Bogus but consistent with current CH)
         slice_email = 'slice-%s@example.com' % slice_name
 
-        options = {'PROJECT_URN' : project_urn, 'SLICE_NAME' : slice_name, 
-                   'SLICE_EMAIL' : slice_email }
+        options = {'fields': {'SLICE_PROJECT_URN' : project_urn,
+                              'SLICE_NAME' : slice_name,
+                              '_GENI_SLICE_EMAIL' : slice_email }}
 
-        print "OPTS = " + str(options)
-
-        create_slice_return = \
-            self._sa_handler._delegate.create_slice(client_cert, creds, options)
+        sa = self._sa_handler._delegate
+        create_slice_return = sa.create_slice(client_cert, creds, options)
         if create_slice_return['code'] != NO_ERROR:
             return create_slice_return
-        slice_cred = slice_create_return['value']['SLICE_CREDENTIAL']
 
+        # Now get the slice credential so it can be returned
+        slice_urn = create_slice_return['value']['SLICE_URN']
+        creds_return = sa.get_credentials(client_cert, slice_urn, creds, {})
+        if creds_return['code'] != NO_ERROR:
+            return creds_return
+
+        # Locate the SFA credential
+        slice_cred = None
+        for cred in creds_return['value']:
+            if cred['geni_type'] == 'geni_sfa':
+                slice_cred = cred['geni_value']
+                break
+        if slice_cred is None:
+            # No SFA credential found!
+            return self._errorReturn('No slice credential available')
         return self._successReturn(slice_cred)
 
     def RenewSlice(self, client_cert, args):
@@ -493,24 +506,34 @@ class PGCHv1Delegate(DelegateBase):
         slice_credential = args['credential']
         expiration = args['expiration']
 
+        cred = sfa.trust.credential.Credential(string=slice_credential)
+        slice_gid = cred.get_gid_object()
+        slice_urn = slice_gid.get_urn()
+
         # Renew via update_slice in SA
-        slice_urn = None
-        credentials [slice_credential]
+        credentials = [slice_credential]
         options = {'fields' : {'SLICE_EXPIRATION' : expiration}}
-        update_slice_return = \
-            self._sa_handler._delegate.update_slice(client_cert, slice_urn, \
-                                                        credentials, options)
+        sa = self._sa_handler._delegate
+        update_slice_return = sa.update_slice(client_cert, slice_urn,
+                                              credentials, options)
         if update_slice_return['code'] != NO_ERROR:
             return update_slice_return
 
-        get_credentials_return = \
-            self._sa_handler._delegate.get_credentials(client_cert, slice_urn, \
-                                                           credentials, options)
-        if get_credentials_return['code'] != NO_ERROR:
-            return get_credentials_return
-        renewed_slice_credentials = get_credentials_return['value']
+        creds_return = sa.get_credentials(client_cert, slice_urn,
+                                          credentials, {})
+        if creds_return['code'] != NO_ERROR:
+            return creds_return
 
-        return self._successReturn("RenewSlice" + str(args))
+        # Locate the SFA credential
+        slice_cred = None
+        for cred in creds_return['value']:
+            if cred['geni_type'] == 'geni_sfa':
+                slice_cred = cred['geni_value']
+                break
+        if slice_cred is None:
+            # No SFA credential found!
+            return self._errorReturn('No slice credential available')
+        return self._successReturn(slice_cred)
 
     def GetKeys(self, client_cert, args):
         # cred is user cred
