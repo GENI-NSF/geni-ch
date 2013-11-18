@@ -95,7 +95,8 @@ grep -q 8443 "${PORTS_CONF}" \
 # Update the deflate module configuration if necessary
 DEFLATE_CONF=/etc/apache2/mods-available/deflate.conf
 DEFLATE_DIFF="${CHAPI_DIR}"/conf/deflate.conf.diff
-grep -q 'text/xml' "${DEFLATE_CONF}" \
+# grep '[^#]*text/xml$' deflate.conf
+grep -q 'text/xml$' "${DEFLATE_CONF}" \
     && sudo patch --backup -p0 "${DEFLATE_CONF}" < "${DEFLATE_DIFF}"
 
 
