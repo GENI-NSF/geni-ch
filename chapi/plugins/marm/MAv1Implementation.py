@@ -277,11 +277,7 @@ class MAv1Implementation(MAv1DelegateBase):
             urn = row[0]
             values = {}
             for col in selected_columns:
-                if col == "_GENI_USER_CREDENTIAL":
-                    values[col] = self.get_user_credential(session, uid)
-                elif col == "_GENI_CREDENTIALS":
-                    values[col] = self.get_all_credentials(session, uid)
-                elif col in ["MEMBER_UID", "_GENI_IDENTIFYING_MEMBER_UID"]:
+                if col in ["MEMBER_UID", "_GENI_IDENTIFYING_MEMBER_UID"]:
                     values[col] = uid
                 else:
                     vals = None
@@ -451,6 +447,9 @@ class MAv1Implementation(MAv1DelegateBase):
         if not certs:
             certs = self.get_val_for_uid(session, InsideKey, "certificate", 
                                          uid)
+        if not certs:
+            return creds
+
         user_cert = certs[0]
 
         abac_raw_creds = []
@@ -678,12 +677,11 @@ class MAv1Implementation(MAv1DelegateBase):
         q = add_filters(q, match_criteria, self.db.SSH_KEY_TABLE, MA.key_field_mapping)
         rows = q.all()
         session.close()
-        keys = []
+        keys = {}
         for row in rows:
-            row.id = str(row.id)
-#            if not hasattr(keys, row.id):
-#                keys[row.id] = []
-            keys.append(construct_result_row(row, \
+            if row.value not in keys:
+                keys[row.value] = []
+            keys[row.value].append(construct_result_row(row, \
                          selected_columns, MA.key_field_mapping))
         result = self._successReturn(keys)
         chapi_log_result(MA_LOG_PREFIX, method, result)

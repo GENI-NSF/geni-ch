@@ -726,19 +726,145 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         method = 'modify_project_membership'
         args = {'project_urn' : project_urn}
         chapi_log_invocation(SA_LOG_PREFIX, method, credentials, options, args)
-
         client_uuid = get_uuid_from_cert(client_cert)
         self.update_project_expirations(client_uuid)
 
         session = self.db.getSession()
         name = from_project_urn(project_urn)
         project_id = self.get_project_id(session, "project_name", name)
+        old_project_lead = self.get_project_lead(session, project_id)
+        new_project_lead = old_project_lead;
+        old_lead_urn = self.get_member_urn_for_id(session, old_project_lead)
         client_uuid = get_uuid_from_cert(client_cert)
+
+        # If we are removing the lead, make sure there is an authorized admin on the project
+        #   If yes, make the admin be the lead, and the current lead be an admin
+        #   If no, FAIL
+
+        if 'members_to_remove' in options:
+            for member in options['members_to_remove']:
+                if (member==old_lead_urn):
+                    lookup_result = self.lookup_project_members(client_cert, \
+                                                        project_urn, \
+                                                        credentials, \
+                                                        {})
+                    if lookup_result['code'] != NO_ERROR:
+                        return lookup_result   # Shouldn't happen: Should raise an exception
+                    new_lead_urn = None
+                    for row in lookup_result['value']:
+                        if row['PROJECT_ROLE'] == 'ADMIN':
+                            # check if admin had lead privileges
+                            q = session.query(self.db.MEMBER_ATTRIBUTE_TABLE.c.value).\
+                                filter(self.db.MEMBER_ATTRIBUTE_TABLE.c.member_id == row['PROJECT_MEMBER_UID']). \
+                                filter(self.db.MEMBER_ATTRIBUTE_TABLE.c.name == 'PROJECT_LEAD')
+                            rows = q.all()
+                            if len(rows) == 0 or rows[0][0] != 'true':
+                                continue
+                            new_project_lead = row['PROJECT_MEMBER_UID']
+                            new_lead_urn = self.get_member_urn_for_id(session, new_project_lead)
+                            
+                            role_options = {'members_to_change': [{'PROJECT_MEMBER': old_lead_urn, 'PROJECT_ROLE': 'ADMIN'},{'PROJECT_MEMBER': new_lead_urn, 'PROJECT_ROLE': 'LEAD'}]}
+                            result = self.modify_membership(session, ProjectMember, client_uuid, \
+                                                                project_id, project_urn, \
+                                                                role_options, 'project_id', \
+                                                                'PROJECT_MEMBER', 'PROJECT_ROLE', \
+                                                                'project')
+
+                            break
+                    if new_lead_urn==None:
+                        raise CHAPIv1ArgumentError('New project lead not authorized')
+                    
+        if 'members_to_change' in options:
+            # if project lead will change, make sure new project lead authorized
+            for change in options['members_to_change']:
+                if change['PROJECT_ROLE'] == 'LEAD':
+                    new_project_lead = change['PROJECT_MEMBER']
+                    q = session.query(self.db.MEMBER_ATTRIBUTE_TABLE.c.value).\
+                    filter(self.db.MEMBER_ATTRIBUTE_TABLE.c.member_id == new_project_lead).\
+                    filter(self.db.MEMBER_ATTRIBUTE_TABLE.c.name == 'PROJECT_LEAD')
+                    rows = q.all()
+                    if len(rows) == 0 or rows[0][0] != 'true':
+                        raise CHAPIv1ArgumentError('New project lead not authorized')
+
+
         result = self.modify_membership(session, ProjectMember, client_uuid, \
                                           project_id, project_urn, \
                                           options, 'project_id', \
                                           'PROJECT_MEMBER', 'PROJECT_ROLE', \
                                           'project')
+
+        # identify all slices in project and new project lead
+        q = session.query(self.db.SLICE_TABLE)
+        q = q.filter(self.db.SLICE_TABLE.c.project_id == project_id)
+        rows = q.all()
+    
+        slices = [row.slice_id for row in rows]
+        slice_urns = {}
+        for row in rows:
+            slice_urns[row.slice_id] = row.slice_urn
+        project_lead = self.get_project_lead(session, project_id)
+        project_lead_urn = self.get_member_urn_for_id(session, project_lead)
+
+        # if project lead has changed, change in pa_project table
+        if new_project_lead != old_project_lead:
+            q = session.query(Project)
+            q = q.filter(Project.project_id == project_id)
+            q = q.update({"lead_id" : new_project_lead})
+
+ 
+        # make new project lead admin on slices
+            opt = [{'SLICE_MEMBER': project_lead_urn, 'SLICE_ROLE': 'ADMIN'}]
+            result3 = self.lookup_slices_for_member(client_cert, \
+                                 project_lead_urn, credentials, {})
+
+            # change lead's role on slices he/she is member of
+            for slice in result3['value']:
+                # skip slice if not in current project
+                if slice['SLICE_UID'] not in slices:
+                    continue
+                del(slice_urns[slice['SLICE_UID']])
+                if slice['SLICE_ROLE'] not in ['LEAD', 'ADMIN']:
+                    options = {'members_to_change': opt}
+                    self.modify_membership(session, SliceMember, client_uuid, \
+                           slice['SLICE_UID'], slice['SLICE_URN'], options, \
+                           'slice_id', 'SLICE_MEMBER', 'SLICE_ROLE', 'slice')
+                    
+            # add lead to slices not yet a member of
+            for slice_id, slice_urn in slice_urns.iteritems():
+                 options = {'members_to_add': opt}
+                 self.modify_membership(session, SliceMember, client_uuid, \
+                           slice_id, slice_urn, options, \
+                           'slice_id', 'SLICE_MEMBER', 'SLICE_ROLE', 'slice')
+
+        # now delete all removed members from slices
+        if 'members_to_remove' in options:
+            for member in options['members_to_remove']:
+                result3 = self.lookup_slices_for_member(client_cert, member, \
+                                                        credentials, {})
+                for slice in result3['value']:
+                    # skip slices that are not part of the current project
+                    if not slice['SLICE_UID'] in slices:
+                        continue
+                    options = {'members_to_remove': [member]}
+
+                    # if member is lead on the slice, make a new lead
+                    if slice['SLICE_ROLE'] == 'LEAD':
+                        opt = [{'SLICE_MEMBER': project_lead_urn,
+                                'SLICE_ROLE': 'LEAD'}]
+                        q = session.query(SliceMember.member_id)
+                        q = q.filter(SliceMember.slice_id == slice['SLICE_UID'])
+                        q = q.filter(SliceMember.member_id == project_lead)
+                        if len(q.all()) > 0:
+                            options['members_to_change'] = opt
+                        else:
+                            options['members_to_add'] = opt
+                    
+                    self.modify_membership(session, SliceMember, client_uuid, \
+                             slice['SLICE_UID'], slice['SLICE_URN'], options, \
+                             'slice_id', 'SLICE_MEMBER', 'SLICE_ROLE', 'slice')
+
+        session.commit()
+        session.close()
 
         chapi_log_result(SA_LOG_PREFIX, method, result)
         return result
@@ -761,6 +887,8 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                                           options, 'slice_id', \
                                           'SLICE_MEMBER', 'SLICE_ROLE', \
                                           'slice')
+        session.commit()
+        session.close()
 
         chapi_log_result(SA_LOG_PREFIX, method, result)
         return result
@@ -826,10 +954,6 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
             raise CHAPIv1ArgumentError('This would result in ' + \
                           str(num_leads) + ' leads for the ' + text_str)
 
-        # finish up
-        session.commit()
-        session.close()
-
 
         # Now log the removals, adds, changes
 
@@ -886,6 +1010,25 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         q = session.query(self.db.MEMBER_ATTRIBUTE_TABLE.c.member_id)
         q = q.filter(self.db.MEMBER_ATTRIBUTE_TABLE.c.name == "urn")
         q = q.filter(self.db.MEMBER_ATTRIBUTE_TABLE.c.value == urn)
+        rows = q.all()
+        if len(rows) > 0:
+           return rows[0].member_id
+        return None
+
+    def get_member_urn_for_id(self, session, id):
+        q = session.query(self.db.MEMBER_ATTRIBUTE_TABLE.c.value)
+        q = q.filter(self.db.MEMBER_ATTRIBUTE_TABLE.c.name == "urn")
+        q = q.filter(self.db.MEMBER_ATTRIBUTE_TABLE.c.member_id == id)
+        rows = q.all()
+        if len(rows) > 0:
+           return rows[0].value
+        return None
+
+    def get_project_lead(self, session, project_id):
+        q = session.query(ProjectMember.member_id)
+        q = q.filter(ProjectMember.project_id == project_id)
+        lead_role = str(self.get_role_id(session, "LEAD"))
+        q = q.filter(ProjectMember.role == lead_role)
         rows = q.all()
         if len(rows) > 0:
            return rows[0].member_id
@@ -949,7 +1092,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         vals = {}
         for field, value in options['fields'].iteritems():
            vals[SA.sliver_info_field_mapping[field]] = value
-        q.update(vals)
+        q.update1(vals)
         session.commit()
         session.close()
         return self._successReturn(True)
