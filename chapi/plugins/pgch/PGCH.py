@@ -171,16 +171,30 @@ class PGCHv1Delegate(DelegateBase):
 
         # If no args, get a user credential
         if not args:
-            client_uuid = get_uuid_from_cert(client_cert)
-            creds = []
-            options = {"match" : {"MEMBER_UID" : client_uuid},
-                       "fields" : ["_GENI_USER_CREDENTIAL"]}
-            public_info = \
-                self._ma_handler._delegate.lookup_public_member_info(creds, 
-                                                                     options)
-            client_urn = public_info['value'].keys()[0]
-            user_credential = \
-                public_info['value'][client_urn]['_GENI_USER_CREDENTIAL']
+#             client_uuid = get_uuid_from_cert(client_cert)
+#             creds = []
+#             options = {"match" : {"MEMBER_UID" : client_uuid},
+#                        "fields" : ["_GENI_USER_CREDENTIAL"]}
+#             public_info = \
+#                 self._ma_handler._delegate.lookup_public_member_info(creds, 
+#                                                                      options)
+#             client_urn = public_info['value'].keys()[0]
+#             user_credential = \
+#                 public_info['value'][client_urn]['_GENI_USER_CREDENTIAL']
+
+            client_urn = get_urn_from_cert(client_cert)
+            creds = self._ma_handler._delegate.get_credentials(client_cert,
+                                                              client_urn,
+                                                              [], {})
+            if creds['code'] != NO_ERROR: return creds
+
+            # Extract the SFA user credential from the returned set
+            user_credential = None
+            for cred in creds['value']:
+                if cred['geni_type'] == 'geni_sfa':
+                    user_credential = cred['geni_value']
+                    break
+
             return self._successReturn(user_credential)
 
 #        if not args:

@@ -48,8 +48,6 @@ optional_fields = {
     "_GENI_MEMBER_INSIDE_PUBLIC_KEY": {"OBJECT": "MEMBER", "TYPE": "KEY"},
     "_GENI_MEMBER_INSIDE_CERTIFICATE": {"OBJECT": "MEMBER", "TYPE": "CERTIFICATE"},
     "_GENI_MEMBER_INSIDE_PRIVATE_KEY": {"OBJECT": "MEMBER", "TYPE": "KEY", "PROTECT": "PRIVATE"},
-    "_GENI_USER_CREDENTIAL": {"OBJECT": "MEMBER", "TYPE": "CREDENTIALS"},
-    "_GENI_CREDENTIALS": {"OBJECT": "MEMBER", "TYPE": "CREDENTIALS"},
     "_GENI_IDENTIFYING_MEMBER_UID": {"OBJECT": "MEMBER", "TYPE" : "UID", \
           "UPDATE" : False, "PROTECT" : "IDENTIFYING"},
     # TODO: perhaps allow _GENI_MEMBER_ENABLED?
@@ -90,8 +88,6 @@ field_mapping = {
     "_GENI_MEMBER_INSIDE_PUBLIC_KEY": None,
     "_GENI_MEMBER_INSIDE_CERTIFICATE": "certificate",
     "_GENI_MEMBER_INSIDE_PRIVATE_KEY": "private_key",
-    "_GENI_USER_CREDENTIAL": "foo",
-    "_GENI_CREDENTIALS": "foo",
     "_GENI_IDENTIFYING_MEMBER_UID": "member_id",
 
     # these are special - used in the database but not fields specifiable in the API
@@ -130,8 +126,7 @@ attributes = [
 public_fields = [
     "MEMBER_URN", "MEMBER_UID", "MEMBER_USERNAME",
     "_GENI_MEMBER_SSL_PUBLIC_KEY", "_GENI_MEMBER_SSL_CERTIFICATE",
-    "_GENI_MEMBER_INSIDE_PUBLIC_KEY", "_GENI_MEMBER_INSIDE_CERTIFICATE",
-    "_GENI_USER_CREDENTIAL", "_GENI_CREDENTIALS"
+    "_GENI_MEMBER_INSIDE_PUBLIC_KEY", "_GENI_MEMBER_INSIDE_CERTIFICATE"
 ]
 
 identifying_fields = [
