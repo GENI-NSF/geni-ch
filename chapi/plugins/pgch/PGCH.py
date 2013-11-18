@@ -305,7 +305,8 @@ class PGCHv1Delegate(DelegateBase):
             if not urn:
                 match_clause = {'MEMBER_UID' : uuid}
             public_filter_clause = ['MEMBER_UID', 'MEMBER_URN',
-                                    'MEMBER_USERNAME', '_GENI_USER_CREDENTIAL']
+                                    'MEMBER_USERNAME',
+                                    '_GENI_MEMBER_SSL_CERTIFICATE']
             public_options = {"match" : match_clause,
                               "filter" : public_filter_clause}
             creds = []
@@ -332,7 +333,7 @@ class PGCHv1Delegate(DelegateBase):
             member_hrn = sfa.util.xrn.urn_to_hrn(public_info['MEMBER_URN'])[0]
             member_uuid = public_info['MEMBER_UID']
             member_email = identifying_info['MEMBER_EMAIL']
-            user_gid = gid.GID(public_info['_GENI_USER_CREDENTIAL'])
+            member_gid = public_info['_GENI_MEMBER_SSL_CERTIFICATE']
             member_name = public_info['MEMBER_USERNAME']
 
             # Slices
@@ -362,7 +363,7 @@ class PGCHv1Delegate(DelegateBase):
                            'hrn' : member_hrn, \
                            'uuid' : member_uuid, \
                            'email' : member_email, \
-                           'gid' : user_gid.save_to_string(), # user_cred
+                           'gid' : member_gid,
                            'name' : member_name,  # Common Name
                        'slices' : slices
                        }
