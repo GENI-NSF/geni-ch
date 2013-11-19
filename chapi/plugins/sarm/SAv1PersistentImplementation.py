@@ -628,6 +628,10 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         q = session.query(Project)
         q = q.filter(getattr(Project, "project_name") == name)
         updates = {}
+        # Handle empty string for no expiration
+        if (options['fields'].has_key('PROJECT_EXPIRATION')
+            and not options['fields']['PROJECT_EXPIRATION']):
+            options['fields']['PROJECT_EXPIRATION'] = None
         for field, value in options['fields'].iteritems():
             updates[SA.project_field_mapping[field]] = value
         q = q.update(updates)
