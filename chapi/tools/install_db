@@ -2,8 +2,6 @@
 
 echoerr() { echo "$@" 1>&2; }
 
-# Exit on error
-set -e
 # Echo commands with variables expanded
 set -x
 
