@@ -113,14 +113,18 @@ def construct_result_row(row, columns, mapping):
         result_row[column] = column_value
     return result_row
 
-# Grab the query selection columns ('filter') and match criterial ('match') from options
 def unpack_query_options(options, mapping):
-    selected_columns = mapping.keys() # Default = all columns if not specified
-    if options.has_key('filter'): selected_columns = options['filter']
+    """Unpack the query options and return a tuple of
+    selected columns (a list) and match criteria (a dict).
+    """
+    # Default selected columns is all
+    selected_columns = mapping.keys()
+    if options.has_key('filter'):
+        selected_columns = options['filter']
 
-    match_criteria = []
-    if options.has_key('match'): match_criteria = options['match']
+    # Default match criteria is none (empty dict)
+    match_criteria = {}
+    if options.has_key('match'):
+        match_criteria = options['match']
 
     return selected_columns, match_criteria
-
-
