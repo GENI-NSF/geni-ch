@@ -569,7 +569,8 @@ class PGCHv1Delegate(DelegateBase):
         Return a list of dicts. Each dict has keys gid, urn, hrn, url.
         """
         self.logger.info("Called ListComponents")
-        options = dict()
+        filter = ['SERVICE_CERT', 'SERVICE_URN', 'SERVICE_URL']
+        options = dict(filter=filter)
         get_aggregates_result = self._ch_handler.lookup_aggregates(options)
         if get_aggregates_result['code'] != NO_ERROR:
             return get_aggregates_result
@@ -583,8 +584,14 @@ class PGCHv1Delegate(DelegateBase):
             # Clean up the HRN
             hrn = sfa_hrn.replace('\\', '')
             # Load the certificate from file
-            with open(gid_file, 'r') as f:
-                gid = f.read()
+            try:
+                with open(gid_file, 'r') as f:
+                    gid = f.read()
+            except:
+                msg = 'ListComponents: gid file %r cannot be read.'
+                msg = msg % (gid_file)
+                chapi_error(PGCH_LOG_PREFIX, msg)
+                gid = ''
             component = {'gid' : gid, 'urn' : urn, 'hrn' : hrn, 'url' : url}
             components.append(component)
         return self._successReturn(components)
