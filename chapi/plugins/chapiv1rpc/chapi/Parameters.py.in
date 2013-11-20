@@ -22,9 +22,14 @@
 #----------------------------------------------------------------------
 
 import amsoil.core.pluginmanager as pm
-import os.path
-import ConfigParser
+
 from tools.chapi_log import *
+
+import ConfigParser
+import logging
+import logging.config
+import logging.handlers
+import os.path
 
 CONFIG_FILE = '@pkgsysconfdir@/chapi.ini'
 
@@ -80,13 +85,23 @@ default_parameters = [
     },
     {
         NAME_KEY: "chapi.log_file",
-        VALUE_KEY: '/tmp/chapi.log',
-        DESC_KEY: "Location of chapi's log file"
+        VALUE_KEY: '/var/log/geni-chapi/chapi.log',
+        DESC_KEY: "Location of CHAPI's log file"
+    },
+    {
+        NAME_KEY: "chapi.log_config_file",
+        VALUE_KEY: '/etc/geni-chapi/logging_config.conf',
+        DESC_KEY: "Location of CHAPI's logging configuration file"
+    },
+    {
+        NAME_KEY: "chapi.log_verbose",
+        VALUE_KEY: False,
+        DESC_KEY: "Set true to enable verbose debug logging in CHAPI."
     },
     {
         NAME_KEY: "chrm.authority",
         VALUE_KEY: "host.example.com",
-        DESC_KEY: "name of CH/SA/MA authority"
+        DESC_KEY: "Name of CH/SA/MA authority"
     },
     {
         NAME_KEY: "flask.debug.client_cert_file",
@@ -96,7 +111,7 @@ default_parameters = [
     {
         NAME_KEY: 'chrm.db_url',
         VALUE_KEY: 'postgresql://scott:tiger@localhost/chapi',
-        DESC_KEY: 'database URL'
+        DESC_KEY: 'Database URL'
     },
     {
         NAME_KEY: "flask.fcgi",
@@ -180,3 +195,75 @@ def set_parameters():
                     chapi_debug('PARAMETERS',
                                 msg % (pname, value, CONFIG_FILE))
                     config.set(pname, value)
+
+def configure_logging():
+    config = pm.getService("config")
+
+    level = logging.INFO
+    optlevel = 'INFO'
+    # If we got the verbose setting, set optlevel to 'DEBUG'
+    chapi_debug = config.get("chapi.log_verbose")
+    if chapi_debug:
+        optlevel = 'DEBUG'
+        level = logging.DEBUG
+    deft = {}
+    deft['loglevel'] = optlevel
+    deft['logfilename'] = config.get("chapi.log_file")
+
+    # FIXME: Create any needed directories for chapi.log_file?
+
+    # Get the log config file
+    logConfigFilename = config.get("chapi.log_config_file")
+    # look for it as is or after os.path.abspath()
+    fns = [logConfigFilename, os.path.abspath(logConfigFilename)]
+    found = False
+    for fn in fns:
+        if os.path.exists(fn) and os.path.getsize(fn) > 0:
+            # Only new loggers get the parameters in the config file.
+            # If disable_existing is True(default), then existing loggers are disabled,
+            # unless they (or ancestors, not 'root') are explicitly listed in the config file.
+            try:
+                logging.config.fileConfig(fn, defaults=deft, disable_existing_loggers=False)
+                logging.info("Configured logging from file %s", fn)
+                found = True
+            except Exception, e:
+                import traceback
+                logging.error("Failed to configure logging from %s: %s", fn, e)
+                logging.error(traceback.format_exc())
+            break
+
+    if not found:
+        fmt = '%(asctime)s %(levelname)-8s %(name)s: %(message)s'
+        logging.basicConfig(level=level,format=fmt,datefmt='%m/%d/%y %H:%M:%S')
+        
+        logging.warn("Failed to find or use log config file %s", logConfigFilename)
+
+    # Clean up the old loggers so they stop sending output to the old places
+    amsoillogger = logging.getLogger("amsoil")
+    if amsoillogger.getEffectiveLevel() != level:
+        logging.warn("AMSoil logger didnt get changes?")
+        amsoillogger.setLevel(level)
+    toremove = None
+    for handler in amsoillogger.handlers:
+        # remove the old handler that put this in amsoil.log
+        logging.warn("handler filename: %s, logfilename: %s", handler.baseFilename, deft['logfilename'])
+        if not deft['logfilename'] in handler.baseFilename:
+            logging.warn("Removing handler from amsoil logger with filename %s" % handler.baseFilename)
+            toremove = handler
+            break
+    if toremove:
+#        toremove.close()
+        amsoillogger.removeHandler(toremove)
+
+    chapilogger = logging.getLogger("chapi")
+    toremove = None
+    for handler in chapilogger.handlers:
+        # remove the old handler that put this in amsoil.log
+        logging.warn("handler filename: %s, logfilename: %s", handler.baseFilename, deft['logfilename'])
+        if not deft['logfilename'] in handler.baseFilename:
+            logging.warn("Removing handler from chapi logger with filename %s" % handler.baseFilename)
+            toremove = handler
+            break
+    if toremove:
+#        toremove.close()
+        chapilogger.removeHandler(toremove)
