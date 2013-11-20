@@ -22,9 +22,9 @@
 +        ScriptAlias /CS /usr/share/geni-ch/chapi/AMsoil/src/main.py 
 +        ScriptAlias /CH /usr/share/geni-ch/chapi/AMsoil/src/main.py 
 +        ScriptAlias /LOG /usr/share/geni-ch/chapi/AMsoil/src/main.py 
++        ScriptAlias /PGCH/ch /usr/share/geni-ch/chapi/AMsoil/src/main.py
 +        ScriptAlias /PGCH /usr/share/geni-ch/chapi/AMsoil/src/main.py 
 +        ScriptAlias /SR /usr/share/geni-ch/chapi/AMsoil/src/main.py 
-+        ScriptAlias /PGCH/ch /usr/share/geni-ch/chapi/AMsoil/src/main.py
  
  </VirtualHost>
  
