@@ -99,6 +99,11 @@ default_parameters = [
         DESC_KEY: "Set true to enable verbose debug logging in CHAPI."
     },
     {
+        NAME_KEY: "chapi.set_params",
+        VALUE_KEY: True,
+        DESC_KEY: "Flag noting we set the CHAPI params in the config module"
+    },
+    {
         NAME_KEY: "chrm.authority",
         VALUE_KEY: "host.example.com",
         DESC_KEY: "Name of CH/SA/MA authority"
@@ -151,7 +156,8 @@ def get_typed_value(parser, section, option, value_type):
         value = parser.getboolean(section, option)
     else:
         msg = 'Unknown type %s for default parameter %s'
-        chapi_warn('PARAMETERS',
+#        chapi_warn('PARAMETERS',
+        logging.warn('PARAMETERS: ' + 
                    msg % (value_type.__name__, pname))
     return value
 
@@ -172,6 +178,16 @@ def param_to_secopt(param):
 
 def set_parameters():
     config = pm.getService("config")
+
+    did_set = False
+    try:
+        did_set = config.get("chapi.set_params")
+    except:
+        pass
+    if did_set:
+        chapi_warn('PARAMETERS', 'CHAPI params already in configdb')
+        return
+
     # Set up the defaults
     for param in default_parameters:
         config.install(param[NAME_KEY], param[VALUE_KEY], param[DESC_KEY])
@@ -180,7 +196,8 @@ def set_parameters():
     result = parser.read(CONFIG_FILE)
     if len(result) != 1:
         # file was not read, warn and return
-        chapi_warn('PARAMETERS',
+        #chapi_warn('PARAMETERS',
+        logging.warn('PARAMETERS: ' + 
                    'Unable to read config file %s' % (CONFIG_FILE))
     else:
         for param in default_parameters:
@@ -192,7 +209,8 @@ def set_parameters():
                 if value is not None:
                     # If a value was extracted, set it
                     msg = 'Setting parameter %s to %s from %s'
-                    chapi_debug('PARAMETERS',
+#                    chapi_info('PARAMETERS',
+                    logging.info('PARAMETERS: ' + 
                                 msg % (pname, value, CONFIG_FILE))
                     config.set(pname, value)
 
@@ -202,8 +220,8 @@ def configure_logging():
     level = logging.INFO
     optlevel = 'INFO'
     # If we got the verbose setting, set optlevel to 'DEBUG'
-    chapi_debug = config.get("chapi.log_verbose")
-    if chapi_debug:
+    chapi_do_debug = config.get("chapi.log_verbose")
+    if chapi_do_debug:
         optlevel = 'DEBUG'
         level = logging.DEBUG
     deft = {}
@@ -223,47 +241,65 @@ def configure_logging():
             # If disable_existing is True(default), then existing loggers are disabled,
             # unless they (or ancestors, not 'root') are explicitly listed in the config file.
             try:
+                logging.info("About to configure logging from file %s", fn)
                 logging.config.fileConfig(fn, defaults=deft, disable_existing_loggers=False)
                 logging.info("Configured logging from file %s", fn)
                 found = True
             except Exception, e:
                 import traceback
                 logging.error("Failed to configure logging from %s: %s", fn, e)
-                logging.error(traceback.format_exc())
+                logging.debug(traceback.format_exc())
             break
 
     if not found:
-        fmt = '%(asctime)s %(levelname)-8s %(name)s: %(message)s'
-        logging.basicConfig(level=level,format=fmt,datefmt='%m/%d/%y %H:%M:%S')
-        
-        logging.warn("Failed to find or use log config file %s", logConfigFilename)
+        chapi_logging_basic_config(level)
+#        fmt = '%(asctime)s %(levelname)-8s %(name)s: %(message)s'
+#        logging.basicConfig(level=level,format=fmt,datefmt='%m/%d/%Y %H:%M:%S')       
+        logging.warn("***Failed to find or use log config file %s", logConfigFilename)
 
     # Clean up the old loggers so they stop sending output to the old places
     amsoillogger = logging.getLogger("amsoil")
     if amsoillogger.getEffectiveLevel() != level:
-        logging.warn("AMSoil logger didnt get changes?")
+        logging.warn("***AMSoil logger didnt get changes?")
         amsoillogger.setLevel(level)
     toremove = None
     for handler in amsoillogger.handlers:
         # remove the old handler that put this in amsoil.log
-        logging.warn("handler filename: %s, logfilename: %s", handler.baseFilename, deft['logfilename'])
-        if not deft['logfilename'] in handler.baseFilename:
-            logging.warn("Removing handler from amsoil logger with filename %s" % handler.baseFilename)
+        logging.warn("amsoil handler filename: %s, logfilename: %s", handler.baseFilename, deft['logfilename'])
+        if not handler.baseFilename.startswith(deft['logfilename']):
+            logging.warn("***Removing handler from amsoil logger with filename %s" % handler.baseFilename)
             toremove = handler
             break
+        else:
+            fn = None
+            if isinstance(handler, logging.FileHandler):
+                fn = handler.baseFilename
+                logging.warn("***Keeping amsoil handler with level %s, formatter %s, file %s", logging.getLevelName(handler.level), handler.formatter._fmt, fn)
+            else:
+                logging.warn("***Keeping amsoil handler (non file) with level %s, formatter %s", logging.getLevelName(handler.level), handler.formatter._fmt)
+
     if toremove:
-#        toremove.close()
         amsoillogger.removeHandler(toremove)
+    else:
+        logging.warn("***Failed to find the old amsoil handler")
 
     chapilogger = logging.getLogger("chapi")
     toremove = None
     for handler in chapilogger.handlers:
         # remove the old handler that put this in amsoil.log
-        logging.warn("handler filename: %s, logfilename: %s", handler.baseFilename, deft['logfilename'])
-        if not deft['logfilename'] in handler.baseFilename:
-            logging.warn("Removing handler from chapi logger with filename %s" % handler.baseFilename)
+        logging.warn("chapi handler filename: %s, logfilename: %s", handler.baseFilename, deft['logfilename'])
+        if not handler.baseFilename.startswith(deft['logfilename']):
+            logging.warn("***Removing handler from chapi logger with filename %s, level %s, formatter %s" % handler.baseFilename, logging.getLevelName(handler.level), handler.formatter._fmt)
             toremove = handler
             break
+        else:
+            fn = None
+            if isinstance(handler, logging.FileHandler):
+                fn = handler.baseFilename
+                logging.warn("***Keeping chapi handler with level %s, formatter %s, file %s", logging.getLevelName(handler.level), handler.formatter._fmt, fn)
+            else:
+                logging.warn("***Keeping chapi handler (non file) with level %s, formatter %s", logging.getLevelName(handler.level), handler.formatter._fmt)
     if toremove:
-#        toremove.close()
         chapilogger.removeHandler(toremove)
+    else:
+        logging.info("***Failed to find any old chapi handler - expected now I think")
