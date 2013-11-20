@@ -563,27 +563,35 @@ class PGCHv1Delegate(DelegateBase):
         
         return self._successReturn(keys)
 
-
     def ListComponents(self, client_cert, args):
-        # Returns list of CMs (AMs)
-        # cred is user cred or slice cred - Omni uses user cred
-        # return list( of dict(gid=<cert>, hrn=<hrn>, url=<AM URL>))
-        # Matt seems to say hrn is not critical, and can maybe even skip cert
-        # args: credential
+        """Get the list of CMs (AMs).
 
+        Return a list of dicts. Each dict has keys gid, urn, hrn, url.
+        """
         self.logger.info("Called ListComponents")
-        options = dict()
+        filter = ['SERVICE_CERT', 'SERVICE_URN', 'SERVICE_URL']
+        options = dict(filter=filter)
         get_aggregates_result = self._ch_handler.lookup_aggregates(options)
         if get_aggregates_result['code'] != NO_ERROR:
             return get_aggregates_result
         aggregates = get_aggregates_result['value']
         components = []
         for aggregate in aggregates:
-            gid = aggregate['SERVICE_CERT']
+            gid_file = aggregate['SERVICE_CERT']
             urn = aggregate['SERVICE_URN']
-            hrn = sfa.util.xrn.urn_to_hrn(urn)
             url = aggregate['SERVICE_URL']
+            sfa_hrn,sfa_type = sfa.util.xrn.urn_to_hrn(urn)
+            # Clean up the HRN
+            hrn = sfa_hrn.replace('\\', '')
+            # Load the certificate from file
+            try:
+                with open(gid_file, 'r') as f:
+                    gid = f.read()
+            except:
+                msg = 'ListComponents: gid file %r cannot be read.'
+                msg = msg % (gid_file)
+                chapi_error(PGCH_LOG_PREFIX, msg)
+                gid = ''
             component = {'gid' : gid, 'urn' : urn, 'hrn' : hrn, 'url' : url}
             components.append(component)
         return self._successReturn(components)
-
