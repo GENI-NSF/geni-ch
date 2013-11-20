@@ -661,7 +661,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         columns, match_criteria = \
             unpack_query_options(options, SA.project_field_mapping)
 
-        if match_criteria and match_criteria.has_key('PROJECT_URN'):
+        if match_criteria.has_key('PROJECT_URN'):
             urns = match_criteria['PROJECT_URN']
             del match_criteria['PROJECT_URN']
             if not isinstance(urns, list):

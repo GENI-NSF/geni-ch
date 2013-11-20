@@ -43,8 +43,13 @@ def setup():
    pgch_delegate2 = PGCHv1Delegate()
    pgch_handler2.setDelegate(pgch_delegate2)
 
+   pgch_handler3 = PGCHv1Handler()
+   pgch_delegate3 = PGCHv1Delegate()
+   pgch_handler3.setDelegate(pgch_delegate3)
+
    pm.registerService('pgchv1handler', pgch_handler)
 
    # name, handler, endpoint                                                   
    xmlrpc.registerXMLRPC('pgch2v1', pgch_handler2, '/PGCH')
+   xmlrpc.registerXMLRPC('pgch3v1', pgch_handler3, '/PGCH/ch')
    xmlrpc.registerXMLRPC('pgchv1', pgch_handler, '/')
