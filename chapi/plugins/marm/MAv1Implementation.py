@@ -688,14 +688,10 @@ class MAv1Implementation(MAv1DelegateBase):
         return result
 
     # Member certificate methods
-    def create_certificate(self, client_cert, member_urn, \
-                               credentials, options):
+    def create_certificate(self, client_cert, member_urn, credentials, options):
         method = 'create_certificate'
         args = {'member_urn' : member_urn}
         chapi_log_invocation(MA_LOG_PREFIX, method, credentials, options, args)
-
-#        print "In MAv1Implementation.create_cert : " + \
-#            str(member_urn) + " " + str(options)
 
         # Grab the CSR or make CSR/KEY
         if 'csr' in options:
@@ -712,17 +708,15 @@ class MAv1Implementation(MAv1DelegateBase):
         # Lookup UID and email from URN
         match = {'MEMBER_URN' : member_urn}
         lookup_options = {'match' : match}
-        lookup_response = \
-            self.lookup_member_info(lookup_options, \
-                                        ['MEMBER_EMAIL', 'MEMBER_UID'])
+        lookup_response = self.lookup_member_info(lookup_options,
+                                                  ['MEMBER_EMAIL',
+                                                   'MEMBER_UID'])
         member_info = lookup_response['value'][member_urn]
-        urn = member_urn
-        email = str(member_info['MEMBER_EMAIL'])
-        uuid = str(member_info['MEMBER_UID'])
+        member_email = str(member_info['MEMBER_EMAIL'])
+        member_id = str(member_info['MEMBER_UID'])
 
-        cert_pem, private_key = \
-            make_cert_and_key(member_id, member_email, \
-                                  member_urn, self.cert, self.key, csr_file)
+        cert_pem = make_cert(member_id, member_email, member_urn,
+                             self.cert, self.key, csr_file)
 
         # Grab signer pem
         signer_pem = open(self.cert).read()
@@ -737,7 +731,7 @@ class MAv1Implementation(MAv1DelegateBase):
         insert_fields={'certificate' : cert_chain, 'member_id' : member_id}
         if private_key:
             insert_fields['private_key'] = private_key
-        ins = self.db.OUTSIDE_CERT_TABLE().values(insert_fields)
+        ins = self.db.OUTSIDE_CERT_TABLE.insert().values(insert_fields)
         result = session.execute(ins)
         session.commit()
         session.close()
