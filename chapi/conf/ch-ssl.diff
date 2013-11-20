@@ -1,6 +1,6 @@
---- ch-ssl.orig	2013-11-15 14:05:47.623241997 -0500
-+++ ch-ssl	2013-11-15 14:16:23.164751806 -0500
-@@ -182,14 +182,17 @@
+--- ch-ssl.orig	2013-10-08 11:18:46.447848440 -0400
++++ ch-ssl	2013-11-20 10:57:32.123263754 -0500
+@@ -182,14 +182,19 @@
  	# MSIE 7 and newer should be able to use keepalive
  	BrowserMatch "MSIE [17-9]" ssl-unclean-shutdown
  
@@ -12,6 +12,7 @@
 -	Include /usr/share/geni-ch/cs/apache2.conf
 -	Include /usr/share/geni-ch/logging/apache2.conf
 -	Include /usr/share/xml-signer/etc/apache2.conf
++        # Include configuration files for CHAPI clearinghouse services
 +        SSLOptions +ExportCertData
 +        SSLCACertificateFile /usr/share/geni-ch/CA/cacert.pem
 +        SSLVerifyClient optional_no_ca
@@ -23,42 +24,47 @@
 +        ScriptAlias /LOG /usr/share/geni-ch/chapi/AMsoil/src/main.py 
 +        ScriptAlias /PGCH /usr/share/geni-ch/chapi/AMsoil/src/main.py 
 +        ScriptAlias /SR /usr/share/geni-ch/chapi/AMsoil/src/main.py 
++        ScriptAlias /PGCH/ch /usr/share/geni-ch/chapi/AMsoil/src/main.py
  
  </VirtualHost>
  
-@@ -227,4 +230,35 @@
+@@ -227,4 +232,39 @@
          ErrorDocument 404 /index.html
  </VirtualHost>
  
++
++# CHAPI clearinghouses use a second virtualhost on port 8443 for the
++# PGCH service, for backwards compatibility
 +<VirtualHost %IP_ADDR%:8443>
-+      ServerAdmin portal-sandbox-admin@gpolab.bbn.com
-+      ServerName  %FQDN%
++        ServerAdmin portal-sandbox-admin@gpolab.bbn.com
++        ServerName  %FQDN%
 +
-+      Include /usr/share/geni-ch/ch/apache2.conf
++        Include /usr/share/geni-ch/ch/apache2.conf
 +
-+      ErrorLog /var/log/apache2/ch_error_8443.log
-+      CustomLog /var/log/apache2/ch_ssl_access_8443.log combined
++        ErrorLog /var/log/apache2/ch_error_8443.log
++        CustomLog /var/log/apache2/ch_ssl_access_8443.log combined
 +
-+      LogLevel warn
++        LogLevel warn
 +
-+      SSLEngine on
++        SSLEngine on
 +
-+      SSLCertificateFile    /etc/ssl/certs/%FQDN%.pem
-+      SSLCertificateKeyFile /etc/ssl/certs/%FQDN%.pem
-+      SSLCertificateChainFile /etc/ssl/certs/ca-gpolab.crt
++        # These SSL parameters should match the ones used on port 443
++	SSLCertificateFile    /etc/ssl/certs/%FQDN%.pem
++	SSLCertificateKeyFile /etc/ssl/certs/%FQDN%.pem
++	SSLCertificateChainFile /etc/ssl/certs/ca-gpolab.crt
 +
-+      BrowserMatch "MSIE [2-6]" \
-+              nokeepalive ssl-unclean-shutdown \
-+              downgrade-1.0 force-response-1.0
-+      BrowserMatch "MSIE [17-9]" ssl-unclean-shutdown
++        BrowserMatch "MSIE [2-6]" \
++                nokeepalive ssl-unclean-shutdown \
++                downgrade-1.0 force-response-1.0
++        BrowserMatch "MSIE [17-9]" ssl-unclean-shutdown
 +
-+      SSLOptions +ExportCertData
-+      SSLCACertificateFile /usr/share/geni-ch/CA/cacert.pem
-+      SSLVerifyClient optional_no_ca
-+      SSLVerifyDepth 3
++        SSLOptions +ExportCertData
++        SSLCACertificateFile /usr/share/geni-ch/CA/cacert.pem
++        SSLVerifyClient optional_no_ca
++        SSLVerifyDepth 3
 +
-+      DocumentRoot /usr/share/geni-ch/ch/www
-+      ScriptAlias / /usr/share/geni-ch/chapi/AMsoil/src/main.py
++        DocumentRoot /usr/share/geni-ch/ch/www
++        ScriptAlias / /usr/share/geni-ch/chapi/AMsoil/src/main.py
 +</VirtualHost>
 +
  </IfModule>
