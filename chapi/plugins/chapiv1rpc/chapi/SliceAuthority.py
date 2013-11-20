@@ -492,7 +492,6 @@ class SAv1Handler(HandlerBase):
     # 'attribute_to_remove' : NAME
     def lookup_project_attributes(self, project_urn, 
                                  credentials, options):
-        sys.stderr.write("SA: ENTERING LOOKUP_PROJEC_ATTRIBUTES")
         client_cert = self.requestCertificate()
         method = 'lookup_project_attributes'
         try:

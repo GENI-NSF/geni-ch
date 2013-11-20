@@ -1080,8 +1080,8 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         q = q.filter(self.db.PROJECT_ATTRIBUTE_TABLE.c.project_id==project_id)
         rows = q.all()
         session.close()
-        return rows
-
+        result = self._successReturn(rows)
+        return result
 
     # Sliver Info API
 
