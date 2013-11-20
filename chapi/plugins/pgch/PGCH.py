@@ -133,19 +133,6 @@ class PGCHv1Delegate(DelegateBase):
         self._sa_handler = pm.getService('sav1handler')
         self._ma_handler = pm.getService('mav1handler')
 
-# {
-#     'api': 1,
-#     'code_tag': 'f7ef98f5ed1d9bff40a2aa2a522e6a114a7857b0',
-#     'hostname': 'www.emulab.net',
-#     'hrn': 'utahemulab.ch',
-#     'interface': 'registry',
-#     'peers': {},
-#     'sa-version': 1.01,
-#     'url': 'https://www.emulab.net:12369/protogeni/xmlrpc/ch',
-#     'urn': 'urn:publicid:IDN+emulab.net+authority+ch'
-# }
-
-
     def GetVersion(self, client_cert):
         self.logger.info("Called GetVersion")
 
@@ -157,7 +144,7 @@ class PGCHv1Delegate(DelegateBase):
         API_VERSION = 1
         CH_HOSTNAME = authority
 
-        # Read this from a file
+        # Read code tag from a file
         code_tag_file = '/etc/geni-chapi/geni-chapi-githash'
         try:
             with open(code_tag_file, 'r') as f:
