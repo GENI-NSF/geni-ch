@@ -11,47 +11,48 @@ RSYNC_EXCLUDE = --exclude .git --exclude '*~' \
 RSYNC_DELETE = --delete --delete-excluded
 RSYNC_ARGS = -aztv $(RSYNC_EXCLUDE)
 
+GITHASH = etc/geni-chapi-githash
 
 .PHONY: syncb syncd syncm synci syncs synct syncp syncc
 
 default:
 	echo "Choose a specific sync target."
 
-bin/geni-ch-githash: ../.git
-	git rev-parse HEAD > bin/geni-ch-githash
+$(GITHASH): ../.git
+	git rev-parse HEAD > $@
 
-synca: bin/geni-ch-githash
+synca: $(GITHASH)
 	$(RSYNC) $(RSYNC_ARGS) ../chapi algonquin.gpolab.bbn.com:
 
-syncb: bin/geni-ch-githash
+syncb: $(GITHASH)
 	$(RSYNC) $(RSYNC_ARGS) ../chapi bigslide.gpolab.bbn.com:
 
-syncd: bin/geni-ch-githash
+syncd: $(GITHASH)
 	$(RSYNC) $(RSYNC_ARGS) ../chapi dagoola.gpolab.bbn.com:
 
-synce: bin/geni-ch-githash
+synce: $(GITHASH)
 	$(RSYNC) $(RSYNC_ARGS) ../chapi emmons.gpolab.bbn.com:
 
-synch: bin/geni-ch-githash
+synch: $(GITHASH)
 	$(RSYNC) $(RSYNC_ARGS) ../chapi haystack.gpolab.bbn.com:
 
-syncm: bin/geni-ch-githash
+syncm: $(GITHASH)
 	$(RSYNC) $(RSYNC_ARGS) ../chapi marilac.gpolab.bbn.com:
 
-synci: bin/geni-ch-githash
+synci: $(GITHASH)
 	$(RSYNC) $(RSYNC_ARGS) ../chapi illyrica.gpolab.bbn.com:
 
-syncs: bin/geni-ch-githash
+syncs: $(GITHASH)
 	$(RSYNC) $(RSYNC_ARGS) ../chapi sergyar.gpolab.bbn.com:
 
-synct: bin/geni-ch-githash
+synct: $(GITHASH)
 	$(RSYNC) $(RSYNC_ARGS) ../chapi tau-ceti.gpolab.bbn.com:
 
-syncp: bin/geni-ch-githash
+syncp: $(GITHASH)
 	$(RSYNC) $(RSYNC_ARGS) ../chapi panther.gpolab.bbn.com:
 
-syncc: bin/geni-ch-githash
+syncc: $(GITHASH)
 	$(RSYNC) $(RSYNC_ARGS) ../chapi cascade.gpolab.bbn.com:
 
-syncn: bin/geni-ch-githash
+syncn: $(GITHASH)
 	$(RSYNC) $(RSYNC_ARGS) ../chapi nye.gpolab.bbn.com:
