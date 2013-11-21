@@ -134,33 +134,42 @@ class PGCHv1Delegate(DelegateBase):
         self._ma_handler = pm.getService('mav1handler')
 
     def GetVersion(self, client_cert):
-
-        # Values returned by GetVersion
-        API_VERSION = 1.3
-        CODE_VERSION = "0001"
-        CH_HOSTNAME = "ch.geni.net"
-        CH_PORT = "8443"
-
         self.logger.info("Called GetVersion")
-        version = dict()
 
-        peers = dict() # FIXME: This is the registered CMs at PG Utah
-        version['peers'] = peers
-        version['api'] = API_VERSION
-        version['urn'] = 'urn:publicid:IDN+' + CH_HOSTNAME + '+authority+ch'
-        version['hrn'] = CH_HOSTNAME
-        version['url'] = 'https://' + CH_HOSTNAME + ':' + CH_PORT
-        version['interface'] = 'registry'
-        version['code_tag'] = CODE_VERSION
-        version['hostname'] = CH_HOSTNAME
-        version['gcf-pgch_api'] = API_VERSION
+        # Load the authority from the config
+        config = pm.getService('config')
+        authority = config.get('chrm.authority')
 
+        # Which API? What is the right value?
+        API_VERSION = 1
+        CH_HOSTNAME = authority
+
+        # Read code tag from a file
+        code_tag_file = '/etc/geni-chapi/geni-chapi-githash'
+        try:
+            with open(code_tag_file, 'r') as f:
+                code_tag = f.readline().strip()
+        except:
+            msg = 'GetVersion: Cannot read code tag file %r.'
+            msg = msg % (code_tag_file)
+            chapi_error(PGCH_LOG_PREFIX, msg)
+            code_tag = 'unknown'
+
+        # Templated URN. Should we get this from
+        # the authority certificate?
+        urn = 'urn:publicid:IDN+' + CH_HOSTNAME + '+authority+ch'
+
+        # At present there are no peers
+        peers = dict()
+        version = dict(peers=peers,
+                       api=API_VERSION,
+                       urn=urn,
+                       hrn=CH_HOSTNAME,
+                       url='https://' + CH_HOSTNAME + '/PGCH',
+                       interface='registry',
+                       code_tag=code_tag,
+                       hostname=CH_HOSTNAME)
         return self._successReturn(version)
-
-        # Note that the SA GetVersion is not implemented
-        # return value should be a struct with a bunch of entries
-        return self._ch_handler.get_version()
-
 
     def GetCredential(self, client_cert, args):
         # all none means return user cred
@@ -563,27 +572,35 @@ class PGCHv1Delegate(DelegateBase):
         
         return self._successReturn(keys)
 
-
     def ListComponents(self, client_cert, args):
-        # Returns list of CMs (AMs)
-        # cred is user cred or slice cred - Omni uses user cred
-        # return list( of dict(gid=<cert>, hrn=<hrn>, url=<AM URL>))
-        # Matt seems to say hrn is not critical, and can maybe even skip cert
-        # args: credential
+        """Get the list of CMs (AMs).
 
+        Return a list of dicts. Each dict has keys gid, urn, hrn, url.
+        """
         self.logger.info("Called ListComponents")
-        options = dict()
+        filter = ['SERVICE_CERT', 'SERVICE_URN', 'SERVICE_URL']
+        options = dict(filter=filter)
         get_aggregates_result = self._ch_handler.lookup_aggregates(options)
         if get_aggregates_result['code'] != NO_ERROR:
             return get_aggregates_result
         aggregates = get_aggregates_result['value']
         components = []
         for aggregate in aggregates:
-            gid = aggregate['SERVICE_CERT']
+            gid_file = aggregate['SERVICE_CERT']
             urn = aggregate['SERVICE_URN']
-            hrn = sfa.util.xrn.urn_to_hrn(urn)
             url = aggregate['SERVICE_URL']
+            sfa_hrn,sfa_type = sfa.util.xrn.urn_to_hrn(urn)
+            # Clean up the HRN
+            hrn = sfa_hrn.replace('\\', '')
+            # Load the certificate from file
+            try:
+                with open(gid_file, 'r') as f:
+                    gid = f.read()
+            except:
+                msg = 'ListComponents: gid file %r cannot be read.'
+                msg = msg % (gid_file)
+                chapi_error(PGCH_LOG_PREFIX, msg)
+                gid = ''
             component = {'gid' : gid, 'urn' : urn, 'hrn' : hrn, 'url' : url}
             components.append(component)
         return self._successReturn(components)
-
