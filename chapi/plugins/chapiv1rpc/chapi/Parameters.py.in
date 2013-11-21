@@ -269,7 +269,9 @@ def configure_logging():
         if not handler.baseFilename.startswith(deft['logfilename']):
             logging.warn("***Removing handler from amsoil logger with filename %s" % handler.baseFilename)
             toremove = handler
-            break
+             # Online example says instead to do:
+#            handler.filter=lambda x: False
+           break
         else:
             fn = None
             if isinstance(handler, logging.FileHandler):
@@ -291,6 +293,8 @@ def configure_logging():
         if not handler.baseFilename.startswith(deft['logfilename']):
             logging.warn("***Removing handler from chapi logger with filename %s, level %s, formatter %s" % handler.baseFilename, logging.getLevelName(handler.level), handler.formatter._fmt)
             toremove = handler
+            # Online example says instead to do:
+#            handler.filter=lambda x: False
             break
         else:
             fn = None

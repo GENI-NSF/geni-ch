@@ -51,18 +51,24 @@ SR_LOG_PREFIX = "SR"
 def chapi_get_audit_logger():
     chapi_audit_logger = logging.getLogger('chapi.audit')
     if len(chapi_audit_logger.handlers) == 0:
-        chapi_logging_basic_config()
+        logging.debug("No handler for chapi_audit yet")
+        if len(logging.getLogger().handlers) == 0:
+            logging.warn("No handler for chapi_audit or for the root logger. Do basic config")
+            chapi_logging_basic_config()
+        else:
+            logging.debug("But there is a handler for the root")
     return chapi_audit_logger
 
 def chapi_get_logger():
     chapi_logger = logging.getLogger('chapi')
-    if len(chapi_logger.handlers) == 0:
+    if len(chapi_logger.handlers) == 0 and len(logging.getLogger().handlers) == 0:
+        logging.warn("No handler for chapi yet - will do basic_config")
         chapi_logging_basic_config()
     return chapi_logger
 
 def chapi_logging_basic_config(level=logging.INFO):
     if len(logging.getLogger().handlers) > 0:
-        logging.debug("Not redoing basic config")
+        logging.debug("Not (re)doing basic config")
         return
     fmt = '%(asctime)s %(levelname)-8s %(name)s: %(message)s'
     logging.basicConfig(level=level,format=fmt,datefmt='%m/%d/%Y %H:%M:%S')
