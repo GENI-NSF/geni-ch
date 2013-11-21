@@ -48,13 +48,13 @@ class CHv1Guard(ABACGuardBase):
 
     ARGUMENT_CHECK_FOR_METHOD = \
         {
-        'get_member_authorities' : \
+        'lookup_member_authorities' : \
             CHGetServicesCheck(CHv1Implementation.mandatory_fields, \
                                    CHv1Implementation.supplemental_fields),
-        'get_slice_authorities' : \
+        'lookup_slice_authorities' : \
             CHGetServicesCheck(CHv1Implementation.mandatory_fields, \
                                    CHv1Implementation.supplemental_fields),
-        'get_aggregates' : \
+        'lookup_aggregates' : \
             CHGetServicesCheck(CHv1Implementation.mandatory_fields, \
                                    CHv1Implementation.supplemental_fields),
         'lookup_aggregates_for_urns' :
