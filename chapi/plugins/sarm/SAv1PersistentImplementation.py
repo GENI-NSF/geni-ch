@@ -904,11 +904,22 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
 
         session = self.db.getSession()
         slice_id = self.get_slice_id(session, "slice_urn", slice_urn) # MIK: only non-expired slice
+        old_slice_lead = self.get_slice_lead(session, slice_id)
+
         result = self.modify_membership(session, SliceMember, client_uuid, \
                                           slice_id, slice_urn, \
                                           options, 'slice_id', \
                                           'SLICE_MEMBER', 'SLICE_ROLE', \
                                           'slice')
+        
+        new_slice_lead = self.get_slice_lead(session,slice_id)
+
+        # if slice lead has changed, change in sa_slice table
+        if new_slice_lead != old_slice_lead:
+            q = session.query(Slice)
+            q = q.filter(Slice.slice_id == slice_id)
+            q = q.update({"owner_id" : new_slice_lead})
+            
         session.commit()
         session.close()
 
@@ -1082,6 +1093,16 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         session.close()
         result = self._successReturn(rows)
         return result
+
+    def get_slice_lead(self, session, slice_id):
+        q = session.query(SliceMember.member_id)
+        q = q.filter(SliceMember.slice_id == slice_id)
+        lead_role = str(self.get_role_id(session, "LEAD"))
+        q = q.filter(SliceMember.role == lead_role)
+        rows = q.all()
+        if len(rows) > 0:
+           return rows[0].member_id
+        return None
 
     # Sliver Info API
 
