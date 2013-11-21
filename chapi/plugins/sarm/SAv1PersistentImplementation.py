@@ -243,7 +243,6 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         q = session.query(member_table, table.c[name_field],
                           self.db.MEMBER_ATTRIBUTE_TABLE.c.value,
                           self.db.ROLE_TABLE.c.name)
-        q = q.filter(table.c.expired == 'f')
         q = q.filter(table.c[name_field] == name)
         q = q.filter(member_table.c[id_field] == table.c[id_field])
         q = q.filter(self.db.MEMBER_ATTRIBUTE_TABLE.c.name == 'urn')
@@ -420,6 +419,19 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                     raise CHAPIv1ArgumentError('No project with urn ' + value)
             else:
                 setattr(slice, SA.slice_field_mapping[key], value)
+
+        # Check if project is not null
+        if project_urn == None:
+            raise CHAPIv1ArgumentError("No project specified for create_slice");
+
+        # Check if project is not expired
+        q = session.query(Project.expired)
+        q = q.filter(Project.project_id == slice.project_id)
+        project_info = q.one()
+        expired = project_info.expired
+        if project_info.expired:
+            raise CHAPIv1ArgumentError("May not create a slice on expired project");
+        
 
         # before fill in rest, check that slice does not already exist
         same_name = self.get_slice_ids(session, "slice_name", name)
