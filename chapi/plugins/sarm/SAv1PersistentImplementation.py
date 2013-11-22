@@ -466,26 +466,21 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         add_attribute(self.db, session, client_uuid, client_uuid, \
                           LEAD_ATTRIBUTE, SLICE_CONTEXT, slice.slice_id)
 
-        # Add project lead as member (if not same)
-        project_lead_uuid = None
-        lookup_result = self.lookup_project_members(client_cert, \
-                                                        project_urn, \
-                                                        credentials, \
-                                                        {})
-        if lookup_result['code'] != NO_ERROR:
-            return lookup_result   # Shouldn't happen: Should raise an exception
-        for row in lookup_result['value']:
-            if row['PROJECT_ROLE'] == LEAD_ATTRIBUTE:
-                project_lead_uuid = row['MEMBER_UID']
-                break
-
-        if project_lead_uuid != client_uuid:
-            ins = self.db.SLICE_MEMBER_TABLE.insert().values(slice_id=slice.slice_id, member_id = project_lead_uuid, role=MEMBER_ATTRIBUTE)
+        # Add project lead and project admins as admin (if not same)
+        admins_to_add = []
+        members = self.lookup_project_members(client_cert,project_urn, credentials,{})
+        if members['code'] != NO_ERROR:
+            raise CHAPIv1ArgumentError('No members for project ' + project_urn)
+        for member in members['value']:
+            if member['PROJECT_ROLE'] == 'ADMIN' or member['PROJECT_ROLE'] == 'LEAD':
+                if member['PROJECT_MEMBER_UID'] != client_uuid:
+                    admins_to_add.append(member['PROJECT_MEMBER_UID'])
+        for admin_uid in admins_to_add:
+            ins = self.db.SLICE_MEMBER_TABLE.insert().values(slice_id=slice.slice_id, member_id = admin_uid, role=ADMIN_ATTRIBUTE)
             result = session.execute(ins)
             # Keep assertions synchronized with membership
-            add_attribute(self.db, session, client_uuid, project_lead_uuid, \
-                              MEMBER_ATTRIBUTE, SLICE_CONTEXT, slice.slice_id)
-
+            add_attribute(self.db, session, client_uuid, admin_uid, \
+                              ADMIN_ATTRIBUTE, SLICE_CONTEXT, slice.slice_id)
 
         attribs = {"SLICE" : slice.slice_id, "PROJECT" : slice.project_id}
         self.logging_service.log_event("Created slice " + name, 
