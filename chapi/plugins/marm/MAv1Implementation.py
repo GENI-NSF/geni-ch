@@ -428,7 +428,7 @@ class MAv1Implementation(MAv1DelegateBase):
             session.close()
             raise CHAPIv1ArgumentError('No member with URN ' + member_urn)
         uid = uids[0]
-        creds = self.get_all_credentials(session, uid)
+        creds = self.get_all_credentials(session, uid, client_cert)
 
         session.close()
         chapi_log_result(MA_LOG_PREFIX, 'get_credentials', creds)
@@ -437,9 +437,9 @@ class MAv1Implementation(MAv1DelegateBase):
     # Construct a list of credentials in AM format
     # [{'geni_type' : type, 'geni_version' : version, 'geni_value' : value}]
     # where type is SFA for a UserCredential or ABAC for ABAC credentials
-    def get_all_credentials(self, session, uid):
+    def get_all_credentials(self, session, uid, client_cert):
         creds = []
-        sfa_raw_creds = [self.get_user_credential(session, uid)]
+        sfa_raw_creds = [self.get_user_credential(session, uid, client_cert)]
         abac_assertions = []
         user_urn = convert_member_uid_to_urn(uid)
                 #syslog('GUC: outside certs = '+str(certs))                   
@@ -472,16 +472,26 @@ class MAv1Implementation(MAv1DelegateBase):
 
 
     # build a user credential based on the user's cert
-    def get_user_credential(self, session, uid):
+    def get_user_credential(self, session, uid, client_cert):
+        cred_cert = None
         certs = self.get_val_for_uid(session, OutsideCert, "certificate", uid)
-        #syslog('GUC: outside certs = '+str(certs))
-        if not certs:
+        for cert in certs:
+            if cert.startswith(client_cert):
+                chapi_debug(MA_LOG_PREFIX, 'found client in outside certs')
+                cred_cert = cert
+                break
+        if not cred_cert:
             certs = self.get_val_for_uid(session, InsideKey, "certificate", uid)
-            #syslog('GUC: inside certs = '+str(certs))
-        if not certs:
-            #syslog('GUC: no certs')
+            for cert in certs:
+                if cert.startswith(client_cert):
+                    chapi_debug(MA_LOG_PREFIX, 'found client in inside certs')
+                    cred_cert = cert
+                    break
+        if not cred_cert:
+            chapi_debug(MA_LOG_PREFIX, 'no cred_cert')
             return None
-        gid = sfa_gid.GID(string = certs[0])
+
+        gid = sfa_gid.GID(string=cred_cert)
         #syslog('GUC: gid = '+str(gid))
         expires = datetime.utcnow() + relativedelta(years=1)
         cred = cred_util.create_credential(gid, gid, expires, "user", \
