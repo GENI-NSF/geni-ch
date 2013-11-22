@@ -510,6 +510,57 @@ class SAv1Handler(HandlerBase):
         except Exception as e:
             return self._errorReturn(e)
 
+    # Add an attribute to a given project
+    # arguments: project_urn
+    #     options {'attr_name' : attr_name, 'attr_value' : attr_value}
+    def add_project_attribute(self, \
+                                  project_urn, \
+                                  credentials, options):
+        client_cert = self.requestCertificate()
+        method = 'add_project_attribute'
+        try:
+            client_cert, options = \
+                self._guard.adjust_client_identity(client_cert, \
+                                                       credentials, options)
+            self._guard.validate_call(client_cert, method, \
+                                          credentials, options, \
+                                          {'project_urn' : project_urn})
+            results = \
+                self._delegate.add_project_attribute(client_cert, \
+                                                         project_urn, \
+                                                         credentials, \
+                                                         options)
+            return results
+        except Exception as e:
+            return self._errorReturn(e)
+
+    # remove an attribute from a given project
+    # arguments: project_urn
+    #     options {'attr_name' : attr_name}
+    def remove_project_attribute(self, \
+                                     project_urn, \
+                                     credentials, options):
+        client_cert = self.requestCertificate()
+        method = 'remove_project_attribute'
+        try:
+            client_cert, options = \
+                self._guard.adjust_client_identity(client_cert, \
+                                                       credentials, options)
+            self._guard.validate_call(client_cert, method, \
+                                          credentials, options, \
+                                          {'project_urn' : project_urn})
+            results = \
+                self._delegate.remove_project_attribute(client_cert, \
+                                                            project_urn, \
+                                                            credentials, \
+                                                            options)
+            return results
+        except Exception as e:
+            return self._errorReturn(e)
+
+
+
+
     # Methods for handling pending project / slice requests
     # Note: Not part of standard Federation API
     
@@ -765,13 +816,19 @@ class SAv1DelegateBase(DelegateBase):
                                       credentials, options):
         raise CHAPIv1NotImplementedError('')
 
+    # Add an attribute to a given project
+    # arguments: project_urn
+    #     options {'attr_name' : attr_name, 'attr_value' : attr_value}
     def add_project_attribute(self, \
                                   client_cert, project_urn, \
                                   credentials, options):
         raise CHAPIv1NotImplementedError('')
 
+    # remove an attribute from a given project
+    # arguments: project_urn
+    #     options {'attr_name' : attr_name}
     def remove_project_attribute(self, \
-                                     client_cert, member_urn, \
+                                     client_cert, project_urn, \
                                      credentials, options):
         raise CHAPIv1NotImplementedError('')
 

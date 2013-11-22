@@ -1047,12 +1047,12 @@ class MAv1Implementation(MAv1DelegateBase):
             filter(MemberAttribute.name == attr_name)
         rows = q.all()
 
-        was_defined = (len(rows)==0)
+        was_defined = (len(rows)>0)
         old_value = None
         if was_defined:
             old_value = rows[0][0]
 
-        self.update_attr(session, attr_name, attr_value, member_id, attr_self_assert)
+        self.update_attr(session, attr_name, attr_value, member_uid, attr_self_assert)
         session.commit()
         session.close()
 
@@ -1083,16 +1083,17 @@ class MAv1Implementation(MAv1DelegateBase):
         # find the old value
         q = session.query(MemberAttribute.value).\
             filter(MemberAttribute.member_id == member_uid).\
-            filter(MemberAttribute.name == privilege)
+            filter(MemberAttribute.name == attr_name)
         rows = q.all()
 
-        was_defined = (len(rows)==0)
+        was_defined = (len(rows)>0)
+        import chapi_log; chapi_info('', 'RMA.ROWS = %s' % rows)
         old_value = None
         if was_defined:
             old_value = rows[0][0]
 
         if not was_defined:
-            self.delete_attr(session, attr_name, member_id)
+            self.delete_attr(session, attr_name, member_uid)
 
         session.close()
 
