@@ -271,7 +271,7 @@ def configure_logging():
             toremove = handler
              # Online example says instead to do:
 #            handler.filter=lambda x: False
-           break
+            break
         else:
             fn = None
             if isinstance(handler, logging.FileHandler):
