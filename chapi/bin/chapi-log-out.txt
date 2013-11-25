@@ -1,0 +1,4 @@
+DEBUG
+INFO.*Invoked
+INFO.*Result.*'code': 0
+INFO] MA: Result from get_credentials

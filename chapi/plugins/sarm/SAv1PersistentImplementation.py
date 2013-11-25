@@ -1389,3 +1389,69 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         chapi_log_result(SA_LOG_PREFIX, method, result)
         return result
 
+    # Add an attribute to a given project
+    # arguments: project_urn
+    #     options {'attr_name' : attr_name, 'attr_value' : attr_value}
+    def add_project_attribute(self, \
+                                  client_cert, project_urn, \
+                                  credentials, options):
+        method = 'add_project_attribute'
+        args = {'project_urn' : project_urn}
+        chapi_log_invocation(SA_LOG_PREFIX, method, credentials, options, args)
+
+        if not options or 'attr_name' not in options or 'attr_value' not in options:
+            raise CHAPIv1ArgumentError("Missing attribute name/value for add_project_attribute")
+
+        attr_name = options['attr_name']
+        attr_value = options['attr_value']
+
+        session = self.db.getSession()
+
+        project_name = from_project_urn(project_urn)
+        project_id = self.get_project_id(session, 'project_name', project_name)
+
+        ins = self.db.PROJECT_ATTRIBUTE_TABLE.insert().values(project_id = project_id, 
+                                                              name = attr_name, 
+                                                              value = attr_value)
+
+        session.execute(ins)
+        result = True
+
+        session.commit()
+        session.close()
+        chapi_log_result(SA_LOG_PREFIX, method, result)
+
+        return self._successReturn(result)
+
+    # remove an attribute from a given project
+    # arguments: project_urn
+    #     options {'attr_name' : attr_name}
+    def remove_project_attribute(self, \
+                                     client_cert, project_urn, \
+                                     credentials, options):
+        method = 'remove_project_attribute'
+        args = {'project_urn' : project_urn}
+        chapi_log_invocation(SA_LOG_PREFIX, method, credentials, options, args)
+
+        if not options or 'attr_name' not in options:
+            raise CHAPIv1ArgumentError("Missing attribute name/value for remove_project_attribute")
+        attr_name = options['attr_name']
+
+        session = self.db.getSession()
+
+        project_name = from_project_urn(project_urn)
+        project_id = self.get_project_id(session, 'project_name', project_name)
+
+        q = session.query(self.db.PROJECT_ATTRIBUTE_TABLE)
+        q = q.filter(self.db.PROJECT_ATTRIBUTE_TABLE.c.project_id == project_id)
+        q = q.filter(self.db.PROJECT_ATTRIBUTE_TABLE.c.name == attr_name)
+
+        q.delete(synchronize_session='fetch')
+        result = True
+
+        session.commit()
+        session.close()
+        chapi_log_result(SA_LOG_PREFIX, method, result)
+
+        return self._successReturn(result)
+
