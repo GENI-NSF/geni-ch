@@ -243,7 +243,6 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         q = session.query(member_table, table.c[name_field],
                           self.db.MEMBER_ATTRIBUTE_TABLE.c.value,
                           self.db.ROLE_TABLE.c.name)
-        q = q.filter(table.c.expired == 'f')
         q = q.filter(table.c[name_field] == name)
         q = q.filter(member_table.c[id_field] == table.c[id_field])
         q = q.filter(self.db.MEMBER_ATTRIBUTE_TABLE.c.name == 'urn')
@@ -421,6 +420,19 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
             else:
                 setattr(slice, SA.slice_field_mapping[key], value)
 
+        # Check if project is not null
+        if project_urn == None:
+            raise CHAPIv1ArgumentError("No project specified for create_slice");
+
+        # Check if project is not expired
+        q = session.query(Project.expired)
+        q = q.filter(Project.project_id == slice.project_id)
+        project_info = q.one()
+        expired = project_info.expired
+        if project_info.expired:
+            raise CHAPIv1ArgumentError("May not create a slice on expired project");
+        
+
         # before fill in rest, check that slice does not already exist
         same_name = self.get_slice_ids(session, "slice_name", name)
         if same_name:
@@ -454,26 +466,21 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         add_attribute(self.db, session, client_uuid, client_uuid, \
                           LEAD_ATTRIBUTE, SLICE_CONTEXT, slice.slice_id)
 
-        # Add project lead as member (if not same)
-        project_lead_uuid = None
-        lookup_result = self.lookup_project_members(client_cert, \
-                                                        project_urn, \
-                                                        credentials, \
-                                                        {})
-        if lookup_result['code'] != NO_ERROR:
-            return lookup_result   # Shouldn't happen: Should raise an exception
-        for row in lookup_result['value']:
-            if row['PROJECT_ROLE'] == LEAD_ATTRIBUTE:
-                project_lead_uuid = row['MEMBER_UID']
-                break
-
-        if project_lead_uuid != client_uuid:
-            ins = self.db.SLICE_MEMBER_TABLE.insert().values(slice_id=slice.slice_id, member_id = project_lead_uuid, role=MEMBER_ATTRIBUTE)
+        # Add project lead and project admins as admin (if not same)
+        admins_to_add = []
+        members = self.lookup_project_members(client_cert,project_urn, credentials,{})
+        if members['code'] != NO_ERROR:
+            raise CHAPIv1ArgumentError('No members for project ' + project_urn)
+        for member in members['value']:
+            if member['PROJECT_ROLE'] == 'ADMIN' or member['PROJECT_ROLE'] == 'LEAD':
+                if member['PROJECT_MEMBER_UID'] != client_uuid:
+                    admins_to_add.append(member['PROJECT_MEMBER_UID'])
+        for admin_uid in admins_to_add:
+            ins = self.db.SLICE_MEMBER_TABLE.insert().values(slice_id=slice.slice_id, member_id = admin_uid, role=ADMIN_ATTRIBUTE)
             result = session.execute(ins)
             # Keep assertions synchronized with membership
-            add_attribute(self.db, session, client_uuid, project_lead_uuid, \
-                              MEMBER_ATTRIBUTE, SLICE_CONTEXT, slice.slice_id)
-
+            add_attribute(self.db, session, client_uuid, admin_uid, \
+                              ADMIN_ATTRIBUTE, SLICE_CONTEXT, slice.slice_id)
 
         attribs = {"SLICE" : slice.slice_id, "PROJECT" : slice.project_id}
         self.logging_service.log_event("Created slice " + name, 
@@ -1369,4 +1376,70 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
 
         chapi_log_result(SA_LOG_PREFIX, method, result)
         return result
+
+    # Add an attribute to a given project
+    # arguments: project_urn
+    #     options {'attr_name' : attr_name, 'attr_value' : attr_value}
+    def add_project_attribute(self, \
+                                  client_cert, project_urn, \
+                                  credentials, options):
+        method = 'add_project_attribute'
+        args = {'project_urn' : project_urn}
+        chapi_log_invocation(SA_LOG_PREFIX, method, credentials, options, args)
+
+        if not options or 'attr_name' not in options or 'attr_value' not in options:
+            raise CHAPIv1ArgumentError("Missing attribute name/value for add_project_attribute")
+
+        attr_name = options['attr_name']
+        attr_value = options['attr_value']
+
+        session = self.db.getSession()
+
+        project_name = from_project_urn(project_urn)
+        project_id = self.get_project_id(session, 'project_name', project_name)
+
+        ins = self.db.PROJECT_ATTRIBUTE_TABLE.insert().values(project_id = project_id, 
+                                                              name = attr_name, 
+                                                              value = attr_value)
+
+        session.execute(ins)
+        result = True
+
+        session.commit()
+        session.close()
+        chapi_log_result(SA_LOG_PREFIX, method, result)
+
+        return self._successReturn(result)
+
+    # remove an attribute from a given project
+    # arguments: project_urn
+    #     options {'attr_name' : attr_name}
+    def remove_project_attribute(self, \
+                                     client_cert, project_urn, \
+                                     credentials, options):
+        method = 'remove_project_attribute'
+        args = {'project_urn' : project_urn}
+        chapi_log_invocation(SA_LOG_PREFIX, method, credentials, options, args)
+
+        if not options or 'attr_name' not in options:
+            raise CHAPIv1ArgumentError("Missing attribute name/value for remove_project_attribute")
+        attr_name = options['attr_name']
+
+        session = self.db.getSession()
+
+        project_name = from_project_urn(project_urn)
+        project_id = self.get_project_id(session, 'project_name', project_name)
+
+        q = session.query(self.db.PROJECT_ATTRIBUTE_TABLE)
+        q = q.filter(self.db.PROJECT_ATTRIBUTE_TABLE.c.project_id == project_id)
+        q = q.filter(self.db.PROJECT_ATTRIBUTE_TABLE.c.name == attr_name)
+
+        q.delete(synchronize_session='fetch')
+        result = True
+
+        session.commit()
+        session.close()
+        chapi_log_result(SA_LOG_PREFIX, method, result)
+
+        return self._successReturn(result)
 
