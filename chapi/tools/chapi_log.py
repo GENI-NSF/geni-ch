@@ -37,24 +37,14 @@ CS_LOG_PREFIX = "CS"
 PGCH_LOG_PREFIX = "PGCH"
 SR_LOG_PREFIX = "SR"
 
-chapi_logger = logging.getLogger('chapi')
-# FIXME: Get this from the settings in config?
-chapi_logger.setLevel(logging.INFO)
-chapi_fh = logging.FileHandler('/var/log/geni-chapi/chapi.log')
-chapi_formatter = \
-    logging.Formatter('[%(asctime)s]:[%(levelname)-8s]' + \
-                          ':%(name)s:%(message)s')
-chapi_logger.addHandler(chapi_fh)
-chapi_fh.setFormatter(chapi_formatter)
-#chapi_audit_logger = logging.getLogger('chapi.audit')
-
 def chapi_get_audit_logger():
     chapi_audit_logger = logging.getLogger('chapi.audit')
     if len(chapi_audit_logger.handlers) == 0:
         logging.debug("No handler for chapi_audit yet")
         if len(logging.getLogger().handlers) == 0:
-            logging.warn("No handler for chapi_audit or for the root logger. Do basic config")
             chapi_logging_basic_config()
+            chapi_audit_logger = logging.getLogger('chapi.audit')
+            logging.info("Had no handler for chapi_audit or for the root logger. Did basic config")
         else:
             logging.debug("But there is a handler for the root")
     return chapi_audit_logger
@@ -62,8 +52,9 @@ def chapi_get_audit_logger():
 def chapi_get_logger():
     chapi_logger = logging.getLogger('chapi')
     if len(chapi_logger.handlers) == 0 and len(logging.getLogger().handlers) == 0:
-        logging.warn("No handler for chapi yet - will do basic_config")
         chapi_logging_basic_config()
+        chapi_logger = logging.getLogger('chapi')
+        logging.info("Had no handler for chapi yet - did basic_config")
     return chapi_logger
 
 def chapi_logging_basic_config(level=logging.INFO):
@@ -72,7 +63,6 @@ def chapi_logging_basic_config(level=logging.INFO):
         return
     fmt = '%(asctime)s %(levelname)-8s %(name)s: %(message)s'
     logging.basicConfig(level=level,format=fmt,datefmt='%m/%d/%Y %H:%M:%S')
-    logging.info("Did logging basic config")
 
 # Generic call for logging CHAPI messages at different levels
 def chapi_log(prefix, msg, logging_level):
@@ -101,7 +91,6 @@ def chapi_error(prefix, msg):
 # Log a CHAPI info message
 def chapi_info(prefix, msg):
     chapi_log(prefix, msg, logging.INFO)
-    #chapi_audit(prefix,("audit:%s" % msg))
 
 # Log a CHAPI criticial message
 def chapi_critical(prefix, msg):
@@ -129,8 +118,10 @@ def chapi_log_invocation(prefix, method, credentials, options, arguments):
         else:
             chapi_info(prefix, msg)
 
-    # FIXME: Send to syslog?
-    chapi_audit(prefix, msg, logging.DEBUG)
+    # FIXME: Only do this if the chapi logger is at DEBUG level?
+    if chapi_logger.isEnabledFor(logging.DEBUG):
+        # Send to syslog at INFO level
+        chapi_audit(prefix, msg, logging.INFO)
 
 # Log the result of an invocation of a method
 def chapi_log_result(prefix, method, result):
@@ -145,6 +136,8 @@ def chapi_log_result(prefix, method, result):
         else:
             chapi_info(prefix, msg)
 
-    # FIXME: Send to syslog?
-    chapi_audit(prefix, msg, logging.DEBUG)
+    # FIXME: Only do this if the chapi logger is at DEBUG level?
+    if chapi_logger.isEnabledFor(logging.DEBUG):
+        # Send to syslog at INFO level
+        chapi_audit(prefix, msg, logging.INFO)
 
