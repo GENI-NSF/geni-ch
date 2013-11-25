@@ -1402,7 +1402,8 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                                                               name = attr_name, 
                                                               value = attr_value)
 
-        result = session.execute(ins)
+        session.execute(ins)
+        result = True
 
         session.commit()
         session.close()
@@ -1433,7 +1434,8 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         q = q.filter(self.db.PROJECT_ATTRIBUTE_TABLE.c.project_id == project_id)
         q = q.filter(self.db.PROJECT_ATTRIBUTE_TABLE.c.name == attr_name)
 
-        result = q.delete(synchronize_session='fetch')
+        q.delete(synchronize_session='fetch')
+        result = True
 
         session.commit()
         session.close()
