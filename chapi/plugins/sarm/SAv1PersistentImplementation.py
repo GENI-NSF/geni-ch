@@ -23,6 +23,7 @@
 
 import tools.SA_constants as SA
 import os
+import re
 from sqlalchemy import *
 from chapi.Exceptions import *
 import chapi.Parameters
@@ -432,7 +433,16 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         if project_info.expired:
             raise CHAPIv1ArgumentError("May not create a slice on expired project");
         
-
+        # Check that slice name is valid
+        if ' ' in name:
+            raise CHAPIv1ArgumentError('Slice name may not contain spaces.')
+        elif len(name) > 19:
+            raise CHAPIv1ArgumentError('Slice name %s is too long - use at most 19 characters.' %name)
+            
+        pattern = '^[a-zA-Z0-9][a-zA-Z0-9-]{0,31}$'
+        valid = re.match(pattern,name)
+        if valid == None:
+            raise CHAPIv1ArgumentError('Slice name %s is invalid - use at most 19 alphanumeric characters or hyphen. No leading hyphen.' %name)
         # before fill in rest, check that slice does not already exist
         same_name = self.get_slice_ids(session, "slice_name", name)
         if same_name:
@@ -568,10 +578,21 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         client_uuid = get_uuid_from_cert(client_cert)
         self.update_project_expirations(client_uuid)
 
+        name = options["fields"]["PROJECT_NAME"]
+        # check that project name is valid
+        if ' ' in name:
+            raise CHAPIv1ArgumentError('Project name may not contain spaces.')
+        elif len(name) > 32:
+            raise CHAPIv1ArgumentError('Project name %s is too long - use at most 32 characters.' %name)
+            
+        pattern = '^[a-zA-Z0-9][a-zA-Z0-9-_]{0,31}$'
+        valid = re.match(pattern,name)
+        if valid == None:
+            raise CHAPIv1ArgumentError('Project name %s is invalid - use at most 32 alphanumeric characters or hyphen or underscore. No leading hyphen or underscore.' %name)
+        
         session = self.db.getSession()
 
         # check that project does not already exist
-        name = options["fields"]["PROJECT_NAME"]
         if self.get_project_id(session, "project_name", name):
             session.close()
             raise CHAPIv1DuplicateError('Already exists a project named ' + name)
