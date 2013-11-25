@@ -1403,10 +1403,12 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                                                               value = attr_value)
 
         result = session.execute(ins)
+
         session.commit()
         session.close()
         chapi_log_result(SA_LOG_PREFIX, method, result)
-        return self._successfulReturn(result)
+
+        return self._successReturn(result)
 
     # remove an attribute from a given project
     # arguments: project_urn
@@ -1430,10 +1432,12 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         q = session.query(self.db.PROJECT_ATTRIBUTE_TABLE)
         q = q.filter(self.db.PROJECT_ATTRIBUTE_TABLE.c.project_id == project_id)
         q = q.filter(self.db.PROJECT_ATTRIBUTE_TABLE.c.name == attr_name)
-        result = q.delete(synchronise_sesson = 'fetch')
+
+        result = q.delete(synchronize_session='fetch')
 
         session.commit()
         session.close()
         chapi_log_result(SA_LOG_PREFIX, method, result)
-        return self._successfulReturn(result)
+
+        return self._successReturn(result)
 
