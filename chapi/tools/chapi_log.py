@@ -37,15 +37,15 @@ CS_LOG_PREFIX = "CS"
 PGCH_LOG_PREFIX = "PGCH"
 SR_LOG_PREFIX = "SR"
 
-#chapi_logger = logging.getLogger('chapi')
+chapi_logger = logging.getLogger('chapi')
 # FIXME: Get this from the settings in config?
-#chapi_logger.setLevel(logging.INFO)
-#chapi_fh = logging.FileHandler('/var/log/geni-chapi/chapi.log')
-#chapi_formatter = \
-#    logging.Formatter('[%(asctime)s]:[%(levelname)-8s]' + \
-#                          ':%(name)s:%(message)s')
-#chapi_logger.addHandler(chapi_fh)
-#chapi_fh.setFormatter(chapi_formatter)
+chapi_logger.setLevel(logging.INFO)
+chapi_fh = logging.FileHandler('/var/log/geni-chapi/chapi.log')
+chapi_formatter = \
+    logging.Formatter('[%(asctime)s]:[%(levelname)-8s]' + \
+                          ':%(name)s:%(message)s')
+chapi_logger.addHandler(chapi_fh)
+chapi_fh.setFormatter(chapi_formatter)
 #chapi_audit_logger = logging.getLogger('chapi.audit')
 
 def chapi_get_audit_logger():
@@ -101,7 +101,7 @@ def chapi_error(prefix, msg):
 # Log a CHAPI info message
 def chapi_info(prefix, msg):
     chapi_log(prefix, msg, logging.INFO)
-    chapi_audit(prefix,("audit:%s" % msg))
+    #chapi_audit(prefix,("audit:%s" % msg))
 
 # Log a CHAPI criticial message
 def chapi_critical(prefix, msg):
@@ -121,7 +121,7 @@ def chapi_log_invocation(prefix, method, credentials, options, arguments):
     msg = "Invoked %s Options %s Arguments %s" % (method, options, arguments)
     # FIXME: Info or debug?
     chapi_logger = chapi_get_logger()
-    if chapi_logger.isEnabledFor(logging.debug):
+    if chapi_logger.isEnabledFor(logging.DEBUG):
         chapi_debug(prefix, msg)
     else:
         if len(msg) > 260:
@@ -137,7 +137,7 @@ def chapi_log_result(prefix, method, result):
     msg = "Result from %s: %s" % (method, result)
     # FIXME: Info or debug?
     chapi_logger = chapi_get_logger()
-    if chapi_logger.isEnabledFor(logging.debug):
+    if chapi_logger.isEnabledFor(logging.DEBUG):
         chapi_debug(prefix, msg)
     else:
         if len(msg) > 260:

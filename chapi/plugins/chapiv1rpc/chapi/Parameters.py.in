@@ -156,9 +156,11 @@ def get_typed_value(parser, section, option, value_type):
         value = parser.getboolean(section, option)
     else:
         msg = 'Unknown type %s for default parameter %s'
-#        chapi_warn('PARAMETERS',
-        logging.warn('PARAMETERS: ' + 
+        chapi_warn('PARAMETERS',
+#         logging.warn('PARAMETERS: ' + 
                    msg % (value_type.__name__, pname))
+#         sys.stderr.write('stderr: PARAMETERS: ' + 
+#                    msg % (value_type.__name__, pname))
     return value
 
 def param_to_secopt(param):
@@ -178,26 +180,25 @@ def param_to_secopt(param):
 
 def set_parameters():
     config = pm.getService("config")
-
     did_set = False
     try:
         did_set = config.get("chapi.set_params")
     except:
         pass
-    if did_set:
+    if did_set == False:
         chapi_warn('PARAMETERS', 'CHAPI params already in configdb')
         return
 
     # Set up the defaults
     for param in default_parameters:
         config.install(param[NAME_KEY], param[VALUE_KEY], param[DESC_KEY])
+
     # Overwrite the defaults with values from the config file
     parser = ConfigParser.SafeConfigParser()
     result = parser.read(CONFIG_FILE)
     if len(result) != 1:
         # file was not read, warn and return
-        #chapi_warn('PARAMETERS',
-        logging.warn('PARAMETERS: ' + 
+        chapi_warn('PARAMETERS',
                    'Unable to read config file %s' % (CONFIG_FILE))
     else:
         for param in default_parameters:
@@ -209,8 +210,7 @@ def set_parameters():
                 if value is not None:
                     # If a value was extracted, set it
                     msg = 'Setting parameter %s to %s from %s'
-#                    chapi_info('PARAMETERS',
-                    logging.info('PARAMETERS: ' + 
+                    chapi_info('PARAMETERS',
                                 msg % (pname, value, CONFIG_FILE))
                     config.set(pname, value)
 
@@ -222,6 +222,7 @@ def configure_logging():
     # If we got the verbose setting, set optlevel to 'DEBUG'
     chapi_do_debug = config.get("chapi.log_verbose")
     if chapi_do_debug:
+        chapi_info("LOGGING", "Will log DEBUG CHAPI logs")
         optlevel = 'DEBUG'
         level = logging.DEBUG
     deft = {}
@@ -253,9 +254,7 @@ def configure_logging():
 
     if not found:
         chapi_logging_basic_config(level)
-#        fmt = '%(asctime)s %(levelname)-8s %(name)s: %(message)s'
-#        logging.basicConfig(level=level,format=fmt,datefmt='%m/%d/%Y %H:%M:%S')       
-        logging.warn("***Failed to find or use log config file %s", logConfigFilename)
+        logging.warn("Failed to find or use CHAPI log config file %s", logConfigFilename)
 
     # Clean up the old loggers so they stop sending output to the old places
     amsoillogger = logging.getLogger("amsoil")
@@ -263,47 +262,59 @@ def configure_logging():
         logging.warn("***AMSoil logger didnt get changes?")
         amsoillogger.setLevel(level)
     toremove = None
-    for handler in amsoillogger.handlers:
+    handlers = amsoillogger.handlers
+    if len(handlers) == 0:
+        logging.debug("0 handlers for amsoil logger")
+        if amsoillogger.parent:
+            handlers = amsoillogger.parent.handlers
+            logging.debug("Looking at parent for the proper handlers (has %d)", len(handlers))
+    for handler in handlers:
         # remove the old handler that put this in amsoil.log
-        logging.warn("amsoil handler filename: %s, logfilename: %s", handler.baseFilename, deft['logfilename'])
-        if not handler.baseFilename.startswith(deft['logfilename']):
-            logging.warn("***Removing handler from amsoil logger with filename %s" % handler.baseFilename)
-            toremove = handler
-             # Online example says instead to do:
-#            handler.filter=lambda x: False
-            break
-        else:
-            fn = None
-            if isinstance(handler, logging.FileHandler):
-                fn = handler.baseFilename
-                logging.warn("***Keeping amsoil handler with level %s, formatter %s, file %s", logging.getLevelName(handler.level), handler.formatter._fmt, fn)
+        if isinstance(handler, logging.FileHandler):
+            logging.debug("amsoil handler filename: %s, logfilename: %s", handler.baseFilename, deft['logfilename'])
+            if not handler.baseFilename.startswith(deft['logfilename']):
+                logging.info("***Removing handler from amsoil logger with filename %s" % handler.baseFilename)
+                toremove = handler
+                # Online example says instead to do:
+                #            handler.filter=lambda x: False
+                break
             else:
-                logging.warn("***Keeping amsoil handler (non file) with level %s, formatter %s", logging.getLevelName(handler.level), handler.formatter._fmt)
+                fn = handler.baseFilename
+                logging.info("***Keeping amsoil handler with level %s, formatter %s, file %s", logging.getLevelName(handler.level), handler.formatter._fmt, fn)
+        else:
+            logging.info("***Keeping amsoil handler (non file) with level %s, formatter %s", logging.getLevelName(handler.level), handler.formatter._fmt)
 
     if toremove:
         amsoillogger.removeHandler(toremove)
     else:
-        logging.warn("***Failed to find the old amsoil handler")
+        logging.info("***Failed to find the old amsoil handler")
 
     chapilogger = logging.getLogger("chapi")
     toremove = None
-    for handler in chapilogger.handlers:
+    handlers = chapilogger.handlers
+    if len(handlers) == 0:
+        logging.debug("0 handlers for chapi logger")
+        if chapilogger.parent:
+            handlers = chapilogger.parent.handlers
+            logging.debug("Looking at parent for the proper handlers (has %d)", len(handlers))
+    for handler in handlers:
         # remove the old handler that put this in amsoil.log
-        logging.warn("chapi handler filename: %s, logfilename: %s", handler.baseFilename, deft['logfilename'])
-        if not handler.baseFilename.startswith(deft['logfilename']):
-            logging.warn("***Removing handler from chapi logger with filename %s, level %s, formatter %s" % handler.baseFilename, logging.getLevelName(handler.level), handler.formatter._fmt)
-            toremove = handler
-            # Online example says instead to do:
-#            handler.filter=lambda x: False
-            break
-        else:
-            fn = None
-            if isinstance(handler, logging.FileHandler):
-                fn = handler.baseFilename
-                logging.warn("***Keeping chapi handler with level %s, formatter %s, file %s", logging.getLevelName(handler.level), handler.formatter._fmt, fn)
+        if isinstance(handler, logging.FileHandler):
+            logging.debug("chapi handler filename: %s, logfilename: %s", handler.baseFilename, deft['logfilename'])
+            if not handler.baseFilename.startswith(deft['logfilename']):
+                logging.info("***Removing handler from chapi logger with filename %s, level %s, formatter %s" % (handler.baseFilename, logging.getLevelName(handler.level), handler.formatter._fmt))
+                toremove = handler
+                # Online example says instead to do:
+                #            handler.filter=lambda x: False
+                break
             else:
-                logging.warn("***Keeping chapi handler (non file) with level %s, formatter %s", logging.getLevelName(handler.level), handler.formatter._fmt)
+                fn = handler.baseFilename
+                logging.info("***Keeping chapi handler with level %s, formatter %s, file %s", logging.getLevelName(handler.level), handler.formatter._fmt, fn)
+        else:
+            logging.info("***Keeping chapi handler (non file) with level %s, formatter %s", logging.getLevelName(handler.level), handler.formatter._fmt)
     if toremove:
         chapilogger.removeHandler(toremove)
     else:
-        logging.info("***Failed to find any old chapi handler - expected now I think")
+        logging.debug("***Failed to find any old chapi handler - expected now I think")
+
+    chapi_info("LOGGING", "Done configuring CHAPI logging")
