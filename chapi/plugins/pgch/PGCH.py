@@ -28,7 +28,7 @@ from amsoil.core import serviceinterface
 from chapi.DelegateBase import DelegateBase
 from chapi.HandlerBase import HandlerBase
 from chapi.Exceptions import *
-from tools.cert_utils import get_uuid_from_cert, get_urn_from_cert
+from tools.cert_utils import get_uuid_from_cert, get_urn_from_cert, get_email_from_cert
 from tools.chapi_log import *
 import sfa.trust.gid as gid
 import geni.util.urn_util as urn_util
@@ -42,17 +42,19 @@ class PGCHv1Handler(HandlerBase):
 
     # Override error return to log exception
     def _errorReturn(self, e):
-        chapi_log_exception(PGCH_LOG_PREFIX, e)
+        user_email = get_email_from_cert(self.requestCertificate())
+        chapi_log_exception(PGCH_LOG_PREFIX, e, {'user': user_email})
         return super(PGCHv1Handler, self)._errorReturn(e)
 
     def GetVersion(self):
         method = 'GetVersion'
         args = None
-        chapi_log_invocation(PGCH_LOG_PREFIX, method, [], {}, args)
+        user_email = get_email_from_cert(self.requestCertificate())
+        chapi_log_invocation(PGCH_LOG_PREFIX, method, [], {}, args, {'user': user_email})
         try:
             client_cert = self.requestCertificate()
             result = self._delegate.GetVersion(client_cert)
-            chapi_log_result(PGCH_LOG_PREFIX, method, result)
+            chapi_log_result(PGCH_LOG_PREFIX, method, result, {'user': user_email})
             return result
         except Exception as e:
             return self._errorReturn(e)
@@ -60,33 +62,36 @@ class PGCHv1Handler(HandlerBase):
 
     def GetCredential(self, args=None):
         method = 'GetCredential'
-        chapi_log_invocation(PGCH_LOG_PREFIX, method, [], {}, args)
+        user_email = get_email_from_cert(self.requestCertificate())
+        chapi_log_invocation(PGCH_LOG_PREFIX, method, [], {}, args, {'user': user_email})
         try:
             client_cert = self.requestCertificate()
             result = self._delegate.GetCredential(client_cert, args)
-            chapi_log_result(PGCH_LOG_PREFIX, method, result)
+            chapi_log_result(PGCH_LOG_PREFIX, method, result, {'user': user_email})
             return result
         except Exception as e:
             return self._errorReturn(e)
 
     def Resolve(self, args):
         method = 'Resolve'
-        chapi_log_invocation(PGCH_LOG_PREFIX, method, [], {}, args)
+        user_email = get_email_from_cert(self.requestCertificate())
+        chapi_log_invocation(PGCH_LOG_PREFIX, method, [], {}, args, {'user': user_email})
         try:
             client_cert = self.requestCertificate()
             result = self._delegate.Resolve(client_cert, args)
-            chapi_log_result(PGCH_LOG_PREFIX, method, result)
+            chapi_log_result(PGCH_LOG_PREFIX, method, result, {'user': user_email})
             return result
         except Exception as e:
             return self._errorReturn(e)
 
     def Register(self, args):
         method = 'Register'
-        chapi_log_invocation(PGCH_LOG_PREFIX, method, [], {}, args)
+        user_email = get_email_from_cert(self.requestCertificate())
+        chapi_log_invocation(PGCH_LOG_PREFIX, method, [], {}, args, {'user': user_email})
         try:
             client_cert = self.requestCertificate()
             result = self._delegate.Register(client_cert, args)
-            chapi_log_result(PGCH_LOG_PREFIX, method, result)
+            chapi_log_result(PGCH_LOG_PREFIX, method, result, {'user': user_email})
             return result
         except Exception as e:
             return self._errorReturn(e)
@@ -94,33 +99,36 @@ class PGCHv1Handler(HandlerBase):
 
     def RenewSlice(self, args):
         method = 'RenewSlice'
-        chapi_log_invocation(PGCH_LOG_PREFIX, method, [], {}, args)
+        user_email = get_email_from_cert(self.requestCertificate())
+        chapi_log_invocation(PGCH_LOG_PREFIX, method, [], {}, args, {'user': user_email})
         try:
             client_cert = self.requestCertificate()
             result = self._delegate.RenewSlice(client_cert, args)
-            chapi_log_result(PGCH_LOG_PREFIX, method, result)
+            chapi_log_result(PGCH_LOG_PREFIX, method, result, {'user': user_email})
             return result
         except Exception as e:
             return self._errorReturn(e)
 
     def GetKeys(self, args):
         method = 'GetKeys'
-        chapi_log_invocation(PGCH_LOG_PREFIX, method, [], {}, args)
+        user_email = get_email_from_cert(self.requestCertificate())
+        chapi_log_invocation(PGCH_LOG_PREFIX, method, [], {}, args, {'user': user_email})
         try:
             client_cert = self.requestCertificate()
             result = self._delegate.GetKeys(client_cert, args)
-            chapi_log_result(PGCH_LOG_PREFIX, method, result)
+            chapi_log_result(PGCH_LOG_PREFIX, method, result, {'user': user_email})
             return result
         except Exception as e:
             return self._errorReturn(e)
 
     def ListComponents(self, args):
         method = 'ListComponents'
-        chapi_log_invocation(PGCH_LOG_PREFIX, method, [], {}, args)
+        user_email = get_email_from_cert(self.requestCertificate())
+        chapi_log_invocation(PGCH_LOG_PREFIX, method, [], {}, args, {'user': user_email})
         try:
             client_cert = self.requestCertificate()
             result = self._delegate.ListComponents(client_cert, args)
-            chapi_log_result(PGCH_LOG_PREFIX, method, result)
+            chapi_log_result(PGCH_LOG_PREFIX, method, result, {'user': user_email})
             return result
         except Exception as e:
             return self._errorReturn(e)
@@ -136,6 +144,7 @@ class PGCHv1Delegate(DelegateBase):
     def GetVersion(self, client_cert):
         self.logger.info("Called GetVersion")
 
+        user_email = get_email_from_cert(client_cert)
         # Load the authority from the config
         config = pm.getService('config')
         authority = config.get('chrm.authority')
@@ -152,7 +161,7 @@ class PGCHv1Delegate(DelegateBase):
         except:
             msg = 'GetVersion: Cannot read code tag file %r.'
             msg = msg % (code_tag_file)
-            chapi_error(PGCH_LOG_PREFIX, msg)
+            chapi_error(PGCH_LOG_PREFIX, msg, {'user': user_email})
             code_tag = 'unknown'
 
         # Templated URN. Should we get this from
@@ -599,7 +608,8 @@ class PGCHv1Delegate(DelegateBase):
             except:
                 msg = 'ListComponents: gid file %r cannot be read.'
                 msg = msg % (gid_file)
-                chapi_error(PGCH_LOG_PREFIX, msg)
+                user_email = get_email_from_cert(client_cert)
+                chapi_error(PGCH_LOG_PREFIX, msg, {'user': user_email})
                 gid = ''
             component = {'gid' : gid, 'urn' : urn, 'hrn' : hrn, 'url' : url}
             components.append(component)

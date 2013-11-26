@@ -134,7 +134,8 @@ class SRv1Delegate(CHv1PersistentImplementation):
     def get_services_of_type(self, service_type):
         method = 'get_services_of_type'
         args = {'service_type' : service_type}
-        chapi_log_invocation(SR_LOG_PREFIX, method, [], {}, args)
+        user_email = get_email_from_cert(self.requestCertificate())
+        chapi_log_invocation(SR_LOG_PREFIX, method, [], {}, args, {'user': user_email})
 
         options = {'match' : {}, 'filter' : self.field_mapping.keys()}
 
@@ -144,12 +145,13 @@ class SRv1Delegate(CHv1PersistentImplementation):
         result = [s for s in services['value'] \
                                  if s['SERVICE_TYPE'] == service_type] 
 
-        chapi_log_result(SR_LOG_PREFIX, method, result)
+        chapi_log_result(SR_LOG_PREFIX, method, result, {'user': user_email})
         return result
 
     def get_services(self):
         method = 'get_services'
-        chapi_log_invocation(SR_LOG_PREFIX, method, [], {}, {})
+        user_email = get_email_from_cert(self.requestCertificate())
+        chapi_log_invocation(SR_LOG_PREFIX, method, [], {}, {}, {'user': user_email})
 
         options = {'match' : {}, 'filter' : self.field_mapping.keys()}
         selected_columns, match_criteria = \
@@ -175,6 +177,6 @@ class SRv1Delegate(CHv1PersistentImplementation):
 
         result = self._successReturn(services)
 
-        chapi_log_result(SR_LOG_PREFIX, method, result)
+        chapi_log_result(SR_LOG_PREFIX, method, result, {'user': user_email})
         return result
 

@@ -61,83 +61,91 @@ def chapi_logging_basic_config(level=logging.INFO):
     if len(logging.getLogger().handlers) > 0:
         logging.debug("Not (re)doing basic config")
         return
-    fmt = '%(asctime)s %(levelname)-8s %(name)s: %(message)s'
+    fmt = '%(asctime)s %(levelname)-8s %(name)s: %(user)s: %(message)s'
     logging.basicConfig(level=level,format=fmt,datefmt='%m/%d/%Y %H:%M:%S')
 
 # Generic call for logging CHAPI messages at different levels
-def chapi_log(prefix, msg, logging_level):
+def chapi_log(prefix, msg, logging_level, extra=None):
     chapi_logger = chapi_get_logger()
-    chapi_logger.log(logging_level, "%s: %s" % (prefix, msg))
+    if extra is None:
+        extra = {}
+    if not extra.has_key('user') or extra['user'] is None:
+        extra['user'] = '<unspecified>'
+    chapi_logger.log(logging_level, "%s: %s" % (prefix, msg), extra=extra)
 
 # Log a potentially auditable event
-def chapi_audit(prefix, msg, lvl=logging.INFO):
+def chapi_audit(prefix, msg, lvl=logging.INFO, extra=None):
     chapi_audit_logger = chapi_get_audit_logger()
-    chapi_audit_logger.log(lvl, "%s: %s" % (prefix, msg))
+    if extra is None:
+        extra = {}
+    if not extra.has_key('user') or extra['user'] is None:
+        extra['user'] = '<unspecified>'
+    chapi_audit_logger.log(lvl, "%s: %s" % (prefix, msg), extra=extra)
 
 # Log a CHAPI warning message
-def chapi_warn(prefix, msg):
-    chapi_log(prefix, msg, logging.WARNING)
-    chapi_audit(prefix, msg, logging.WARNING)
+def chapi_warn(prefix, msg, extra=None):
+    chapi_log(prefix, msg, logging.WARNING, extra)
+    chapi_audit(prefix, msg, logging.WARNING, extra)
 
 # Log a CHAPI debug message
-def chapi_debug(prefix, msg):
-    chapi_log(prefix, msg, logging.DEBUG)
+def chapi_debug(prefix, msg, extra=None):
+    chapi_log(prefix, msg, logging.DEBUG, extra=extra)
 
 # Log a CHAPI error messagen
-def chapi_error(prefix, msg):
-    chapi_log(prefix, msg, logging.ERROR)
-    chapi_audit(prefix, msg, logging.ERROR)
+def chapi_error(prefix, msg, extra=None):
+    chapi_log(prefix, msg, logging.ERROR, extra=extra)
+    chapi_audit(prefix, msg, logging.ERROR, extra=extra)
 
 # Log a CHAPI info message
-def chapi_info(prefix, msg):
-    chapi_log(prefix, msg, logging.INFO)
+def chapi_info(prefix, msg, extra=None):
+    chapi_log(prefix, msg, logging.INFO, extra=extra)
 
 # Log a CHAPI criticial message
-def chapi_critical(prefix, msg):
-    chapi_log(prefix, msg, logging.CRITICAL)
-    chapi_audit(prefix, msg, logging.CRITICAL)
+def chapi_critical(prefix, msg, extra=None):
+    chapi_log(prefix, msg, logging.CRITICAL, extra=extra)
+    chapi_audit(prefix, msg, logging.CRITICAL, extra=extra)
 
 # Log a CHAPI exception
-def chapi_log_exception(prefix, e):
+def chapi_log_exception(prefix, e, extra=None):
     exc_type, exc_value, exc_traceback = sys.exc_info()
     tb_info = traceback.format_tb(exc_traceback)
     msg = "Exception: %s\n%s" % (e, "".join(tb_info))
-    chapi_error(prefix, msg)
-    chapi_audit(prefix, msg, logging.ERROR)
+    chapi_error(prefix, msg, extra=extra)
+    chapi_audit(prefix, msg, logging.ERROR, extra=extra)
 
 # Log an invocation of a method
-def chapi_log_invocation(prefix, method, credentials, options, arguments):
+def chapi_log_invocation(prefix, method, credentials, options, arguments, extra=None):
     msg = "Invoked %s Options %s Arguments %s" % (method, options, arguments)
     # FIXME: Info or debug?
     chapi_logger = chapi_get_logger()
     if chapi_logger.isEnabledFor(logging.DEBUG):
-        chapi_debug(prefix, msg)
+        chapi_debug(prefix, msg, extra=extra)
     else:
         if len(msg) > 260:
-            chapi_info(prefix, msg[:250] + "...")
+            chapi_info(prefix, msg[:250] + "...", extra=extra)
         else:
-            chapi_info(prefix, msg)
+            chapi_info(prefix, msg, extra=extra)
 
     # FIXME: Only do this if the chapi logger is at DEBUG level?
     if chapi_logger.isEnabledFor(logging.DEBUG):
         # Send to syslog at INFO level
-        chapi_audit(prefix, msg, logging.INFO)
+        chapi_audit(prefix, msg, logging.INFO, extra=extra)
 
 # Log the result of an invocation of a method
-def chapi_log_result(prefix, method, result):
+def chapi_log_result(prefix, method, result, extra=None):
     msg = "Result from %s: %s" % (method, result)
     # FIXME: Info or debug?
     chapi_logger = chapi_get_logger()
     if chapi_logger.isEnabledFor(logging.DEBUG):
-        chapi_debug(prefix, msg)
+        chapi_debug(prefix, msg, extra=extra)
     else:
         if len(msg) > 260:
-            chapi_info(prefix, msg[:250] + "...")
+            chapi_info(prefix, msg[:250] + "...", extra=extra)
         else:
-            chapi_info(prefix, msg)
+            chapi_info(prefix, msg, extra=extra)
 
     # FIXME: Only do this if the chapi logger is at DEBUG level?
     if chapi_logger.isEnabledFor(logging.DEBUG):
         # Send to syslog at INFO level
-        chapi_audit(prefix, msg, logging.INFO)
+        chapi_audit(prefix, msg, logging.INFO, extra=extra)
 

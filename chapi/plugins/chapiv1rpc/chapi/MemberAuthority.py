@@ -27,6 +27,7 @@ from amsoil.core import serviceinterface
 from DelegateBase import DelegateBase
 from HandlerBase import HandlerBase
 from Exceptions import *
+from tools.cert_utils import *
 from tools.chapi_log import *
 
 ma_logger = amsoil.core.log.getLogger('mav1')
@@ -39,7 +40,8 @@ class MAv1Handler(HandlerBase):
 
     # Override error return to log exception
     def _errorReturn(self, e):
-        chapi_log_exception(MA_LOG_PREFIX, e)
+        user_email = get_email_from_cert(self.requestCertificate())
+        chapi_log_exception(MA_LOG_PREFIX, e, {'user': user_email})
         return super(MAv1Handler, self)._errorReturn(e)
 
     def get_version(self):
