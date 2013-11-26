@@ -58,8 +58,9 @@ class CHv1Handler(HandlerBase):
     # Return list of member authorities with matching and filter criteria
     # specified in options
     def lookup_member_authorities(self, options):
+        client_cert = self.requestCertificate()
         try:
-            return self._delegate.lookup_member_authorities(options)
+            return self._delegate.lookup_member_authorities(client_cert, options)
         except Exception as e:
             return self._errorReturn(e)
 
@@ -67,8 +68,9 @@ class CHv1Handler(HandlerBase):
     # Return list of slice authorities with matching and filter criteria
     # specified in options
     def lookup_slice_authorities(self, options):
+        client_cert = self.requestCertificate()
         try:
-            return self._delegate.lookup_slice_authorities(options)
+            return self._delegate.lookup_slice_authorities(client_cert, options)
         except Exception as e:
             return self._errorReturn(e)
 
@@ -76,16 +78,18 @@ class CHv1Handler(HandlerBase):
     # Return list of aggregates with matching and filter criteria`
     # specified in options
     def lookup_aggregates(self, options):
+        client_cert = self.requestCertificate()
         try:
-            return self._delegate.lookup_aggregates(options)
+            return self._delegate.lookup_aggregates(client_cert, options)
         except Exception as e:
             return self._errorReturn(e)
 
     # This call is unprotected: no checking of credentials
     # Return URL of authority (slice or member) for given URN
     def lookup_authorities_for_urns(self, urns):
+        client_cert = self.requestCertificate()
         try:
-            return self._delegate.lookup_authorities_for_urns(urns)
+            return self._delegate.lookup_authorities_for_urns(client_cert, urns)
         except Exception as e:
             return self._errorReturn(e)
 
@@ -93,8 +97,9 @@ class CHv1Handler(HandlerBase):
     # Return list of trust roots trusted by authorities and aggregates of
     # the federation associated with this Clearinghouse
     def get_trust_roots(self):
+        client_cert = self.requestCertificate()
         try:
-            return self._delegate.get_trust_roots()
+            return self._delegate.get_trust_roots(client_cert)
         except Exception as e:
             return self._errorReturn(e)
 
@@ -109,19 +114,19 @@ class CHv1DelegateBase(DelegateBase):
     def get_version(self):
         raise CHAPIv1NotImplementedError('')
 
-    def lookup_member_authorities(self, options):
+    def lookup_member_authorities(self, client_cert, options):
         raise CHAPIv1NotImplementedError('')
 
 
-    def lookup_slice_authorities(self, options):
+    def lookup_slice_authorities(self, client_cert, options):
         raise CHAPIv1NotImplementedError('')
 
-    def lookup_aggregates(self, options):
+    def lookup_aggregates(self, client_cert, options):
         raise CHAPIv1NotImplementedError('')
 
-    def lookup_authorities_for_urns(self, urns):
+    def lookup_authorities_for_urns(self, client_cert, urns):
         raise CHAPIv1NotImplementedError('')
 
-    def get_trust_roots(self):
+    def get_trust_roots(self, client_cert):
         raise CHAPIv1NotImplementedError('')
 

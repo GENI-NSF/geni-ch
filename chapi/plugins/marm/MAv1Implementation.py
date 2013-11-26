@@ -185,8 +185,9 @@ class MAv1Implementation(MAv1DelegateBase):
     # This call is unprotected: no checking of credentials
     def get_version(self):
         method = 'get_version'
-        user_email = get_email_from_cert(self.requestCertificate())
-        chapi_log_invocation(MA_LOG_PREFIX, method, [], {}, {}, {'user': user_email})
+#        user_email = get_email_from_cert(self.requestCertificate())
+#        chapi_log_invocation(MA_LOG_PREFIX, method, [], {}, {}, {'user': user_email})
+        chapi_log_invocation(MA_LOG_PREFIX, method, [], {}, {})
 
         all_optional_fields = dict(MA.optional_fields.items() + \
                                    MA.optional_key_fields.items())
@@ -197,7 +198,8 @@ class MAv1Implementation(MAv1DelegateBase):
                         "FIELDS": all_optional_fields}
         result =  self._successReturn(version_info)
 
-        chapi_log_result(MA_LOG_PREFIX, method, result, {'user': user_email})
+#        chapi_log_result(MA_LOG_PREFIX, method, result, {'user': user_email})
+        chapi_log_result(MA_LOG_PREFIX, method, result)
         return result
 
     # ensure that all of a set of entries are attributes
@@ -302,9 +304,9 @@ class MAv1Implementation(MAv1DelegateBase):
         return self._successReturn(members)
 
     # This call is unprotected: no checking of credentials
-    def lookup_public_member_info(self, credentials, options):
+    def lookup_public_member_info(self, client_cert, credentials, options):
         method = 'lookup_public_member_info'
-        user_email = get_email_from_cert(self.requestCertificate())
+        user_email = get_email_from_cert(client_cert)
         chapi_log_invocation(MA_LOG_PREFIX, method, credentials, options, {}, {'user': user_email})
 
         result = self.lookup_member_info(options, MA.public_fields)
@@ -331,7 +333,7 @@ class MAv1Implementation(MAv1DelegateBase):
 
         result = self.lookup_member_info(options, MA.identifying_fields)
 
-        chapi_log_result(MA_LOG_PREFIX, method, result, {'user', user_email})
+        chapi_log_result(MA_LOG_PREFIX, method, result, {'user': user_email})
         return result
 
     # This call is protected
@@ -624,7 +626,7 @@ class MAv1Implementation(MAv1DelegateBase):
         method = 'delete_key'
         args = {'member_urn' : member_urn, 'key_id' : key_id}
         user_email = get_email_from_cert(client_cert)
-        chapi_log_invocation(MA_LOG_PREFIX, method, credentials, options, args, {'user', user_email})
+        chapi_log_invocation(MA_LOG_PREFIX, method, credentials, options, args, {'user': user_email})
 
         session = self.db.getSession()
         q = session.query(SshKey)
@@ -773,7 +775,7 @@ class MAv1Implementation(MAv1DelegateBase):
         msg = "Created certificate for %s" % member_urn
         if private_key:
             msg = msg + " with private key"
-        chapi_audit(MA_LOG_PREFIX, msg, logging.INFO, {'user', user_email})
+        chapi_audit(MA_LOG_PREFIX, msg, logging.INFO, {'user': user_email})
 
         chapi_log_result(MA_LOG_PREFIX, method, result, {'user': user_email})
         return result
@@ -781,9 +783,9 @@ class MAv1Implementation(MAv1DelegateBase):
     ### ClientAuth
 
     # Dictionary of client_name => client_urn
-    def list_clients(self):
+    def list_clients(self, client_cert):
         method = 'list_clients'
-        user_email = get_email_from_cert(self.requestCertificate())
+        user_email = get_email_from_cert(client_cert)
         chapi_log_invocation(MA_LOG_PREFIX, method, [], {}, {}, {'user': user_email})
 
         session = self.db.getSession()
@@ -824,7 +826,7 @@ class MAv1Implementation(MAv1DelegateBase):
         args = {'member_id' : member_id, 'client_urn' : client_urn, 
                 'authorize_sense' : authorize_sense}
         user_email = get_email_from_cert(client_cert)
-        chapi_log_invoation(MA_LOG_PREFIX, method, [], {}, args, {'user': user_email})
+        chapi_log_invocation(MA_LOG_PREFIX, method, [], {}, args, {'user': user_email})
 
         member_urn = convert_member_uid_to_urn(member_id)
 
@@ -877,14 +879,14 @@ class MAv1Implementation(MAv1DelegateBase):
         return result
 
     # enable/disable a user/member  (private)
-    def enable_user(self, member_urn, enable_sense, credentials, options):
+    def enable_user(self, client_cert, member_urn, enable_sense, credentials, options):
         '''Mark a member/user as enabled or disabled.
         IFF enabled_sense is True, then user is unconditionally enabled, otherwise disabled.
         returns the previous sense.'''
         method = 'enable_user'
         args = {'member_urn' : member_urn,
                 'enable_sense' : enable_sense}
-        user_email = get_email_from_cert(self.requestCertificate())
+        user_email = get_email_from_cert(client_cert)
         chapi_log_invocation(MA_LOG_PREFIX, method, [], {}, args, {'user': user_email})
 
         syslog(method+' '+member_urn+' '+str(enable_sense))

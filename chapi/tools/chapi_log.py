@@ -61,7 +61,7 @@ def chapi_logging_basic_config(level=logging.INFO):
     if len(logging.getLogger().handlers) > 0:
         logging.debug("Not (re)doing basic config")
         return
-    fmt = '%(asctime)s %(levelname)-8s %(name)s: %(user)s: %(message)s'
+    fmt = '%(asctime)s %(levelname)-8s %(name)s: %(message)s'
     logging.basicConfig(level=level,format=fmt,datefmt='%m/%d/%Y %H:%M:%S')
 
 # Generic call for logging CHAPI messages at different levels
@@ -70,7 +70,7 @@ def chapi_log(prefix, msg, logging_level, extra=None):
     if extra is None:
         extra = {}
     if not extra.has_key('user') or extra['user'] is None:
-        extra['user'] = '<unspecified>'
+        extra['user'] = '<no user>'
     chapi_logger.log(logging_level, "%s: %s" % (prefix, msg), extra=extra)
 
 # Log a potentially auditable event
@@ -79,7 +79,7 @@ def chapi_audit(prefix, msg, lvl=logging.INFO, extra=None):
     if extra is None:
         extra = {}
     if not extra.has_key('user') or extra['user'] is None:
-        extra['user'] = '<unspecified>'
+        extra['user'] = '<no user>'
     chapi_audit_logger.log(lvl, "%s: %s" % (prefix, msg), extra=extra)
 
 # Log a CHAPI warning message

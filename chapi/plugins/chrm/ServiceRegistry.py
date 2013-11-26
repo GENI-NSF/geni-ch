@@ -42,7 +42,7 @@ class SRv1Handler(CHv1Handler):
     def __init__(self):
         super(SRv1Handler, self).__init__()
 
-    # Return list of all services registed in SR
+    # Return list of all services registered in SR
     def get_services(self):
         try:
             return self._delegate.get_services()
@@ -51,8 +51,9 @@ class SRv1Handler(CHv1Handler):
 
     # Return list of all services of given type registed in SR
     def get_services_of_type(self, service_type):
+        client_cert = self.requestCertificate()
         try:
-            return self._delegate.get_services_of_type(service_type)
+            return self._delegate.get_services_of_type(client_cert, service_type)
         except Exception as e:
             return self._errorReturn(e)
 
@@ -124,17 +125,17 @@ class SRv1Delegate(CHv1PersistentImplementation):
             
 
     # Return list of trust roots for given Federation
-    def get_trust_roots(self):
+    def get_trust_roots(self, client_cert):
         config = pm.getService('config')
         trust_roots = config.get('chapiv1rpc.ch_cert_root')
         pem_files = os.listdir(trust_roots)
         pems = [open(os.path.join(trust_roots, pem_file)).read() for pem_file in pem_files if pem_file != 'CATedCACerts.pem']
         return self._successReturn(pems)
 
-    def get_services_of_type(self, service_type):
+    def get_services_of_type(self, client_cert, service_type):
         method = 'get_services_of_type'
         args = {'service_type' : service_type}
-        user_email = get_email_from_cert(self.requestCertificate())
+        user_email = get_email_from_cert(client_cert)
         chapi_log_invocation(SR_LOG_PREFIX, method, [], {}, args, {'user': user_email})
 
         options = {'match' : {}, 'filter' : self.field_mapping.keys()}
@@ -150,8 +151,7 @@ class SRv1Delegate(CHv1PersistentImplementation):
 
     def get_services(self):
         method = 'get_services'
-        user_email = get_email_from_cert(self.requestCertificate())
-        chapi_log_invocation(SR_LOG_PREFIX, method, [], {}, {}, {'user': user_email})
+        chapi_log_invocation(SR_LOG_PREFIX, method, [], {}, {})
 
         options = {'match' : {}, 'filter' : self.field_mapping.keys()}
         selected_columns, match_criteria = \
@@ -177,6 +177,6 @@ class SRv1Delegate(CHv1PersistentImplementation):
 
         result = self._successReturn(services)
 
-        chapi_log_result(SR_LOG_PREFIX, method, result, {'user': user_email})
+        chapi_log_result(SR_LOG_PREFIX, method, result)
         return result
 

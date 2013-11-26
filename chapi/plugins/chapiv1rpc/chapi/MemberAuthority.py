@@ -61,8 +61,9 @@ class MAv1Handler(HandlerBase):
         This call is unprotected: no checking of credentials
         """
 
+        client_cert = self.requestCertificate()
         try:
-            return self._delegate.lookup_public_member_info(credentials, options)
+            return self._delegate.lookup_public_member_info(client_cert, credentials, options)
         except Exception as e:
             return self._errorReturn(e)
 
@@ -360,8 +361,9 @@ class MAv1Handler(HandlerBase):
     def list_clients(self):
         """
         """
+        client_cert = self.requestCertificate()
         try:
-            return self._delegate.list_clients()
+            return self._delegate.list_clients(client_cert)
         except Exception as e:
             return self._errorReturn(e)
 
