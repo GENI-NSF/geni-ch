@@ -23,6 +23,7 @@
 
 import tools.SA_constants as SA
 import os
+import re
 from sqlalchemy import *
 from chapi.Exceptions import *
 import chapi.Parameters
@@ -170,7 +171,6 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         self.update_expirations(client_uuid, 'slice', False)
 
     def lookup_slices(self, client_cert, credentials, options):
-
         method = 'lookup_slices'
         chapi_log_invocation(SA_LOG_PREFIX, method, credentials, options, {})
 
@@ -204,11 +204,25 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
     def lookup_slice_members(self, client_cert, slice_urn, credentials, options):
         method = 'lookup_slice_members'
         args = {'slice_urn' : slice_urn}
+
         chapi_log_invocation(SA_LOG_PREFIX, method, credentials, options, args)
+        slice_id = None
+        if "match" in options:
+            if 'SLICE_UID' in options['match']:
+                slice_id = options['match']['SLICE_UID']
+
+        if slice_id == None:
+            session = self.db.getSession()
+            q = session.query(self.db.SLICE_TABLE.c['slice_id'])
+            q = q.filter(self.db.SLICE_TABLE.c['slice_urn']==slice_urn)
+            q = q.order_by(desc(self.db.SLICE_TABLE.c['creation']))
+            rows = q.all()
+            slice_id = rows[0][0]
 
         result = self.lookup_members(client_cert, self.db.SLICE_TABLE, 
                                      self.db.SLICE_MEMBER_TABLE, slice_urn, "slice_urn", 
-                                     "slice_id", "SLICE_ROLE", "SLICE_MEMBER", "SLICE_MEMBER_UID")
+                                     "slice_id", "SLICE_ROLE", "SLICE_MEMBER", "SLICE_MEMBER_UID",
+                                     slice_id)
 
         chapi_log_result(SA_LOG_PREFIX, method, result)
         return result
@@ -225,7 +239,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         result = self.lookup_members(client_cert, self.db.PROJECT_TABLE, 
                                      self.db.PROJECT_MEMBER_TABLE, project_name, "project_name", 
                                      "project_id", "PROJECT_ROLE", "PROJECT_MEMBER", 
-                                     "PROJECT_MEMBER_UID")
+                                     "PROJECT_MEMBER_UID", None)
 
         chapi_log_result(SA_LOG_PREFIX, method, result)
         return result
@@ -234,7 +248,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
     # shared code for lookup_slice_members() and lookup_project_members()
     def lookup_members(self, client_cert, table, member_table, \
                            name, name_field, \
-                           id_field, role_txt, member_txt, member_uid_txt):
+                           id_field, role_txt, member_txt, member_uid_txt, id_value):
 
         client_uuid = get_uuid_from_cert(client_cert)
         self.update_slice_expirations(client_uuid)
@@ -244,18 +258,19 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                           self.db.MEMBER_ATTRIBUTE_TABLE.c.value,
                           self.db.ROLE_TABLE.c.name)
         q = q.filter(table.c[name_field] == name)
-        q = q.filter(member_table.c[id_field] == table.c[id_field])
+        if id_value == None:
+            q = q.filter(member_table.c[id_field] == table.c[id_field])
+        else:
+            q = q.filter(member_table.c[id_field] == id_value)
+            q = q.filter(table.c[id_field] == id_value)
         q = q.filter(self.db.MEMBER_ATTRIBUTE_TABLE.c.name == 'urn')
         q = q.filter(member_table.c.member_id == \
                      self.db.MEMBER_ATTRIBUTE_TABLE.c.member_id)
         q = q.filter(member_table.c.role == self.db.ROLE_TABLE.c.id)
         rows = q.all()
-#        print str(q)
-#        print str(rows)
         session.close()
         members = [{role_txt: row.name, member_txt: row.value, \
                         member_uid_txt : row.member_id} for row in rows]
-#        print "MEMBERS = " + str(members)
         return self._successReturn(members)
 
     def lookup_slices_for_member(self, client_cert, member_urn, \
@@ -274,6 +289,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                        "SLICE_URN": row.slice_urn, \
                       "EXPIRED": row.expired } \
                   for row in rows]
+
         result = self._successReturn(slices)
 
         chapi_log_result(SA_LOG_PREFIX, method, result)
@@ -424,15 +440,25 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         if project_urn == None:
             raise CHAPIv1ArgumentError("No project specified for create_slice");
 
-        # Check if project is not expired
-        q = session.query(Project.expired)
+        # Check if project is not expired, get expiration for later use
+        q = session.query(Project.expired, Project.expiration)
         q = q.filter(Project.project_id == slice.project_id)
         project_info = q.one()
         expired = project_info.expired
+        project_expiration = project_info.expiration
         if project_info.expired:
             raise CHAPIv1ArgumentError("May not create a slice on expired project");
         
-
+        # Check that slice name is valid
+        if ' ' in name:
+            raise CHAPIv1ArgumentError('Slice name may not contain spaces.')
+        elif len(name) > 19:
+            raise CHAPIv1ArgumentError('Slice name %s is too long - use at most 19 characters.' %name)
+            
+        pattern = '^[a-zA-Z0-9][a-zA-Z0-9-]{0,31}$'
+        valid = re.match(pattern,name)
+        if valid == None:
+            raise CHAPIv1ArgumentError('Slice name %s is invalid - use at most 19 alphanumeric characters or hyphen. No leading hyphen.' %name)
         # before fill in rest, check that slice does not already exist
         same_name = self.get_slice_ids(session, "slice_name", name)
         if same_name:
@@ -448,6 +474,11 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
             slice.expiration = slice.creation + relativedelta(days=7)
         else:
             slice.expiration = dateutil.parser.parse(slice.expiration)
+
+        # if project expiration is sooner than slice expiration, use project expiration
+        if project_expiration != None and slice.expiration > project_expiration:
+            slice.expiration = project_expiration
+
         slice.slice_id = str(uuid.uuid4())
         slice.owner_id = client_uuid
         slice.slice_urn = urn_for_slice(slice.slice_name, project_name)
@@ -529,9 +560,26 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                         email = rows[0].slice_email, uuidarg=rows[0].slice_id)
                     updates['certificate'] = cert.save_to_string()
 
+
+
+        project_name, authority, slice_name = \
+            extract_data_from_slice_urn(slice_urn)
+        project_uuid = \
+            self.get_project_id(session, 'project_name', project_name)
+        q = session.query(Project.expired, Project.expiration)
+        q = q.filter(Project.project_id == project_uuid)
+        project_info = q.one()
+        expired = project_info.expired
+        project_expiration = project_info.expiration
+        if expired:
+            raise CHAPIv1ArgumentError('Cannot create a slice for an expired project')
+
         q = session.query(Slice)
         q = q.filter(getattr(Slice, "slice_urn") == slice_urn)
         for field, value in options['fields'].iteritems():
+            # don't renew past project expiration time
+            if field=="SLICE_EXPIRATION" and project_expiration != None and value > project_expiration:
+                value = project_expiration
             updates[SA.slice_field_mapping[field]] = value
         q = q.update(updates)
         session.commit()
@@ -539,10 +587,6 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
 
         # Log the update project
         client_uuid = get_uuid_from_cert(client_cert)
-        project_name, authority, slice_name = \
-            extract_data_from_slice_urn(slice_urn)
-        project_uuid = \
-            self.get_project_id(session, 'project_name', project_name)
         attribs = {"PROJECT" : project_uuid, "SLICE" : slice_uuid}
         self.logging_service.log_event("Updated slice " + slice_name, 
                                        attribs, client_uuid)
@@ -568,10 +612,21 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         client_uuid = get_uuid_from_cert(client_cert)
         self.update_project_expirations(client_uuid)
 
+        name = options["fields"]["PROJECT_NAME"]
+        # check that project name is valid
+        if ' ' in name:
+            raise CHAPIv1ArgumentError('Project name may not contain spaces.')
+        elif len(name) > 32:
+            raise CHAPIv1ArgumentError('Project name %s is too long - use at most 32 characters.' %name)
+            
+        pattern = '^[a-zA-Z0-9][a-zA-Z0-9-_]{0,31}$'
+        valid = re.match(pattern,name)
+        if valid == None:
+            raise CHAPIv1ArgumentError('Project name %s is invalid - use at most 32 alphanumeric characters or hyphen or underscore. No leading hyphen or underscore.' %name)
+        
         session = self.db.getSession()
 
         # check that project does not already exist
-        name = options["fields"]["PROJECT_NAME"]
         if self.get_project_id(session, "project_name", name):
             session.close()
             raise CHAPIv1DuplicateError('Already exists a project named ' + name)
