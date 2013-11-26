@@ -2,3 +2,14 @@ DEBUG
 INFO.*Invoked
 INFO.*Result.*'code': 0
 INFO] MA: Result from get_credentials
+root:Configured logging from file
+INFO    :root:Configured logging
+DEBUG   :root:Looking at parent
+DEBUG   :root:amsoil handler filename
+DEBUG   :root:Keeping amsoil handler
+DEBUG   :root:Looking at parent for
+DEBUG   :root:chapi handler filename
+DEBUG   :root:Keeping chapi handler
+INFO    :chapi:LOGGING: Done
+INFO    :amsoil:[pluginmanager]
+INFO    :amsoil:[flaskrpcs]

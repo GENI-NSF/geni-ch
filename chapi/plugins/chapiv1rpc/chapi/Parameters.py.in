@@ -29,6 +29,7 @@ import ConfigParser
 import logging
 import logging.config
 import logging.handlers
+import os
 import os.path
 
 CONFIG_FILE = '@pkgsysconfdir@/chapi.ini'
@@ -226,7 +227,14 @@ def configure_logging():
     deft['loglevel'] = optlevel
     deft['logfilename'] = config.get("chapi.log_file")
 
-    # FIXME: Create any needed directories for chapi.log_file?
+    # Create any needed directories for chapi.log_file
+    # FIXME: Creating isn't enough - we need the dir to be owned by www-data:www-data
+    if not os.path.exists(os.path.dirname(deft['logfilename'])):
+        chapi_error("LOGGING", "Dir for log file not there: %s" % deft['logfilename'])
+        try:
+            os.makedirs(os.path.dirname(deft['logfilename']))
+        except EnvironmentError, e:
+            chapi_error("LOGGING", "Failed to create log file path %s: %s" % (deft['logfilename'], e))
 
     # Get the log config file
     logConfigFilename = config.get("chapi.log_config_file")
