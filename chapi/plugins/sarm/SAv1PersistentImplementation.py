@@ -171,7 +171,6 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         self.update_expirations(client_uuid, 'slice', False)
 
     def lookup_slices(self, client_cert, credentials, options):
-
         method = 'lookup_slices'
         chapi_log_invocation(SA_LOG_PREFIX, method, credentials, options, {})
 
@@ -205,11 +204,25 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
     def lookup_slice_members(self, client_cert, slice_urn, credentials, options):
         method = 'lookup_slice_members'
         args = {'slice_urn' : slice_urn}
+
         chapi_log_invocation(SA_LOG_PREFIX, method, credentials, options, args)
+        slice_id = None
+        if "match" in options:
+            if 'SLICE_UID' in options['match']:
+                slice_id = options['match']['SLICE_UID']
+
+        if slice_id == None:
+            session = self.db.getSession()
+            q = session.query(self.db.SLICE_TABLE.c['slice_id'])
+            q = q.filter(self.db.SLICE_TABLE.c['slice_urn']==slice_urn)
+            q = q.order_by(desc(self.db.SLICE_TABLE.c['creation']))
+            rows = q.all()
+            slice_id = rows[0][0]
 
         result = self.lookup_members(client_cert, self.db.SLICE_TABLE, 
                                      self.db.SLICE_MEMBER_TABLE, slice_urn, "slice_urn", 
-                                     "slice_id", "SLICE_ROLE", "SLICE_MEMBER", "SLICE_MEMBER_UID")
+                                     "slice_id", "SLICE_ROLE", "SLICE_MEMBER", "SLICE_MEMBER_UID",
+                                     slice_id)
 
         chapi_log_result(SA_LOG_PREFIX, method, result)
         return result
@@ -226,7 +239,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         result = self.lookup_members(client_cert, self.db.PROJECT_TABLE, 
                                      self.db.PROJECT_MEMBER_TABLE, project_name, "project_name", 
                                      "project_id", "PROJECT_ROLE", "PROJECT_MEMBER", 
-                                     "PROJECT_MEMBER_UID")
+                                     "PROJECT_MEMBER_UID", None)
 
         chapi_log_result(SA_LOG_PREFIX, method, result)
         return result
@@ -235,7 +248,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
     # shared code for lookup_slice_members() and lookup_project_members()
     def lookup_members(self, client_cert, table, member_table, \
                            name, name_field, \
-                           id_field, role_txt, member_txt, member_uid_txt):
+                           id_field, role_txt, member_txt, member_uid_txt, id_value):
 
         client_uuid = get_uuid_from_cert(client_cert)
         self.update_slice_expirations(client_uuid)
@@ -245,18 +258,19 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                           self.db.MEMBER_ATTRIBUTE_TABLE.c.value,
                           self.db.ROLE_TABLE.c.name)
         q = q.filter(table.c[name_field] == name)
-        q = q.filter(member_table.c[id_field] == table.c[id_field])
+        if id_value == None:
+            q = q.filter(member_table.c[id_field] == table.c[id_field])
+        else:
+            q = q.filter(member_table.c[id_field] == id_value)
+            q = q.filter(table.c[id_field] == id_value)
         q = q.filter(self.db.MEMBER_ATTRIBUTE_TABLE.c.name == 'urn')
         q = q.filter(member_table.c.member_id == \
                      self.db.MEMBER_ATTRIBUTE_TABLE.c.member_id)
         q = q.filter(member_table.c.role == self.db.ROLE_TABLE.c.id)
         rows = q.all()
-#        print str(q)
-#        print str(rows)
         session.close()
         members = [{role_txt: row.name, member_txt: row.value, \
                         member_uid_txt : row.member_id} for row in rows]
-#        print "MEMBERS = " + str(members)
         return self._successReturn(members)
 
     def lookup_slices_for_member(self, client_cert, member_urn, \
@@ -275,6 +289,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                        "SLICE_URN": row.slice_urn, \
                       "EXPIRED": row.expired } \
                   for row in rows]
+
         result = self._successReturn(slices)
 
         chapi_log_result(SA_LOG_PREFIX, method, result)
