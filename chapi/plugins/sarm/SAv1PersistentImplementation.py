@@ -1098,7 +1098,13 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         q = q.filter(self.db.PROJECT_ATTRIBUTE_TABLE.c.project_id==project_id)
         rows = q.all()
         session.close()
-        result = self._successReturn(rows)
+        attribs = []
+        for row in rows:
+            attrib_name = row.name
+            attrib_value = row.value
+            attrib = {'name' : attrib_name, 'value' : attrib_value}
+            attribs.append(attrib)
+        result = self._successReturn(attribs)
         return result
 
     def get_slice_lead(self, session, slice_id):
