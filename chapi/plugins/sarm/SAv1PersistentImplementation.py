@@ -440,11 +440,12 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         if project_urn == None:
             raise CHAPIv1ArgumentError("No project specified for create_slice");
 
-        # Check if project is not expired
-        q = session.query(Project.expired)
+        # Check if project is not expired, get expiration for later use
+        q = session.query(Project.expired, Project.expiration)
         q = q.filter(Project.project_id == slice.project_id)
         project_info = q.one()
         expired = project_info.expired
+        project_expiration = project_info.expiration
         if project_info.expired:
             raise CHAPIv1ArgumentError("May not create a slice on expired project");
         
@@ -473,6 +474,11 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
             slice.expiration = slice.creation + relativedelta(days=7)
         else:
             slice.expiration = dateutil.parser.parse(slice.expiration)
+
+        # if project expiration is sooner than slice expiration, use project expiration
+        if project_expiration != None and slice.expiration > project_expiration:
+            slice.expiration = project_expiration
+
         slice.slice_id = str(uuid.uuid4())
         slice.owner_id = client_uuid
         slice.slice_urn = urn_for_slice(slice.slice_name, project_name)
@@ -554,9 +560,26 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                         email = rows[0].slice_email, uuidarg=rows[0].slice_id)
                     updates['certificate'] = cert.save_to_string()
 
+
+
+        project_name, authority, slice_name = \
+            extract_data_from_slice_urn(slice_urn)
+        project_uuid = \
+            self.get_project_id(session, 'project_name', project_name)
+        q = session.query(Project.expired, Project.expiration)
+        q = q.filter(Project.project_id == project_uuid)
+        project_info = q.one()
+        expired = project_info.expired
+        project_expiration = project_info.expiration
+        if expired:
+            raise CHAPIv1ArgumentError('Cannot create a slice for an expired project')
+
         q = session.query(Slice)
         q = q.filter(getattr(Slice, "slice_urn") == slice_urn)
         for field, value in options['fields'].iteritems():
+            # don't renew past project expiration time
+            if field=="SLICE_EXPIRATION" and project_expiration != None and value > project_expiration:
+                value = project_expiration
             updates[SA.slice_field_mapping[field]] = value
         q = q.update(updates)
         session.commit()
@@ -564,10 +587,6 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
 
         # Log the update project
         client_uuid = get_uuid_from_cert(client_cert)
-        project_name, authority, slice_name = \
-            extract_data_from_slice_urn(slice_urn)
-        project_uuid = \
-            self.get_project_id(session, 'project_name', project_name)
         attribs = {"PROJECT" : project_uuid, "SLICE" : slice_uuid}
         self.logging_service.log_event("Updated slice " + slice_name, 
                                        attribs, client_uuid)
