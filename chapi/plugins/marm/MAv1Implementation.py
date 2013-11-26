@@ -221,6 +221,9 @@ class MAv1Implementation(MAv1DelegateBase):
             q = q.filter(MemberAttribute.value.in_(value))
         else:
             q = q.filter(MemberAttribute.value == value)
+
+        chapi_info('', "ATTR = %s, MAP = %s, VALUE = %s, Q = %s" % \
+                       (attr, MA.field_mapping[attr], value, q))
         rows = q.all()
         return [row.member_id for row in rows]
 
@@ -277,6 +280,8 @@ class MAv1Implementation(MAv1DelegateBase):
         uids = [set(self.get_uids_for_attribute(session, attr, value)) \
                 for attr, value in match_criteria.iteritems()]
         uids = set.intersection(*uids)
+
+        chapi_info('', "UIDS = %s COLS = %s CRIT = %s" % (uids, selected_columns, match_criteria))
 
         # then, get the values
         members = {}
