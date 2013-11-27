@@ -213,6 +213,9 @@ class MAv1Implementation(MAv1DelegateBase):
             q = q.filter(MemberAttribute.value.in_(value))
         else:
             q = q.filter(MemberAttribute.value == value)
+
+        chapi_info('', "ATTR = %s, MAP = %s, VALUE = %s, Q = %s" % \
+                       (attr, MA.field_mapping[attr], value, q))
         rows = q.all()
         return [row.member_id for row in rows]
 
@@ -269,6 +272,8 @@ class MAv1Implementation(MAv1DelegateBase):
         uids = [set(self.get_uids_for_attribute(session, attr, value)) \
                 for attr, value in match_criteria.iteritems()]
         uids = set.intersection(*uids)
+
+        chapi_info('', "UIDS = %s COLS = %s CRIT = %s" % (uids, selected_columns, match_criteria))
 
         # then, get the values
         members = {}
@@ -794,7 +799,7 @@ class MAv1Implementation(MAv1DelegateBase):
         method = 'authorize_client'
         args = {'member_id' : member_id, 'client_urn' : client_urn, 
                 'authorize_sense' : authorize_sense}
-        chapi_log_invoation(MA_LOG_PREFIX, method, [], {}, args)
+        chapi_log_invocation(MA_LOG_PREFIX, method, [], {}, args)
 
         member_urn = convert_member_uid_to_urn(member_id)
 

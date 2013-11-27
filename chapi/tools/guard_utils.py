@@ -36,6 +36,7 @@ from chapi.Exceptions import *
 from syslog import syslog
 import MA_constants as MA
 from dbutils import add_filters
+from chapi_log import *
 
 # context support
 _context = threading.local()
@@ -317,13 +318,25 @@ def lookup_pi_privilege(user_urn):
 
 # If given caller and given subject share a common project
 # Generate an ME.SHARES_PROJECT_$subject<-caller assertion
+# Three cases:
+# 1. find all people who share a project with given caller
+#    from among the subjects (member_urns)
+# 2. Find all people with a pending join request to project
+#     with given subject as lead
+# 3. If looking up a member by member_email who is a 
+#    project lead or admin, allow it
 def assert_shares_project(caller_urn, member_urns, label, options, abac_manager):
-    if isinstance(member_urns, list): 
-        if len(member_urns) == 0: return  # if empty, then we dont share the project.
-        member_urn = member_urns[0] # Pull singleton URN from list
-    else:
-        member_urn = member_urns
+#    chapi_info('', "ASP %s %s %s %s" % (caller_urn, member_urns, 
+#                                        label, options))
     if label != "MEMBER_URN": return
+
+    # Make sure the list of subjects is a non-empty list
+    if isinstance(member_urns, list): 
+        # if empty, then we dont share the project.
+        if len(member_urns) == 0: return  
+    else:
+        member_urns = list(member_urns)
+
     db = pm.getService('chdbengine')
     session = db.getSession()
 
@@ -332,6 +345,7 @@ def assert_shares_project(caller_urn, member_urns, label, options, abac_manager)
     ma1 = aliased(db.MEMBER_ATTRIBUTE_TABLE)
     ma2 = aliased(db.MEMBER_ATTRIBUTE_TABLE)
 
+    # Find all people in the subjects list who share a project
     q = session.query(pm1.c.project_id, pm2.c.project_id, ma1.c.value, ma2.c.value)
     q = q.filter(pm1.c.project_id == pm2.c.project_id)
     q = q.filter(pm1.c.member_id == ma1.c.member_id)
@@ -339,31 +353,40 @@ def assert_shares_project(caller_urn, member_urns, label, options, abac_manager)
     q = q.filter(ma1.c.name == 'urn')
     q = q.filter(ma2.c.name == 'urn')
     q = q.filter(ma1.c.value == caller_urn)
-    q = q.filter(ma2.c.value == member_urn)
+    q = q.filter(ma2.c.value.in_(member_urns))
 
     rows = q.all()
 #    print "ROWS = " + str(len(rows)) + " " + str(rows)
-    if len(rows) > 0:
+    for row in rows:
+        member_urn = row[3]  # ma2.c.value
         assertion = "ME.SHARES_PROJECT_%s<-CALLER" % flatten_urn(member_urn)
         abac_manager.register_assertion(assertion)
 
-    q = session.query(db.PROJECT_REQUEST_TABLE.c.status)
+    # Find all people with a pending join request to project
+    # with given subject as lead
+
+    q = session.query(db.PROJECT_REQUEST_TABLE.c.status, ma2.c.value)
     q = q.filter(pm1.c.member_id == ma1.c.member_id)
     q = q.filter(db.PROJECT_REQUEST_TABLE.c.requestor == ma2.c.member_id)
     q = q.filter(ma1.c.name == 'urn')
     q = q.filter(ma2.c.name == 'urn')
     q = q.filter(ma1.c.value == caller_urn)
-    q = q.filter(ma2.c.value == member_urn)
+    q = q.filter(ma2.c.value.in_(member_urns))
     q = q.filter(db.PROJECT_REQUEST_TABLE.c.context_id == pm1.c.project_id)
     q = q.filter(pm1.c.role.in_([LEAD_ATTRIBUTE, ADMIN_ATTRIBUTE]))
     q = q.filter(db.PROJECT_REQUEST_TABLE.c.status == PENDING_STATUS)
 
     rows = q.all()
-    if len(rows) > 0:
+
+    for row in rows:
+        member_urn = row[1] # member_urn of project lead on request
         assertion = "ME.HAS_PENDING_REQUEST_ON_SHARED_PROJECT_%s<-CALLER" % \
-                    flatten_urn(member_urn)
+            flatten_urn(member_urn)
         abac_manager.register_assertion(assertion)
 
+
+    # If looking up a member by member_email who is a 
+    # project lead or admin, allow it
     if 'match' in options and len(options['match']) == 1 and \
        'MEMBER_EMAIL' in options['match']:
         q = session.query(pm1.c.member_id)
@@ -372,6 +395,7 @@ def assert_shares_project(caller_urn, member_urns, label, options, abac_manager)
         q = q.filter(ma1.c.value == caller_urn)
         q = q.filter(pm1.c.role.in_([LEAD_ATTRIBUTE, ADMIN_ATTRIBUTE]))
         rows = q.all()
+
         if len(rows) > 0:
             assertion = "ME.IS_LEAD_AND_SEARCHING_EMAIL<-CALLER"
             abac_manager.register_assertion(assertion)
@@ -382,10 +406,9 @@ def assert_shares_project(caller_urn, member_urns, label, options, abac_manager)
 # If given caller and given subject share a common slice
 # Generate an ME.SHARES_SLICE(subject)<-caller assertion
 def assert_shares_slice(caller_urn, member_urns, label, options, abac_manager):
-    if isinstance(member_urns, list): 
-        member_urn = member_urns[0] # Pull singleton URN from list
-    else:
-        member_urn = member_urns
+    if not isinstance(member_urns, list): 
+        member_urns = list(member_urns)
+
     if label != "MEMBER_URN": return
     db = pm.getService('chdbengine')
     session = db.getSession()
@@ -395,6 +418,9 @@ def assert_shares_slice(caller_urn, member_urns, label, options, abac_manager):
     ma1 = aliased(db.MEMBER_ATTRIBUTE_TABLE)
     ma2 = aliased(db.MEMBER_ATTRIBUTE_TABLE)
 
+    chapi_info('', "ASS : %s %s %s %s" % \
+                   (caller_urn, member_urns, label, options))
+
     q = session.query(sm1.c.slice_id, sm2.c.slice_id, ma1.c.value, ma2.c.value)
     q = q.filter(sm1.c.slice_id == sm2.c.slice_id)
     q = q.filter(sm1.c.member_id == ma1.c.member_id)
@@ -402,13 +428,14 @@ def assert_shares_slice(caller_urn, member_urns, label, options, abac_manager):
     q = q.filter(ma1.c.name == 'urn')
     q = q.filter(ma2.c.name == 'urn')
     q = q.filter(ma1.c.value == caller_urn)
-    q = q.filter(ma2.c.value == member_urn)
+    q = q.filter(ma2.c.value.in_(member_urns))
 
     rows = q.all()
 #    print "ROWS = " + str(len(rows)) + " " + str(rows)
     session.close()
 
-    if len(rows) > 0:
+    for row in rows:
+        member_urn = row[3] # member_urn of member sharing slice
         assertion = "ME.SHARES_SLICE_%s<-CALLER" % flatten_urn(member_urn)
         abac_manager.register_assertion(assertion)
 

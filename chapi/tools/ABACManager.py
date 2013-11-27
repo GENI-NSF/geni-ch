@@ -31,6 +31,7 @@ import sys
 import tempfile
 import ABAC
 from syslog import syslog
+from chapi_log import *
 
 # Generate an ABACManager config file
 # [Principals]
@@ -422,6 +423,7 @@ class ABACManager:
 
         if self._verbose:
             syslog("Registering ID: " + name + " " + str(cert_file))
+            chapi_info('', "Registering ID: " + name + " " + str(cert_file))
 
         if self._ids_by_name.has_key(name):
             raise Exception("ABACManager: name doubley defined " + name)
@@ -439,6 +441,7 @@ class ABACManager:
             id.load_privkey(key_file)
             if self._verbose:
                 syslog("Registering key " + name + " " + key_file)
+                chapi_info('', "Registering key " + name + " " + key_file)
 
 
     # Register a new assertion with the manager
@@ -446,6 +449,11 @@ class ABACManager:
     # into RT1_line/RT0 roles and principal keyids
     # Generate exception if a principal is referenced but not registered
     def register_assertion(self, assertion):
+
+        if self._verbose:
+            syslog("Registering assertion  " + assertion)
+            chapi_info('', "Registering assertion  " + assertion)
+
         # *** Hack ***
         if not self._manage_context:
             self._all_assertions.append(assertion)
@@ -497,15 +505,13 @@ class ABACManager:
         P.bake()
         self._ctxt.load_attribute_chunk(P.cert_chunk())
 
-        if self._verbose:
-            syslog("Registering assertion  " + assertion)
-
         self._assertions.append(assertion)
         return P
 
     def register_assertion_file(self, assertion_file):
         if self._verbose:
             syslog("Registering assertion file " + assertion_file)
+            chapi_info('', "Registering assertion file " + assertion_file)
         self._assertion_files.append(assertion_file)
         if self._manage_context:
             self._ctxt.load_attribute_file(assertion_file) 
