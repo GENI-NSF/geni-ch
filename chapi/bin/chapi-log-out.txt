@@ -13,3 +13,7 @@ DEBUG   :root:Keeping chapi handler
 INFO    :chapi:LOGGING: Done
 INFO    :amsoil:\[pluginmanager
 INFO    :amsoil:\[flaskrpcs
+INFO    :amsoil:\[csv1
+INFO    :amsoil:\[sav1
+INFO    :amsoil:\[mav1
+INFO    :amsoil:\[logv1
