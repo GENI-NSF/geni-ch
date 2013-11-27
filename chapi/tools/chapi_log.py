@@ -74,10 +74,8 @@ def chapi_log(prefix, msg, logging_level, extra=None):
 # Log a potentially auditable event
 def chapi_audit(prefix, msg, lvl=logging.INFO, extra=None):
     chapi_audit_logger = chapi_get_audit_logger()
-    if extra is None:
-        extra = {}
-    if not extra.has_key('user') or extra['user'] is None:
-        extra['user'] = '<no user>'
+    if extra is not None and extra.has_key('user') and extra['user'] is not None and extra['user'].strip() != '':
+        msg = "%s: %s" % (extra['user'].strip(), msg)
     chapi_audit_logger.log(lvl, "%s: %s" % (prefix, msg), extra=extra)
 
 # Log a CHAPI warning message
