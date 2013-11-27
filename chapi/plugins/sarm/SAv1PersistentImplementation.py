@@ -559,27 +559,44 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                         lifeDays = (t2 - t3).days + SA.SLICE_CERT_LIFETIME, \
                         email = rows[0].slice_email, uuidarg=rows[0].slice_id)
                     updates['certificate'] = cert.save_to_string()
-
-
-
+                    
         project_name, authority, slice_name = \
             extract_data_from_slice_urn(slice_urn)
         project_uuid = \
             self.get_project_id(session, 'project_name', project_name)
+
         q = session.query(Project.expired, Project.expiration)
         q = q.filter(Project.project_id == project_uuid)
         project_info = q.one()
-        expired = project_info.expired
         project_expiration = project_info.expiration
-        if expired:
-            raise CHAPIv1ArgumentError('Cannot create a slice for an expired project')
+        if project_info.expired:
+            raise CHAPIv1ArgumentError('Cannot update a slice for an expired project')
+
+        q = session.query(Slice.expired, Slice.expiration)
+        q = q.filter(Slice.slice_id == slice_uuid)
+        slice_info = q.one()
+        slice_expiration = slice_info.expiration
+        max_exp = slice_expiration + relativedelta(days=SA.SLICE_MAX_RENEWAL_DAYS)
 
         q = session.query(Slice)
         q = q.filter(getattr(Slice, "slice_urn") == slice_urn)
         for field, value in options['fields'].iteritems():
-            # don't renew past project expiration time
-            if field=="SLICE_EXPIRATION" and project_expiration != None and value > project_expiration:
-                value = project_expiration
+            if field=="SLICE_EXPIRATION":
+                # convert value to datetime object
+                new_exp = dateutil.parser.parse(value)
+                # don't renew past project expiration time
+                if project_expiration != None and new_exp > project_expiration:
+                    value = project_expiration
+                # dont renew expired slice
+                elif slice_info.expired:
+                    raise CHAPIv1ArgumentError('Cannot update an expired slice')
+                # don't shorten slice lifetime
+                elif slice_expiration > new_exp:
+                    value = slice_info.expiration
+                # make sure renewal isn't more than max allowed
+                elif new_exp > max_exp:
+                    value = max_exp
+
             updates[SA.slice_field_mapping[field]] = value
         q = q.update(updates)
         session.commit()
@@ -596,8 +613,6 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
             self.logging_service.log_event("Renewed slice %s until %s" % \
                                                (slice_name, expiration), \
                                                attribs, client_uuid)
-
-
         result = self._successReturn(True)
 
         chapi_log_result(SA_LOG_PREFIX, method, result)
