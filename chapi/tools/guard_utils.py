@@ -406,10 +406,9 @@ def assert_shares_project(caller_urn, member_urns, label, options, abac_manager)
 # If given caller and given subject share a common slice
 # Generate an ME.SHARES_SLICE(subject)<-caller assertion
 def assert_shares_slice(caller_urn, member_urns, label, options, abac_manager):
-    if isinstance(member_urns, list): 
-        member_urn = member_urns[0] # Pull singleton URN from list
-    else:
-        member_urn = member_urns
+    if not isinstance(member_urns, list): 
+        member_urns = list(member_urns)
+
     if label != "MEMBER_URN": return
     db = pm.getService('chdbengine')
     session = db.getSession()
@@ -419,6 +418,9 @@ def assert_shares_slice(caller_urn, member_urns, label, options, abac_manager):
     ma1 = aliased(db.MEMBER_ATTRIBUTE_TABLE)
     ma2 = aliased(db.MEMBER_ATTRIBUTE_TABLE)
 
+    chapi_info('', "ASS : %s %s %s %s" % \
+                   (caller_urn, member_urns, label, options))
+
     q = session.query(sm1.c.slice_id, sm2.c.slice_id, ma1.c.value, ma2.c.value)
     q = q.filter(sm1.c.slice_id == sm2.c.slice_id)
     q = q.filter(sm1.c.member_id == ma1.c.member_id)
@@ -426,13 +428,14 @@ def assert_shares_slice(caller_urn, member_urns, label, options, abac_manager):
     q = q.filter(ma1.c.name == 'urn')
     q = q.filter(ma2.c.name == 'urn')
     q = q.filter(ma1.c.value == caller_urn)
-    q = q.filter(ma2.c.value == member_urn)
+    q = q.filter(ma2.c.value.in_(member_urns))
 
     rows = q.all()
 #    print "ROWS = " + str(len(rows)) + " " + str(rows)
     session.close()
 
-    if len(rows) > 0:
+    for row in rows:
+        member_urn = row[3] # member_urn of member sharing slice
         assertion = "ME.SHARES_SLICE_%s<-CALLER" % flatten_urn(member_urn)
         abac_manager.register_assertion(assertion)
 
