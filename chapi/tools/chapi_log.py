@@ -67,11 +67,9 @@ def chapi_logging_basic_config(level=logging.INFO):
 # Generic call for logging CHAPI messages at different levels
 def chapi_log(prefix, msg, logging_level, extra=None):
     chapi_logger = chapi_get_logger()
-    if extra is None:
-        extra = {}
-    if not extra.has_key('user') or extra['user'] is None:
-        extra['user'] = '<no user>'
-    chapi_logger.log(logging_level, "%s: %s" % (prefix, msg), extra=extra)
+    if extra is not None and extra.has_key('user') and extra['user'] is not None and extra['user'].strip() != '':
+        msg = "%s: %s" % (extra['user'].strip(), msg)
+    chapi_logger.log(logging_level, "%s: %s" % (prefix, msg))
 
 # Log a potentially auditable event
 def chapi_audit(prefix, msg, lvl=logging.INFO, extra=None):

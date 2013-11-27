@@ -222,7 +222,7 @@ class MAv1Implementation(MAv1DelegateBase):
         else:
             q = q.filter(MemberAttribute.value == value)
 
-        chapi_info('', "ATTR = %s, MAP = %s, VALUE = %s, Q = %s" % \
+        chapi_debug(MA_LOG_PREFIX, "ATTR = %s, MAP = %s, VALUE = %s, Q = %s" % \
                        (attr, MA.field_mapping[attr], value, q))
         rows = q.all()
         return [row.member_id for row in rows]
@@ -281,7 +281,7 @@ class MAv1Implementation(MAv1DelegateBase):
                 for attr, value in match_criteria.iteritems()]
         uids = set.intersection(*uids)
 
-        chapi_info('', "UIDS = %s COLS = %s CRIT = %s" % (uids, selected_columns, match_criteria))
+        chapi_debug(MA_LOG_PREFIX, "UIDS = %s COLS = %s CRIT = %s" % (uids, selected_columns, match_criteria))
 
         # then, get the values
         members = {}
@@ -1147,7 +1147,9 @@ class MAv1Implementation(MAv1DelegateBase):
         rows = q.all()
 
         was_defined = (len(rows)>0)
-        import chapi_log; chapi_info('', 'RMA.ROWS = %s' % rows)
+
+        chapi_debug(MA_LOG_PREFIX, 'RMA.ROWS = %s' % rows)
+
         old_value = None
         if was_defined:
             old_value = rows[0][0]
