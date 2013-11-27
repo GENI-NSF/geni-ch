@@ -590,7 +590,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
 
                 # Do not allow renewing past the max increment (185 days was the old value)?
 
-                # FIXME: Validate that this is a valid UTC timestamp before using it
+                # FIXME: Convert this to UTC
                 new_expiration = value
             updates[SA.slice_field_mapping[field]] = value
 
@@ -674,7 +674,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         for key, value in options["fields"].iteritems():
             setattr(project, SA.project_field_mapping[key], value)
         project.creation = datetime.utcnow()
-        # FIXME: Must project expiration be in UTC? Shouldn't we check it is valid?
+        # FIXME: Must project expiration be in UTC?
         if project.expiration == "": project.expiration=None
         project.project_id = str(uuid.uuid4())
 
@@ -739,7 +739,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
             and not options['fields']['PROJECT_EXPIRATION']):
             options['fields']['PROJECT_EXPIRATION'] = None
 
-        # FIXME: Are there any rules on TZ for project expiration? Make sure it is a valid timestamp?
+        # FIXME: Are there any rules on TZ for project expiration?
 
         for field, value in options['fields'].iteritems():
             updates[SA.project_field_mapping[field]] = value
@@ -750,6 +750,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         # Log the update project
         client_uuid = get_uuid_from_cert(client_cert)
         attribs = {"PROJECT" : project_uuid}
+        # FIXME: Say what was updated
         self.logging_service.log_event("Updated project " + name, 
                                        attribs, client_uuid)
 
