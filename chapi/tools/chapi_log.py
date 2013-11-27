@@ -78,6 +78,11 @@ def chapi_audit(prefix, msg, lvl=logging.INFO, extra=None):
         msg = "%s: %s" % (extra['user'].strip(), msg)
     chapi_audit_logger.log(lvl, "%s: %s" % (prefix, msg), extra=extra)
 
+# Log both to audit log and regular log an event
+def chapi_audit_and_log(prefix, msg, lvl=logging.INFO, extra=None):
+    chapi_audit(prefix, msg, lvl, extra)
+    chapi_log(prefix, msg, lvl, extra)
+
 # Log a CHAPI warning message
 def chapi_warn(prefix, msg, extra=None):
     chapi_log(prefix, msg, logging.WARNING, extra)
@@ -87,7 +92,7 @@ def chapi_warn(prefix, msg, extra=None):
 def chapi_debug(prefix, msg, extra=None):
     chapi_log(prefix, msg, logging.DEBUG, extra=extra)
 
-# Log a CHAPI error messagen
+# Log a CHAPI error message
 def chapi_error(prefix, msg, extra=None):
     chapi_log(prefix, msg, logging.ERROR, extra=extra)
     chapi_audit(prefix, msg, logging.ERROR, extra=extra)

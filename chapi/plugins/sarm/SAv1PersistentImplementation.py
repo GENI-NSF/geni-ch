@@ -423,8 +423,12 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
 
         session = self.db.getSession()
 
-        # Create email if not provided
         name = options["fields"]["SLICE_NAME"]
+
+        # FIXME: In old SA we made the slice email be null because FOAM didn't like
+        # the fake email addresses
+
+        # Create email if not provided
         if not '_GENI_SLICE_EMAIL' in options['fields'] or \
            not options['fields']['_GENI_SLICE_EMAIL']:
             options['fields']['_GENI_SLICE_EMAIL'] = \
@@ -479,10 +483,10 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                 raise CHAPIv1DuplicateError('Already exists a slice named ' +
                                             name + ' in project ' + project_name)
 
-        # FIXME: Must ensure the slice expires no later than the project expiration if set
         # FIXME: Real slice email
 
         slice.creation = datetime.utcnow()
+        # FIXME: Why check if slice.expiration is set. We are creating the slice here - how can it be set?
         if not slice.expiration:
             # FIXME: Externalize the #7 here
             slice.expiration = slice.creation + relativedelta(days=7)
@@ -496,6 +500,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         slice.slice_id = str(uuid.uuid4())
         slice.owner_id = client_uuid
         slice.slice_urn = urn_for_slice(slice.slice_name, project_name)
+        # FIXME: Why is the cert lifeDays 365 days more than the diff between slice expiration and creation?
         cert, k = cert_util.create_cert(slice.slice_urn, \
             issuer_key = self.key, issuer_cert = self.cert, \
             lifeDays = (slice.expiration - slice.creation).days + \
@@ -530,7 +535,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         attribs = {"SLICE" : slice.slice_id, "PROJECT" : slice.project_id}
         self.logging_service.log_event("Created slice " + name, 
                                        attribs, client_uuid)
-        chapi_audit(SA_LOG_PREFIX, "Created slice " + name + " in project " + slice.project_id, logging.INFO, {'user': user_email})
+        chapi_audit_and_log(SA_LOG_PREFIX, "Created slice " + name + " in project " + slice.project_id, logging.INFO, {'user': user_email})
 
         # do the database write
         result = self.finish_create(session, slice, SA.slice_field_mapping)
@@ -557,25 +562,6 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
             raise CHAPIv1ArgumentError('No slice with urn ' + slice_urn)
         updates = {}
 
-        # regenerate cert if necessary
-        if options['fields'].has_key('SLICE_EXPIRATION'):
-            q = session.query(Slice)
-            q = q.filter(getattr(Slice, "slice_urn") == slice_urn)
-            rows = q.all()
-            if len(rows) > 0:
-                new_exp = options['fields']['SLICE_EXPIRATION']
-                cert = Certificate(string = rows[0].certificate)
-                t1 = dateutil.parser.parse(cert.cert.get_notAfter())
-                t2 = dateutil.parser.parse(new_exp)
-                t1 = t1.replace(tzinfo = t2.tzinfo)
-                if (t1 < t2):
-                    t3 = rows[0].creation
-                    cert, k = cert_util.create_cert(slice_urn, \
-                        issuer_key = self.key, issuer_cert = self.cert, \
-                        lifeDays = (t2 - t3).days + SA.SLICE_CERT_LIFETIME, \
-                        email = rows[0].slice_email, uuidarg=rows[0].slice_id)
-                    updates['certificate'] = cert.save_to_string()
-
 
         project_name, authority, slice_name = \
             extract_data_from_slice_urn(slice_urn)
@@ -589,6 +575,8 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         if expired:
             raise CHAPIv1ArgumentError('Cannot update a slice for an expired project')
 
+        # FIXME: Do not do this if the slice is expired
+
         q = session.query(Slice)
         q = q.filter(getattr(Slice, "slice_urn") == slice_urn)
         new_expiration = None
@@ -601,8 +589,32 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                 # FIXME: Do not allow renewing to a shorter time
 
                 # Do not allow renewing past the max increment (185 days was the old value)?
+
+                # FIXME: Validate that this is a valid UTC timestamp before using it
                 new_expiration = value
             updates[SA.slice_field_mapping[field]] = value
+
+        # regenerate cert if necessary
+        if options['fields'].has_key('SLICE_EXPIRATION'):
+            q = session.query(Slice)
+            q = q.filter(getattr(Slice, "slice_urn") == slice_urn)
+            rows = q.all()
+            if len(rows) > 0:
+                cert = Certificate(string = rows[0].certificate)
+                t1 = dateutil.parser.parse(cert.cert.get_notAfter())
+                t2 = dateutil.parser.parse(new_expiration)
+                # FIXME: Why are we assuming the cert's TZ is meant to be that from the input request time. In fact, the input request time should be treated as UTC if not specified, and the TZ in the cert should UTC. Or is a diff between 2 python datetimes something where .days gives you the total days in the diff, in which case we're just losing any hourse/minutes.
+                t1 = t1.replace(tzinfo = t2.tzinfo)
+                if (t1 < t2):
+                    t3 = rows[0].creation
+                    # FIXME: Why are we diffing the days in the 2 timestamps?
+                    cert, k = cert_util.create_cert(slice_urn, \
+                        issuer_key = self.key, issuer_cert = self.cert, \
+                        lifeDays = (t2 - t3).days + SA.SLICE_CERT_LIFETIME, \
+                        email = rows[0].slice_email, uuidarg=rows[0].slice_id)
+                    updates['certificate'] = cert.save_to_string()
+
+
         q = q.update(updates)
         session.commit()
         session.close()
@@ -662,6 +674,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         for key, value in options["fields"].iteritems():
             setattr(project, SA.project_field_mapping[key], value)
         project.creation = datetime.utcnow()
+        # FIXME: Must project expiration be in UTC? Shouldn't we check it is valid?
         if project.expiration == "": project.expiration=None
         project.project_id = str(uuid.uuid4())
 
@@ -690,7 +703,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         # FIXME: Get the name of the project lead and add this to the log/audit messages
         self.logging_service.log_event("Created project " + name, 
                                        attribs, client_uuid)
-        chapi_audit(SA_LOG_PREFIX, "Created project " + name, logging.INFO, {'user': user_email})
+        chapi_audit_and_log(SA_LOG_PREFIX, "Created project " + name, logging.INFO, {'user': user_email})
 
         # FIXME: Email the admins that the project was created
 
@@ -725,6 +738,9 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         if (options['fields'].has_key('PROJECT_EXPIRATION')
             and not options['fields']['PROJECT_EXPIRATION']):
             options['fields']['PROJECT_EXPIRATION'] = None
+
+        # FIXME: Are there any rules on TZ for project expiration? Make sure it is a valid timestamp?
+
         for field, value in options['fields'].iteritems():
             updates[SA.project_field_mapping[field]] = value
         q = q.update(updates)
@@ -928,7 +944,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
             q = session.query(Project)
             q = q.filter(Project.project_id == project_id)
             q = q.update({"lead_id" : new_project_lead})
-            chapi_audit(SA_LOG_PREFIX, "Changed lead for project %s from %s to %s" % (name, old_lead_urn, project_lead_urn), logging.INFO, {'user': user_email})
+            chapi_audit_and_log(SA_LOG_PREFIX, "Changed lead for project %s from %s to %s" % (name, old_lead_urn, project_lead_urn), logging.INFO, {'user': user_email})
             # FIXME: Add call to log service? It would be a duplicate of sorts
 
  

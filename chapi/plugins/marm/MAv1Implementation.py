@@ -563,7 +563,7 @@ class MAv1Implementation(MAv1DelegateBase):
         msg = "Activated GENI user : %s" % member_id
         attrs = {"MEMBER" : member_id}
         self.logging_service.log_event(msg, attrs, member_id)
-        chapi_audit(MA_LOG_PREFIX, msg, logging.INFO, {'user': user_email})
+        chapi_audit_and_log(MA_LOG_PREFIX, msg, logging.INFO, {'user': user_email})
         # FIXME: Send email to portal admins
 
         result = self._successReturn(atmap.values())
@@ -618,7 +618,7 @@ class MAv1Implementation(MAv1DelegateBase):
         attrs = {"MEMBER" : client_uuid}
         msg = "%s registering SSH key %s" % (member_urn, key_id)
         self.logging_service.log_event(msg, attrs, client_uuid)
-        chapi_audit(MA_LOG_PREFIX, msg, logging.INFO, {'user': user_email})
+        chapi_audit_and_log(MA_LOG_PREFIX, msg, logging.INFO, {'user': user_email})
 
         result = self._successReturn(fields)
 
@@ -780,7 +780,7 @@ class MAv1Implementation(MAv1DelegateBase):
         msg = "Created certificate for %s" % member_urn
         if private_key:
             msg = msg + " with private key"
-        chapi_audit(MA_LOG_PREFIX, msg, logging.INFO, {'user': user_email})
+        chapi_audit_and_log(MA_LOG_PREFIX, msg, logging.INFO, {'user': user_email})
 
         chapi_log_result(MA_LOG_PREFIX, method, result, {'user': user_email})
         return result
@@ -861,7 +861,7 @@ class MAv1Implementation(MAv1DelegateBase):
             msg = "Authorizing client %s for member %s" % (client_urn, member_urn)
             attribs = {"MEMBER" : member_id}
             self.logging_service.log_event(msg, attribs, member_id)
-            chapi_audit(MA_LOG_PREFIX, msg, logging.INFO, {'user': user_email})
+            chapi_audit_and_log(MA_LOG_PREFIX, msg, logging.INFO, {'user': user_email})
 
         else:
             # delete from MA_INSIDE_KEY_TABLENAME
@@ -877,7 +877,7 @@ class MAv1Implementation(MAv1DelegateBase):
             msg = "Deauthorizing client %s for member %s" % (client_urn, member_urn)
             attribs = {"MEMBER" : member_id}
             self.logging_service.log_event(msg, attribs, member_id)
-            chapi_audit(MA_LOG_PREFIX, msg, logging.INFO, {'user': user_email})
+            chapi_audit_and_log(MA_LOG_PREFIX, msg, logging.INFO, {'user': user_email})
 
         result = self._successReturn(True)
         chapi_log_result(MA_LOG_PREFIX, method, result, {'user': user_email})
@@ -931,7 +931,7 @@ class MAv1Implementation(MAv1DelegateBase):
             (member_urn, 'enabled' if enable_sense else 'disabled')
         attribs = {"MEMBER" : member_urn}
         self.logging_service.log_event(msg, attribs, member_urn)
-        chapi_audit(MA_LOG_PREFIX, msg, logging.INFO, {'user': user_email})
+        chapi_audit_and_log(MA_LOG_PREFIX, msg, logging.INFO, {'user': user_email})
 
         result = self._successReturn(was_enabled)
         chapi_log_result(MA_LOG_PREFIX, method, result, {'user': user_email})
@@ -996,7 +996,7 @@ class MAv1Implementation(MAv1DelegateBase):
         msg = "Setting member %s privilege %s" %  (member_uid, privilege)
         attribs = {"MEMBER" : member_uid}
         self.logging_service.log_event(msg, attribs, member_uid)
-        chapi_audit(MA_LOG_PREFIX, msg, logging.INFO, {'user': user_email})
+        chapi_audit_and_log(MA_LOG_PREFIX, msg, logging.INFO, {'user': user_email})
 
         # FIXME: Email admins, new project lead
 
@@ -1069,7 +1069,7 @@ class MAv1Implementation(MAv1DelegateBase):
             msg = "Revoking member %s privilege %s" %  (member_uid, privilege)
             attribs = {"MEMBER" : member_uid}
             self.logging_service.log_event(msg, attribs, member_uid)
-            chapi_audit(MA_LOG_PREFIX, msg, logging.INFO, {'user': user_email})
+            chapi_audit_and_log(MA_LOG_PREFIX, msg, logging.INFO, {'user': user_email})
 
         session.close()
 
