@@ -41,6 +41,7 @@ from tools.geni_utils import *
 from tools.guard_utils import *
 from syslog import syslog
 import amsoil.core.pluginmanager as pm
+from chapi_log import *
 from tools.mapped_tables import MemberAttribute
 
 logger = amsoil.core.log.getLogger('ABAC')
@@ -161,6 +162,7 @@ class SubjectInvocationCheck(InvocationCheck):
                     ok, proof = abac_manager.query(query)
                     if abac_manager._verbose:
                         syslog("Testing ABAC query %s OK = %s" % (query, ok))
+                        chapi_info('', "Testing ABAC query %s OK = %s" % (query, ok))
                     if ok:
                         one_succeeded = True
                         break
