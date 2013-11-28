@@ -418,7 +418,7 @@ def assert_shares_slice(caller_urn, member_urns, label, options, abac_manager):
     ma1 = aliased(db.MEMBER_ATTRIBUTE_TABLE)
     ma2 = aliased(db.MEMBER_ATTRIBUTE_TABLE)
 
-    chapi_info('', "ASS : %s %s %s %s" % \
+    chapi_debug('', "ASS : %s %s %s %s" % \
                    (caller_urn, member_urns, label, options))
 
     q = session.query(sm1.c.slice_id, sm2.c.slice_id, ma1.c.value, ma2.c.value)

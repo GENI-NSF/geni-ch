@@ -562,58 +562,72 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
             raise CHAPIv1ArgumentError('No slice with urn ' + slice_urn)
         updates = {}
 
-
         project_name, authority, slice_name = \
             extract_data_from_slice_urn(slice_urn)
         project_uuid = \
             self.get_project_id(session, 'project_name', project_name)
+
         q = session.query(Project.expired, Project.expiration)
         q = q.filter(Project.project_id == project_uuid)
         project_info = q.one()
-        expired = project_info.expired
         project_expiration = project_info.expiration
-        if expired:
+        if project_info.expired:
+            session.close()
             raise CHAPIv1ArgumentError('Cannot update a slice for an expired project')
 
-        # FIXME: Do not do this if the slice is expired
+        q = session.query(Slice.expired, Slice.expiration, Slice.certificate, Slice.slice_email, Slice.slice_id, Slice.creation)
+        q = q.filter(Slice.slice_id == slice_uuid)
+        slice_info = q.one()
+        if slice_info.expired:
+            session.close()
+            raise CHAPIv1ArgumentError('Cannot update or renew an expired slice')
+        slice_expiration = slice_info.expiration
+        max_exp = datetime.utcnow() + relativedelta(days=SA.SLICE_MAX_RENEWAL_DAYS)
+        new_exp = None # A dateutil for the new slice expiration
 
-        q = session.query(Slice)
-        q = q.filter(getattr(Slice, "slice_urn") == slice_urn)
-        new_expiration = None
         for field, value in options['fields'].iteritems():
             if field=="SLICE_EXPIRATION":
+                # convert value to datetime object
+                # FIXME: Make it UTC so we compare apples to apples *****
+                new_exp = dateutil.parser.parse(value)
+#                chapi_debug(SA_LOG_PREFIX, "Slice %s Requested new slice expiration %s" % (slice_name, value)
                 # don't renew past project expiration time
-                if project_expiration != None and value > project_expiration:
-                    value = project_expiration
-
-                # FIXME: Do not allow renewing to a shorter time
-
-                # Do not allow renewing past the max increment (185 days was the old value)?
-
-                # FIXME: Convert this to UTC
-                new_expiration = value
-            updates[SA.slice_field_mapping[field]] = value
-
-        # regenerate cert if necessary
-        if options['fields'].has_key('SLICE_EXPIRATION'):
-            q = session.query(Slice)
-            q = q.filter(getattr(Slice, "slice_urn") == slice_urn)
-            rows = q.all()
-            if len(rows) > 0:
-                cert = Certificate(string = rows[0].certificate)
+                if project_expiration != None and new_exp > project_expiration:
+                    if project_expiration < slice_expiration:
+                        # Don't reset their request to make it illegal
+                        # The error would be surprising
+                        value = slice_expiration
+                        new_exp = slice_expiration # value just changed from string to datetime
+#                        chapi_debug(SA_LOG_PREFIX, "Slice %s Reset renew request %s to project exp %s but that's less than current slice exp %s, so reset to slice exp" % (slice_name, new_exp, project_expiration, slice_expiration))
+                    else:
+                        value = project_expiration # value just changed from string to datetime
+                        new_exp = project_expiration
+#                        chapi_debug(SA_LOG_PREFIX, "Slice %s Reset renew request %s to project exp %s" % (slice_name, new_exp, project_expiration))
+                # make sure renewal isn't more than max allowed
+                if new_exp > max_exp:
+                    new_exp = max_exp
+                    value = max_exp # value just changed from string to datetime!
+#                    chapi_debug(SA_LOG_PREFIX, "Slice %s Reset renew request %s to max exp %s" % (slice_name, new_exp, max_exp))
+                # don't shorten slice lifetime
+                if slice_expiration > new_exp:
+                    session.close()
+                    raise CHAPIv1ArgumentError('Cannot shorten slice lifetime')
+                # regenerate cert if necessary
+                cert = Certificate(string = slice_info.certificate)
                 t1 = dateutil.parser.parse(cert.cert.get_notAfter())
-                t2 = dateutil.parser.parse(new_expiration)
-                # FIXME: Why are we assuming the cert's TZ is meant to be that from the input request time. In fact, the input request time should be treated as UTC if not specified, and the TZ in the cert should UTC. Or is a diff between 2 python datetimes something where .days gives you the total days in the diff, in which case we're just losing any hourse/minutes.
+                t2 = new_exp
+                # FIXME: Why are we assuming the cert's TZ is meant to be that from the input request time. In fact, the input request time should be treated as UTC if not specified, and the TZ in the cert should UTC. Or is a diff between 2 python datetimes something where .days gives you the total days in the diff, in which case we're just losing any hours/minutes.
                 t1 = t1.replace(tzinfo = t2.tzinfo)
                 if (t1 < t2):
-                    t3 = rows[0].creation
-                    # FIXME: Why are we diffing the days in the 2 timestamps?
+                    t3 = slice_info.creation
+                    # FIXME: Note the cert will be good past the slice expiration - why?
                     cert, k = cert_util.create_cert(slice_urn, \
                         issuer_key = self.key, issuer_cert = self.cert, \
                         lifeDays = (t2 - t3).days + SA.SLICE_CERT_LIFETIME, \
-                        email = rows[0].slice_email, uuidarg=rows[0].slice_id)
+                        email = slice_info.slice_email, uuidarg=slice_info.slice_id)
                     updates['certificate'] = cert.save_to_string()
-
+                    
+            updates[SA.slice_field_mapping[field]] = value
 
         q = q.update(updates)
         session.commit()
@@ -623,12 +637,9 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         client_uuid = get_uuid_from_cert(client_cert)
         attribs = {"PROJECT" : project_uuid, "SLICE" : slice_uuid}
         if "SLICE_EXPIRATION" in options['fields']: 
-            expiration_string = options['fields']['SLICE_EXPIRATION']
-            if new_expiration is not None:
-                expiration_string = new_expiration
-            expiration = dateutil.parser.parse(expiration_string)
+            # FIXME: Format in RFC3339 format not iso
             self.logging_service.log_event("Renewed slice %s until %s" % \
-                                               (slice_name, expiration), \
+                                               (slice_name, new_exp.isoformat()), \
                                                attribs, client_uuid)
         else:
             self.logging_service.log_event("Updated slice " + slice_name, 
