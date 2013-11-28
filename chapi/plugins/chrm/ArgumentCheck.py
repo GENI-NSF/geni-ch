@@ -326,5 +326,5 @@ class ValidURNCheck(ArgumentCheck):
         if urns.instanceof(types.StringType): urns = [urns]
         for urn in urns:
             if not is_valid_urn(urn):
-                raiseCHAPIv1ArgumentError("Invalid URN: " + urn)
+                raise CHAPIv1ArgumentError("Invalid URN: " + urn)
             
