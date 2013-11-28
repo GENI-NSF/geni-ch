@@ -100,6 +100,11 @@ default_parameters = [
         DESC_KEY: "Set true to enable verbose debug logging in CHAPI."
     },
     {
+        NAME_KEY: "chapi.log_level",
+        VALUE_KEY: "INFO",
+        DESC_KEY: "CHAPI logging level."
+    },
+    {
         NAME_KEY: "chapi.set_params",
         VALUE_KEY: True,
         DESC_KEY: "Flag noting we set the CHAPI params in the config module"
@@ -215,14 +220,38 @@ def set_parameters():
 def configure_logging():
     config = pm.getService("config")
 
-    level = logging.INFO
-    optlevel = 'INFO'
-    # If we got the verbose setting, set optlevel to 'DEBUG'
+    # If we got the verbose setting certain long log messages will be logged
     chapi_do_debug = config.get("chapi.log_verbose")
     if chapi_do_debug:
-        chapi_info("LOGGING", "Will log DEBUG CHAPI logs")
+        chapi_info("LOGGING", "Will log verbosely")
+        verboseObj.setVerbose()
+
+    # Set the log level
+    level = logging.INFO
+    optlevel = 'INFO'
+    config_log_level_string = config.get("chapi.log_level")
+    if config_log_level_string.strip().upper() == "DEBUG":
         optlevel = 'DEBUG'
         level = logging.DEBUG
+    elif config_log_level_string.strip().upper() == "INFO":
+        optlevel = 'INFO'
+        level = logging.INFO
+    elif config_log_level_string.strip().upper() == "WARN":
+        optlevel = 'WARNING'
+        level = logging.WARNING
+    elif config_log_level_string.strip().upper() == "WARNING":
+        optlevel = 'WARNING'
+        level = logging.WARNING
+    elif config_log_level_string.strip().upper() == "ERROR":
+        optlevel = 'ERROR'
+        level = logging.ERROR
+    elif config_log_level_string.strip().upper() == "CRITICAL":
+        optlevel = 'CRITICAL'
+        level = logging.CRITICAL
+    else:
+        chapi_warn("LOGGING", "Unknown log level %s ignored" % config_log_level_string)
+    chapi_info("LOGGING", "CHAPI log level is %s" % optlevel)
+
     deft = {}
     deft['loglevel'] = optlevel
     deft['logfilename'] = config.get("chapi.log_file")

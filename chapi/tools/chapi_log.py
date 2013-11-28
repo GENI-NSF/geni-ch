@@ -37,6 +37,17 @@ CS_LOG_PREFIX = "CS"
 PGCH_LOG_PREFIX = "PGCH"
 SR_LOG_PREFIX = "SR"
 
+# Class just to hold the is_verbose flag from Parameters.py
+class CHAPIVerbose(object):
+    def __init__(self, verbose=False):
+        self.verbose=verbose
+    def setVerbose(self, verbose=True):
+        self.verbose=verbose
+    def isVerbose(self):
+        return self.verbose
+
+verboseObj = CHAPIVerbose()
+
 def chapi_get_audit_logger():
     chapi_audit_logger = logging.getLogger('chapi.audit')
     if len(chapi_audit_logger.handlers) == 0:
@@ -119,7 +130,7 @@ def chapi_log_invocation(prefix, method, credentials, options, arguments, extra=
     msg = "Invoked %s Options %s Arguments %s" % (method, options, arguments)
     # FIXME: Info or debug?
     chapi_logger = chapi_get_logger()
-    if chapi_logger.isEnabledFor(logging.DEBUG):
+    if verboseObj.isVerbose() and chapi_logger.isEnabledFor(logging.DEBUG):
         chapi_debug(prefix, msg, extra=extra)
     else:
         if len(msg) > 260:
@@ -127,8 +138,7 @@ def chapi_log_invocation(prefix, method, credentials, options, arguments, extra=
         else:
             chapi_info(prefix, msg, extra=extra)
 
-    # FIXME: Only do this if the chapi logger is at DEBUG level?
-    if chapi_logger.isEnabledFor(logging.DEBUG):
+    if verboseObj.isVerbose():
         # Send to syslog at INFO level
         chapi_audit(prefix, msg, logging.INFO, extra=extra)
 
@@ -137,7 +147,7 @@ def chapi_log_result(prefix, method, result, extra=None):
     msg = "Result from %s: %s" % (method, result)
     # FIXME: Info or debug?
     chapi_logger = chapi_get_logger()
-    if chapi_logger.isEnabledFor(logging.DEBUG):
+    if verboseObj.isVerbose() and chapi_logger.isEnabledFor(logging.DEBUG):
         chapi_debug(prefix, msg, extra=extra)
     else:
         if len(msg) > 260:
@@ -145,8 +155,7 @@ def chapi_log_result(prefix, method, result, extra=None):
         else:
             chapi_info(prefix, msg, extra=extra)
 
-    # FIXME: Only do this if the chapi logger is at DEBUG level?
-    if chapi_logger.isEnabledFor(logging.DEBUG):
+    if verboseObj.isVerbose():
         # Send to syslog at INFO level
         chapi_audit(prefix, msg, logging.INFO, extra=extra)
 
