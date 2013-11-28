@@ -33,6 +33,7 @@ import os
 import os.path
 
 CONFIG_FILE = '@pkgsysconfdir@/chapi.ini'
+DEV_CONFIG_FILE = '@pkgsysconfdir@/chapi-dev.ini'
 
 GENI_CH_DIR = '/usr/share/geni-ch'
 CA_DIR = os.path.join(GENI_CH_DIR, 'CA')
@@ -204,6 +205,29 @@ def set_parameters():
         chapi_warn('PARAMETERS',
                    'Unable to read config file %s' % (CONFIG_FILE))
     else:
+        for param in default_parameters:
+            pname = param[NAME_KEY]
+            (section, option) = param_to_secopt(pname)
+            if parser.has_option(section, option):
+                value_type = type(param[VALUE_KEY])
+                value = get_typed_value(parser, section, option, value_type)
+                if value is not None:
+                    # If a value was extracted, set it
+                    msg = 'Setting parameter %s to %s from %s'
+                    chapi_info('PARAMETERS',
+                                msg % (pname, value, CONFIG_FILE))
+                    config.set(pname, value)
+
+    # Overwrite the base settings with values from the developer config file
+    parser = ConfigParser.SafeConfigParser()
+    result = parser.read(DEV_CONFIG_FILE)
+    if len(result) != 1:
+        # file was not read, warn and return
+        chapi_debug('PARAMETERS',
+                   'Unable to read developer config file %s' % (DEV_CONFIG_FILE))
+    else:
+        chapi_warn('PARAMETERS', "Over-riding configs using developer config file %s" % (DEV_CONFIG_FILE))
+        # FIXME: Only allow log settings to be changed?
         for param in default_parameters:
             pname = param[NAME_KEY]
             (section, option) = param_to_secopt(pname)
