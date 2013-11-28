@@ -52,19 +52,24 @@ class InvocationCheck(object):
 
     # Raise an ARGUMENT_ERROR if there is something wrong about the 
     # arguments passed to method
+    # Return dictionary of {subject_type : subjects}
     def validate_arguments(self, client_cert, method, options, arguments):
         # Method-specific logic
-        pass
+        return None
 
     # Raise an AUTHORIZATION_ERROR if there is something wrong about the 
-    # certs and credentials and options/argumentspassed to the call
-    def authorize_call(self, client_cert, method, credentials, options, arguments):
+    # certs and credentials and options/arguments passed to the call
+    # and subjects extracted from validate_arguments call
+    def authorize_call(self, client_cert, method, credentials, options, \
+                           arguments, subjects ):
         raise CHAPIv1NotImplementedError("Abstract Base class: InvocationCheck")
 
     # Validate arguments and check authorization
     def validate(self, client_cert, method, credentials, options, arguments):
-        self.validate_arguments(client_cert, method, options, arguments)
-        self.authorize_call(client_cert, method, credentials, options, arguments)
+        subjects = self.validate_arguments(client_cert, method, \
+                                               options, arguments)
+        self.authorize_call(client_cert, method, credentials, \
+                                options, arguments, subjects)
 
 # Class that determines if the caller has the right to invoke a given method on all
 # the subjects of a given method invocation
@@ -78,7 +83,6 @@ class SubjectInvocationCheck(InvocationCheck):
             self._attribute_extractors = [attribute_extractors]
         self._subject_extractor = subject_extractor
         self._pass_empty_subject = pass_empty_subject
-        self._subjects = None
         self.config = pm.getService('config')
         self.key_file = self.config.get("chapiv1rpc.ch_key")
         self.cert_file = self.config.get("chapiv1rpc.ch_cert")
@@ -86,13 +90,15 @@ class SubjectInvocationCheck(InvocationCheck):
     # Check that there are subjects in the arguments if required
     # Store the list of subjects for later authorization
     def validate_arguments(self, client_cert, method, options, arguments):
+        subjects = {}
         if self._subject_extractor:
-            self._subjects = self._subject_extractor(options, arguments)
-#            if not self._subjects or len(self._subjects) == 0:
+            subjects = self._subject_extractor(options, arguments)
+#            if not subjects or len(subjects) == 0:
 #                raise CHAPIv1ArgumentError("No subjects supplied to call %s" % method);
-            if self._subjects and len(self._subjects) > 1:
+            if subjects and len(subjects) > 1:
                 raise CHAPIv1ArgumentError("Can't provide mixture of subject types for call %s: %s" % \
-                                               (method, self._subjects.keys()))
+                                               (method, subjects.keys()))
+        return subjects
 
     def load_policies(self, abac_manager, subject_name):
         for policy in self._policies:
@@ -108,7 +114,8 @@ class SubjectInvocationCheck(InvocationCheck):
     #    For each subject prove AUTHORITY.MAY_$method(SUBJECT)<-CALLER
     # If there are no subjects (and this is allowed by validate_arguments)
     #    Prove AUTHORITYMAY_$method<-CALLER
-    def authorize_call(self, client_cert, method, credentials, options, arguments):
+    def authorize_call(self, client_cert, method, credentials, options, \
+                           arguments, subjects):
         abac_manager =  ABACManager(certs_by_name = {"CALLER" : client_cert}, 
                                     cert_files_by_name = {"ME" : self.cert_file}, 
                                     key_files_by_name = {"ME" : self.key_file},
@@ -126,10 +133,10 @@ class SubjectInvocationCheck(InvocationCheck):
         if lookup_authority_privilege(client_urn):
             abac_manager.register_assertion("ME.IS_AUTHORITY<-CALLER")
 
-        if self._subjects:
+        if subjects:
 
-            subject_type = self._subjects.keys()[0]
-            subjects_of_type = self._subjects[subject_type]
+            subject_type = subjects.keys()[0]
+            subjects_of_type = subjects[subject_type]
             if not isinstance(subjects_of_type, list) : 
                 subjects_of_type = [subjects_of_type]
             # empty subject list means not returning anything, so okay          
