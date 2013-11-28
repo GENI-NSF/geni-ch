@@ -139,15 +139,13 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         session = self.db.getSession()
         q = self.get_expiration_query(session, type, old_flag, resurrect)
         rows = q.all()
-        session.close()
 
         if len(rows) > 0:
-            session = self.db.getSession()
             q = self.get_expiration_query(session, type, old_flag, resurrect)
             update_fields = {'expired' : new_flag}
             q = q.update(update_fields)
             session.commit()
-            session.close()
+        session.close()
 
 
         for row in rows:
@@ -223,6 +221,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
             q = q.order_by(desc(self.db.SLICE_TABLE.c['creation']))
             rows = q.all()
             slice_id = rows[0][0]
+            session.close()
 
         result = self.lookup_members(client_cert, self.db.SLICE_TABLE, 
                                      self.db.SLICE_MEMBER_TABLE, slice_urn, "slice_urn", 
@@ -451,6 +450,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
 
         # Check if project is not null
         if project_urn == None:
+            session.close()
             raise CHAPIv1ArgumentError("No project specified for create_slice");
 
         # Check if project is not expired, get expiration for later use
@@ -460,18 +460,22 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         expired = project_info.expired
         project_expiration = project_info.expiration
         if project_info.expired:
+            session.close()
             raise CHAPIv1ArgumentError("May not create a slice on expired project");
         
         # Check that slice name is valid
         if ' ' in name:
+            session.close()
             raise CHAPIv1ArgumentError('Slice name may not contain spaces.')
         elif len(name) > 19:
+            session.close()
             raise CHAPIv1ArgumentError('Slice name %s is too long - use at most 19 characters.' %name)
             
         # FIXME: Externalize this
         pattern = '^[a-zA-Z0-9][a-zA-Z0-9-]{0,18}$'
         valid = re.match(pattern,name)
         if valid == None:
+            session.close()
             raise CHAPIv1ArgumentError('Slice name %s is invalid - use at most 19 alphanumeric characters or hyphen. No leading hyphen.' %name)
         # before fill in rest, check that slice does not already exist
         same_name = self.get_slice_ids(session, "slice_name", name)
@@ -520,6 +524,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         admins_to_add = []
         members = self.lookup_project_members(client_cert,project_urn, credentials,{})
         if members['code'] != NO_ERROR:
+            session.close()
             raise CHAPIv1ArgumentError('No members for project ' + project_urn)
         for member in members['value']:
             if member['PROJECT_ROLE'] == 'ADMIN' or member['PROJECT_ROLE'] == 'LEAD':
@@ -877,6 +882,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                                                         credentials, \
                                                         {})
                     if lookup_result['code'] != NO_ERROR:
+                        session.close()
                         return lookup_result   # Shouldn't happen: Should raise an exception
                     new_lead_urn = None
                     for row in lookup_result['value']:
@@ -900,6 +906,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
 
                             break
                     if new_lead_urn==None:
+                        session.close()
                         raise CHAPIv1ArgumentError('New project lead not authorized')
                     
         if 'members_to_change' in options:
@@ -911,6 +918,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                                                         credentials, \
                                                         {})
                     if lookup_result['code'] != NO_ERROR:
+                        session.close()
                         return lookup_result   # Shouldn't happen: Should raise an exception
                     new_lead_urn = change['PROJECT_MEMBER']
                     for row in lookup_result['value']:
@@ -921,6 +929,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                                 filter(self.db.MEMBER_ATTRIBUTE_TABLE.c.name == 'PROJECT_LEAD')
                             rows = q.all()
                             if len(rows) == 0 or rows[0][0] != 'true':
+                                session.close()
                                 raise CHAPIv1ArgumentError('New project lead not authorized')
                             new_project_lead = row['PROJECT_MEMBER_UID']
                             break

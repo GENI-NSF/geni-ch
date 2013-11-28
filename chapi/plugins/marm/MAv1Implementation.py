@@ -413,6 +413,7 @@ class MAv1Implementation(MAv1DelegateBase):
             q.update(keys)
         else:
             if "certificate" not in keys:
+                session.close()
                 raise CHAPIv1ArgumentError('Cannot insert just private key')
             obj = table()
             obj.member_id = uid
@@ -638,6 +639,7 @@ class MAv1Implementation(MAv1DelegateBase):
         q = q.filter(SshKey.id == key_id)
         num_del = q.delete()
         if num_del == 0:
+            session.close()
             raise CHAPIv1DatabaseError("No key with id  %s" % key_id)
         session.commit()
         session.close()
@@ -675,6 +677,7 @@ class MAv1Implementation(MAv1DelegateBase):
         num_upd = q.update(update_fields)
 
         if num_upd == 0:
+            session.close()
             raise CHAPIv1DatabaseError("No key with id %s" % key_id)
         session.commit()
         session.close()
@@ -1062,6 +1065,7 @@ class MAv1Implementation(MAv1DelegateBase):
                                     result = self._sa_handler._delegate.modify_project_membership(cert, project['PROJECT_URN'], credentials, options)
                                     break
                         if new_lead_urn == None:
+                            session.close()
                             raise CHAPIv1ArgumentError('Cannot revoke lead privilege.  No authorized admin to take lead role on project %s' %project_urn)                            
         if was_enabled:
             self.delete_attr(session, privilege, member_uid)
