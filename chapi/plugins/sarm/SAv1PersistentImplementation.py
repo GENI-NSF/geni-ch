@@ -317,8 +317,8 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         q = q.filter(self.db.SLICE_TABLE.c.slice_urn == slice_urn)
         q = q.filter(self.db.SLICE_TABLE.c.expired == 'f')
         rows = q.all()
-        session.close()
         if len(rows) == 0:
+            session.close()
             return self._errorReturn("Can't get slice credential " + \
                                          "on expired or non-existent slice %s"\
                                          % slice_urn)
@@ -337,7 +337,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
 
         sfa_raw_creds = [slice_cred.xml]
         abac_raw_creds = []
-        session = self.db.getSession()
+
         q = session.query(self.db.SLICE_MEMBER_TABLE.c.role)
         q = q.filter(self.db.SLICE_MEMBER_TABLE.c.slice_id == self.db.SLICE_TABLE.c.slice_id)
         q = q.filter(self.db.SLICE_TABLE.c.slice_urn == slice_urn)
