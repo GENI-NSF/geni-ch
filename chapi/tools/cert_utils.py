@@ -65,6 +65,19 @@ def get_urn_from_cert(cert):
             break
     return urn
 
+# Pull out the email from the certificate
+def get_email_from_cert(cert):
+    cert_object = sfa.trust.certificate.Certificate(string=cert)
+    subject_alt_names = cert_object.get_extension('subjectAltName')
+    san_parts = subject_alt_names.split(',')
+    email = None
+    for san_part in san_parts:
+        san_part = san_part.strip()
+        if san_part.startswith('email:'):
+            email = san_part[6:]
+            break
+    return email
+
 # Pull the object name fro the URN
 # It is the part after the last +
 def get_name_from_urn(urn):

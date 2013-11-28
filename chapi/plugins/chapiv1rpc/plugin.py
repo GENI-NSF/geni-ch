@@ -26,12 +26,15 @@ from chapi.Clearinghouse import CHv1Handler, CHv1DelegateBase
 from chapi.MemberAuthority import MAv1Handler, MAv1DelegateBase
 from chapi.SliceAuthority import SAv1Handler, SAv1DelegateBase
 from chapi.GuardBase import GuardBase
-from chapi.Parameters import set_parameters
+from chapi.Parameters import set_parameters, configure_logging
 
 def setup():
     # load all the parameter values into the config database
     set_parameters()
-    
+
+    # Configure logging
+    configure_logging()
+
     # register xmlrpc endpoint
     xmlrpc = pm.getService('xmlrpc')
 

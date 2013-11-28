@@ -2,5 +2,9 @@ FastCGI.*initialized
 FastCGI.*AMsoil.*started
 RFC 4366
 SIGTERM
+INFO     root: Had no handler for chapi yet
+INFO     chapi: PARAMETERS: Setting
+INFO     chapi: LOGGING: CHAPI log level is INFO
+INFO     root: About to configure logging
 mod_fastcgi/2.4.6 PHP/5.3.2-1ubuntu4.21 with Suhosin-Patch mod_ssl/2.2.14 OpenSSL/0.9.8k configured
 PHP/5.3.2-1ubuntu4.21 with Suhosin-Patch mod_ssl/2.2.14 OpenSSL/0.9.8k configured

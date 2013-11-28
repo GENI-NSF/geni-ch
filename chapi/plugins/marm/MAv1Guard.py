@@ -26,7 +26,7 @@ from ArgumentCheck import *
 import tools.MA_constants as MA
 
 # Special class to make sure no one can ask for SSH private keys
-# other that for self
+# other than for self
 class LookupKeysInvocationCheck(SubjectInvocationCheck):
         
     def validate_arguments(self, client_cert, method, options, arguments):

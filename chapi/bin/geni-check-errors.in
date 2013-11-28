@@ -19,7 +19,7 @@ checks = [LogChecker('/var/log/apache2/error.log',
                      '@pkgdatadir@/apache-error-log-out.txt'),
           LogChecker('/var/log/apache2/ch_error.log',
                      '@pkgdatadir@/ch-error-log-out.txt'),
-          LogChecker('/tmp/chapi.log',
+          LogChecker('/var/log/geni-chapi/chapi.log',
                      '@pkgdatadir@/chapi-log-out.txt'),
           LogChecker('/usr/share/geni-ch/chapi/AMsoil/log/amsoil.log',
                      '@pkgdatadir@/amsoil-log-out.txt')]
