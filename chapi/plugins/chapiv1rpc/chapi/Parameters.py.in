@@ -238,7 +238,7 @@ def set_parameters():
                     # If a value was extracted, set it
                     msg = 'Setting parameter %s to %s from %s'
                     chapi_info('PARAMETERS',
-                                msg % (pname, value, CONFIG_FILE))
+                                msg % (pname, value, DEV_CONFIG_FILE))
                     config.set(pname, value)
 
 def configure_logging():
