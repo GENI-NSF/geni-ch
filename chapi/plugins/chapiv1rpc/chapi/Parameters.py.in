@@ -106,11 +106,6 @@ default_parameters = [
         DESC_KEY: "CHAPI logging level."
     },
     {
-        NAME_KEY: "chapi.set_params",
-        VALUE_KEY: True,
-        DESC_KEY: "Flag noting we set the CHAPI params in the config module"
-    },
-    {
         NAME_KEY: "chrm.authority",
         VALUE_KEY: "host.example.com",
         DESC_KEY: "Name of CH/SA/MA authority"
@@ -184,14 +179,6 @@ def param_to_secopt(param):
 
 def set_parameters():
     config = pm.getService("config")
-    did_set = False
-    try:
-        did_set = config.get("chapi.set_params")
-    except:
-        pass
-    if did_set == False:
-        chapi_warn('PARAMETERS', 'CHAPI params already in configdb')
-        return
 
     # Set up the defaults
     for param in default_parameters:
