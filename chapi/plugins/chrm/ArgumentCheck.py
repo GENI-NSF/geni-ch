@@ -25,9 +25,11 @@ from chapi.Exceptions import *
 from geni.util.urn_util import is_valid_urn
 from tools.geni_constants import *
 from sfa.trust.certificate import Certificate
+from tools.chapi_log import *
 import types
 import uuid
 import dateutil.parser
+from dateutil.tz import tzutc
 
 # Create a subset 'fields' dictionary with only fields in given list
 def select_fields(field_definitions, field_list):
@@ -84,6 +86,9 @@ class FieldsArgumentCheck(ArgumentCheck):
         # Check all the typed arguments
         self.validateArgumentFormats(arguments)
 
+        # Normalize field inputs (e.g turn all dates into UTC)
+        self.normalizeFields(options)
+
     # Make sure all object fields provided are recognized 
     def validateFieldList(self, fields):
         for field in fields:
@@ -91,6 +96,26 @@ class FieldsArgumentCheck(ArgumentCheck):
                     not  field in self._supplemental_fields:
                 raise CHAPIv1ArgumentError("Unrecognized field : " + field)
 
+    # Format for parsing/formatting datetime with timezone
+    FORMAT_DATETIME_TZ = "%Y-%m-%d %H:%M:%S.%f"
+
+    # Modify the 'fields' option to normalize inputs (e.g. turn all dates into UTC TZ)
+    def normalizeFields(self, options):
+        if 'fields' not in options: return
+
+        for field_name, field_value in  options['fields'].items():
+            field_type = self.fieldTypeForFieldName(field_name)
+            if field_type == 'DATETIME':
+                # Store all dates as 'naive UTC'
+                # If any date doesn't have a TZ, assume it is UTC
+                # If it does have a TZ, convert to UTC and strip TZ info
+                # Then  store converted value into the proper 'fields' slot
+                parsed_datetime = dateutil.parser.parse(field_value)
+                if parsed_datetime.tzinfo:
+                    parsed_datetime = parsed_datetime.astimezone(tzutc())
+                    utc_field_value = parsed_datetime.strftime(FieldsArgumentCheck.FORMAT_DATETIME_TZ)
+                    options['fields'][field_name] = utc_field_value
+                    chapi_info('ArgCheck', 'DATETIME convert: %s %s' % (field_value, utc_field_value))
                            
     # Take a list of {field : value} dictionaries
     # Make sure all field name/value pairs are recognized and of proper type
@@ -104,8 +129,8 @@ class FieldsArgumentCheck(ArgumentCheck):
                 raise CHAPIv1ArgumentError("Unrecognized field : " + field)
             self.validateFieldValueFormat(field, value)
 
-    # Validate that a given field has proper format by looking up type
-    def validateFieldValueFormat(self, field, value):
+    # Determine the type of a given field
+    def fieldTypeForFieldName(self, field):
         if field in self._mandatory_fields and \
                  'TYPE' in self._mandatory_fields[field]:
             field_type = self._mandatory_fields[field]['TYPE']
@@ -117,6 +142,11 @@ class FieldsArgumentCheck(ArgumentCheck):
             field_type = self._matchable_fields[field]['TYPE']
         else:
             raise CHAPIv1ArgumentError("No type defined for field: %s" % field)
+        return field_type
+
+    # Validate that a given field has proper format by looking up type
+    def validateFieldValueFormat(self, field, value):
+        field_type = self.fieldTypeForFieldName(field)
         self.validateTypedField(field, field_type, value)
 
     # Validate format arguments (not options)
