@@ -40,7 +40,7 @@ from tools.geni_constants import *
 from tools.geni_utils import *
 from tools.guard_utils import *
 import amsoil.core.pluginmanager as pm
-from chapi_log import *
+from tools.chapi_log import *
 from tools.mapped_tables import MemberAttribute
 import logging
 
