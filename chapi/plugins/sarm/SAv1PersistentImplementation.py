@@ -432,10 +432,12 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         # the fake email addresses
 
         # Create email if not provided
-        if not '_GENI_SLICE_EMAIL' in options['fields'] or \
-           not options['fields']['_GENI_SLICE_EMAIL']:
-            options['fields']['_GENI_SLICE_EMAIL'] = \
-                'slice-%s@example.com' % name
+#        if not '_GENI_SLICE_EMAIL' in options['fields'] or \
+#           not options['fields']['_GENI_SLICE_EMAIL']:
+#            options['fields']['_GENI_SLICE_EMAIL'] = \
+#                'slice-%s@example.com' % name
+
+        options['fields']['_GENI_SLICE_EMAIL'] = None
 
         # fill in the fields of the object
         slice = Slice()
