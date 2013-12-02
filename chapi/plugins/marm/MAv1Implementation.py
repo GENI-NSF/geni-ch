@@ -870,8 +870,9 @@ class MAv1Implementation(MAv1DelegateBase):
             # delete from MA_INSIDE_KEY_TABLENAME
             # where member_id = member_id and client_urn = client_urn
             session = self.db.getSession()
-            q = q.filter(self.db.INSIDE_KEY_TABLE.c.member_id == member_id)
-            q = q.filter(self.db.INSIDE_KEY_TABLE.c.client_urn == client_urn)
+            q = session.query(InsideKey)
+            q = q.filter(InsideKey.member_id == member_id)
+            q = q.filter(InsideKey.client_urn == client_urn)
             q = q.delete()
             session.commit()
             session.close()
