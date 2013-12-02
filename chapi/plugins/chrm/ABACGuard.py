@@ -41,7 +41,7 @@ from tools.geni_utils import *
 from tools.guard_utils import *
 from syslog import syslog
 import amsoil.core.pluginmanager as pm
-from chapi_log import *
+from tools.chapi_log import *
 from tools.mapped_tables import MemberAttribute
 
 logger = amsoil.core.log.getLogger('ABAC')
