@@ -30,19 +30,20 @@ import tools.MA_constants as MA
 class LookupKeysInvocationCheck(SubjectInvocationCheck):
         
     def validate_arguments(self, client_cert, method, options, arguments):
-        super(LookupKeysInvocationCheck, self).validate_arguments(
+        subjects = super(LookupKeysInvocationCheck, self).validate_arguments(
             client_cert, method, options, arguments)
         # If they didn't specify a filter (all by default), 
         # or they explicitly asked for KEY_PRIVATE, there can only
         # be the caller in the list of requested users in 'match'
         if 'filter' not in options or 'KEY_PRIVATE' in options['filter']:
             client_urn = get_urn_from_cert(client_cert)
-            for member_urn in self._subjects['MEMBER_URN']:
-                if member_urn != client_urn:
-                    raise CHAPIv1AuthorizationError(
-                        "Can't request private SSH key for user other" + 
-                        " than self. Limit match criteria or set filter" + 
-                        " explicitly : " + member_urn)
+            if subjects and 'MEMBER_URN' in subjects:
+                for member_urn in subjects['MEMBER_URN']:
+                    if member_urn != client_urn:
+                        raise CHAPIv1AuthorizationError(
+                            "Can't request private SSH key for user other" + 
+                            " than self. Limit match criteria or set filter" + 
+                            " explicitly : " + member_urn)
 
 
 def member_id_extractor(options, arguments):
