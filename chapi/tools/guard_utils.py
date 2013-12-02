@@ -33,7 +33,6 @@ from cert_utils import *
 from geni_constants import *
 from chapi.Memoize import memoize
 from chapi.Exceptions import *
-from syslog import syslog
 import MA_constants as MA
 from dbutils import add_filters
 from chapi_log import *
@@ -278,7 +277,7 @@ def lookup_operator_privilege(user_urn):
     rows = q.all()
     session.close()
     is_operator = (len(rows)>0)
-    syslog('lookup_operator_privilege: '+user_urn+" = "+str(is_operator))
+    chapi_debug('UTILS', 'lookup_operator_privilege: '+user_urn+" = "+str(is_operator))
     cache[user_urn] = is_operator
     return is_operator
 
