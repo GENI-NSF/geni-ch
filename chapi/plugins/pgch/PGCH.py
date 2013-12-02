@@ -194,7 +194,7 @@ class PGCHv1Delegate(DelegateBase):
 #             options = {"match" : {"MEMBER_UID" : client_uuid},
 #                        "fields" : ["_GENI_USER_CREDENTIAL"]}
 #             public_info = \
-#                 self._ma_handler._delegate.lookup_public_member_info(creds, 
+#                 self._ma_handler._delegate.lookup_public_member_info(client_cert, creds, 
 #                                                                      options)
 #             client_urn = public_info['value'].keys()[0]
 #             user_credential = \
@@ -329,7 +329,7 @@ class PGCHv1Delegate(DelegateBase):
                               "filter" : public_filter_clause}
             creds = []
             lookup_public_return = \
-                ma.lookup_public_member_info(creds, public_options)
+                ma.lookup_public_member_info(client_cert, creds, public_options)
             if lookup_public_return['code'] != NO_ERROR:
                 return lookup_public_return
             public_info = lookup_public_return['value']
@@ -415,7 +415,7 @@ class PGCHv1Delegate(DelegateBase):
             filter_clause = ['MEMBER_URN']
             options = {'match' : match_clause, 'filter' : filter_clause}
             lookup_member_return = \
-                self._ma_handler._delegate.lookup_public_member_info(client_cert, options)
+                self._ma_handler._delegate.lookup_public_member_info(client_cert, creds, options)
 
             if lookup_member_return['code'] != NO_ERROR:
                 return lookup_member_return

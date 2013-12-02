@@ -533,7 +533,7 @@ class MAv1DelegateBase(DelegateBase):
     # MEMBER service methods
 
     # This call is unprotected: no checking of credentials
-    def lookup_public_member_info(self, credentials, options):
+    def lookup_public_member_info(self, client_cert, credentials, options):
         raise CHAPIv1NotImplementedError('')
 
     # This call is protected

@@ -1023,7 +1023,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                             options['members_to_add'] = opt
                     
 
-                    self.modify_membership(session, SliceMember, client_uuid, \
+                    self.modify_membership(client_cert, session, SliceMember, client_uuid, \
                              slice['SLICE_UID'], slice['SLICE_URN'], options, \
                              'slice_id', 'SLICE_MEMBER', 'SLICE_ROLE', 'slice')
 
