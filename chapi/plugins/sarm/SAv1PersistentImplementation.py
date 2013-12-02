@@ -120,7 +120,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                                   Project.project_name)
         q = q.filter(table.expired == old_flag)
         if resurrect:
-            q = q.filter(table.expiration > datetime.utcnow())
+            q = q.filter(or_(table.expiration > datetime.utcnow(),table.expiration == None))
         else:
             q = q.filter(table.expiration < datetime.utcnow())
 
