@@ -104,6 +104,7 @@ field_mapping = {
     "_GENI_ENABLE_IRODS" : "enable_irods",
     "_GENI_IRODS_USERNAME" : "irods_username",
     "_GENI_WIMAX_USERNAME" : "wimax_username",
+    "_GENI_MEMBER_ENABLED" : "member_enabled",
 
     # these are special - used in the database but not fields specifiable in the API
     "PROJECT_LEAD": "PROJECT_LEAD",

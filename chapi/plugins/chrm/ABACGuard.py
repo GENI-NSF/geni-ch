@@ -39,10 +39,10 @@ from ArgumentCheck import *
 from tools.geni_constants import *
 from tools.geni_utils import *
 from tools.guard_utils import *
-from syslog import syslog
 import amsoil.core.pluginmanager as pm
 from tools.chapi_log import *
 from tools.mapped_tables import MemberAttribute
+import logging
 
 logger = amsoil.core.log.getLogger('ABAC')
 
@@ -168,8 +168,7 @@ class SubjectInvocationCheck(InvocationCheck):
                 for query in queries:
                     ok, proof = abac_manager.query(query)
                     if abac_manager._verbose:
-                        syslog("Testing ABAC query %s OK = %s" % (query, ok))
-                        chapi_info('', "Testing ABAC query %s OK = %s" % (query, ok))
+                        chapi_audit_and_log("ABAC", "Testing ABAC query %s OK = %s" % (query, ok), logging.DEBUG)
                     if ok:
                         one_succeeded = True
                         break
@@ -245,10 +244,10 @@ class ABACGuardBase(GuardBase):
         session.close()
 
         if is_enabled:
-            #syslog("UC: user '%s' (%s) enabled" % (client_name, client_urn))
+            #chapi_debug("ABAC", "UC: user '%s' (%s) enabled" % (client_name, client_urn))
             pass
         else:
-            syslog("UC: user '%s' (%s) disabled" % (client_name, client_urn))
+            chapi_audit_and_log("ABAC", "UC: user '%s' (%s) disabled" % (client_name, client_urn))
             raise CHAPIv1AuthorizationError("User %s (%s) disabled" % (client_name, client_urn));
 
     # Support speaks-for invocation:
