@@ -933,7 +933,7 @@ class MAv1Implementation(MAv1DelegateBase):
         msg = "Setting member %s status to %s" % \
             (member_urn, 'enabled' if enable_sense else 'disabled')
         attribs = {"MEMBER" : member_urn}
-        self.logging_service.log_event(msg, attribs, member_urn)
+        self.logging_service.log_event(msg, attribs, member_id)
         chapi_audit_and_log(MA_LOG_PREFIX, msg, logging.INFO, {'user': user_email})
 
         result = self._successReturn(was_enabled)
