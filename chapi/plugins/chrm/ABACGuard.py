@@ -185,6 +185,8 @@ class SubjectInvocationCheck(InvocationCheck):
 
             query ="ME.MAY_%s<-CALLER" % method.upper()
             ok, proof = abac_manager.query(query)
+            if abac_manager._verbose:
+                chapi_audit_and_log("ABAC", "Testing ABAC query %s OK = %s" % (query, ok), logging.DEBUG)
             if not ok:
                 template = "Caller not authorized to call method %s " + \
                     "with options %s arguments %s query %s"
