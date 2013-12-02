@@ -192,6 +192,7 @@ class SAv1Guard(ABACGuardBase):
         'modify_project_membership' : \
             SubjectInvocationCheck([
                 "ME.MAY_MODIFY_PROJECT_MEMBERSHIP<-ME.IS_OPERATOR",
+                "ME.MAY_MODIFY_PROJECT_MEMBERSHIP<-ME.IS_AUTHORITY",
                 "ME.MAY_MODIFY_PROJECT_MEMBERSHIP_$SUBJECT<-ME.IS_LEAD_$SUBJECT",
                 "ME.MAY_MODIFY_PROJECT_MEMBERSHIP_$SUBJECT<-ME.IS_ADMIN_$SUBJECT",
                 ], assert_project_role, project_urn_extractor),
