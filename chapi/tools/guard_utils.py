@@ -440,26 +440,26 @@ def assert_shares_slice(caller_urn, member_urns, label, options, abac_manager):
 
 # Assert ME.IS_$ROLE(SLICE)<-CALLER for all slices of given set 
 # of which caller is a member
-def assert_slice_role(caller_urn, slice_urns, label, options, abac_manager):
-    db = pm.getService('chdbengine')
-    session = db.getSession()
-    q = session.query(db.SLICE_MEMBER_TABLE.c.role, \
-                          db.SLICE_TABLE.c.slice_urn, \
-                          db.MEMBER_ATTRIBUTE_TABLE)
-    q = q.filter(db.SLICE_MEMBER_TABLE.c.slice_id == db.SLICE_TABLE.c.slice_id)
-    q = q.filter(db.MEMBER_ATTRIBUTE_TABLE.c.member_id == \
-                     db.SLICE_MEMBER_TABLE.c.member_id)
-    q = q.filter(db.SLICE_TABLE.c.slice_urn.in_(slice_urns))
-    q = q.filter(db.MEMBER_ATTRIBUTE_TABLE.c.name == 'urn')
-    q = q.filter(db.MEMBER_ATTRIBUTE_TABLE.c.value == caller_urn)
-    rows = q.all()
-    session.close()
-
+def assert_slice_role(caller_urn, urns, label, options, abac_manager):
+    config = pm.getService('config')
+    authority = config.get("chrm.authority")
+    if label == "SLICE_URN":
+        rows = get_slice_role_for_member(caller_urn, urns)
+    elif label == "PROJECT_URN":
+        rows = get_project_role_for_member(caller_urn, urns)
+    else:
+        raise CHAPIv1ArgumentError("Call to assert_slice_role with type %s" %\
+                                   label)
     for row in rows:
         role = row.role
-        slice_urn = row.slice_urn
+        if label == "SLICE_URN":
+            subject_urn = row.slice_urn
+        else:
+            project_name = row.project_name
+            subject_urn = to_project_urn(authority, project_name)
         role_name = attribute_type_names[role]
-        assertion = "ME.IS_%s_%s<-CALLER" % (role_name, flatten_urn(slice_urn))
+        assertion = "ME.IS_%s_%s<-CALLER" % \
+                    (role_name, flatten_urn(subject_urn))
         abac_manager.register_assertion(assertion)
 
 # Get role of member on each of list of projects
@@ -476,6 +476,23 @@ def get_project_role_for_member(caller_urn, project_urns):
     q = q.filter(db.MEMBER_ATTRIBUTE_TABLE.c.name == 'urn')
     q = q.filter(db.MEMBER_ATTRIBUTE_TABLE.c.value == caller_urn)
     q = q.filter(db.MEMBER_ATTRIBUTE_TABLE.c.member_id == db.PROJECT_MEMBER_TABLE.c.member_id)
+    rows = q.all()
+    session.close()
+    return rows
+
+def get_slice_role_for_member(caller_urn, slice_urns):
+    db = pm.getService('chdbengine')
+    session = db.getSession()
+    if not isinstance(slice_urns, list): slice_urns = [slice_urns]
+    q = session.query(db.SLICE_MEMBER_TABLE.c.role, \
+                          db.SLICE_TABLE.c.slice_urn, \
+                          db.MEMBER_ATTRIBUTE_TABLE)
+    q = q.filter(db.SLICE_MEMBER_TABLE.c.slice_id == db.SLICE_TABLE.c.slice_id)
+    q = q.filter(db.MEMBER_ATTRIBUTE_TABLE.c.member_id == \
+                     db.SLICE_MEMBER_TABLE.c.member_id)
+    q = q.filter(db.SLICE_TABLE.c.slice_urn.in_(slice_urns))
+    q = q.filter(db.MEMBER_ATTRIBUTE_TABLE.c.name == 'urn')
+    q = q.filter(db.MEMBER_ATTRIBUTE_TABLE.c.value == caller_urn)
     rows = q.all()
     session.close()
     return rows
