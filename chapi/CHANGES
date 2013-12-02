@@ -1,0 +1,13 @@
+# Note: keep this file in wiki format for easy pasting to the proto-ch wiki
+
+= GENI Clearinghouse Release Notes =
+
+== 1.0 ==
+ * Initial release of new clearinghouse implementing the
+ [http://groups.geni.net/geni/wiki/UniformClearinghouseAPI Uniform
+ Federation APIs]. This implementation retains the functionality of
+ the previous PHP-based server, but implemented in Python using
+ [https://github.com/fp7-ofelia/AMsoil AMsoil]. Note that the `pgch`
+ server is now part of this base install, and all services are now
+ reached via XML-RPC over SSL.
+
