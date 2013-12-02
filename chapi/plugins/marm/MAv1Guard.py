@@ -45,6 +45,8 @@ class LookupKeysInvocationCheck(SubjectInvocationCheck):
                             " than self. Limit match criteria or set filter" + 
                             " explicitly : " + member_urn)
 
+        return subjects
+
 
 def member_id_extractor(options, arguments):
     member_id = arguments['member_id']
