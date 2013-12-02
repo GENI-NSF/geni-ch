@@ -898,7 +898,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                             new_lead_urn = self.get_member_urn_for_id(session, new_project_lead)
                             
                             role_options = {'members_to_change': [{'PROJECT_MEMBER': old_lead_urn, 'PROJECT_ROLE': 'ADMIN'},{'PROJECT_MEMBER': new_lead_urn, 'PROJECT_ROLE': 'LEAD'}]}
-                            result = self.modify_membership(session, ProjectMember, client_uuid, \
+                            result = self.modify_membership(client_cert, session, ProjectMember, client_uuid, \
                                                                 project_id, project_urn, \
                                                                 role_options, 'project_id', \
                                                                 'PROJECT_MEMBER', 'PROJECT_ROLE', \
@@ -942,7 +942,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
 #                        raise CHAPIv1ArgumentError('New project lead not authorized')
 
 
-        result = self.modify_membership(session, ProjectMember, client_uuid, \
+        result = self.modify_membership(client_cert, session, ProjectMember, client_uuid, \
                                           project_id, project_urn, \
                                           options, 'project_id', \
                                           'PROJECT_MEMBER', 'PROJECT_ROLE', \
@@ -982,14 +982,14 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                 del(slice_urns[slice['SLICE_UID']])
                 if slice['SLICE_ROLE'] not in ['LEAD', 'ADMIN']:
                     options = {'members_to_change': opt}
-                    self.modify_membership(session, SliceMember, client_uuid, \
+                    self.modify_membership(client_cert, session, SliceMember, client_uuid, \
                            slice['SLICE_UID'], slice['SLICE_URN'], options, \
                            'slice_id', 'SLICE_MEMBER', 'SLICE_ROLE', 'slice')
                     
             # add lead to slices not yet a member of
             for slice_id, slice_urn in slice_urns.iteritems():
                  options = {'members_to_add': opt}
-                 self.modify_membership(session, SliceMember, client_uuid, \
+                 self.modify_membership(client_cert, session, SliceMember, client_uuid, \
                            slice_id, slice_urn, options, \
                            'slice_id', 'SLICE_MEMBER', 'SLICE_ROLE', 'slice')
 
@@ -1043,7 +1043,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         slice_id = self.get_slice_id(session, "slice_urn", slice_urn) # MIK: only non-expired slice
         old_slice_lead = self.get_slice_lead(session, slice_id)
 
-        result = self.modify_membership(session, SliceMember, client_uuid, \
+        result = self.modify_membership(client_cert, session, SliceMember, client_uuid, \
                                           slice_id, slice_urn, \
                                           options, 'slice_id', \
                                           'SLICE_MEMBER', 'SLICE_ROLE', \
@@ -1066,8 +1066,24 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         chapi_log_result(SA_LOG_PREFIX, method, result, {'user': user_email})
         return result
 
+    # Return the user display name
+    # First, try '_GENI_MEMBER_DISPLAYNAME'
+    # Then try 'MEMBER_FIRSTNAME' 'MEMBER_LASTNAME'
+    # Then try 'MEMBER_EMAIL'
+    # Then pull the username from the urn
+    def _extract_user_name(self, member_identifying_info, member_urn):
+        if "_GENI_MEMBER_DISPLAYNAME" in member_identifying_info and member_identifying_info['_GENI_MEMBER_DISPLAYNAME']:
+            return member_identifying_info['_GENI_MEMBER_DISPLAYNAME']
+        elif "MEMBER_FIRSTNAME" in member_identifying_info and "MEMBER_LASTNAME" in member_identifying_info \
+                and member_identifying_info['MEMBER_FIRSTNAME'] and member_identifying_info['MEMBER_LASTNAME']:
+            return "%s %s" % (member_identifying_info['MEMBER_FIRSTNAME'], member_identifying_info['MEMBER_LASTNAME'])
+        elif "MEMBER_EMAIL" in member_identifying_info and member_identifying_info['MEMBER_EMAIL']:
+            return member_identifying_info['MEMBER_EMAIL']
+        else:
+            return get_name_from_urn(member_urn)
+
     # shared between modify_slice_membership and modify_project_membership
-    def modify_membership(self, session, member_class, client_uuid, id, urn, 
+    def modify_membership(self, client_cert, session, member_class, client_uuid, id, urn, 
                           options, id_field,
                           member_str, role_str, text_str):
 
@@ -1130,6 +1146,37 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
 
         # Now log the removals, adds, changes
 
+        # Grab the display names for all members whose membership we are changing
+        all_urns = []
+        if 'members_to_add' in options: 
+            for member_to_add in options['members_to_add']:
+                all_urns.append(member_to_add[member_str])
+        if 'members_to_remove' in options: 
+            for member_to_remove in options['members_to_remove']:
+                all_urns.append(member_to_remove)
+        if 'members_to_change' in options: 
+            for member_to_change in options['members_to_change']:
+                all_urns.append(member_to_change[member_str])
+#        chapi_info('SA', "ALL_URNS = %s" % all_urns)
+
+        credentials = []
+        lookup_identifying_options = {\
+            "match" : {"MEMBER_URN" : all_urns}, 
+            "filter" : ["_GENI_MEMBER_DISPLAYNAME", "MEMBER_FIRSTNAME", 
+                        "MEMBER_LASTNAME", "MEMBER_EMAIL"]}
+        ma_handler = pm.getService('mav1handler')
+        result = ma_handler._delegate.lookup_identifying_member_info(client_cert, credentials, lookup_identifying_options)
+        urn_to_display_name = {}
+        # If we failed to get the display names, use the usernames
+        for member_urn in all_urns:
+            if result['code'] != NO_ERROR or member_urn not in result['value']:
+                urn_to_display_name[member_urn] = \
+                    get_name_from_urn(member_urn)
+            else:
+                urn_to_display_name[member_urn] = \
+                    self._extract_user_name(result['value'][member_urn], member_urn)
+        chapi_info('SA:MA', "URN_TO_DISPLAY_NAME = %s" % urn_to_display_name)
+
         # Get attributes for logging membership changes
         if text_str == 'slice':
             project_name, authority, slice_name = \
@@ -1147,7 +1194,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         if 'members_to_remove' in options:
             members_to_remove = options['members_to_remove']
             for member_to_remove in members_to_remove:
-                member_name = get_name_from_urn(member_to_remove)
+                member_name = urn_to_display_name[member_to_remove]
                 self.logging_service.log_event(
                     "Removed member %s from %s %s" % \
                         (member_name, text_str, label), \
@@ -1158,7 +1205,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
             members_to_add = options['members_to_add']
             for member_to_add in members_to_add:
                 member_urn = member_to_add[member_str]
-                member_name = get_name_from_urn(member_urn)
+                member_name = urn_to_display_name[member_urn]
                 member_role = member_to_add[role_str]
                 self.logging_service.log_event(
                     "Added member %s in role %s to %s %s" % \
@@ -1171,7 +1218,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
             members_to_change = options['members_to_change']
             for member_to_change in members_to_change:
                 member_urn = member_to_change[member_str]
-                member_name = get_name_from_urn(member_urn)
+                member_name = urn_to_display_name[member_urn]
                 member_role = member_to_change[role_str]
                 self.logging_service.log_event(
                     "Changed member %s to role %s in %s %s" % \
