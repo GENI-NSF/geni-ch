@@ -43,6 +43,7 @@ import amsoil.core.pluginmanager as pm
 from tools.chapi_log import *
 from tools.mapped_tables import MemberAttribute
 import logging
+import MA_constants
 
 logger = amsoil.core.log.getLogger('ABAC')
 
@@ -238,7 +239,7 @@ class ABACGuardBase(GuardBase):
         session = self.db.getSession()
         q = session.query(MemberAttribute.value).\
             filter(MemberAttribute.member_id == client_uuid).\
-            filter(MemberAttribute.name == '_GENI_MEMBER_ENABLED')
+            filter(MemberAttribute.name == MA_constants.field_mapping['_GENI_MEMBER_ENABLED'])
         rows = q.all()
         is_enabled = (len(rows)==0 or rows[0][0] == 'y')
         session.close()
