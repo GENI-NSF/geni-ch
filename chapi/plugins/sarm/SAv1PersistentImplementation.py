@@ -326,7 +326,11 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         
         row = rows[0]
         expiration = row.expiration
-        user_gid = gid.GID(string=client_cert)
+        # Temporary fix, see ticket #84.
+        with open('/usr/share/geni-ch/ma/ma-cert.pem', 'r') as f:
+            ma_cert = f.read()
+        client_chain = client_cert + ma_cert
+        user_gid = gid.GID(string=client_chain)
         slice_gid = gid.GID(string=row.certificate)
         delegatable = False
         slice_cred = cred_util.create_credential(user_gid, slice_gid, \
