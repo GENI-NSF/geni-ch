@@ -682,6 +682,27 @@ def key_subject_extractor(options, arguments):
         extracted['MEMBER_URN'] = [row.value for row in rows]
 
     return extracted
+
+# Extract project UID(s) from arguments
+def project_uid_extractor(options, arguments):
+    if 'project_id' in arguments:
+        return {'PROJECT_UID' : arguments['project_id']}
+    return {}
+
+# Extract project UID from invite_id argument
+def project_uid_from_invitation_extractor(options, arguments):
+    if 'invite_id' in arguments:
+        invite_id = arguments['invite_id']
+        db = pm.getService('chdbengine')
+        session = db.getSession()
+        q = session.query(db.PROJECT_INVITATION_TABLE)
+        q = q.filter(db.PROJECT_INVITATION_TABLE.c.invite_id == invite_id)
+        rows = q.all()
+        session.close()
+        if len(rows) > 0:
+            project_id = rows[0].project_id
+            return {'PROJECT_UID' : project_id}
+    return {}
         
 
 # Extract project URN(s) from options or arguments

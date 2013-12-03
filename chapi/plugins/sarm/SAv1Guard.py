@@ -108,7 +108,12 @@ class SAv1Guard(ABACGuardBase):
         # No options required (member_id, context_type, context_id arguments)
         'get_number_of_pending_requests_for_user' :  None,
         # No options required (request_id, context_type arguments)
-        'get_request_by_id' : None
+        'get_request_by_id' : None,
+        # No options required (role, project_id)
+        'invite_member' : None,
+        # No options required (invite_id, member_id)
+        'accept_invitation' : None
+        
 
         }
     
@@ -284,6 +289,21 @@ class SAv1Guard(ABACGuardBase):
                 "ME.MAY_GET_REQUEST_BY_ID<-ME.IS_REQUESTOR"
                 ], assert_request_id_requestor_and_project_role, request_id_extractor),
 
+        # Only if you are an operator or a project lead/admin
+        'invite_member' : \
+            SubjectInvocationCheck([
+                "ME.MAY_INVITE_MEMBER<-ME.IS_OPERATOR",
+                "ME.MAY_INVITE_MEMBER_$SUBJECT<-ME.IS_LEAD_$SUBJECT", 
+                "ME.MAY_INVITE_MEMBER_$SUBJECT<-ME.IS_ADMIN_$SUBJECT"
+                ], assert_project_role, project_uid_extractor),
+
+        # No options required (invite_id, member_id)
+        'accept_invitation' : \
+            SubjectInvocationCheck([
+                "ME.MAY_ACCEPT_INVITATION<-ME.IS_OPERATOR",
+                "ME.MAY_ACCEPT_INVITATION_$SUBJECT<-ME.IS_LEAD_$SUBJECT", 
+                "ME.MAY_ACCEPT_INVITATION_$SUBJECT<-ME.IS_ADMIN_$SUBJECT"
+                ], assert_project_role, project_uid_from_invitation_extractor)
         }
 
 

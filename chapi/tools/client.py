@@ -229,6 +229,19 @@ def main(args = sys.argv, do_print=True):
             _do_ssl(framework, suppress_errors, reason, fcn, opts.int_arg, 
                     opts.int2_arg, opts.int3_arg, opts.string_arg, \
                         opts.credentials, client_options)
+    elif opts.method in ['invite_member']:
+        (result, msg) = \
+            _do_ssl(framework, suppress_errors, reason, fcn, opts.int_arg, 
+                    opts.uuid_arg, 
+                    opts.credentials, client_options)
+        
+    elif opts.method in ['accept_invitation']:
+        (result, msg) = \
+            _do_ssl(framework, suppress_errors, reason, fcn, 
+                    opts.uuid_arg, # invite_id
+                    opts.uuid2_arg, # member_id
+                    opts.credentials, client_options)
+        
     elif opts.method in ['get_requests_for_context']:
         (result, msg) = \
             _do_ssl(framework, suppress_errors, reason, fcn, opts.int_arg, 

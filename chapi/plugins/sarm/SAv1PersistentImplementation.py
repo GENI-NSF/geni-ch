@@ -67,6 +67,9 @@ class ProjectMember(object):
 class SliverInfo(object):
     pass
 
+class ProjectInvitation(object):
+    pass
+
 # Implementation of SA that speaks to GPO Slice and projects table schema
 class SAv1PersistentImplementation(SAv1DelegateBase):
 
@@ -91,6 +94,8 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         mapper(Project, self.db.PROJECT_TABLE)
         mapper(ProjectMember, self.db.PROJECT_MEMBER_TABLE)
         mapper(SliverInfo, self.db.SLIVER_INFO_TABLE)
+        mapper(ProjectInvitation, self.db.PROJECT_INVITATION_TABLE, \
+                   primary_key = self.db.PROJECT_INVITATION_TABLE.c.id)
 
     def get_version(self):
         method = 'get_version'
@@ -1628,4 +1633,94 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         chapi_log_result(SA_LOG_PREFIX, method, result, {'user': user_email})
 
         return self._successReturn(result)
+
+    # Invite a member to join a project in a given role
+    def invite_member(self, client_cert, role, project_id, 
+                      credentials, options):
+
+        method = 'invite_member'
+        args = {'role' : role, 'project_id' : project_id}
+        chapi_log_invocation(SA_LOG_PREFIX, method, credentials, options, args)
+        
+        # Set expiration
+        # insert into PA_PROJECT_MEMBER_INVITATION 
+        #    (project_id, role, expiration) values 
+        #    (project_id, role, expiration)
+        # Extract and return invite_id
+
+        session = self.db.getSession()
+        self._expire_project_invitations(session)
+
+        invite_id = str(uuid.uuid4())
+        expiration = datetime.utcnow() + relativedelta(hours=SA.PROJECT_DEFAULT_INVITATION_EXPIRATION_HOURS)
+        ins = self.db.PROJECT_INVITATION_TABLE.insert().values(expiration=expiration, project_id=project_id, role=role, invite_id=invite_id)
+        session.execute(ins)
+
+        session.commit()
+        session.close()
+        result = {'expiration' : str(expiration), 'invite_id' : invite_id}
+        chapi_log_result(SA_LOG_PREFIX, method, result, args)
+        return self._successReturn(result)
+
+
+    # Accept an invitation to join a project
+    def accept_invitation(self, client_cert, invite_id, member_id,
+                          credentials, options):
+
+        method = 'accept_invitation'
+        args = {'invite_id' : invite_id, 'member_id' : member_id}
+        chapi_log_invocation(SA_LOG_PREFIX, method, credentials, options, args)
+
+        session = self.db.getSession()
+        self._expire_project_invitations(session)
+
+        # select project_id, role, expiration from 
+        # PA_PROJECT_MEMBER_INVITATION where invite_id = invite_id
+        q = session.query(ProjectInvitation)
+        q = q.filter(ProjectInvitation.invite_id == invite_id)
+        rows = q.all()
+
+        # If no such inviation, return error
+        if len(rows) < 1:
+            raise CHAPIv1ArgumentError("No invitation with given invite_id %s" % invite_id)
+        invite_info = rows[0]
+        project_id = invite_info.project_id
+        expiration = invite_info.expiration
+        role = invite_info.role
+
+        project_urn = convert_project_uid_to_urn(project_id)
+        member_urn = convert_member_uid_to_urn(member_id)
+        role_name = attribute_type_names[role]
+
+        # Add the member to the project
+        options = {'members_to_add' : [
+                {"PROJECT_MEMBER" : member_urn, 
+                 "PROJECT_ROLE" : role_name}
+                ]}
+        self.modify_project_membership(client_cert, project_urn, credentials, options)
+
+        # Delete the invitation:
+        session.delete(invite_info)
+        
+        session.commit()
+        session.close()
+
+        result = None
+        chapi_log_result(SA_LOG_PREFIX, method, result)
+        return self._successReturn(result)
+
+    # Remove all project invitations that whose expiration has passed
+    def _expire_project_invitations(self, session):
+
+        now = datetime.utcnow()
+        q = session.query(ProjectInvitation)
+        q = q.filter(ProjectInvitation.expiration < now)
+        chapi_info("***", "Q = %s" % str(q))
+        rows = q.all()
+        for row in rows:
+            chapi_info('SA', 'Expiring project invitation ID %s Project %s role %s' % \
+                           (row.invite_id, row.project_id, row.role))
+            session.delete(row)
+
+
 

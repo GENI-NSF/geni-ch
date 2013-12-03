@@ -563,7 +563,7 @@ class SAv1Handler(HandlerBase):
 
 
 
-    # Methods for handling pending project / slice requests
+    # Methods for handling pending project / slice requests and invitations
     # Note: Not part of standard Federation API
     
     def create_request(self, context_type, context_id, request_type, request_text, 
@@ -719,6 +719,43 @@ class SAv1Handler(HandlerBase):
         except Exception as e:
             return self._errorReturn(e)
 
+    def invite_member(self, role, project_id, credentials, options):
+        client_cert = self.requestCertificate()
+        method = 'invite_member'
+        try:
+            client_cert, options = \
+                self._guard.adjust_client_identity(client_cert, 
+                                                   credentials, options)
+            self._guard.validate_call(client_cert, method, \
+                                          credentials, options, \
+                                          {'project_id' : project_id,
+                                           'role' : role})
+            return self._delegate.invite_member(client_cert, role, project_id,
+                                                credentials, options)
+
+        except Exception as e:
+            return self._errorReturn(e)
+
+    def accept_invitation(self, invite_id, member_id, credentials, options):
+        client_cert = self.requestCertificate()
+        method = 'accept_invitation'
+        try:
+            client_cert, options = \
+                self._guard.adjust_client_identity(client_cert, 
+                                                   credentials, options)
+            self._guard.validate_call(client_cert, method, \
+                                          credentials, options, \
+                                          {'invite_id' : invite_id,
+                                           'member_id' : member_id})
+            return self._delegate.accept_invitation(client_cert, 
+                                                    invite_id, member_id,
+                                                    credentials, options)
+
+        except Exception as e:
+            return self._errorReturn(e)
+
+        
+
 
 # Base class for implementing the SA Slice interface. Must be
 # implemented in a derived class, and that derived class
@@ -872,3 +909,10 @@ class SAv1DelegateBase(DelegateBase):
 
 
 
+    def invite_member(self, client_cert, role, project_id,
+                      credentials, options):
+        raise CHAPIv1NotImplementedError('')
+
+    def accept_invitation(self, client_cert, invite_id, member_id, 
+                          credentials, options):
+        raise CHAPIv1NotImplementedError('')
