@@ -115,7 +115,7 @@ class FieldsArgumentCheck(ArgumentCheck):
                     parsed_datetime = parsed_datetime.astimezone(tzutc())
                     utc_field_value = parsed_datetime.strftime(FieldsArgumentCheck.FORMAT_DATETIME_TZ)
                     options['fields'][field_name] = utc_field_value
-                    chapi_info('ArgCheck', 'DATETIME convert: %s %s' % (field_value, utc_field_value))
+                    chapi_debug('ArgCheck', 'DATETIME convert: %s %s' % (field_value, utc_field_value))
                            
     # Take a list of {field : value} dictionaries
     # Make sure all field name/value pairs are recognized and of proper type
