@@ -1126,7 +1126,7 @@ class MAv1Implementation(MAv1DelegateBase):
         # log_event
         msg = "Setting member %s attribute %s to %s" %  (self._get_displayname_for_member_urn(member_urn), attr_name, attr_value )
         attribs = {"MEMBER" : member_urn}
-        self.logging_service.log_event(msg, attribs, member_urn)
+        self.logging_service.log_event(msg, attribs, member_uid)
         chapi_audit_and_log(MA_LOG_PREFIX, msg)
 
         result = self._successReturn(old_value)
@@ -1171,7 +1171,7 @@ class MAv1Implementation(MAv1DelegateBase):
         # log_event
         msg = "Removing member %s attribute %s" %  (self._get_displayname_for_member_urn(member_urn), attr_name)
         attribs = {"MEMBER" : member_urn}
-        self.logging_service.log_event(msg, attribs, member_urn)
+        self.logging_service.log_event(msg, attribs, member_uid)
         chapi_audit_and_log(MA_LOG_PREFIX, msg)
 
         result = self._successReturn(old_value)
