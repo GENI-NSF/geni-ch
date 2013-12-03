@@ -1199,6 +1199,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
             label = project_name
 
         # Log all removals
+        user_email = get_email_from_cert(client_cert)
         if 'members_to_remove' in options:
             members_to_remove = options['members_to_remove']
             for member_to_remove in members_to_remove:
@@ -1219,6 +1220,9 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                     "Added member %s in role %s to %s %s" % \
                         (member_name, member_role, text_str, label), 
                         attribs, client_uuid)
+                chapi_audit_and_log(SA_LOG_PREFIX, 
+                    "Added member %s in role %s to %s %s" % \
+                        (member_name, member_role, text_str, label), logging.INFO, {'user': user_email})
                 # FIXME: Email admins of new project members
 
         # Log all changes
@@ -1653,7 +1657,8 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
 
         method = 'invite_member'
         args = {'role' : role, 'project_id' : project_id}
-        chapi_log_invocation(SA_LOG_PREFIX, method, credentials, options, args)
+        user_email = get_email_from_cert(client_cert)
+        chapi_log_invocation(SA_LOG_PREFIX, method, credentials, options, args, {'user': user_email})
         
         # Set expiration
         # insert into PA_PROJECT_MEMBER_INVITATION 
@@ -1672,7 +1677,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         session.commit()
         session.close()
         result = {'expiration' : str(expiration), 'invite_id' : invite_id}
-        chapi_log_result(SA_LOG_PREFIX, method, result, args)
+        chapi_log_result(SA_LOG_PREFIX, method, result, {'user': user_email})
         return self._successReturn(result)
 
 
@@ -1682,7 +1687,8 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
 
         method = 'accept_invitation'
         args = {'invite_id' : invite_id, 'member_id' : member_id}
-        chapi_log_invocation(SA_LOG_PREFIX, method, credentials, options, args)
+        user_email = get_email_from_cert(client_cert)
+        chapi_log_invocation(SA_LOG_PREFIX, method, credentials, options, args, {'user': user_email})
 
         session = self.db.getSession()
         self._expire_project_invitations(session)
@@ -1719,7 +1725,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         session.close()
 
         result = None
-        chapi_log_result(SA_LOG_PREFIX, method, result)
+        chapi_log_result(SA_LOG_PREFIX, method, result, {'user': user_email})
         return self._successReturn(result)
 
     # Remove all project invitations that whose expiration has passed
