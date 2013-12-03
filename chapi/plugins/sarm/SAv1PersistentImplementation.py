@@ -604,7 +604,6 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         for field, value in options['fields'].iteritems():
             if field=="SLICE_EXPIRATION":
                 # convert value to datetime object
-                # FIXME: Make it UTC so we compare apples to apples *****
                 new_exp = dateutil.parser.parse(value)
 #                chapi_debug(SA_LOG_PREFIX, "Slice %s Requested new slice expiration %s" % (slice_name, value)
                 # don't renew past project expiration time
@@ -1715,7 +1714,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         now = datetime.utcnow()
         q = session.query(ProjectInvitation)
         q = q.filter(ProjectInvitation.expiration < now)
-        chapi_info("***", "Q = %s" % str(q))
+        chapi_debug(SA_LOG_PREFIX, "expire_project_invitations Q = %s" % str(q))
         rows = q.all()
         for row in rows:
             chapi_info('SA', 'Expiring project invitation ID %s Project %s role %s' % \
