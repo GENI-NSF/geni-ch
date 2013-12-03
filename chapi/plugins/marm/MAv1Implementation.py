@@ -286,6 +286,9 @@ class MAv1Implementation(MAv1DelegateBase):
         members = {}
         for uid in uids:
             row = self.get_attr_for_uid(session,"MEMBER_URN",uid)
+            if row is None or len(row) == 0:
+                chapi_warn(MA_LOG_PREFIX, "lookup_member_info: no member_urn row from get_attr_for_uid %s" % uid)
+                continue
             urn = row[0]
             values = {}
             for col in selected_columns:

@@ -50,6 +50,13 @@ def get_uuid_from_cert(cert):
         if san_part.startswith('URI:urn:uuid'):
             uuid = san_part[13:]
             break
+    # The MA cert has the uuid in the field URI:uuid (which is wrong)
+    if uuid is None:
+        for san_part in san_parts:
+            san_part = san_part.strip()
+            if san_part.startswith('URI:uuid'):
+                uuid = san_part[9:]
+                break
     return uuid
 
 # Pull out the URN from the certificate
