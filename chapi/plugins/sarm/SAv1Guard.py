@@ -301,8 +301,7 @@ class SAv1Guard(ABACGuardBase):
         'accept_invitation' : \
             SubjectInvocationCheck([
                 "ME.MAY_ACCEPT_INVITATION<-ME.IS_OPERATOR",
-                "ME.MAY_ACCEPT_INVITATION_$SUBJECT<-ME.IS_LEAD_$SUBJECT", 
-                "ME.MAY_ACCEPT_INVITATION_$SUBJECT<-ME.IS_ADMIN_$SUBJECT"
+                "ME.MAY_ACCEPT_INVITATION_$SUBJECT<-ME.IS_$SUBJECT", 
                 ], assert_project_role, project_uid_from_invitation_extractor)
         }
 
