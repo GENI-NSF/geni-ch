@@ -392,7 +392,7 @@ def assert_shares_project(caller_urn, member_urns, label, options, abac_manager)
 
 
     # If looking up a member by member_email who is a 
-    # project lead or admin, allow it
+    # lead or admin on a project, allow it
     if 'match' in options and len(options['match']) == 1 and \
        'MEMBER_EMAIL' in options['match']:
         q = session.query(pm1.c.member_id)
@@ -404,6 +404,21 @@ def assert_shares_project(caller_urn, member_urns, label, options, abac_manager)
 
         if len(rows) > 0:
             assertion = "ME.IS_LEAD_AND_SEARCHING_EMAIL<-CALLER"
+            abac_manager.register_assertion(assertion)
+
+    # If looking up a member by member_uid who is a 
+    # lead of a project, allow it
+    if 'match' in options and len(options['match']) == 1 and \
+       'MEMBER_UID' in options['match']:
+        q = session.query(pm1.c.member_id)
+        q = q.filter(pm1.c.member_id == ma1.c.member_id)
+        q = q.filter(ma1.c.name == 'urn')
+        q = q.filter(ma1.c.value == caller_urn)
+        q = q.filter(pm1.c.role.in_([LEAD_ATTRIBUTE]))
+        rows = q.all()
+
+        if len(rows) > 0:
+            assertion = "ME.IS_LEAD_AND_SEARCHING_UID<-CALLER"
             abac_manager.register_assertion(assertion)
 
     session.close()
