@@ -302,11 +302,11 @@ class SAv1Guard(ABACGuardBase):
             SubjectInvocationCheck([
                 "ME.MAY_ACCEPT_INVITATION<-ME.IS_OPERATOR",
                 "ME.MAY_ACCEPT_INVITATION_$SUBJECT<-ME.IS_$SUBJECT", 
-                ], assert_project_role, project_uid_from_invitation_extractor)
-        }
+                ], None, request_member_extractor)
+}
 
 
-    # Lookup argument check per method (or None if none registered)
+# argument check per method (or None if none registered)
     def get_argument_check(self, method):
         if self.ARGUMENT_CHECK_FOR_METHOD.has_key(method):
             return self.ARGUMENT_CHECK_FOR_METHOD[method]
