@@ -221,8 +221,10 @@ class MAv1Implementation(MAv1DelegateBase):
         else:
             q = q.filter(MemberAttribute.value == value)
 
-        chapi_debug(MA_LOG_PREFIX, "ATTR = %s, MAP = %s, VALUE = %s, Q = %s" % \
-                       (attr, MA.field_mapping[attr], value, q))
+        chapi_debug(MA_LOG_PREFIX, "get_uids_for_attrs: ATTR = %s, MAP = %s, VALUE = %s" % \
+                       (attr, MA.field_mapping[attr], value))
+#        chapi_debug(MA_LOG_PREFIX, "get_uids_for_attrs: ATTR = %s, MAP = %s, VALUE = %s, Q = %s" % \
+#                       (attr, MA.field_mapping[attr], value, q))
         rows = q.all()
         return [row.member_id for row in rows]
 
@@ -287,7 +289,7 @@ class MAv1Implementation(MAv1DelegateBase):
         for uid in uids:
             row = self.get_attr_for_uid(session,"MEMBER_URN",uid)
             if row is None or len(row) == 0:
-                chapi_warn(MA_LOG_PREFIX, "lookup_member_info: no member_urn row from get_attr_for_uid %s" % uid)
+                chapi_info(MA_LOG_PREFIX, "lookup_member_info: no member_urn row from get_attr_for_uid %s (the MA?)" % uid)
                 continue
             urn = row[0]
             values = {}
