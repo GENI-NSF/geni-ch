@@ -187,6 +187,20 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
 
         selected_columns, match_criteria = \
             unpack_query_options(options, SA.slice_field_mapping)
+
+        # If query asked for only a single empty list of identifiers
+        # Skip the query
+        if match_criteria and len(match_criteria) == 1:
+            match_values = match_criteria.values()[0]
+            if len(match_values) == 0:
+                slices = {}
+                result = self._successReturn(slices)
+                chapi_info(SA_LOG_PREFIX,
+                           "Returning empty list of slices for empty criteria")
+                chapi_log_result(SA_LOG_PREFIX, method, result, \
+                                     {'user': user_email})
+                return result
+
         session = self.db.getSession()
 
         q = session.query(self.db.SLICE_TABLE, self.db.PROJECT_TABLE.c.project_id, self.db.PROJECT_TABLE.c.project_name)

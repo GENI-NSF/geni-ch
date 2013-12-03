@@ -99,6 +99,9 @@ def convert_slice_uid_to_urn(slice_uid):
     slice_uids = slice_uid
     if not isinstance(slice_uid, list): slice_uids = [slice_uid]
 
+    if len(slice_uids) == 0:
+        return []
+
     cache = cache_get('slice_uid_to_urn')
     uncached_uids = [id for id in slice_uids if id not in cache]
 
@@ -131,6 +134,10 @@ def convert_project_uid_to_urn(project_uid):
 
     project_uids = project_uid
     if not isinstance(project_uid, list): project_uids = [project_uid]
+
+    if len(project_uids) == 0:
+        return []
+
 
     cache = cache_get('project_uid_to_urn')
     uncached_uids = [id for id in project_uids if id not in cache]
@@ -481,9 +488,12 @@ def get_project_role_for_member(caller_urn, project_urns):
     return rows
 
 def get_slice_role_for_member(caller_urn, slice_urns):
+    if not isinstance(slice_urns, list): slice_urns = [slice_urns]
+    if len(slice_urns) == 0:
+        return []
+
     db = pm.getService('chdbengine')
     session = db.getSession()
-    if not isinstance(slice_urns, list): slice_urns = [slice_urns]
     q = session.query(db.SLICE_MEMBER_TABLE.c.role, \
                           db.SLICE_TABLE.c.slice_urn, \
                           db.MEMBER_ATTRIBUTE_TABLE)
@@ -516,6 +526,10 @@ def assert_project_role(caller_urn, project_urns, label, options, abac_manager):
 
 # Assert ME.BELONGS_TO_$SLICE<-CALLER if caller is member of slice
 def assert_belongs_to_slice(caller_urn, slice_urns, label, options, abac_manager):
+
+    if len(slice_urns) == 0:
+        return []
+
     if label != "SLICE_URN": return
     db = pm.getService('chdbengine')
     session = db.getSession()
