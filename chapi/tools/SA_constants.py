@@ -131,6 +131,8 @@ project_request_columns = [
     'resolver', 'resolution_timestamp', 'resolution_description'
 ]
 
+PROJECT_DEFAULT_INVITATION_EXPIRATION_HOURS = 72
+
 project_request_field_mapping = {
     'id' : 'id', 
     'context_type' : 'context_type', 
