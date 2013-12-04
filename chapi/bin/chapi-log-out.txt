@@ -19,4 +19,4 @@ INFO    :amsoil:\[sav1
 INFO    :amsoil:\[mav1
 INFO    :amsoil:\[logv1
 INFO    :chapi:MA: lookup_member_info: no member_urn row
-INFO    :chapi:SA: Returning empty list of slices for empty criteria
+INFO    :chapi:SA: Returning empty list of slices
