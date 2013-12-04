@@ -36,6 +36,7 @@ MA_LOG_PREFIX = "MA"
 CS_LOG_PREFIX = "CS"
 PGCH_LOG_PREFIX = "PGCH"
 SR_LOG_PREFIX = "SR"
+LOG_LOG_PREFIX = "LOG"
 
 # Class just to hold the is_verbose flag from Parameters.py
 class CHAPIVerbose(object):
