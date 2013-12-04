@@ -26,13 +26,16 @@
 import smtplib
 from email.mime.text import MIMEText
 
-def send_email(toaddr,fromaddr,replyaddr,subject,msgbody):
+def send_email(toaddr,fromaddr,replyaddr,subject,msgbody,ccaddr=None):
     msg = MIMEText(msgbody)
     msg['Subject'] = subject
     msg['To'] = toaddr
     msg['Reply-To'] = replyaddr
-    msg['precedence'] = "bulk"
+    if ccaddr != None:
+        msg['Cc'] = ccaddr
+        toaddrs = [toaddr,ccaddr] 
+    msg['Precedence'] = "bulk"
     s = smtplib.SMTP('localhost')
-    s.sendmail(fromaddr,toaddr,msg.as_string())
+    s.sendmail(fromaddr,toaddrs,msg.as_string())
     s.quit()
 
