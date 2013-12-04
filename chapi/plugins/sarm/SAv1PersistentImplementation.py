@@ -1507,6 +1507,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         result = [construct_result_row(row, SA.project_request_columns, \
                                            SA.project_request_field_mapping) \
                       for row in rows]
+        chapi_log_result(SA_LOG_PREFIX, method, result, {'user': user_email})
         return self._successReturn(result)
 
     def get_pending_requests_for_user(self, client_cert, member_id, \
