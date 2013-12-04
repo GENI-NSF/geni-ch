@@ -221,8 +221,10 @@ class MAv1Implementation(MAv1DelegateBase):
         else:
             q = q.filter(MemberAttribute.value == value)
 
-        chapi_debug(MA_LOG_PREFIX, "ATTR = %s, MAP = %s, VALUE = %s, Q = %s" % \
-                       (attr, MA.field_mapping[attr], value, q))
+        chapi_debug(MA_LOG_PREFIX, "get_uids_for_attrs: ATTR = %s, MAP = %s, VALUE = %s" % \
+                       (attr, MA.field_mapping[attr], value))
+#        chapi_debug(MA_LOG_PREFIX, "get_uids_for_attrs: ATTR = %s, MAP = %s, VALUE = %s, Q = %s" % \
+#                       (attr, MA.field_mapping[attr], value, q))
         rows = q.all()
         return [row.member_id for row in rows]
 
@@ -287,7 +289,7 @@ class MAv1Implementation(MAv1DelegateBase):
         for uid in uids:
             row = self.get_attr_for_uid(session,"MEMBER_URN",uid)
             if row is None or len(row) == 0:
-                chapi_warn(MA_LOG_PREFIX, "lookup_member_info: no member_urn row from get_attr_for_uid %s" % uid)
+                chapi_info(MA_LOG_PREFIX, "lookup_member_info: no member_urn row from get_attr_for_uid %s (the MA?)" % uid)
                 continue
             urn = row[0]
             values = {}
@@ -945,6 +947,7 @@ class MAv1Implementation(MAv1DelegateBase):
 
     def check_user_enabled(self, client_cert):
         client_urn = get_urn_from_cert(client_cert)
+        client_email = get_email_from_cert(client_cert)
         client_uuid = get_uuid_from_cert(client_cert)
         client_name = get_name_from_urn(client_urn)
 
@@ -960,7 +963,7 @@ class MAv1Implementation(MAv1DelegateBase):
             chapi_debug(MA_LOG_PREFIX, "CUE: user '%s' (%s) enabled" % (client_name, client_urn))
             pass
         else:
-            chapi_audit_and_log(MA_LOG_PREFIX, "CUE: user '%s' (%s) disabled" % (client_name, client_urn))
+            chapi_audit_and_log(MA_LOG_PREFIX, "CUE: user '%s' (%s) disabled" % (client_name, client_urn), logging.INFO, {'user': user_email})
             raise CHAPIv1AuthorizationError("User %s (%s) disabled" % (client_name, client_urn));
 
 
@@ -1124,8 +1127,8 @@ class MAv1Implementation(MAv1DelegateBase):
         # log_event
         msg = "Setting member %s attribute %s to %s" %  (self._get_displayname_for_member_urn(member_urn), attr_name, attr_value )
         attribs = {"MEMBER" : member_urn}
-        self.logging_service.log_event(msg, attribs, member_urn)
-        chapi_audit_and_log(MA_LOG_PREFIX, msg)
+        self.logging_service.log_event(msg, attribs, member_uid)
+        chapi_audit_and_log(MA_LOG_PREFIX, msg, logging.INFO, {'user': user_email})
 
         result = self._successReturn(old_value)
         chapi_log_result(MA_LOG_PREFIX, method, result, {'user': user_email})
@@ -1155,7 +1158,7 @@ class MAv1Implementation(MAv1DelegateBase):
 
         was_defined = (len(rows)>0)
 
-        chapi_debug(MA_LOG_PREFIX, 'RMA.ROWS = %s' % rows)
+        chapi_debug(MA_LOG_PREFIX, 'RMA.ROWS = %s' % rows, {'user': user_email})
 
         old_value = None
         if was_defined:
@@ -1169,8 +1172,8 @@ class MAv1Implementation(MAv1DelegateBase):
         # log_event
         msg = "Removing member %s attribute %s" %  (self._get_displayname_for_member_urn(member_urn), attr_name)
         attribs = {"MEMBER" : member_urn}
-        self.logging_service.log_event(msg, attribs, member_urn)
-        chapi_audit_and_log(MA_LOG_PREFIX, msg)
+        self.logging_service.log_event(msg, attribs, member_uid)
+        chapi_audit_and_log(MA_LOG_PREFIX, msg, logging.INFO, {'user': user_email})
 
         result = self._successReturn(old_value)
         chapi_log_result(MA_LOG_PREFIX, method, result, {'user': user_email})

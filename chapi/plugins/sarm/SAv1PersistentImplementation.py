@@ -194,6 +194,20 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
 
         selected_columns, match_criteria = \
             unpack_query_options(options, SA.slice_field_mapping)
+
+        # If query asked for only a single empty list of identifiers
+        # Skip the query
+        if match_criteria and len(match_criteria) == 1:
+            match_values = match_criteria.values()[0]
+            if len(match_values) == 0:
+                slices = {}
+                result = self._successReturn(slices)
+                chapi_info(SA_LOG_PREFIX,
+                           "Returning empty list of slices for empty criteria")
+                chapi_log_result(SA_LOG_PREFIX, method, result, \
+                                     {'user': user_email})
+                return result
+
         session = self.db.getSession()
 
         q = session.query(self.db.SLICE_TABLE, self.db.PROJECT_TABLE.c.project_id, self.db.PROJECT_TABLE.c.project_name)
@@ -1204,6 +1218,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
             label = project_name
 
         # Log all removals
+        user_email = get_email_from_cert(client_cert)
         if 'members_to_remove' in options:
             members_to_remove = options['members_to_remove']
             for member_to_remove in members_to_remove:
@@ -1224,6 +1239,9 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                     "Added member %s in role %s to %s %s" % \
                         (member_name, member_role, text_str, label), 
                         attribs, client_uuid)
+                chapi_audit_and_log(SA_LOG_PREFIX, 
+                    "Added member %s in role %s to %s %s" % \
+                        (member_name, member_role, text_str, label), logging.INFO, {'user': user_email})
                 # FIXME: Email admins of new project members
 
         # Log all changes
@@ -1508,6 +1526,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         result = [construct_result_row(row, SA.project_request_columns, \
                                            SA.project_request_field_mapping) \
                       for row in rows]
+        chapi_log_result(SA_LOG_PREFIX, method, result, {'user': user_email})
         return self._successReturn(result)
 
     def get_pending_requests_for_user(self, client_cert, member_id, \
@@ -1658,7 +1677,8 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
 
         method = 'invite_member'
         args = {'role' : role, 'project_id' : project_id}
-        chapi_log_invocation(SA_LOG_PREFIX, method, credentials, options, args)
+        user_email = get_email_from_cert(client_cert)
+        chapi_log_invocation(SA_LOG_PREFIX, method, credentials, options, args, {'user': user_email})
         
         # Set expiration
         # insert into PA_PROJECT_MEMBER_INVITATION 
@@ -1677,7 +1697,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         session.commit()
         session.close()
         result = {'expiration' : str(expiration), 'invite_id' : invite_id}
-        chapi_log_result(SA_LOG_PREFIX, method, result, args)
+        chapi_log_result(SA_LOG_PREFIX, method, result, {'user': user_email})
         return self._successReturn(result)
 
 
@@ -1687,7 +1707,8 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
 
         method = 'accept_invitation'
         args = {'invite_id' : invite_id, 'member_id' : member_id}
-        chapi_log_invocation(SA_LOG_PREFIX, method, credentials, options, args)
+        user_email = get_email_from_cert(client_cert)
+        chapi_log_invocation(SA_LOG_PREFIX, method, credentials, options, args, {'user': user_email})
 
         session = self.db.getSession()
         self._expire_project_invitations(session)
@@ -1724,7 +1745,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         session.close()
 
         result = None
-        chapi_log_result(SA_LOG_PREFIX, method, result)
+        chapi_log_result(SA_LOG_PREFIX, method, result, {'user': user_email})
         return self._successReturn(result)
 
     # Remove all project invitations that whose expiration has passed
