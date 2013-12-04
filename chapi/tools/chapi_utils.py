@@ -34,6 +34,8 @@ def send_email(toaddr,fromaddr,replyaddr,subject,msgbody,ccaddr=None):
     if ccaddr != None:
         msg['Cc'] = ccaddr
         toaddrs = [toaddr,ccaddr] 
+    else:
+        toaddrs = [toaddr]
     msg['Precedence'] = "bulk"
     s = smtplib.SMTP('localhost')
     s.sendmail(fromaddr,toaddrs,msg.as_string())
