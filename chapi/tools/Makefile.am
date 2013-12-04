@@ -19,6 +19,7 @@ dist_tool_DATA = \
 	__init__.py \
 	cert_utils.py \
 	chapi_log.py \
+	chapi_utils.py \
 	client.py \
 	cs_utils.py \
 	dbtest.py \

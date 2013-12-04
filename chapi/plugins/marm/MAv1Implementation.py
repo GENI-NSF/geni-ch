@@ -46,6 +46,7 @@ from tools.dbutils import *
 from tools.cert_utils import *
 from tools.chapi_log import *
 from tools.guard_utils import *
+from tools.chapi_utils import *
 from tools.ABACManager import *
 from tools.mapped_tables import *
 from chapi.MemberAuthority import MAv1DelegateBase
@@ -171,6 +172,11 @@ class MAv1Implementation(MAv1DelegateBase):
             }
         self.cert = self.config.get('chapi.ma_cert')
         self.key = self.config.get('chapi.ma_key')
+
+        self.portal_admin_email = self.config.get('chapi.portal_admin_email')
+        self.portal_help_email = self.config.get('chapi.portal_help_email')
+        self.ch_from_email = self.config.get('chapi.ch_from_email')
+
         trusted_root = self.config.get('chapiv1rpc.ch_cert_root')
         self.trusted_roots = [os.path.join(trusted_root, f) \
             for f in os.listdir(trusted_root) if not f.startswith('CAT')]
@@ -966,6 +972,36 @@ class MAv1Implementation(MAv1DelegateBase):
             chapi_audit_and_log(MA_LOG_PREFIX, "CUE: user '%s' (%s) disabled" % (client_name, client_urn), logging.INFO, {'user': user_email})
             raise CHAPIv1AuthorizationError("User %s (%s) disabled" % (client_name, client_urn));
 
+    # send email about new lead/operator privilege
+    def mail_new_privilege(self,member_id, privilege):
+        options = {'match' : {'MEMBER_UID' : member_id },'filter': ['_GENI_MEMBER_DISPLAYNAME','MEMBER_FIRSTNAME','MEMBER_LASTNAME','MEMBER_EMAIL']}  
+        info = self.lookup_member_info(options, MA.identifying_fields)
+        member_info = info['value']
+        pretty_name = ""
+        member_email = None
+        if len(member_info) > 0:
+            for row in member_info:
+                pretty_name = get_member_display_name(member_info[row],row)
+                member_email = member_info[row]['MEMBER_EMAIL']
+        msgbody = "Dear " + pretty_name + ",\n\n"
+        msgbody += "Congratulations, you have been made a 'Project Lead', meaning you can create GENI"
+        msgbody += " Projects, as well as create slices in projects and reserve resources.\n\n"
+        
+        msgbody += "If you are using the GENI Portal, see "
+        msgbody += "http://groups.geni.net/geni/wiki/SignMeUp#a2b.CreateaGENIProject "  #FIXME: Edit if page moves
+        msgbody += "for instructions on creating a project.\n\n"
+        
+        #  msgbody .= "Please visit https://" . $_SERVER['SERVER_NAME'];
+        #  msgbody .= "/secure/home.php for more information, or to get started.\n\n";
+        
+        msgbody += "Sincerely,\n"
+        msgbody += "GENI Clearinghouse operations\n"
+
+        if privilege == "PROJECT_LEAD":
+            subject = "You are now a GENI Project Lead" 
+        else:
+            subject = "You are now a GENI Operator" 
+        send_email(member_email, self.ch_from_email,self.portal_help_email,subject,msgbody,self.portal_admin_email)
 
     #  member_privilege (private)
     def add_member_privilege(self, cert, member_uid, privilege, credentials, options):
@@ -1007,7 +1043,12 @@ class MAv1Implementation(MAv1DelegateBase):
         self.logging_service.log_event(msg, attribs, member_uid)
         chapi_audit_and_log(MA_LOG_PREFIX, msg, logging.INFO, {'user': user_email})
 
-        # FIXME: Email admins, new project lead
+        # Email admins, new project lead/operator
+        self.mail_new_privilege(member_uid,privilege)
+
+
+
+
 
         result = self._successReturn(was_enabled)
         chapi_log_result(MA_LOG_PREFIX, method, result, {'user': user_email})
