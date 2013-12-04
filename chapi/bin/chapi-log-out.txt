@@ -20,3 +20,5 @@ INFO    :amsoil:\[mav1
 INFO    :amsoil:\[logv1
 INFO    :chapi:MA: lookup_member_info: no member_urn row
 INFO    :chapi:SA: Returning empty list of slices
+INFO    :chapi:LOG:.*Result from 
+INFO    :chapi:SA:.*Result from get_requests_by_user

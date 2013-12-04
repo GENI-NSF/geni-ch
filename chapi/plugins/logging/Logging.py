@@ -24,16 +24,21 @@
 import amsoil.core.log
 import amsoil.core.pluginmanager as pm
 from amsoil.core import serviceinterface
+
 from CHDatabaseEngine import *
 from chapi.DelegateBase import DelegateBase
 from chapi.HandlerBase import HandlerBase
 from chapi.Exceptions import *
-from sqlalchemy import *
-import datetime
-from dateutil.relativedelta import relativedelta
+
 from tools.dbutils import *
 from tools.geni_constants import context_type_names
 from tools.chapi_log import *
+from tools.cert_utils import get_email_from_cert
+
+from sqlalchemy import *
+from datetime import datetime
+from dateutil.relativedelta import relativedelta
+
 
 logging_logger = amsoil.core.log.getLogger('logv1')
 xmlrpc = pm.getService('xmlrpc')
@@ -129,7 +134,8 @@ class Loggingv1Delegate(DelegateBase):
     def log_event(self, client_cert, message, attributes, user_id):
         method = 'log_event'
         args = {'user_id' : user_id, 'message' : message, 'attributes' : attributes}
-        chapi_log_invocation(LOG_LOG_PREFIX, method, [], {}, args)
+        user_email = get_email_from_cert(client_cert)
+        chapi_log_invocation(LOG_LOG_PREFIX, method, [], {}, args, {'user': user_email})
         session = self.db.getSession()
         now = datetime.utcnow()
         # Record the event
@@ -148,13 +154,14 @@ class Loggingv1Delegate(DelegateBase):
             result = session.execute(ins)
         session.commit()
         session.close()
-        chapi_log_result(LOG_LOG_PREFIX, method, True)
+        chapi_log_result(LOG_LOG_PREFIX, method, True, {'user': user_email})
         return self._successReturn(True)
 
     def get_log_entries_by_author(self, client_cert, user_id, num_hours):
         method = 'get_log_entries_by_author'
         args = {'user_id' : user_id, 'num_hours' : num_hours}
-        chapi_log_invocation(LOG_LOG_PREFIX, method, [], {}, args)
+        user_email = get_email_from_cert(client_cert)
+        chapi_log_invocation(LOG_LOG_PREFIX, method, [], {}, args, {'user': user_email})
         session = self.db.getSession()
         q = session.query(self.db.LOGGING_ENTRY_TABLE)
         q = q.filter(self.db.LOGGING_ENTRY_TABLE.c.user_id == user_id)
@@ -164,14 +171,15 @@ class Loggingv1Delegate(DelegateBase):
         session.close()
         entries = [construct_result_row(row, self.columns, 
                                         self.field_mapping) for row in rows]
-        chapi_log_result(LOG_LOG_PREFIX, method, entries)
+        chapi_log_result(LOG_LOG_PREFIX, method, entries, {'user': user_email})
         return self._successReturn(entries)
 
     def get_log_entries_for_context(self, client_cert, context_type, context_id, num_hours):
         method = 'get_log_entries_for_context'
         args = {'context_type' : context_type, 'context_id' : context_id, 
                 'num_hours' : num_hours}
-        chapi_log_invocation(LOG_LOG_PREFIX, method, [], {}, args)
+        user_email = get_email_from_cert(client_cert)
+        chapi_log_invocation(LOG_LOG_PREFIX, method, [], {}, args, {'user': user_email})
         session = self.db.getSession()
         q = session.query(self.db.LOGGING_ENTRY_TABLE)
         q = q.filter(self.db.LOGGING_ENTRY_TABLE.c.id == self.db.LOGGING_ENTRY_ATTRIBUTE_TABLE.c.event_id)
@@ -183,13 +191,14 @@ class Loggingv1Delegate(DelegateBase):
         session.close()
         entries = [construct_result_row(row, self.columns, 
                                         self.field_mapping) for row in rows]
-        chapi_log_result(LOG_LOG_PREFIX, method, entries)
+        chapi_log_result(LOG_LOG_PREFIX, method, entries, {'user': user_email})
         return self._successReturn(entries)
 
     def get_log_entries_by_attributes(self, client_cert, attribute_sets, num_hours):
         method = 'get_log_entries_by_attributes'
         args = {'attribute_sets' : attribute_sets, 'num_hours' : num_hours}
-        chapi_log_invocation(LOG_LOG_PREFIX, method, [], {}, args)
+        user_email = get_email_from_cert(client_cert)
+        chapi_log_invocation(LOG_LOG_PREFIX, method, [], {}, args, {'user': user_email})
         session = self.db.getSession()
         q = session.query(self.db.LOGGING_ENTRY_TABLE)
         q = q.filter(self.db.LOGGING_ENTRY_TABLE.c.id == self.db.LOGGING_ENTRY_ATTRIBUTE_TABLE.c.event_id)
@@ -208,14 +217,15 @@ class Loggingv1Delegate(DelegateBase):
         session.close()
         entries = [construct_result_row(row, self.columns, 
                                         self.field_mapping) for row in rows]
-        chapi_log_result(LOG_LOG_PREFIX, method, entries)
+        chapi_log_result(LOG_LOG_PREFIX, method, entries, {'user': user_email})
         return self._successReturn(entries)
 
 
     def get_attributes_for_log_entry(self, client_cert, event_id):
         method = 'get_attributes_for_log_entry'
         args = {'event_id' : event_id}
-        chapi_log_invocation(LOG_LOG_PREFIX, method, [], {}, args)
+        user_email = get_email_from_cert(client_cert)
+        chapi_log_invocation(LOG_LOG_PREFIX, method, [], {}, args, {'user': user_email})
         session = self.db.getSession()
         q = session.query(self.db.LOGGING_ENTRY_ATTRIBUTE_TABLE)
         q = q.filter(self.db.LOGGING_ENTRY_ATTRIBUTE_TABLE.c.event_id == event_id)
@@ -223,7 +233,7 @@ class Loggingv1Delegate(DelegateBase):
         session.close()
         entries = [construct_result_row(row, self.attribute_columns, 
                                         self.attribute_field_mapping) for row in rows]
-        chapi_log_result(LOG_LOG_PREFIX, method, entries)
+        chapi_log_result(LOG_LOG_PREFIX, method, entries, {'user': user_email})
         return self._successReturn(entries)
 
 

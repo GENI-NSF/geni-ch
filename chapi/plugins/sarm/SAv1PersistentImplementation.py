@@ -914,7 +914,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         client_uuid = get_uuid_from_cert(client_cert)
 
         # If we are removing the lead, make sure there is an authorized admin on the project
-        #   If yes, make the admin be the lead, and the current lead be an admin
+        #   If yes, make the admin be the lead, and the current lead be a member
         #   If no, FAIL
 
         if 'members_to_remove' in options:
@@ -940,7 +940,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                             new_project_lead = row['PROJECT_MEMBER_UID']
                             new_lead_urn = self.get_member_urn_for_id(session, new_project_lead)
                             
-                            role_options = {'members_to_change': [{'PROJECT_MEMBER': old_lead_urn, 'PROJECT_ROLE': 'ADMIN'},{'PROJECT_MEMBER': new_lead_urn, 'PROJECT_ROLE': 'LEAD'}]}
+                            role_options = {'members_to_change': [{'PROJECT_MEMBER': old_lead_urn, 'PROJECT_ROLE': 'MEMBER'},{'PROJECT_MEMBER': new_lead_urn, 'PROJECT_ROLE': 'LEAD'}]}
                             result = self.modify_membership(client_cert, session, ProjectMember, client_uuid, \
                                                                 project_id, project_urn, \
                                                                 role_options, 'project_id', \
@@ -994,11 +994,12 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         # identify all slices in project and new project lead
         q = session.query(self.db.SLICE_TABLE)
         q = q.filter(self.db.SLICE_TABLE.c.project_id == project_id)
-        rows = q.all()
+        q = q.filter(self.db.SLICE_TABLE.c.expired == False) # We only care about active slices
+        project_slices = q.all()
     
-        slices = [row.slice_id for row in rows]
+        slice_uids = [row.slice_id for row in project_slices]
         slice_urns = {}
-        for row in rows:
+        for row in project_slices:
             slice_urns[row.slice_id] = row.slice_urn
         project_lead = self.get_project_lead(session, project_id)
         project_lead_urn = self.get_member_urn_for_id(session, project_lead)
@@ -1020,20 +1021,20 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
             # change lead's role on slices he/she is member of
             for slice in result3['value']:
                 # skip slice if not in current project
-                if slice['SLICE_UID'] not in slices:
+                if slice['SLICE_UID'] not in slice_uids:
                     continue
                 del(slice_urns[slice['SLICE_UID']])
                 if slice['SLICE_ROLE'] not in ['LEAD', 'ADMIN']:
-                    options = {'members_to_change': opt}
+                    lead_options = {'members_to_change': opt}
                     self.modify_membership(client_cert, session, SliceMember, client_uuid, \
-                           slice['SLICE_UID'], slice['SLICE_URN'], options, \
+                           slice['SLICE_UID'], slice['SLICE_URN'], lead_options, \
                            'slice_id', 'SLICE_MEMBER', 'SLICE_ROLE', 'slice')
                     
             # add lead to slices not yet a member of
             for slice_id, slice_urn in slice_urns.iteritems():
-                 options = {'members_to_add': opt}
+                 lead_options2 = {'members_to_add': opt}
                  self.modify_membership(client_cert, session, SliceMember, client_uuid, \
-                           slice_id, slice_urn, options, \
+                           slice_id, slice_urn, lead_options2, \
                            'slice_id', 'SLICE_MEMBER', 'SLICE_ROLE', 'slice')
 
         # now delete all removed members from slices
@@ -1043,9 +1044,9 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                                                         credentials, {})
                 for slice in result3['value']:
                     # skip slices that are not part of the current project
-                    if not slice['SLICE_UID'] in slices:
+                    if not slice['SLICE_UID'] in slice_uids:
                         continue
-                    options = {'members_to_remove': [member]}
+                    del_options = {'members_to_remove': [member]}
 
                     # if member is lead on the slice, make a new lead
                     if slice['SLICE_ROLE'] == 'LEAD':
@@ -1055,14 +1056,74 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                         q = q.filter(SliceMember.slice_id == slice['SLICE_UID'])
                         q = q.filter(SliceMember.member_id == project_lead)
                         if len(q.all()) > 0:
-                            options['members_to_change'] = opt
+                            del_options['members_to_change'] = opt
                         else:
-                            options['members_to_add'] = opt
-                    
+                            del_options['members_to_add'] = opt
+
+                        # Also, change the slice owner_id
+                        q = session.query(Slice)
+                        q = q.filter(Slice.slice_id == slice['SLICE_UID'])
+                        q = q.update({"owner_id" : project_lead})
 
                     self.modify_membership(client_cert, session, SliceMember, client_uuid, \
-                             slice['SLICE_UID'], slice['SLICE_URN'], options, \
+                             slice['SLICE_UID'], slice['SLICE_URN'], del_options, \
                              'slice_id', 'SLICE_MEMBER', 'SLICE_ROLE', 'slice')
+
+        # All new project admins should be admins in all project slices
+        if 'members_to_add' in options:
+            for member in options['members_to_add']:
+                # If the new member has role of admin, then we need to ensure they are
+                # an admin on all slices in the project
+                if member['PROJECT_ROLE'] == 'ADMIN':
+                    # For each slice in project
+                    for slice in project_slices:
+                        q = session.query(SliceMember.role)
+                        q = q.filter(SliceMember.slice_id == slice.slice_id)
+                        q = q.filter(SliceMember.member_id == self.get_member_id_for_urn(session, member['PROJECT_MEMBER']))
+                        if q.count() <= 0:
+                            nopt = [{'SLICE_MEMBER': member['PROJECT_MEMBER'], 'SLICE_ROLE': 'ADMIN'}]
+                            noptions = {'members_to_add': nopt}
+                            self.modify_membership(client_cert, session, SliceMember, client_uuid, \
+                                                       slice.slice_id, slice.slice_urn, noptions, \
+                                                       'slice_id', 'SLICE_MEMBER', 'SLICE_ROLE', 'slice')
+                        else:
+                            # If the new admin is a member or auditor on the slice, make them an admin on the slice
+                            # check SliceMember.role
+                            row = q.one()
+                            if row[0] == self.get_role_id(session, 'MEMBER') or row[0] == self.get_role_id(session, 'AUDITOR'):
+                                nopt = [{'SLICE_MEMBER': member['PROJECT_MEMBER'], 'SLICE_ROLE': 'ADMIN'}]
+                                noptions = {'members_to_change': nopt}
+                                self.modify_membership(client_cert, session, SliceMember, client_uuid, \
+                                                           slice.slice_id, slice.slice_urn, noptions, \
+                                                           'slice_id', 'SLICE_MEMBER', 'SLICE_ROLE', 'slice')
+
+        if 'members_to_change' in options:
+            for member in options['members_to_change']:
+                # If the new member has role of admin, then we need to ensure they are
+                # an admin on all slices in the project
+                if member['PROJECT_ROLE'] == 'ADMIN':
+                    # For each slice in project
+                    for slice in project_slices:
+                        q = session.query(SliceMember.role)
+                        q = q.filter(SliceMember.slice_id == slice.slice_id)
+                        q = q.filter(SliceMember.member_id == self.get_member_id_for_urn(session, member['PROJECT_MEMBER']))
+                        if q.count() <= 0:
+                            nopt = [{'SLICE_MEMBER': member['PROJECT_MEMBER'], 'SLICE_ROLE': 'ADMIN'}]
+                            noptions = {'members_to_add': nopt}
+                            self.modify_membership(client_cert, session, SliceMember, client_uuid, \
+                                                       slice.slice_id, slice.slice_urn, noptions, \
+                                                       'slice_id', 'SLICE_MEMBER', 'SLICE_ROLE', 'slice')
+                        else:
+                            # If the new admin is a member or auditor on the slice, make them an admin on the slice
+                            # check SliceMember.role
+                            row = q.one()
+                            if row[0] == self.get_role_id(session, 'MEMBER') or row[0] == self.get_role_id(session, 'AUDITOR'):
+                                nopt = [{'SLICE_MEMBER': member['PROJECT_MEMBER'], 'SLICE_ROLE': 'ADMIN'}]
+                                noptions = {'members_to_change': nopt}
+                                self.modify_membership(client_cert, session, SliceMember, client_uuid, \
+                                                           slice.slice_id, slice.slice_urn, noptions, \
+                                                           'slice_id', 'SLICE_MEMBER', 'SLICE_ROLE', 'slice')
+
 
         session.commit()
         session.close()
@@ -1116,11 +1177,43 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
 
         id_str = '%s.%s' % (member_class.__name__, id_field)
 
+        # Grab the display names and IDs for all members whose membership we are changing
+        all_urns = []
+        if 'members_to_add' in options: 
+            for member_to_add in options['members_to_add']:
+                all_urns.append(member_to_add[member_str])
+        if 'members_to_remove' in options: 
+            for member_to_remove in options['members_to_remove']:
+                all_urns.append(member_to_remove)
+        if 'members_to_change' in options: 
+            for member_to_change in options['members_to_change']:
+                all_urns.append(member_to_change[member_str])
+#        chapi_info('SA', "ALL_URNS = %s" % all_urns)
+
+        credentials = []
+        lookup_identifying_options = {\
+            "match" : {"MEMBER_URN" : all_urns}, 
+            "filter" : ["_GENI_MEMBER_DISPLAYNAME", "MEMBER_FIRSTNAME", 
+                        "MEMBER_LASTNAME", "MEMBER_EMAIL", "_GENI_IDENTIFYING_MEMBER_UID"]}
+        ma_handler = pm.getService('mav1handler')
+        result = ma_handler._delegate.lookup_identifying_member_info(client_cert, credentials, lookup_identifying_options)
+        urn_to_display_name = {}
+        urn_to_id = {}
+        # If we failed to get the display names, use the usernames
+        for member_urn in all_urns:
+            if result['code'] != NO_ERROR or member_urn not in result['value']:
+                urn_to_display_name[member_urn] = \
+                    get_name_from_urn(member_urn)
+            else:
+                urn_to_display_name[member_urn] = \
+                    get_member_display_name(result['value'][member_urn], member_urn)
+                urn_to_id[member_urn] = result['value'][member_urn]["_GENI_IDENTIFYING_MEMBER_UID"]
+        chapi_debug('SA:MA', "URN_TO_DISPLAY_NAME = %s" % urn_to_display_name)
+
         # first, do the removes
         if 'members_to_remove' in options:
             q = session.query(member_class)
-            ids = [self.get_member_id_for_urn(session, m_urn) \
-                   for m_urn in options['members_to_remove']]
+            ids = [urn_to_id[m_urn] for m_urn in options['members_to_remove']]
             q = q.filter(member_class.member_id.in_(ids))
             q = q.filter(eval(id_str) == id)
             q.delete(synchronize_session='fetch')
@@ -1130,8 +1223,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
             for member in options['members_to_add']:
                 member_obj = member_class()
                 setattr(member_obj, id_field, id)
-                member_obj.member_id = self.get_member_id_for_urn \
-                                   (session, member[member_str])
+                member_obj.member_id = urn_to_id[member[member_str]]
                 if not member_obj.member_id:
                     session.close()
                     raise CHAPIv1ArgumentError('No such member ' + \
@@ -1153,7 +1245,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                 q = session.query(member_class)
                 q = q.filter(eval(id_str) == id)
                 q = q.filter(member_class.member_id == \
-                    self.get_member_id_for_urn(session, member[member_str]))
+                    urn_to_id[member[member_str]])
                 if len(q.all()) == 0:
                     session.close()
                     raise CHAPIv1ArgumentError('Cannot change member ' + \
@@ -1173,49 +1265,20 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
 
         # Now log the removals, adds, changes
 
-        # Grab the display names for all members whose membership we are changing
-        all_urns = []
-        if 'members_to_add' in options: 
-            for member_to_add in options['members_to_add']:
-                all_urns.append(member_to_add[member_str])
-        if 'members_to_remove' in options: 
-            for member_to_remove in options['members_to_remove']:
-                all_urns.append(member_to_remove)
-        if 'members_to_change' in options: 
-            for member_to_change in options['members_to_change']:
-                all_urns.append(member_to_change[member_str])
-#        chapi_info('SA', "ALL_URNS = %s" % all_urns)
-
-        credentials = []
-        lookup_identifying_options = {\
-            "match" : {"MEMBER_URN" : all_urns}, 
-            "filter" : ["_GENI_MEMBER_DISPLAYNAME", "MEMBER_FIRSTNAME", 
-                        "MEMBER_LASTNAME", "MEMBER_EMAIL"]}
-        ma_handler = pm.getService('mav1handler')
-        result = ma_handler._delegate.lookup_identifying_member_info(client_cert, credentials, lookup_identifying_options)
-        urn_to_display_name = {}
-        # If we failed to get the display names, use the usernames
-        for member_urn in all_urns:
-            if result['code'] != NO_ERROR or member_urn not in result['value']:
-                urn_to_display_name[member_urn] = \
-                    get_name_from_urn(member_urn)
-            else:
-                urn_to_display_name[member_urn] = \
-                    get_member_display_name(result['value'][member_urn], member_urn)
-        chapi_debug('SA:MA', "URN_TO_DISPLAY_NAME = %s" % urn_to_display_name)
-
         # Get attributes for logging membership changes
         if text_str == 'slice':
             project_name, authority, slice_name = \
                 extract_data_from_slice_urn(urn)
             project_id = \
                 self.get_project_id(session, 'project_name', project_name)
-            attribs = {"SLICE" : id, "PROJECT_ID" : project_id}
+            attribs = {"SLICE" : id, "PROJECT" : project_id}
             label = slice_name
+            label2 = "%s in project %s" % (slice_name, project_name)
         else:
             project_name = get_name_from_urn(urn)
             attribs = {"PROJECT" : id}
             label = project_name
+            label2 = label
 
         # Log all removals
         user_email = get_email_from_cert(client_cert)
@@ -1223,10 +1286,12 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
             members_to_remove = options['members_to_remove']
             for member_to_remove in members_to_remove:
                 member_name = urn_to_display_name[member_to_remove]
+                attribs["MEMBER"] = urn_to_id[member_to_remove]
                 self.logging_service.log_event(
                     "Removed member %s from %s %s" % \
                         (member_name, text_str, label), \
                         attribs, client_uuid)
+                chapi_info(SA_LOG_PREFIX, "Removed member %s from %s %s" % (member_name, text_str, label2), {'user': user_email})
 
         # Log all adds
         if 'members_to_add' in options:
@@ -1235,13 +1300,14 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                 member_urn = member_to_add[member_str]
                 member_name = urn_to_display_name[member_urn]
                 member_role = member_to_add[role_str]
+                attribs["MEMBER"] = urn_to_id[member_urn]
                 self.logging_service.log_event(
                     "Added member %s in role %s to %s %s" % \
                         (member_name, member_role, text_str, label), 
                         attribs, client_uuid)
                 chapi_audit_and_log(SA_LOG_PREFIX, 
                     "Added member %s in role %s to %s %s" % \
-                        (member_name, member_role, text_str, label), logging.INFO, {'user': user_email})
+                        (member_name, member_role, text_str, label2), logging.INFO, {'user': user_email})
                 # FIXME: Email admins of new project members
 
         # Log all changes
@@ -1251,10 +1317,12 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                 member_urn = member_to_change[member_str]
                 member_name = urn_to_display_name[member_urn]
                 member_role = member_to_change[role_str]
+                attribs["MEMBER"] = urn_to_id[member_urn]
                 self.logging_service.log_event(
                     "Changed member %s to role %s in %s %s" % \
                         (member_name, member_role, text_str, label), 
                         attribs, client_uuid)
+                chapi_info(SA_LOG_PREFIX, "Changed member %s to role %s in %s %s" % (member_name, member_role, text_str, label2), {'user': user_email})
 
         return self._successReturn(None)
 
