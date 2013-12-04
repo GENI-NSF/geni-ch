@@ -13,6 +13,8 @@
 -- value : string
 -- self_asserted : Boolean
 
+-- FIXME: Note that if you run this script more than once you will get duplicate entries in ma_member_attribute
+
 
 -- Move all PROJECT_LEAD (ATT=1, CT = 3) assertions into MA_MEMBER_ATTRIBUTE
 -- as 'project_lead: true' attribute
