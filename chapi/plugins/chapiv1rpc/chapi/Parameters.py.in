@@ -106,6 +106,21 @@ default_parameters = [
         DESC_KEY: "CHAPI logging level."
     },
     {
+        NAME_KEY: "chapi.portal_admin_email",
+        VALUE_KEY: "portal-admin@example.com",
+        DESC_KEY: "portal admin email."
+    },
+    {
+        NAME_KEY: "chapi.portal_help_email",
+        VALUE_KEY: "portal-help@example.com",
+        DESC_KEY: "portal help email."
+    },
+    {
+        NAME_KEY: "chapi.ch_from_email",
+        VALUE_KEY: "www-data@example.com",
+        DESC_KEY: "chapi from email"
+    },
+    {
         NAME_KEY: "chrm.authority",
         VALUE_KEY: "host.example.com",
         DESC_KEY: "Name of CH/SA/MA authority"

@@ -49,6 +49,7 @@ from tools.guard_utils import *
 from tools.ABACManager import *
 from tools.cs_utils import *
 from tools.chapi_log import *
+from tools.chapi_utils import *
 
 # classes for mapping to sql tables
 
@@ -81,6 +82,11 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         self.key = self.config.get('chapi.sa_key')
 
         self.logging_service = pm.getService('loggingv1handler')
+        self._ma_handler = pm.getService('mav1handler')
+
+        self.portal_admin_email = self.config.get('chapi.portal_admin_email')
+        self.portal_help_email = self.config.get('chapi.portal_help_email')
+        self.ch_from_email = self.config.get('chapi.ch_from_email')
 
         self.trusted_root = self.config.get('chapiv1rpc.ch_cert_root')
 
@@ -88,6 +94,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
             [os.path.join(self.trusted_root, f) \
                  for f in os.listdir(self.trusted_root) if not f.startswith('CAT')]
 #        print "TR = " + str(self.trusted_root_files)
+
 
         mapper(Slice, self.db.SLICE_TABLE)
         mapper(SliceMember, self.db.SLICE_MEMBER_TABLE)
@@ -726,12 +733,24 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                           PROJECT_CONTEXT, project.project_id)
 
         attribs = {"PROJECT" : project.project_id}
-        # FIXME: Get the name of the project lead and add this to the log/audit messages
-        self.logging_service.log_event("Created project " + name, 
+
+        # get name of project lead
+        ma_options = {'match' : {'MEMBER_UID' : project.lead_id },'filter': ['_GENI_MEMBER_DISPLAYNAME','MEMBER_FIRSTNAME','MEMBER_LASTNAME','MEMBER_EMAIL']}  
+        member_info = self._ma_handler._delegate.lookup_identifying_member_info(client_cert,credentials,ma_options)
+        leadname = ""
+        info = member_info['value']
+        if len(info) > 0:
+            for row in info:
+                leadname = get_member_display_name(info[row],row)
+
+        self.logging_service.log_event("Created project " + name + " with lead " + leadname, 
                                        attribs, client_uuid)
         chapi_audit_and_log(SA_LOG_PREFIX, "Created project " + name, logging.INFO, {'user': user_email})
 
-        # FIXME: Email the admins that the project was created
+        # Email the admins that the project was created
+        subject = "New GENI CH project created"
+        msgbody = "Created project: %s with lead %s" %(name, leadname)
+        send_email(self.portal_admin_email, self.ch_from_email, self.portal_help_email,subject,msgbody)
 
         # do the database write
         result = self.finish_create(session, project,  SA.project_field_mapping, \
