@@ -1066,7 +1066,7 @@ class MAv1Implementation(MAv1DelegateBase):
                                     row = self.get_attr_for_uid(session,"MEMBER_URN",member['PROJECT_MEMBER_UID'])
                                     new_lead_urn = row[0]
                                     
-                                    options = {'members_to_change':[{'PROJECT_MEMBER': member_urn,'PROJECT_ROLE':'ADMIN'}, \
+                                    options = {'members_to_change':[{'PROJECT_MEMBER': member_urn,'PROJECT_ROLE':'MEMBER'}, \
                                                                         {'PROJECT_MEMBER': new_lead_urn,'PROJECT_ROLE':'LEAD'}]}
                                     result = self._sa_handler._delegate.modify_project_membership(cert, project['PROJECT_URN'], credentials, options)
                                     break
