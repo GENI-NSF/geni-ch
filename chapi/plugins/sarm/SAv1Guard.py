@@ -135,7 +135,8 @@ class SAv1Guard(ABACGuardBase):
                 "ME.MAY_LOOKUP_SLICES<-ME.IS_OPERATOR",
                 "ME.MAY_LOOKUP_SLICES_$SUBJECT<-ME.IS_LEAD_$SUBJECT", 
                 "ME.MAY_LOOKUP_SLICES_$SUBJECT<-ME.IS_ADMIN_$SUBJECT",
-                "ME.MAY_LOOKUP_SLICES_$SUBJECT<-ME.IS_MEMBER_$SUBJECT"
+                "ME.MAY_LOOKUP_SLICES_$SUBJECT<-ME.IS_MEMBER_$SUBJECT",
+                "ME.MAY_LOOKUP_SLICES_$SUBJECT<-ME.IS_AUDITOR_$SUBJECT"
                 ], assert_slice_role, standard_subject_extractor),
 
         'update_slice' : \
@@ -147,7 +148,6 @@ class SAv1Guard(ABACGuardBase):
 
         'get_credentials' : \
             SubjectInvocationCheck([
-                "ME.MAY_GET_CREDENTIALS<-ME.IS_OPERATOR",
                 #"ME.MAY_GET_CREDENTIALS_$SUBJECT<-ME.IS_LEAD_$SUBJECT", 
                 #"ME.MAY_GET_CREDENTIALS_$SUBJECT<-ME.IS_ADMIN_$SUBJECT",
                 #"ME.MAY_GET_CREDENTIALS_$SUBJECT<-ME.IS_MEMBER_$SUBJECT",
