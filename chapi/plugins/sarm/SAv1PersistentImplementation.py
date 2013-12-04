@@ -759,11 +759,11 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
 
         self.logging_service.log_event("Created project " + name + " with lead " + leadname, 
                                        attribs, client_uuid)
-        chapi_audit_and_log(SA_LOG_PREFIX, "Created project " + name, logging.INFO, {'user': user_email})
+        chapi_audit_and_log(SA_LOG_PREFIX, "Created project " + name + " with lead " + leadname, logging.INFO, {'user': user_email})
 
         # Email the admins that the project was created
         subject = "New GENI CH project created"
-        msgbody = "Created project: %s with lead %s" %(name, leadname)
+        msgbody = "Created project: %s with lead %s on CH %s" %(name, leadname, self.config.get("chrm.authority"))
         send_email(self.portal_admin_email, self.ch_from_email, self.portal_help_email,subject,msgbody)
 
         # do the database write
