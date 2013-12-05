@@ -28,7 +28,7 @@ from amsoil.core import serviceinterface
 from chapi.DelegateBase import DelegateBase
 from chapi.HandlerBase import HandlerBase
 from chapi.Exceptions import *
-from tools.cert_utils import get_uuid_from_cert, get_urn_from_cert
+from tools.cert_utils import get_uuid_from_cert, get_urn_from_cert, get_email_from_cert
 from tools.chapi_log import *
 import sfa.trust.gid as gid
 import geni.util.urn_util as urn_util
@@ -42,17 +42,19 @@ class PGCHv1Handler(HandlerBase):
 
     # Override error return to log exception
     def _errorReturn(self, e):
-        chapi_log_exception(PGCH_LOG_PREFIX, e)
+        user_email = get_email_from_cert(self.requestCertificate())
+        chapi_log_exception(PGCH_LOG_PREFIX, e, {'user': user_email})
         return super(PGCHv1Handler, self)._errorReturn(e)
 
     def GetVersion(self):
         method = 'GetVersion'
         args = None
-        chapi_log_invocation(PGCH_LOG_PREFIX, method, [], {}, args)
+        user_email = get_email_from_cert(self.requestCertificate())
+        chapi_log_invocation(PGCH_LOG_PREFIX, method, [], {}, args, {'user': user_email})
         try:
             client_cert = self.requestCertificate()
             result = self._delegate.GetVersion(client_cert)
-            chapi_log_result(PGCH_LOG_PREFIX, method, result)
+            chapi_log_result(PGCH_LOG_PREFIX, method, result, {'user': user_email})
             return result
         except Exception as e:
             return self._errorReturn(e)
@@ -60,33 +62,36 @@ class PGCHv1Handler(HandlerBase):
 
     def GetCredential(self, args=None):
         method = 'GetCredential'
-        chapi_log_invocation(PGCH_LOG_PREFIX, method, [], {}, args)
+        user_email = get_email_from_cert(self.requestCertificate())
+        chapi_log_invocation(PGCH_LOG_PREFIX, method, [], {}, args, {'user': user_email})
         try:
             client_cert = self.requestCertificate()
             result = self._delegate.GetCredential(client_cert, args)
-            chapi_log_result(PGCH_LOG_PREFIX, method, result)
+            chapi_log_result(PGCH_LOG_PREFIX, method, result, {'user': user_email})
             return result
         except Exception as e:
             return self._errorReturn(e)
 
     def Resolve(self, args):
         method = 'Resolve'
-        chapi_log_invocation(PGCH_LOG_PREFIX, method, [], {}, args)
+        user_email = get_email_from_cert(self.requestCertificate())
+        chapi_log_invocation(PGCH_LOG_PREFIX, method, [], {}, args, {'user': user_email})
         try:
             client_cert = self.requestCertificate()
             result = self._delegate.Resolve(client_cert, args)
-            chapi_log_result(PGCH_LOG_PREFIX, method, result)
+            chapi_log_result(PGCH_LOG_PREFIX, method, result, {'user': user_email})
             return result
         except Exception as e:
             return self._errorReturn(e)
 
     def Register(self, args):
         method = 'Register'
-        chapi_log_invocation(PGCH_LOG_PREFIX, method, [], {}, args)
+        user_email = get_email_from_cert(self.requestCertificate())
+        chapi_log_invocation(PGCH_LOG_PREFIX, method, [], {}, args, {'user': user_email})
         try:
             client_cert = self.requestCertificate()
             result = self._delegate.Register(client_cert, args)
-            chapi_log_result(PGCH_LOG_PREFIX, method, result)
+            chapi_log_result(PGCH_LOG_PREFIX, method, result, {'user': user_email})
             return result
         except Exception as e:
             return self._errorReturn(e)
@@ -94,33 +99,36 @@ class PGCHv1Handler(HandlerBase):
 
     def RenewSlice(self, args):
         method = 'RenewSlice'
-        chapi_log_invocation(PGCH_LOG_PREFIX, method, [], {}, args)
+        user_email = get_email_from_cert(self.requestCertificate())
+        chapi_log_invocation(PGCH_LOG_PREFIX, method, [], {}, args, {'user': user_email})
         try:
             client_cert = self.requestCertificate()
             result = self._delegate.RenewSlice(client_cert, args)
-            chapi_log_result(PGCH_LOG_PREFIX, method, result)
+            chapi_log_result(PGCH_LOG_PREFIX, method, result, {'user': user_email})
             return result
         except Exception as e:
             return self._errorReturn(e)
 
     def GetKeys(self, args):
         method = 'GetKeys'
-        chapi_log_invocation(PGCH_LOG_PREFIX, method, [], {}, args)
+        user_email = get_email_from_cert(self.requestCertificate())
+        chapi_log_invocation(PGCH_LOG_PREFIX, method, [], {}, args, {'user': user_email})
         try:
             client_cert = self.requestCertificate()
             result = self._delegate.GetKeys(client_cert, args)
-            chapi_log_result(PGCH_LOG_PREFIX, method, result)
+            chapi_log_result(PGCH_LOG_PREFIX, method, result, {'user': user_email})
             return result
         except Exception as e:
             return self._errorReturn(e)
 
     def ListComponents(self, args):
         method = 'ListComponents'
-        chapi_log_invocation(PGCH_LOG_PREFIX, method, [], {}, args)
+        user_email = get_email_from_cert(self.requestCertificate())
+        chapi_log_invocation(PGCH_LOG_PREFIX, method, [], {}, args, {'user': user_email})
         try:
             client_cert = self.requestCertificate()
             result = self._delegate.ListComponents(client_cert, args)
-            chapi_log_result(PGCH_LOG_PREFIX, method, result)
+            chapi_log_result(PGCH_LOG_PREFIX, method, result, {'user': user_email})
             return result
         except Exception as e:
             return self._errorReturn(e)
@@ -134,33 +142,43 @@ class PGCHv1Delegate(DelegateBase):
         self._ma_handler = pm.getService('mav1handler')
 
     def GetVersion(self, client_cert):
-
-        # Values returned by GetVersion
-        API_VERSION = 1.3
-        CODE_VERSION = "0001"
-        CH_HOSTNAME = "ch.geni.net"
-        CH_PORT = "8443"
-
         self.logger.info("Called GetVersion")
-        version = dict()
 
-        peers = dict() # FIXME: This is the registered CMs at PG Utah
-        version['peers'] = peers
-        version['api'] = API_VERSION
-        version['urn'] = 'urn:publicid:IDN+' + CH_HOSTNAME + '+authority+ch'
-        version['hrn'] = CH_HOSTNAME
-        version['url'] = 'https://' + CH_HOSTNAME + ':' + CH_PORT
-        version['interface'] = 'registry'
-        version['code_tag'] = CODE_VERSION
-        version['hostname'] = CH_HOSTNAME
-        version['gcf-pgch_api'] = API_VERSION
+        user_email = get_email_from_cert(client_cert)
+        # Load the authority from the config
+        config = pm.getService('config')
+        authority = config.get('chrm.authority')
 
+        # Which API? What is the right value?
+        API_VERSION = 1
+        CH_HOSTNAME = authority
+
+        # Read code tag from a file
+        code_tag_file = '/etc/geni-chapi/geni-chapi-githash'
+        try:
+            with open(code_tag_file, 'r') as f:
+                code_tag = f.readline().strip()
+        except:
+            msg = 'GetVersion: Cannot read code tag file %r.'
+            msg = msg % (code_tag_file)
+            chapi_error(PGCH_LOG_PREFIX, msg, {'user': user_email})
+            code_tag = 'unknown'
+
+        # Templated URN. Should we get this from
+        # the authority certificate?
+        urn = 'urn:publicid:IDN+' + CH_HOSTNAME + '+authority+ch'
+
+        # At present there are no peers
+        peers = dict()
+        version = dict(peers=peers,
+                       api=API_VERSION,
+                       urn=urn,
+                       hrn=CH_HOSTNAME,
+                       url='https://' + CH_HOSTNAME + '/PGCH',
+                       interface='registry',
+                       code_tag=code_tag,
+                       hostname=CH_HOSTNAME)
         return self._successReturn(version)
-
-        # Note that the SA GetVersion is not implemented
-        # return value should be a struct with a bunch of entries
-        return self._ch_handler.get_version()
-
 
     def GetCredential(self, client_cert, args):
         # all none means return user cred
@@ -171,16 +189,30 @@ class PGCHv1Delegate(DelegateBase):
 
         # If no args, get a user credential
         if not args:
-            client_uuid = get_uuid_from_cert(client_cert)
-            creds = []
-            options = {"match" : {"MEMBER_UID" : client_uuid},
-                       "fields" : ["_GENI_USER_CREDENTIAL"]}
-            public_info = \
-                self._ma_handler._delegate.lookup_public_member_info(creds, 
-                                                                     options)
-            client_urn = public_info['value'].keys()[0]
-            user_credential = \
-                public_info['value'][client_urn]['_GENI_USER_CREDENTIAL']
+#             client_uuid = get_uuid_from_cert(client_cert)
+#             creds = []
+#             options = {"match" : {"MEMBER_UID" : client_uuid},
+#                        "fields" : ["_GENI_USER_CREDENTIAL"]}
+#             public_info = \
+#                 self._ma_handler._delegate.lookup_public_member_info(client_cert, creds, 
+#                                                                      options)
+#             client_urn = public_info['value'].keys()[0]
+#             user_credential = \
+#                 public_info['value'][client_urn]['_GENI_USER_CREDENTIAL']
+
+            client_urn = get_urn_from_cert(client_cert)
+            creds = self._ma_handler._delegate.get_credentials(client_cert,
+                                                              client_urn,
+                                                              [], {})
+            if creds['code'] != NO_ERROR: return creds
+
+            # Extract the SFA user credential from the returned set
+            user_credential = None
+            for cred in creds['value']:
+                if cred['geni_type'] == 'geni_sfa':
+                    user_credential = cred['geni_value']
+                    break
+
             return self._successReturn(user_credential)
 
 #        if not args:
@@ -286,53 +318,73 @@ class PGCHv1Delegate(DelegateBase):
 
         if type == 'user':
             # User
+            ma = self._ma_handler._delegate
             match_clause = {'MEMBER_URN' : urn}
             if not urn:
                 match_clause = {'MEMBER_UID' : uuid}
-            filter_clause = \
-                ['MEMBER_UID', 'MEMBER_URN', 'MEMBER_USERNAME', 'MEMBER_EMAIL', \
-                     'USER_CREDENTIAL']
-            identifying_filter_clause = \
-                ['MEMBER_UID', 'MEMBER_URN', 'MEMBER_USERNAME', 'MEMBER_EMAIL']
-            options = {"match" : match_clause, "filter" : filter_clause}
+            public_filter_clause = ['MEMBER_UID', 'MEMBER_URN',
+                                    'MEMBER_USERNAME',
+                                    '_GENI_MEMBER_SSL_CERTIFICATE']
+            public_options = {"match" : match_clause,
+                              "filter" : public_filter_clause}
             creds = []
             lookup_public_return = \
-                self._ma_handler._delegate.lookup_public_member_info(creds, 
-                                                                     options)
+                ma.lookup_public_member_info(client_cert, creds, public_options)
             if lookup_public_return['code'] != NO_ERROR:
                 return lookup_public_return
             public_info = lookup_public_return['value']
             this_urn = public_info.keys()[0]
             public_info = public_info[this_urn]
 
+            identifying_filter_clause = ['MEMBER_EMAIL']
+            identifying_options = {'match' : match_clause,
+                                   'filter' : identifying_filter_clause }
             lookup_identifying_return = \
-                self._ma_handler._delegate.lookup_identifying_member_info(client_cert, \
-                                                                              creds, options)
+                ma.lookup_identifying_member_info(client_cert, creds,
+                                                  identifying_options)
             if lookup_identifying_return['code'] != NO_ERROR:
                 return lookup_identifying_return
             identifying_info = lookup_identifying_return['value']
             identifying_info = identifying_info[this_urn]
-            
-
-            print "LPR = " + str(lookup_public_return)
-            print "LIR = " + str(lookup_identifying_return)
 
             member_uuid = public_info['MEMBER_UID']
             member_hrn = sfa.util.xrn.urn_to_hrn(public_info['MEMBER_URN'])[0]
             member_uuid = public_info['MEMBER_UID']
             member_email = identifying_info['MEMBER_EMAIL']
-            user_gid = gid.GID(public_info['USER_CREDENTIAL'])
+            member_gid = public_info['_GENI_MEMBER_SSL_CERTIFICATE']
             member_name = public_info['MEMBER_USERNAME']
+
+            # Slices
+            sa = self._sa_handler._delegate
+            lookup_slices_return = sa.lookup_slices_for_member(client_cert,
+                                                               urn, [], {})
+            if lookup_slices_return['code'] != NO_ERROR:
+                return lookup_slices_return
+            slice_info = lookup_slices_return['value']
+            slices = [s['SLICE_URN'] for s in slice_info]
+
+            # Now determine which slices are active...
+            options = { 'match' : { 'SLICE_URN' : slices},
+                        'filter' : ['SLICE_EXPIRED'] }
+            expired_return = sa.lookup_slices(client_cert, [], options)
+            if expired_return['code'] != NO_ERROR:
+                return expired_return
+            slice_info = expired_return['value']
+            # slices = []
+            # for urn in slice_info.keys():
+            #     if not slice_info[urn]['SLICE_EXPIRED']:
+            #         slices.append(urn)
+            slices = [urn for urn in slice_info
+                      if not slice_info[urn]['SLICE_EXPIRED']]
 
             resolve = {'uid' : member_uuid,  # login(Emulab) ID of user \
                            'hrn' : member_hrn, \
                            'uuid' : member_uuid, \
                            'email' : member_email, \
-                           'gid' : user_gid.save_to_string(), # user_cred
-                           'name' : member_name  # Common Name
+                           'gid' : member_gid,
+                           'name' : member_name,  # Common Name
+                       'slices' : slices
                        }
-                       
-            pass
         else:
             # Slice
             match_clause = {'SLICE_URN' : urn, 'SLICE_EXPIRED' : 'f'} 
@@ -363,7 +415,7 @@ class PGCHv1Delegate(DelegateBase):
             filter_clause = ['MEMBER_URN']
             options = {'match' : match_clause, 'filter' : filter_clause}
             lookup_member_return = \
-                self._ma_handler._delegate.lookup_public_member_info(client_cert, options)
+                self._ma_handler._delegate.lookup_public_member_info(client_cert, creds, options)
 
             if lookup_member_return['code'] != NO_ERROR:
                 return lookup_member_return
@@ -439,17 +491,30 @@ class PGCHv1Delegate(DelegateBase):
         # Set the slice email name (Bogus but consistent with current CH)
         slice_email = 'slice-%s@example.com' % slice_name
 
-        options = {'PROJECT_URN' : project_urn, 'SLICE_NAME' : slice_name, 
-                   'SLICE_EMAIL' : slice_email }
+        options = {'fields': {'SLICE_PROJECT_URN' : project_urn,
+                              'SLICE_NAME' : slice_name,
+                              '_GENI_SLICE_EMAIL' : slice_email }}
 
-        print "OPTS = " + str(options)
-
-        create_slice_return = \
-            self._sa_handler._delegate.create_slice(client_cert, creds, options)
+        sa = self._sa_handler._delegate
+        create_slice_return = sa.create_slice(client_cert, creds, options)
         if create_slice_return['code'] != NO_ERROR:
             return create_slice_return
-        slice_cred = slice_create_return['value']['SLICE_CREDENTIAL']
 
+        # Now get the slice credential so it can be returned
+        slice_urn = create_slice_return['value']['SLICE_URN']
+        creds_return = sa.get_credentials(client_cert, slice_urn, creds, {})
+        if creds_return['code'] != NO_ERROR:
+            return creds_return
+
+        # Locate the SFA credential
+        slice_cred = None
+        for cred in creds_return['value']:
+            if cred['geni_type'] == 'geni_sfa':
+                slice_cred = cred['geni_value']
+                break
+        if slice_cred is None:
+            # No SFA credential found!
+            return self._errorReturn('No slice credential available')
         return self._successReturn(slice_cred)
 
     def RenewSlice(self, client_cert, args):
@@ -459,24 +524,34 @@ class PGCHv1Delegate(DelegateBase):
         slice_credential = args['credential']
         expiration = args['expiration']
 
+        cred = sfa.trust.credential.Credential(string=slice_credential)
+        slice_gid = cred.get_gid_object()
+        slice_urn = slice_gid.get_urn()
+
         # Renew via update_slice in SA
-        slice_urn = None
-        credentials [slice_credential]
+        credentials = [slice_credential]
         options = {'fields' : {'SLICE_EXPIRATION' : expiration}}
-        update_slice_return = \
-            self._sa_handler._delegate.update_slice(client_cert, slice_urn, \
-                                                        credentials, options)
+        sa = self._sa_handler._delegate
+        update_slice_return = sa.update_slice(client_cert, slice_urn,
+                                              credentials, options)
         if update_slice_return['code'] != NO_ERROR:
             return update_slice_return
 
-        get_credentials_return = \
-            self._sa_handler._delegate.get_credentials(client_cert, slice_urn, \
-                                                           credentials, options)
-        if get_credentials_return['code'] != NO_ERROR:
-            return get_credentials_return
-        renewed_slice_credentials = get_credentials_return['value']
+        creds_return = sa.get_credentials(client_cert, slice_urn,
+                                          credentials, {})
+        if creds_return['code'] != NO_ERROR:
+            return creds_return
 
-        return self._successReturn("RenewSlice" + str(args))
+        # Locate the SFA credential
+        slice_cred = None
+        for cred in creds_return['value']:
+            if cred['geni_type'] == 'geni_sfa':
+                slice_cred = cred['geni_value']
+                break
+        if slice_cred is None:
+            # No SFA credential found!
+            return self._errorReturn('No slice credential available')
+        return self._successReturn(slice_cred)
 
     def GetKeys(self, client_cert, args):
         # cred is user cred
@@ -499,33 +574,43 @@ class PGCHv1Delegate(DelegateBase):
         if ssh_keys_result['code'] != NO_ERROR:
             return ssh_keys_result
 
+        ssh_keys_value = ssh_keys_result['value']
+
         keys = [{'type' : 'ssh' , 'key' : ssh_key['KEY_PUBLIC']} \
-                    for ssh_key in ssh_keys_result['value']]
+                    for ssh_key in ssh_keys_value[member_urn]]
         
         return self._successReturn(keys)
 
-
     def ListComponents(self, client_cert, args):
-        # Returns list of CMs (AMs)
-        # cred is user cred or slice cred - Omni uses user cred
-        # return list( of dict(gid=<cert>, hrn=<hrn>, url=<AM URL>))
-        # Matt seems to say hrn is not critical, and can maybe even skip cert
-        # args: credential
+        """Get the list of CMs (AMs).
 
+        Return a list of dicts. Each dict has keys gid, urn, hrn, url.
+        """
         self.logger.info("Called ListComponents")
-        options = dict()
-        get_aggregates_result = self._ch_handler.get_aggregates(options)
+        filter = ['SERVICE_CERT', 'SERVICE_URN', 'SERVICE_URL']
+        options = dict(filter=filter)
+        get_aggregates_result = self._ch_handler.lookup_aggregates(options)
         if get_aggregates_result['code'] != NO_ERROR:
             return get_aggregates_result
         aggregates = get_aggregates_result['value']
         components = []
         for aggregate in aggregates:
-            cert_file = aggregate['SERVICE_CERTIFICATE']
-            gid = open(cert_file).read()
+            gid_file = aggregate['SERVICE_CERT']
             urn = aggregate['SERVICE_URN']
-            hrn = sfa.util.xrn.urn_to_hrn(urn)
             url = aggregate['SERVICE_URL']
-            component = {'gid' : gid, 'hrn' : hrn, 'url' : url}
+            sfa_hrn,sfa_type = sfa.util.xrn.urn_to_hrn(urn)
+            # Clean up the HRN
+            hrn = sfa_hrn.replace('\\', '')
+            # Load the certificate from file
+            try:
+                with open(gid_file, 'r') as f:
+                    gid = f.read()
+            except:
+                msg = 'ListComponents: gid file %r cannot be read.'
+                msg = msg % (gid_file)
+                user_email = get_email_from_cert(client_cert)
+                chapi_error(PGCH_LOG_PREFIX, msg, {'user': user_email})
+                gid = ''
+            component = {'gid' : gid, 'urn' : urn, 'hrn' : hrn, 'url' : url}
             components.append(component)
         return self._successReturn(components)
-

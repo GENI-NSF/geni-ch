@@ -73,3 +73,9 @@ class HandlerBase(xmlrpc.Dispatcher):
         """Assembles a GENI compliant return result for successful methods."""
         return { 'code' : 0, 'output' : None, 'value' : result  }
 
+    @serviceinterface
+    def requestCertificate(self):
+        cert = super(HandlerBase, self).requestCertificate()
+        if not cert:
+            raise CHAPIv1AuthorizationError('Client certificate required but not provided')
+        return cert

@@ -42,7 +42,7 @@ class SRv1Handler(CHv1Handler):
     def __init__(self):
         super(SRv1Handler, self).__init__()
 
-    # Return list of all services registed in SR
+    # Return list of all services registered in SR
     def get_services(self):
         try:
             return self._delegate.get_services()
@@ -51,8 +51,9 @@ class SRv1Handler(CHv1Handler):
 
     # Return list of all services of given type registed in SR
     def get_services_of_type(self, service_type):
+        client_cert = self.requestCertificate()
         try:
-            return self._delegate.get_services_of_type(service_type)
+            return self._delegate.get_services_of_type(client_cert, service_type)
         except Exception as e:
             return self._errorReturn(e)
 
@@ -63,7 +64,7 @@ class SRv1Handler(CHv1Handler):
         if services['code'] != NO_ERROR:
             return services
         for service in services['value']:
-            if service['SERVICE_ID'] == service_id:
+            if service['_GENI_SERVICE_ID'] == service_id:
                 return self._successReturn(service)
         return self._errorReturn(\
             CHAPIv1DatabaseError("No service of ID %d found" % service_id))
@@ -85,10 +86,7 @@ class SRv1Delegate(CHv1PersistentImplementation):
 
     # Take an option 'urns' with a list of urns to lookup
     # Return a dictionary of each URN mapped to the URL of associated URN, or None if not found
-    def lookup_authorities_for_urns(self, options):
-        if not options.has_key('urns'):
-            raise CHAPIv1ArgumentError("No urns option provided to lookup_authorities_for_urns call")
-        urns = options['urns']
+    def lookup_authorities_for_urns(self, urns):
         urns_to_authorities = {}
         for urn in urns: 
             urns_to_authorities[urn] = self.lookup_authority_for_urn(urn)
@@ -127,23 +125,28 @@ class SRv1Delegate(CHv1PersistentImplementation):
             
 
     # Return list of trust roots for given Federation
-    def get_trust_roots(self):
+    def get_trust_roots(self, client_cert):
         config = pm.getService('config')
         trust_roots = config.get('chapiv1rpc.ch_cert_root')
         pem_files = os.listdir(trust_roots)
         pems = [open(os.path.join(trust_roots, pem_file)).read() for pem_file in pem_files if pem_file != 'CATedCACerts.pem']
         return self._successReturn(pems)
 
-    def get_services_of_type(self, service_type):
+    def get_services_of_type(self, client_cert, service_type):
         method = 'get_services_of_type'
         args = {'service_type' : service_type}
-        chapi_log_invocation(SR_LOG_PREFIX, method, [], {}, args)
+        user_email = get_email_from_cert(client_cert)
+        chapi_log_invocation(SR_LOG_PREFIX, method, [], {}, args, {'user': user_email})
 
         options = {'match' : {}, 'filter' : self.field_mapping.keys()}
 
-        result = self.lookup_authorities(service_type, options)
+        services = self.get_services()
+        if services['code'] != NO_ERROR:
+            return services
+        result = [s for s in services['value'] \
+                                 if s['SERVICE_TYPE'] == service_type] 
 
-        chapi_log_result(SR_LOG_PREFIX, method, result)
+        chapi_log_result(SR_LOG_PREFIX, method, result, {'user': user_email})
         return result
 
     def get_services(self):
@@ -166,10 +169,11 @@ class SRv1Delegate(CHv1PersistentImplementation):
                         for row in rows]
 
         # Fill in the service_cert_contents
-        for service in services:
-            service_cert = service['SERVICE_CERTIFICATE']
-            if service_cert:
-                service['SERVICE_CERTIFICATE_CONTENTS'] = open(service_cert, 'r').read()
+        if 'SERVICE_CERT' in selected_columns:
+            for service in services:
+                if service['SERVICE_CERT']:
+                    service['SERVICE_CERT'] = \
+                        open(service['SERVICE_CERT'], 'r').read()
 
         result = self._successReturn(services)
 

@@ -1,0 +1,58 @@
+# -*- mode: Makefile -*-
+
+# To delete extraneous files on the remote side, do the following:
+#
+# make RSYNC='/usr/bin/rsync --delete --delete-excluded' -f Makefile.sync synci
+#
+
+RSYNC = /usr/bin/rsync
+RSYNC_EXCLUDE = --exclude .git --exclude '*~' \
+		--exclude '\#*\#' --exclude '.\#*'
+RSYNC_DELETE = --delete --delete-excluded
+RSYNC_ARGS = -aztv $(RSYNC_EXCLUDE)
+
+GITHASH = etc/geni-chapi-githash
+
+.PHONY: syncb syncd syncm synci syncs synct syncp syncc
+
+default:
+	echo "Choose a specific sync target."
+
+$(GITHASH): ../.git
+	git rev-parse HEAD > $@
+
+synca: $(GITHASH)
+	$(RSYNC) $(RSYNC_ARGS) ../chapi algonquin.gpolab.bbn.com:
+
+syncb: $(GITHASH)
+	$(RSYNC) $(RSYNC_ARGS) ../chapi bigslide.gpolab.bbn.com:
+
+syncd: $(GITHASH)
+	$(RSYNC) $(RSYNC_ARGS) ../chapi dagoola.gpolab.bbn.com:
+
+synce: $(GITHASH)
+	$(RSYNC) $(RSYNC_ARGS) ../chapi emmons.gpolab.bbn.com:
+
+synch: $(GITHASH)
+	$(RSYNC) $(RSYNC_ARGS) ../chapi haystack.gpolab.bbn.com:
+
+syncm: $(GITHASH)
+	$(RSYNC) $(RSYNC_ARGS) ../chapi marilac.gpolab.bbn.com:
+
+synci: $(GITHASH)
+	$(RSYNC) $(RSYNC_ARGS) ../chapi illyrica.gpolab.bbn.com:
+
+syncs: $(GITHASH)
+	$(RSYNC) $(RSYNC_ARGS) ../chapi sergyar.gpolab.bbn.com:
+
+synct: $(GITHASH)
+	$(RSYNC) $(RSYNC_ARGS) ../chapi tau-ceti.gpolab.bbn.com:
+
+syncp: $(GITHASH)
+	$(RSYNC) $(RSYNC_ARGS) ../chapi panther.gpolab.bbn.com:
+
+syncc: $(GITHASH)
+	$(RSYNC) $(RSYNC_ARGS) ../chapi cascade.gpolab.bbn.com:
+
+syncn: $(GITHASH)
+	$(RSYNC) $(RSYNC_ARGS) ../chapi nye.gpolab.bbn.com:

@@ -27,6 +27,7 @@ from amsoil.core import serviceinterface
 from DelegateBase import DelegateBase
 from HandlerBase import HandlerBase
 from Exceptions import *
+from tools.cert_utils import *
 from tools.chapi_log import *
 
 ma_logger = amsoil.core.log.getLogger('mav1')
@@ -39,33 +40,40 @@ class MAv1Handler(HandlerBase):
 
     # Override error return to log exception
     def _errorReturn(self, e):
-        chapi_log_exception(MA_LOG_PREFIX, e)
+        user_email = get_email_from_cert(self.requestCertificate())
+        chapi_log_exception(MA_LOG_PREFIX, e, {'user': user_email})
         return super(MAv1Handler, self)._errorReturn(e)
 
-    # This call is unprotected: no checking of credentials
-    # Return version of MA API including object model
     def get_version(self):
+        """Return version of MA API including object model
+        This call is unprotected: no checking of credentials
+        """
         try:
             return self._delegate.get_version()
         except Exception as e:
             return self._errorReturn(e)
 
     # MEMBER service methods
-
-    # This call is unprotected: no checking of credentials
-    # Return public information about members specified in options
-    # filter and query fields
     def lookup_public_member_info(self, credentials, options):
+        """Return public information about members specified in options
+        filter and query fields
+        
+        This call is unprotected: no checking of credentials
+        """
+
+        client_cert = self.requestCertificate()
         try:
-            return self._delegate.lookup_public_member_info(credentials, options)
+            return self._delegate.lookup_public_member_info(client_cert, credentials, options)
         except Exception as e:
             return self._errorReturn(e)
 
-    # This call is protected
-    # Return private information about members specified in options
-    # filter and query fields
-    # Authorized by client cert and credentials
     def lookup_private_member_info(self, credentials, options):
+        """Return private information about members specified in options
+        filter and query fields
+
+        This call is protected
+        Authorized by client cert and credentials
+        """
         client_cert = self.requestCertificate()
         method = 'lookup_private_member_info'
         try:
@@ -88,11 +96,13 @@ class MAv1Handler(HandlerBase):
         except Exception as e:
             return self._errorReturn(e)
 
-    # This call is protected
-    # Return identifying information about members specified in options
-    # filter and query fields
-    # Authorized by client cert and credentials
     def lookup_identifying_member_info(self, credentials, options):
+        """Return identifying information about members specified in options
+        filter and query fields
+        
+        This call is protected
+        Authorized by client cert and credentials
+        """
         client_cert = self.requestCertificate()
         method = 'lookup_identifying_member_info'
         try:
@@ -114,10 +124,12 @@ class MAv1Handler(HandlerBase):
         except Exception as e:
             return self._errorReturn(e)
 
-    # This call is protected
-    # Get credentials for given user
-    # Authorization based on client cert and given credentials
     def get_credentials(self, member_urn, credentials, options):
+        """Get credentials for given user
+        
+        This call is protected
+        Authorization based on client cert and given credentials
+        """
         client_cert = self.requestCertificate()
         method = 'get_credentials'
         try:
@@ -138,10 +150,12 @@ class MAv1Handler(HandlerBase):
         except Exception as e:
             return self._errorReturn(e)
 
-    # This call is protected
-    # Update given member with new data provided in options
-    # Authorized by client cert and credentials
     def update_member_info(self, member_urn, credentials, options):
+        """Update given member with new data provided in options
+        
+        This call is protected
+        Authorized by client cert and credentials
+        """
         client_cert = self.requestCertificate()
         method = 'update_member_info'
         try:
@@ -162,12 +176,14 @@ class MAv1Handler(HandlerBase):
         except Exception as e:
             return self._errorReturn(e)
 
-    # This call is protected
-    # Create a new member using the specified attributes.  Attribute email is 
-    # required.  Returns the attributes of the resulting member record, including
-    # the uid and urn.
-    # Authorized by client cert and credentials
     def create_member(self, attributes, credentials, options):
+        """Create a new member using the specified attributes.  Attribute email is 
+        required.  Returns the attributes of the resulting member record, including
+        the uid and urn.
+        
+        This call is protected
+        Authorized by client cert and credentials
+        """
         client_cert = self.requestCertificate()
         method = 'create_member'
         try:
@@ -192,16 +208,17 @@ class MAv1Handler(HandlerBase):
 
     # KEY service methods
 
-    # Create a record for a key pair for given member
-    # Arguments:
-    # member_urn: URN of member for which to retrieve credentials
-    # options: 'fields' containing the fields for the key pair being stored
-    # Return:
-    # Dictionary of name/value pairs for created key record 
-    #   including the KEY_ID
-    # Should return DUPLICATE_ERROR if a key with the same KEY_ID is 
-    #  already stored for given user
-    def create_key(self, member_urn, credentials, options):
+    def create_key(self, credentials, options):
+        """Create a record for a key pair for given member
+        Arguments:
+            member_urn: URN of member for which to retrieve credentials
+            options: 'fields' containing the fields for the key pair being stored
+        Return:
+            Dictionary of name/value pairs for created key record 
+            including the KEY_ID
+       Should return DUPLICATE_ERROR if a key with the same KEY_ID is 
+       already stored for given user
+       """
         client_cert = self.requestCertificate()
         method = 'create_key'
         try:
@@ -209,9 +226,8 @@ class MAv1Handler(HandlerBase):
                 self._guard.adjust_client_identity(client_cert, \
                                                        credentials, options)
             self._guard.validate_call(client_cert, method,
-                                      credentials, options, \
-                                          {'member_urn' : member_urn})
-            results = self._delegate.create_key(client_cert, member_urn, \
+                                      credentials, options, {})
+            results = self._delegate.create_key(client_cert, \
                                                     credentials, options)
             if results['code'] == NO_ERROR:
                 results_value = results['value']
@@ -222,15 +238,16 @@ class MAv1Handler(HandlerBase):
         except Exception as e:
             return self._errorReturn(e)
 
-    # Delete a key pair for given member
-    #
-    # Arguments:
-    # member_urn: urn of member for which to delete key pair
-    # key_id: KEY_ID (fingerprint) of key pair to be deleted
-    # Return:
-    # True if succeeded
-    # Should return ARGUMENT_ERROR if no such key is found for user
     def delete_key(self, member_urn, key_id, credentials, options):
+        """Delete a key pair for given member
+        Arguments:
+            member_urn: urn of member for which to delete key pair
+            key_id: KEY_ID (fingerprint) of key pair to be deleted
+        Return:
+            True if succeeded
+            
+        Should return ARGUMENT_ERROR if no such key is found for user
+        """
         client_cert = self.requestCertificate()
         method = 'delete_key'
         try:
@@ -253,17 +270,19 @@ class MAv1Handler(HandlerBase):
         except Exception as e:
             return self._errorReturn(e)
 
-    # Update the details of a key pair for given member
-    #
-    # Arguments:
-    # member_urn: urn of member for which to delete key pair
-    # key_id: KEY_ID (fingerprint) of key pair to be deleted
-    # options: 'fields' containing fields for key pairs that are permitted 
-    #   for update
-    # Return:
-    # True if succeeded
-    # Should return ARGUMENT_ERROR if no such key is found for user
     def update_key(self, member_urn, key_id, credentials, options):
+        """
+        Update the details of a key pair for given member
+        
+        Arguments:
+          member_urn: urn of member for which to delete key pair
+          key_id: KEY_ID (fingerprint) of key pair to be deleted
+          options: 'fields' containing fields for key pairs that are permitted 
+        for update
+        Return:
+            True if succeeded
+        Should return ARGUMENT_ERROR if no such key is found for user
+        """
         client_cert = self.requestCertificate()
         method = 'update_key'
         try:
@@ -286,16 +305,17 @@ class MAv1Handler(HandlerBase):
         except Exception as e:
             return self._errorReturn(e)
 
-    # Lookup keys for given match criteria return fields in given 
-    #  filter criteria
-    #
-    # Arguments:
-    # options: 'match' for query match criteria, 'filter' for fields 
-    #    to be returned
-    # Return:
-    #  Dictionary (indexed by member_urn) of dictionaries containing 
-    #     name/value pairs for all keys registered for that given user.
     def lookup_keys(self, credentials, options):
+        """Lookup keys for given match criteria return fields in given 
+        #  filter criteria
+        #
+        # Arguments:
+        # options: 'match' for query match criteria, 'filter' for fields 
+        #    to be returned
+        # Return:
+        #  Dictionary (indexed by member_urn) of dictionaries containing 
+        #     name/value pairs for all keys registered for that given user.
+        """
         client_cert = self.requestCertificate()
         method = 'lookup_keys'
         try:
@@ -315,10 +335,11 @@ class MAv1Handler(HandlerBase):
         except Exception as e:
             return self._errorReturn(e)
 
-    # Methods for managing user certs
-    # options: 
-    # 'csr' => certificate signing request (if null, create cert/key)
     def create_certificate(self, member_urn, credentials, options):
+        """Methods for managing user certs
+        # options: 
+        # 'csr' => certificate signing request (if null, create cert/key)
+        """
         client_cert = self.requestCertificate()
         method = 'create_certificate'
         try:
@@ -338,12 +359,17 @@ class MAv1Handler(HandlerBase):
 
     # ClientAuth API
     def list_clients(self):
+        """
+        """
+        client_cert = self.requestCertificate()
         try:
-            return self._delegate.list_clients()
+            return self._delegate.list_clients(client_cert)
         except Exception as e:
             return self._errorReturn(e)
 
     def list_authorized_clients(self, member_id):
+        """
+        """
         method = 'list_authorized_clients'
         client_cert = self.requestCertificate()
         try:
@@ -356,6 +382,8 @@ class MAv1Handler(HandlerBase):
             return self._errorReturn(e)
 
     def authorize_client(self, member_id, client_urn, authorize_sense):
+        """
+        """
         method = 'authorize_client'
         client_cert = self.requestCertificate()
         try:
@@ -372,6 +400,9 @@ class MAv1Handler(HandlerBase):
 
     # member disable API
     def enable_user(self, member_urn, enable_sense, credentials, options):
+        """Enable or disable a user based on URN. If enable_sense is False, then user 
+        will be disabled.
+        """
         client_cert = self.requestCertificate()
         method = 'enable_user'
         try:
@@ -392,6 +423,9 @@ class MAv1Handler(HandlerBase):
 
     # member privilege (private)
     def add_member_privilege(self, member_uid, privilege, credentials, options):
+        """Add a privilege to a member.
+        privilege is either OPERATOR or PROJECT_LEAD
+        """
         client_cert = self.requestCertificate()
         method = 'add_member_privilege'
         try:
@@ -411,6 +445,7 @@ class MAv1Handler(HandlerBase):
             return self._errorReturn(e)
 
     def revoke_member_privilege(self, member_uid, privilege, credentials, options):
+        """Revoke a privilege for a member."""
         client_cert = self.requestCertificate()
         method = 'revoke_member_privilege'
         try:
@@ -418,8 +453,8 @@ class MAv1Handler(HandlerBase):
                                       credentials, options,
                                       {'member_uid': member_uid,
                                        'privilege': privilege})
-            client_cert, options = self._guard.adjust_client_identity(
-                client_cert, credentials, options)
+            client_cert, options = self._guard.adjust_client_identity(client_cert,
+                                                                      credentials, options)
             results = self._delegate.revoke_member_privilege(client_cert,
                                                              member_uid, 
                                                              privilege,
@@ -429,14 +464,10 @@ class MAv1Handler(HandlerBase):
         except Exception as e:
             return self._errorReturn(e)
 
-    # add/remove_member_attribute (private)
-
-    # This call is protected
-    # Update given member with new data provided in options
-    # Authorized by client cert and credentials
     def add_member_attribute(self,
                              member_urn, name, value, self_asserted,
                              credentials, options):
+        """Add an attribute to member"""
         client_cert = self.requestCertificate()
         method = 'add_member_attribute'
         try:
@@ -463,6 +494,7 @@ class MAv1Handler(HandlerBase):
     def remove_member_attribute(self, 
                                 member_urn, name,
                                 credentials, options):
+        """Remove attribute to member"""
         client_cert = self.requestCertificate()
         method = 'remove_member_attribute'
         try:
@@ -501,7 +533,7 @@ class MAv1DelegateBase(DelegateBase):
     # MEMBER service methods
 
     # This call is unprotected: no checking of credentials
-    def lookup_public_member_info(self, credentials, options):
+    def lookup_public_member_info(self, client_cert, credentials, options):
         raise CHAPIv1NotImplementedError('')
 
     # This call is protected
@@ -526,7 +558,7 @@ class MAv1DelegateBase(DelegateBase):
 
     # KEY service methods
 
-    def create_key(self, client_cert, member_urn, credentials, options):
+    def create_key(self, client_cert, credentials, options):
         raise CHAPIv1NotImplementedError('')
 
     def delete_key(self, client_cert, member_urn, key_id, credentials, options):

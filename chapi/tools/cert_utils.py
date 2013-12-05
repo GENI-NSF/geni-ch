@@ -25,7 +25,7 @@ import sfa.trust.certificate
 import subprocess
 import os
 import tempfile
-from syslog import syslog
+from chapi_log import *
 
 # A set of utilities to pull infomration out of X509 certs
 
@@ -50,6 +50,13 @@ def get_uuid_from_cert(cert):
         if san_part.startswith('URI:urn:uuid'):
             uuid = san_part[13:]
             break
+    # The MA cert has the uuid in the field URI:uuid (which is wrong)
+    if uuid is None:
+        for san_part in san_parts:
+            san_part = san_part.strip()
+            if san_part.startswith('URI:uuid'):
+                uuid = san_part[9:]
+                break
     return uuid
 
 # Pull out the URN from the certificate
@@ -64,6 +71,19 @@ def get_urn_from_cert(cert):
             urn = san_part[4:]
             break
     return urn
+
+# Pull out the email from the certificate
+def get_email_from_cert(cert):
+    cert_object = sfa.trust.certificate.Certificate(string=cert)
+    subject_alt_names = cert_object.get_extension('subjectAltName')
+    san_parts = subject_alt_names.split(',')
+    email = None
+    for san_part in san_parts:
+        san_part = san_part.strip()
+        if san_part.startswith('email:'):
+            email = san_part[6:]
+            break
+    return email
 
 # Pull the object name fro the URN
 # It is the part after the last +
@@ -141,12 +161,12 @@ def make_cert(uuid, email, urn, \
                          '-cert', signer_cert_file,\
                          '-keyfile', signer_key_file, \
                          '-subj', subject ]
-    #syslog("CERT args: "+" ".join(sign_csr_args))
+    #chapi_debug("UTILS", "CERT args: "+" ".join(sign_csr_args))
     os.system(" ".join(sign_csr_args))
 
     # Grab cert from cert_file
     cert_pem = open(cert_file).read()
-    #syslog("CERT_PEM = " + cert_pem)
+    #chapi_debug("UTILS", "CERT_PEM = " + cert_pem)
 
     return cert_pem
 

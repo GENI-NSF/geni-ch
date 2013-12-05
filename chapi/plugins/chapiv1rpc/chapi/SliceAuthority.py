@@ -27,6 +27,7 @@ from amsoil.core import serviceinterface
 from DelegateBase import DelegateBase
 from HandlerBase import HandlerBase
 from Exceptions import *
+from tools.cert_utils import *
 from tools.chapi_log import *
 
 sa_logger = amsoil.core.log.getLogger('sav1')
@@ -39,7 +40,8 @@ class SAv1Handler(HandlerBase):
 
     # Override error return to log exception
     def _errorReturn(self, e):
-        chapi_log_exception(SA_LOG_PREFIX, e)
+        user_email = get_email_from_cert(self.requestCertificate())
+        chapi_log_exception(SA_LOG_PREFIX, e, {'user': user_email})
         return super(SAv1Handler, self)._errorReturn(e)
 
     ## SLICE SERVICE methods
@@ -482,7 +484,86 @@ class SAv1Handler(HandlerBase):
         except Exception as e:
             return self._errorReturn(e)
 
-    # Methods for handling pending project / slice requests
+    ## PROJECT ATTRIBUTE SERVICE methods
+        
+    # Lookup, add, or remove project attributes
+    # of members with respect to given project
+    # The name and value of the attribute to add
+    #    are fields in the options directionary
+    # 'attribute_to_add' : NAME,VALUE
+    # 'attribute_to_remove' : NAME
+    def lookup_project_attributes(self, project_urn, 
+                                 credentials, options):
+        client_cert = self.requestCertificate()
+        method = 'lookup_project_attributes'
+        try:
+            client_cert, options = \
+                self._guard.adjust_client_identity(client_cert, \
+                                                       credentials, options)
+            self._guard.validate_call(client_cert, method, \
+                                          credentials, options, \
+                                          {'project_urn' : project_urn})
+            results = \
+                self._delegate.lookup_project_attributes(client_cert, \
+                                                             project_urn, \
+                                                             credentials, \
+                                                             options)
+            return results
+        except Exception as e:
+            return self._errorReturn(e)
+
+    # Add an attribute to a given project
+    # arguments: project_urn
+    #     options {'attr_name' : attr_name, 'attr_value' : attr_value}
+    def add_project_attribute(self, \
+                                  project_urn, \
+                                  credentials, options):
+        client_cert = self.requestCertificate()
+        method = 'add_project_attribute'
+        try:
+            client_cert, options = \
+                self._guard.adjust_client_identity(client_cert, \
+                                                       credentials, options)
+            self._guard.validate_call(client_cert, method, \
+                                          credentials, options, \
+                                          {'project_urn' : project_urn})
+            results = \
+                self._delegate.add_project_attribute(client_cert, \
+                                                         project_urn, \
+                                                         credentials, \
+                                                         options)
+            return results
+        except Exception as e:
+            return self._errorReturn(e)
+
+    # remove an attribute from a given project
+    # arguments: project_urn
+    #     options {'attr_name' : attr_name}
+    def remove_project_attribute(self, \
+                                     project_urn, \
+                                     credentials, options):
+        client_cert = self.requestCertificate()
+        method = 'remove_project_attribute'
+        try:
+            client_cert, options = \
+                self._guard.adjust_client_identity(client_cert, \
+                                                       credentials, options)
+            self._guard.validate_call(client_cert, method, \
+                                          credentials, options, \
+                                          {'project_urn' : project_urn})
+            results = \
+                self._delegate.remove_project_attribute(client_cert, \
+                                                            project_urn, \
+                                                            credentials, \
+                                                            options)
+            return results
+        except Exception as e:
+            return self._errorReturn(e)
+
+
+
+
+    # Methods for handling pending project / slice requests and invitations
     # Note: Not part of standard Federation API
     
     def create_request(self, context_type, context_id, request_type, request_text, 
@@ -638,6 +719,43 @@ class SAv1Handler(HandlerBase):
         except Exception as e:
             return self._errorReturn(e)
 
+    def invite_member(self, role, project_id, credentials, options):
+        client_cert = self.requestCertificate()
+        method = 'invite_member'
+        try:
+            client_cert, options = \
+                self._guard.adjust_client_identity(client_cert, 
+                                                   credentials, options)
+            self._guard.validate_call(client_cert, method, \
+                                          credentials, options, \
+                                          {'project_id' : project_id,
+                                           'role' : role})
+            return self._delegate.invite_member(client_cert, role, project_id,
+                                                credentials, options)
+
+        except Exception as e:
+            return self._errorReturn(e)
+
+    def accept_invitation(self, invite_id, member_id, credentials, options):
+        client_cert = self.requestCertificate()
+        method = 'accept_invitation'
+        try:
+            client_cert, options = \
+                self._guard.adjust_client_identity(client_cert, 
+                                                   credentials, options)
+            self._guard.validate_call(client_cert, method, \
+                                          credentials, options, \
+                                          {'invite_id' : invite_id,
+                                           'member_id' : member_id})
+            return self._delegate.accept_invitation(client_cert, 
+                                                    invite_id, member_id,
+                                                    credentials, options)
+
+        except Exception as e:
+            return self._errorReturn(e)
+
+        
+
 
 # Base class for implementing the SA Slice interface. Must be
 # implemented in a derived class, and that derived class
@@ -730,6 +848,29 @@ class SAv1DelegateBase(DelegateBase):
                                      credentials, options):
         raise CHAPIv1NotImplementedError('')
 
+    ## PROJECT ATTRIBUTE SERVICE methods
+    
+    def lookup_project_attributes(self,  \
+                                      client_cert, project_urn,  \
+                                      credentials, options):
+        raise CHAPIv1NotImplementedError('')
+
+    # Add an attribute to a given project
+    # arguments: project_urn
+    #     options {'attr_name' : attr_name, 'attr_value' : attr_value}
+    def add_project_attribute(self, \
+                                  client_cert, project_urn, \
+                                  credentials, options):
+        raise CHAPIv1NotImplementedError('')
+
+    # remove an attribute from a given project
+    # arguments: project_urn
+    #     options {'attr_name' : attr_name}
+    def remove_project_attribute(self, \
+                                     client_cert, project_urn, \
+                                     credentials, options):
+        raise CHAPIv1NotImplementedError('')
+
     # Request handling methods
 
     def create_request(self, client_cert, context_type, \
@@ -768,3 +909,10 @@ class SAv1DelegateBase(DelegateBase):
 
 
 
+    def invite_member(self, client_cert, role, project_id,
+                      credentials, options):
+        raise CHAPIv1NotImplementedError('')
+
+    def accept_invitation(self, client_cert, invite_id, member_id, 
+                          credentials, options):
+        raise CHAPIv1NotImplementedError('')

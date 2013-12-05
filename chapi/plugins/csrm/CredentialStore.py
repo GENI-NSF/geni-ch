@@ -51,18 +51,20 @@ class CSv1Handler(HandlerBase):
 
     # Override error return to log exception
     def _errorReturn(self, e):
-        chapi_log_exception(CS_LOG_PREFIX, e)
+        user_email = get_email_from_cert(self.requestCertificate())
+        chapi_log_exception(CS_LOG_PREFIX, e, {'user': user_email})
         return super(CSv1Handler, self)._errorReturn(e)
 
     def get_attributes(self, principal, context_type, context, \
                            credentials, options):
         if context == 'None': context = None # For testing with the client
         client_cert = self.requestCertificate()
+        user_email = get_email_from_cert(client_cert)
         method = 'get_attributes'
         args = {'principal' : principal, \
                     'context_type' : context_type, \
                     'context' : context}
-        chapi_log_invocation(CS_LOG_PREFIX, method, credentials, options, args)
+        chapi_log_invocation(CS_LOG_PREFIX, method, credentials, options, args, {'user': user_email})
         try:
             self._guard.validate_call(client_cert, method, \
                                           credentials, options,  args)
@@ -72,16 +74,17 @@ class CSv1Handler(HandlerBase):
             result = self._delegate.get_attributes(client_cert, principal, \
                                                        context_type, context, \
                                                        credentials, options)
-            chapi_log_result(CS_LOG_PREFIX, method, result)
+            chapi_log_result(CS_LOG_PREFIX, method, result, {'user': user_email})
             return result
         except Exception as e:
             return self._errorReturn(e)
 
     def get_permissions(self, principal, credentials, options):
         client_cert = self.requestCertificate()
+        user_email = get_email_from_cert(client_cert)
         method = 'get_permissions'
         args = {'principal' : principal}
-        chapi_log_invocation(CS_LOG_PREFIX, method, credentials, options, args)
+        chapi_log_invocation(CS_LOG_PREFIX, method, credentials, options, args, {'user': user_email})
         try:
             self._guard.validate_call(client_cert, method, \
                                           credentials, options, args)
@@ -90,7 +93,7 @@ class CSv1Handler(HandlerBase):
                                                        credentials, options);
             result = self._delegate.get_permissions(client_cert, principal, \
                                                         credentials, options)
-            chapi_log_result(CS_LOG_PREFIX, method, result)
+            chapi_log_result(CS_LOG_PREFIX, method, result, {'user': user_email})
             return result
         except Exception as e:
             return self._errorReturn(e)
@@ -108,9 +111,9 @@ class CSv1Delegate(DelegateBase):
         session = self.db.getSession()
 
         # Project attributes
-        q = session.query(self.db.CS_ATTRIBUTE_TABLE.c.name, self.db.PROJECT_MEMBER_TABLE.c.project_id)
+        q = session.query(self.db.MEMBER_ATTRIBUTE_TABLE.c.name, self.db.PROJECT_MEMBER_TABLE.c.project_id)
         q = q.filter(self.db.PROJECT_MEMBER_TABLE.c.member_id == principal)
-        q = q.filter(self.db.CS_ATTRIBUTE_TABLE.c.id == self.db.PROJECT_MEMBER_TABLE.c.role)
+        q = q.filter(self.db.MEMBER_ATTRIBUTE_TABLE.c.id == self.db.PROJECT_MEMBER_TABLE.c.role)
         if context:
             q = q.filter(self.db.PROJECT_MEMBER_TABLE.c.project_id == context)
 
@@ -119,9 +122,9 @@ class CSv1Delegate(DelegateBase):
         print "PROJ = %d" % len(proj_rows)
 
         # Slice attributes
-        q = session.query(self.db.CS_ATTRIBUTE_TABLE.c.name, self.db.SLICE_MEMBER_TABLE.c.slice_id)
+        q = session.query(self.db.MEMBER_ATTRIBUTE_TABLE.c.name, self.db.SLICE_MEMBER_TABLE.c.slice_id)
         q = q.filter(self.db.SLICE_MEMBER_TABLE.c.member_id == principal)
-        q = q.filter(self.db.CS_ATTRIBUTE_TABLE.c.id == self.db.SLICE_MEMBER_TABLE.c.role)
+        q = q.filter(self.db.MEMBER_ATTRIBUTE_TABLE.c.id == self.db.SLICE_MEMBER_TABLE.c.role)
         if context:
             q = q.filter(self.db.SLICE_MEMBER_TABLE.c.slice_id == context)
 
@@ -131,17 +134,17 @@ class CSv1Delegate(DelegateBase):
         # Operator attributes
         operator_rows = []
         if not context:
-            q = session.query(self.db.CS_ATTRIBUTE_TABLE.c.name)
-            q = q.filter(self.db.MEMBER_ATTRIBUTE_TABLE.c.name == 'operator')
+            q = session.query(self.db.MEMBER_ATTRIBUTE_TABLE.c.name)
+            q = q.filter(self.db.MEMBER_ATTRIBUTE_TABLE.c.name == 'OPERATOR')
             q = q.filter(self.db.MEMBER_ATTRIBUTE_TABLE.c.member_id == principal)
             operator_rows = q.all()
 #            print "OPS = %d" % len(operator_rows)
 
         # Project lead attributes
         project_lead_rows = []
-        if not context and context_type == RESOURCE_CONTEXT:
-            q = session.query(self.db.CS_ATTRIBUTE_TABLE.c.name)
-            q = q.filter(self.db.MEMBER_ATTRIBUTE_TABLE.c.name == 'project_lead')
+        if not context and int(context_type) == RESOURCE_CONTEXT:
+            q = session.query(self.db.MEMBER_ATTRIBUTE_TABLE.c.name)
+            q = q.filter(self.db.MEMBER_ATTRIBUTE_TABLE.c.name == 'PROJECT_LEAD')
             q = q.filter(self.db.MEMBER_ATTRIBUTE_TABLE.c.member_id == principal)
             project_lead_rows = q.all()
 #            print "PIs = %d" % len(project_lead_rows)
@@ -194,7 +197,7 @@ class CSv1Delegate(DelegateBase):
 
         q = session.query(self.db.CS_ACTION_TABLE.c.name, 
                           self.db.CS_POLICY_TABLE.c.context_type)
-        q = q.filter(self.db.MEMBER_ATTRIBUTE_TABLE.c.name == 'operator')
+        q = q.filter(self.db.MEMBER_ATTRIBUTE_TABLE.c.name == 'OPERATOR')
         q = q.filter(self.db.MEMBER_ATTRIBUTE_TABLE.c.member_id == principal)
         q = q.filter(self.db.CS_POLICY_TABLE.c.attribute == OPERATOR_ATTRIBUTE)
         q = q.filter(self.db.CS_ACTION_TABLE.c.privilege == self.db.CS_POLICY_TABLE.c.privilege)
@@ -205,7 +208,7 @@ class CSv1Delegate(DelegateBase):
 
         q = session.query(self.db.CS_ACTION_TABLE.c.name, 
                           self.db.CS_POLICY_TABLE.c.context_type)
-        q = q.filter(self.db.MEMBER_ATTRIBUTE_TABLE.c.name == 'project_lead')
+        q = q.filter(self.db.MEMBER_ATTRIBUTE_TABLE.c.name == 'PROJECT_LEAD')
         q = q.filter(self.db.MEMBER_ATTRIBUTE_TABLE.c.member_id == principal)
         q = q.filter(self.db.CS_POLICY_TABLE.c.attribute == LEAD_ATTRIBUTE)
         q = q.filter(self.db.CS_POLICY_TABLE.c.context_type == RESOURCE_CONTEXT)

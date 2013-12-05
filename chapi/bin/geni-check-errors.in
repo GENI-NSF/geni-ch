@@ -1,0 +1,28 @@
+#!/usr/bin/env python
+# -*- Mode: python -*-
+
+import os
+import sys
+
+class LogChecker(object):
+    def __init__(self, fname, grepv):
+        self.fname = fname
+        self.grepv = grepv
+    def check(self):
+        print '\n===== %s =====\n' % (self.fname)
+        # Flush the output before calling system otherwise
+        # they appear out of order.
+        sys.stdout.flush()
+        os.system('grep -v -f %s %s' % (self.grepv, self.fname))
+
+checks = [LogChecker('/var/log/apache2/ch_error.log',
+                     '@pkgdatadir@/ch-error-log-out.txt'),
+          LogChecker('/usr/share/geni-ch/chapi/AMsoil/log/amsoil.log',
+                     '@pkgdatadir@/amsoil-log-out.txt'),
+          LogChecker('/var/log/apache2/error.log',
+                     '@pkgdatadir@/apache-error-log-out.txt'),
+          LogChecker('/var/log/geni-chapi/chapi.log',
+                     '@pkgdatadir@/chapi-log-out.txt')]
+
+for checker in checks:
+    checker.check()

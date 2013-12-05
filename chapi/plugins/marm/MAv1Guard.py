@@ -23,26 +23,29 @@
 
 from ABACGuard import *
 from ArgumentCheck import *
-import MA_constants as MA
+import tools.MA_constants as MA
 
 # Special class to make sure no one can ask for SSH private keys
-# other that for self
+# other than for self
 class LookupKeysInvocationCheck(SubjectInvocationCheck):
         
     def validate_arguments(self, client_cert, method, options, arguments):
-        super(LookupKeysInvocationCheck, self).validate_arguments(
+        subjects = super(LookupKeysInvocationCheck, self).validate_arguments(
             client_cert, method, options, arguments)
         # If they didn't specify a filter (all by default), 
         # or they explicitly asked for KEY_PRIVATE, there can only
         # be the caller in the list of requested users in 'match'
         if 'filter' not in options or 'KEY_PRIVATE' in options['filter']:
             client_urn = get_urn_from_cert(client_cert)
-            for member_urn in self._subjects['MEMBER_URN']:
-                if member_urn != client_urn:
-                    raise CHAPIv1AuthorizationError(
-                        "Can't request private SSH key for user other" + 
-                        " than self. Limit match criteria or set filter" + 
-                        " explicitly : " + member_urn)
+            if subjects and 'MEMBER_URN' in subjects:
+                for member_urn in subjects['MEMBER_URN']:
+                    if member_urn != client_urn:
+                        raise CHAPIv1AuthorizationError(
+                            "Can't request private SSH key for user other" + 
+                            " than self. Limit match criteria or set filter" + 
+                            " explicitly : " + member_urn)
+
+        return subjects
 
 
 def member_id_extractor(options, arguments):
@@ -99,8 +102,7 @@ class MAv1Guard(ABACGuardBase):
             CreateArgumentCheck(select_fields(MA.standard_key_fields, \
                                            MA.allowed_create_key_fields), \
                                     select_fields(MA.optional_key_fields, \
-                                           MA.allowed_create_key_fields),
-                                {'member_urn': 'URN'}), 
+                                           MA.allowed_create_key_fields)), 
         'delete_key' : \
             None,
         'update_key' : \
@@ -109,7 +111,7 @@ class MAv1Guard(ABACGuardBase):
                                     select_fields(MA.optional_key_fields, \
                                                       MA.updatable_key_fields),
                                 {'member_urn' : 'URN', 'key_id' : 'STRING'}),
-        'lookup_key' : \
+        'lookup_keys' : \
             LookupArgumentCheck(MA.standard_key_fields, \
                                     MA.optional_key_fields),
         'create_certificate' : \
@@ -123,6 +125,12 @@ class MAv1Guard(ABACGuardBase):
         'enable_user': None,
         'add_member_privilege': None,
         'revoke_member_privilege': None,
+        'add_member_attribute': SimpleArgumentCheck({'member_urn' : 'URN',
+                                                     'name' : 'STRING',
+                                                     'value' : 'STRING',
+                                                     'self_asserted' : 'STRING'}),
+        'remove_member_attribute': SimpleArgumentCheck({'member_urn' : 'URN',
+                                                     'name' : 'STRING'}),
         }
 
     # Set of invocation checks indexed by method name
@@ -136,6 +144,7 @@ class MAv1Guard(ABACGuardBase):
             SubjectInvocationCheck([
                 "ME.MAY_LOOKUP_IDENTIFYING_MEMBER_INFO<-ME.IS_AUTHORITY",
                 "ME.MAY_LOOKUP_IDENTIFYING_MEMBER_INFO<-ME.IS_OPERATOR", 
+                "ME.MAY_LOOKUP_IDENTIFYING_MEMBER_INFO_$SUBJECT<-ME.IS_LEAD_AND_SEARCHING_UID_$SUBJECT",
                 "ME.MAY_LOOKUP_IDENTIFYING_MEMBER_INFO<-ME.IS_LEAD_AND_SEARCHING_EMAIL", 
                 "ME.MAY_LOOKUP_IDENTIFYING_MEMBER_INFO_$SUBJECT<-ME.SHARES_PROJECT_$SUBJECT",
                 "ME.MAY_LOOKUP_IDENTIFYING_MEMBER_INFO_$SUBJECT<-ME.HAS_PENDING_REQUEST_ON_SHARED_PROJECT_$SUBJECT"
@@ -151,7 +160,7 @@ class MAv1Guard(ABACGuardBase):
                 "ME.MAY_GET_CREDENTIALS<-ME.IS_AUTHORITY", 
                 "ME.MAY_GET_CREDENTIALS<-ME.IS_OPERATOR",
                 "ME.MAY_GET_CREDENTIALS_$SUBJECT<-ME.IS_$SUBJECT" 
-                ], None, standard_subject_extractor),
+                ], None, member_urn_extractor),
         'update_member_info' : \
             SubjectInvocationCheck([
             "ME.MAY_UPDATE_MEMBER_INFO<-ME.IS_OPERATOR", 
@@ -161,7 +170,7 @@ class MAv1Guard(ABACGuardBase):
             SubjectInvocationCheck([
                 "ME.MAY_CREATE_KEY<-ME.IS_OPERATOR",
                 "ME.MAY_CREATE_KEY_$SUBJECT<-ME.IS_$SUBJECT",
-                ], None, member_urn_extractor), 
+                ], None, key_subject_extractor), 
         'delete_key' : \
             SubjectInvocationCheck([
                 "ME.MAY_DELETE_KEY<-ME.IS_OPERATOR",
@@ -178,7 +187,7 @@ class MAv1Guard(ABACGuardBase):
                 "ME.MAY_LOOKUP_KEYS<-ME.IS_OPERATOR", 
                 "ME.MAY_LOOKUP_KEYS_$SUBJECT<-ME.IS_$SUBJECT",
                 "ME.MAY_LOOKUP_KEYS_$SUBJECT<-ME.SHARES_SLICE_$SUBJECT", 
-                ], assert_shares_slice, key_subject_extractor), 
+                ], assert_shares_slice, key_subject_extractor, True), 
         'create_certificate' : 
             SubjectInvocationCheck([
                 "ME.MAY_CREATE_CERTIFICATE<-ME.IS_OPERATOR",
@@ -217,8 +226,17 @@ class MAv1Guard(ABACGuardBase):
                     ], None, None), 
         'revoke_member_privilege' :
             SubjectInvocationCheck([
-                    "ME.MAY_REVOKE_MEMBER_PRIVILEGE<-ME.IS_AUTHORITY",
-                    "ME.MAY_REVOKE_MEMBER_PRIVILEGE<-ME.IS_OPERATOR", 
+                    "ME.MAY_REVOKE_MEMBER_PRIVILEGE<-ME.IS_AUTHORITY", 
+                    "ME.MAY_REVOKE_MEMBER_PRIVILEGE<-ME.IS_OPERATOR"
+                    ], None, None), 
+
+        'add_member_attribute' :
+            SubjectInvocationCheck([
+                    "ME.MAY_ADD_MEMBER_ATTRIBUTE<-ME.IS_OPERATOR", 
+                    ], None, None), 
+        'revoke_member_attribute' :
+            SubjectInvocationCheck([
+                    "ME.MAY_REMOVE_MEMBER_ATTRIBUTE<-ME.IS_OPERATOR", 
                     ], None, None), 
         }
 

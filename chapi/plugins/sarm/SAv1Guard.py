@@ -23,7 +23,7 @@
 
 from ABACGuard import *
 from ArgumentCheck import *
-import SA_constants as SA
+import tools.SA_constants as SA
 
 # Specific guard for GPO SA
 # Provide a set of invocation checks and row checks per method
@@ -108,7 +108,12 @@ class SAv1Guard(ABACGuardBase):
         # No options required (member_id, context_type, context_id arguments)
         'get_number_of_pending_requests_for_user' :  None,
         # No options required (request_id, context_type arguments)
-        'get_request_by_id' : None
+        'get_request_by_id' : None,
+        # No options required (role, project_id)
+        'invite_member' : None,
+        # No options required (invite_id, member_id)
+        'accept_invitation' : None
+        
 
         }
     
@@ -130,7 +135,8 @@ class SAv1Guard(ABACGuardBase):
                 "ME.MAY_LOOKUP_SLICES<-ME.IS_OPERATOR",
                 "ME.MAY_LOOKUP_SLICES_$SUBJECT<-ME.IS_LEAD_$SUBJECT", 
                 "ME.MAY_LOOKUP_SLICES_$SUBJECT<-ME.IS_ADMIN_$SUBJECT",
-                "ME.MAY_LOOKUP_SLICES_$SUBJECT<-ME.IS_MEMBER_$SUBJECT"
+                "ME.MAY_LOOKUP_SLICES_$SUBJECT<-ME.IS_MEMBER_$SUBJECT",
+                "ME.MAY_LOOKUP_SLICES_$SUBJECT<-ME.IS_AUDITOR_$SUBJECT"
                 ], assert_slice_role, standard_subject_extractor),
 
         'update_slice' : \
@@ -142,7 +148,6 @@ class SAv1Guard(ABACGuardBase):
 
         'get_credentials' : \
             SubjectInvocationCheck([
-                "ME.MAY_GET_CREDENTIALS<-ME.IS_OPERATOR",
                 #"ME.MAY_GET_CREDENTIALS_$SUBJECT<-ME.IS_LEAD_$SUBJECT", 
                 #"ME.MAY_GET_CREDENTIALS_$SUBJECT<-ME.IS_ADMIN_$SUBJECT",
                 #"ME.MAY_GET_CREDENTIALS_$SUBJECT<-ME.IS_MEMBER_$SUBJECT",
@@ -192,6 +197,7 @@ class SAv1Guard(ABACGuardBase):
         'modify_project_membership' : \
             SubjectInvocationCheck([
                 "ME.MAY_MODIFY_PROJECT_MEMBERSHIP<-ME.IS_OPERATOR",
+                "ME.MAY_MODIFY_PROJECT_MEMBERSHIP<-ME.IS_AUTHORITY",
                 "ME.MAY_MODIFY_PROJECT_MEMBERSHIP_$SUBJECT<-ME.IS_LEAD_$SUBJECT",
                 "ME.MAY_MODIFY_PROJECT_MEMBERSHIP_$SUBJECT<-ME.IS_ADMIN_$SUBJECT",
                 ], assert_project_role, project_urn_extractor),
@@ -283,10 +289,24 @@ class SAv1Guard(ABACGuardBase):
                 "ME.MAY_GET_REQUEST_BY_ID<-ME.IS_REQUESTOR"
                 ], assert_request_id_requestor_and_project_role, request_id_extractor),
 
-        }
+        # Only if you are an operator or a project lead/admin
+        'invite_member' : \
+            SubjectInvocationCheck([
+                "ME.MAY_INVITE_MEMBER<-ME.IS_OPERATOR",
+                "ME.MAY_INVITE_MEMBER_$SUBJECT<-ME.IS_LEAD_$SUBJECT", 
+                "ME.MAY_INVITE_MEMBER_$SUBJECT<-ME.IS_ADMIN_$SUBJECT"
+                ], assert_project_role, project_uid_extractor),
+
+        # No options required (invite_id, member_id)
+        'accept_invitation' : \
+            SubjectInvocationCheck([
+                "ME.MAY_ACCEPT_INVITATION<-ME.IS_OPERATOR",
+                "ME.MAY_ACCEPT_INVITATION_$SUBJECT<-ME.IS_$SUBJECT", 
+                ], None, request_member_extractor)
+}
 
 
-    # Lookup argument check per method (or None if none registered)
+# argument check per method (or None if none registered)
     def get_argument_check(self, method):
         if self.ARGUMENT_CHECK_FOR_METHOD.has_key(method):
             return self.ARGUMENT_CHECK_FOR_METHOD[method]

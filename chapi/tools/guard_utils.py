@@ -33,7 +33,9 @@ from cert_utils import *
 from geni_constants import *
 from chapi.Memoize import memoize
 from chapi.Exceptions import *
-from syslog import syslog
+import MA_constants as MA
+from dbutils import add_filters
+from chapi_log import *
 
 # context support
 _context = threading.local()
@@ -97,6 +99,9 @@ def convert_slice_uid_to_urn(slice_uid):
     slice_uids = slice_uid
     if not isinstance(slice_uid, list): slice_uids = [slice_uid]
 
+    if len(slice_uids) == 0:
+        return []
+
     cache = cache_get('slice_uid_to_urn')
     uncached_uids = [id for id in slice_uids if id not in cache]
 
@@ -129,6 +134,10 @@ def convert_project_uid_to_urn(project_uid):
 
     project_uids = project_uid
     if not isinstance(project_uid, list): project_uids = [project_uid]
+
+    if len(project_uids) == 0:
+        return []
+
 
     cache = cache_get('project_uid_to_urn')
     uncached_uids = [id for id in project_uids if id not in cache]
@@ -275,7 +284,7 @@ def lookup_operator_privilege(user_urn):
     rows = q.all()
     session.close()
     is_operator = (len(rows)>0)
-    syslog('lookup_operator_privilege: '+user_urn+" = "+str(is_operator))
+    chapi_debug('UTILS', 'lookup_operator_privilege: '+user_urn+" = "+str(is_operator))
     cache[user_urn] = is_operator
     return is_operator
 
@@ -315,13 +324,25 @@ def lookup_pi_privilege(user_urn):
 
 # If given caller and given subject share a common project
 # Generate an ME.SHARES_PROJECT_$subject<-caller assertion
+# Three cases:
+# 1. find all people who share a project with given caller
+#    from among the subjects (member_urns)
+# 2. Find all people with a pending join request to project
+#     with given subject as lead
+# 3. If looking up a member by member_email who is a 
+#    project lead or admin, allow it
 def assert_shares_project(caller_urn, member_urns, label, options, abac_manager):
-    if isinstance(member_urns, list): 
-        if len(member_urns) == 0: return  # if empty, then we dont share the project.
-        member_urn = member_urns[0] # Pull singleton URN from list
-    else:
-        member_urn = member_urns
+#    chapi_info('', "ASP %s %s %s %s" % (caller_urn, member_urns, 
+#                                        label, options))
     if label != "MEMBER_URN": return
+
+    # Make sure the list of subjects is a non-empty list
+    if isinstance(member_urns, list): 
+        # if empty, then we dont share the project.
+        if len(member_urns) == 0: return  
+    else:
+        member_urns = list(member_urns)
+
     db = pm.getService('chdbengine')
     session = db.getSession()
 
@@ -330,6 +351,7 @@ def assert_shares_project(caller_urn, member_urns, label, options, abac_manager)
     ma1 = aliased(db.MEMBER_ATTRIBUTE_TABLE)
     ma2 = aliased(db.MEMBER_ATTRIBUTE_TABLE)
 
+    # Find all people in the subjects list who share a project
     q = session.query(pm1.c.project_id, pm2.c.project_id, ma1.c.value, ma2.c.value)
     q = q.filter(pm1.c.project_id == pm2.c.project_id)
     q = q.filter(pm1.c.member_id == ma1.c.member_id)
@@ -337,31 +359,40 @@ def assert_shares_project(caller_urn, member_urns, label, options, abac_manager)
     q = q.filter(ma1.c.name == 'urn')
     q = q.filter(ma2.c.name == 'urn')
     q = q.filter(ma1.c.value == caller_urn)
-    q = q.filter(ma2.c.value == member_urn)
+    q = q.filter(ma2.c.value.in_(member_urns))
 
     rows = q.all()
 #    print "ROWS = " + str(len(rows)) + " " + str(rows)
-    if len(rows) > 0:
+    for row in rows:
+        member_urn = row[3]  # ma2.c.value
         assertion = "ME.SHARES_PROJECT_%s<-CALLER" % flatten_urn(member_urn)
         abac_manager.register_assertion(assertion)
 
-    q = session.query(db.PROJECT_REQUEST_TABLE.c.status)
+    # Find all people with a pending join request to project
+    # with given subject as lead
+
+    q = session.query(db.PROJECT_REQUEST_TABLE.c.status, ma2.c.value)
     q = q.filter(pm1.c.member_id == ma1.c.member_id)
     q = q.filter(db.PROJECT_REQUEST_TABLE.c.requestor == ma2.c.member_id)
     q = q.filter(ma1.c.name == 'urn')
     q = q.filter(ma2.c.name == 'urn')
     q = q.filter(ma1.c.value == caller_urn)
-    q = q.filter(ma2.c.value == member_urn)
+    q = q.filter(ma2.c.value.in_(member_urns))
     q = q.filter(db.PROJECT_REQUEST_TABLE.c.context_id == pm1.c.project_id)
     q = q.filter(pm1.c.role.in_([LEAD_ATTRIBUTE, ADMIN_ATTRIBUTE]))
     q = q.filter(db.PROJECT_REQUEST_TABLE.c.status == PENDING_STATUS)
 
     rows = q.all()
-    if len(rows) > 0:
+
+    for row in rows:
+        member_urn = row[1] # member_urn of project lead on request
         assertion = "ME.HAS_PENDING_REQUEST_ON_SHARED_PROJECT_%s<-CALLER" % \
-                    flatten_urn(member_urn)
+            flatten_urn(member_urn)
         abac_manager.register_assertion(assertion)
 
+
+    # If I am looking up a member by member_email,
+    # I must be a lead or admin on a project
     if 'match' in options and len(options['match']) == 1 and \
        'MEMBER_EMAIL' in options['match']:
         q = session.query(pm1.c.member_id)
@@ -370,8 +401,27 @@ def assert_shares_project(caller_urn, member_urns, label, options, abac_manager)
         q = q.filter(ma1.c.value == caller_urn)
         q = q.filter(pm1.c.role.in_([LEAD_ATTRIBUTE, ADMIN_ATTRIBUTE]))
         rows = q.all()
+ 
         if len(rows) > 0:
             assertion = "ME.IS_LEAD_AND_SEARCHING_EMAIL<-CALLER"
+            abac_manager.register_assertion(assertion)
+
+    # If looking up a member by member_uid who is a 
+    # lead of an unexpired  project, allow it
+    if 'match' in options and len(options['match']) == 1 and \
+       'MEMBER_UID' in options['match']:
+        member_uids = options['match']['MEMBER_UID']
+        q = session.query(ma1.c.value)
+        q = q.filter(ma1.c.name == 'urn')
+        q = q.filter(ma1.c.member_id == ma2.c.member_id)
+        q = q.filter(ma2.c.name == 'PROJECT_LEAD')
+        q = q.filter(ma2.c.member_id.in_(member_uids))
+        rows = q.all()
+
+        for row in rows:
+            member_urn = row.value
+            assertion = \
+                "ME.IS_LEAD_AND_SEARCHING_UID_%s<-CALLER" % flatten_urn(member_urn)
             abac_manager.register_assertion(assertion)
 
     session.close()
@@ -380,10 +430,9 @@ def assert_shares_project(caller_urn, member_urns, label, options, abac_manager)
 # If given caller and given subject share a common slice
 # Generate an ME.SHARES_SLICE(subject)<-caller assertion
 def assert_shares_slice(caller_urn, member_urns, label, options, abac_manager):
-    if isinstance(member_urns, list): 
-        member_urn = member_urns[0] # Pull singleton URN from list
-    else:
-        member_urn = member_urns
+    if not isinstance(member_urns, list): 
+        member_urns = list(member_urns)
+
     if label != "MEMBER_URN": return
     db = pm.getService('chdbengine')
     session = db.getSession()
@@ -393,6 +442,9 @@ def assert_shares_slice(caller_urn, member_urns, label, options, abac_manager):
     ma1 = aliased(db.MEMBER_ATTRIBUTE_TABLE)
     ma2 = aliased(db.MEMBER_ATTRIBUTE_TABLE)
 
+    chapi_debug('', "ASS : %s %s %s %s" % \
+                   (caller_urn, member_urns, label, options))
+
     q = session.query(sm1.c.slice_id, sm2.c.slice_id, ma1.c.value, ma2.c.value)
     q = q.filter(sm1.c.slice_id == sm2.c.slice_id)
     q = q.filter(sm1.c.member_id == ma1.c.member_id)
@@ -400,38 +452,39 @@ def assert_shares_slice(caller_urn, member_urns, label, options, abac_manager):
     q = q.filter(ma1.c.name == 'urn')
     q = q.filter(ma2.c.name == 'urn')
     q = q.filter(ma1.c.value == caller_urn)
-    q = q.filter(ma2.c.value == member_urn)
+    q = q.filter(ma2.c.value.in_(member_urns))
 
     rows = q.all()
 #    print "ROWS = " + str(len(rows)) + " " + str(rows)
     session.close()
 
-    if len(rows) > 0:
+    for row in rows:
+        member_urn = row[3] # member_urn of member sharing slice
         assertion = "ME.SHARES_SLICE_%s<-CALLER" % flatten_urn(member_urn)
         abac_manager.register_assertion(assertion)
 
 # Assert ME.IS_$ROLE(SLICE)<-CALLER for all slices of given set 
 # of which caller is a member
-def assert_slice_role(caller_urn, slice_urns, label, options, abac_manager):
-    db = pm.getService('chdbengine')
-    session = db.getSession()
-    q = session.query(db.SLICE_MEMBER_TABLE.c.role, \
-                          db.SLICE_TABLE.c.slice_urn, \
-                          db.MEMBER_ATTRIBUTE_TABLE)
-    q = q.filter(db.SLICE_MEMBER_TABLE.c.slice_id == db.SLICE_TABLE.c.slice_id)
-    q = q.filter(db.MEMBER_ATTRIBUTE_TABLE.c.member_id == \
-                     db.SLICE_MEMBER_TABLE.c.member_id)
-    q = q.filter(db.SLICE_TABLE.c.slice_urn.in_(slice_urns))
-    q = q.filter(db.MEMBER_ATTRIBUTE_TABLE.c.name == 'urn')
-    q = q.filter(db.MEMBER_ATTRIBUTE_TABLE.c.value == caller_urn)
-    rows = q.all()
-    session.close()
-
+def assert_slice_role(caller_urn, urns, label, options, abac_manager):
+    config = pm.getService('config')
+    authority = config.get("chrm.authority")
+    if label == "SLICE_URN":
+        rows = get_slice_role_for_member(caller_urn, urns)
+    elif label == "PROJECT_URN":
+        rows = get_project_role_for_member(caller_urn, urns)
+    else:
+        raise CHAPIv1ArgumentError("Call to assert_slice_role with type %s" %\
+                                   label)
     for row in rows:
         role = row.role
-        slice_urn = row.slice_urn
+        if label == "SLICE_URN":
+            subject_urn = row.slice_urn
+        else:
+            project_name = row.project_name
+            subject_urn = to_project_urn(authority, project_name)
         role_name = attribute_type_names[role]
-        assertion = "ME.IS_%s_%s<-CALLER" % (role_name, flatten_urn(slice_urn))
+        assertion = "ME.IS_%s_%s<-CALLER" % \
+                    (role_name, flatten_urn(subject_urn))
         abac_manager.register_assertion(assertion)
 
 # Get role of member on each of list of projects
@@ -448,6 +501,26 @@ def get_project_role_for_member(caller_urn, project_urns):
     q = q.filter(db.MEMBER_ATTRIBUTE_TABLE.c.name == 'urn')
     q = q.filter(db.MEMBER_ATTRIBUTE_TABLE.c.value == caller_urn)
     q = q.filter(db.MEMBER_ATTRIBUTE_TABLE.c.member_id == db.PROJECT_MEMBER_TABLE.c.member_id)
+    rows = q.all()
+    session.close()
+    return rows
+
+def get_slice_role_for_member(caller_urn, slice_urns):
+    if not isinstance(slice_urns, list): slice_urns = [slice_urns]
+    if len(slice_urns) == 0:
+        return []
+
+    db = pm.getService('chdbengine')
+    session = db.getSession()
+    q = session.query(db.SLICE_MEMBER_TABLE.c.role, \
+                          db.SLICE_TABLE.c.slice_urn, \
+                          db.MEMBER_ATTRIBUTE_TABLE)
+    q = q.filter(db.SLICE_MEMBER_TABLE.c.slice_id == db.SLICE_TABLE.c.slice_id)
+    q = q.filter(db.MEMBER_ATTRIBUTE_TABLE.c.member_id == \
+                     db.SLICE_MEMBER_TABLE.c.member_id)
+    q = q.filter(db.SLICE_TABLE.c.slice_urn.in_(slice_urns))
+    q = q.filter(db.MEMBER_ATTRIBUTE_TABLE.c.name == 'urn')
+    q = q.filter(db.MEMBER_ATTRIBUTE_TABLE.c.value == caller_urn)
     rows = q.all()
     session.close()
     return rows
@@ -471,6 +544,10 @@ def assert_project_role(caller_urn, project_urns, label, options, abac_manager):
 
 # Assert ME.BELONGS_TO_$SLICE<-CALLER if caller is member of slice
 def assert_belongs_to_slice(caller_urn, slice_urns, label, options, abac_manager):
+
+    if len(slice_urns) == 0:
+        return []
+
     if label != "SLICE_URN": return
     db = pm.getService('chdbengine')
     session = db.getSession()
@@ -609,19 +686,55 @@ def standard_subject_extractor(options, arguments):
 # For key info methods, extract the subject from options or arguments
 def key_subject_extractor(options, arguments):
     extracted = {}
-    if 'match' not in options:
-        raise CHAPIv1ArgumentError("No match option for query")
-    match_option = options['match']
+    if 'match' in options:
+        match_option = options['match']
+    elif 'fields' in options:
+        match_option = options['fields']
+    else:
+        raise CHAPIv1ArgumentError("No match/fields option for query")
     if 'KEY_MEMBER' in match_option:
         member_urns = match_option['KEY_MEMBER']
         if not isinstance(member_urns, list): member_urns = [member_urns]
         extracted['MEMBER_URN'] = member_urns
-    if '_GENI_KEY_MEMBER_UID' in match_option:
+    elif '_GENI_KEY_MEMBER_UID' in match_option:
         member_uids = match_option['_GENI_KEY_MEMBER_UID']
         if not isinstance(member_uids, list): member_uids = [member_uids]
         member_urns = [convert_member_uid_to_urn(member_uid) for member_uid in member_uids]
         extracted['MEMBER_URN'] = member_urns
+    else:
+        db = pm.getService('chdbengine')
+        session = db.getSession()
+        q = session.query(db.MEMBER_ATTRIBUTE_TABLE.c.value)
+        q = q.filter(db.SSH_KEY_TABLE.c.member_id ==
+                     db.MEMBER_ATTRIBUTE_TABLE.c.member_id)
+        q = q.filter(db.MEMBER_ATTRIBUTE_TABLE.c.name=='urn')
+        q = add_filters(q, match_option, db.SSH_KEY_TABLE, MA.key_field_mapping)
+        rows = q.all()
+        session.close()
+        extracted['MEMBER_URN'] = [row.value for row in rows]
+
     return extracted
+
+# Extract project UID(s) from arguments
+def project_uid_extractor(options, arguments):
+    if 'project_id' in arguments:
+        return {'PROJECT_UID' : arguments['project_id']}
+    return {}
+
+# Extract project UID from invite_id argument
+def project_uid_from_invitation_extractor(options, arguments):
+    if 'invite_id' in arguments:
+        invite_id = arguments['invite_id']
+        db = pm.getService('chdbengine')
+        session = db.getSession()
+        q = session.query(db.PROJECT_INVITATION_TABLE)
+        q = q.filter(db.PROJECT_INVITATION_TABLE.c.invite_id == invite_id)
+        rows = q.all()
+        session.close()
+        if len(rows) > 0:
+            project_id = rows[0].project_id
+            return {'PROJECT_UID' : project_id}
+    return {}
         
 
 # Extract project URN(s) from options or arguments

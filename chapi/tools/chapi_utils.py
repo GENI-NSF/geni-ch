@@ -21,25 +21,23 @@
 # IN THE WORK.
 #----------------------------------------------------------------------
 
-import amsoil.core.pluginmanager as pm
-from ClientAuthorization import ClientAuthv1Delegate, \
-    ClientAuthv1Handler, ClientAuthv1Guard
+# Utility functions
 
-# Plugin for client authorization service implementation
+import smtplib
+from email.mime.text import MIMEText
 
-def setup():
-
-    clientauth_handler = ClientAuthv1Handler()
-    pm.registerService('clientauthv1handler', clientauth_handler)
-
-    clientauth_delegate = ClientAuthv1Delegate()
-    clientauth_handler.setDelegate(clientauth_delegate)
-
-    clientauth_guard = ClientAuthv1Guard()
-    clientauth_handler.setGuard(clientauth_guard)
-
-    xmlrpc = pm.getService('xmlrpc')
-    xmlrpc.registerXMLRPC('clientauth1', clientauth_handler, '/CLIENTAUTH')
-
-
+def send_email(toaddr,fromaddr,replyaddr,subject,msgbody,ccaddr=None):
+    msg = MIMEText(msgbody)
+    msg['Subject'] = subject
+    msg['To'] = toaddr
+    msg['Reply-To'] = replyaddr
+    if ccaddr != None:
+        msg['Cc'] = ccaddr
+        toaddrs = [toaddr,ccaddr] 
+    else:
+        toaddrs = [toaddr]
+    msg['Precedence'] = "bulk"
+    s = smtplib.SMTP('localhost')
+    s.sendmail(fromaddr,toaddrs,msg.as_string())
+    s.quit()
 

@@ -25,8 +25,8 @@
 # schema
 
 import amsoil.core.pluginmanager as pm
-from geni_constants import DATETIME_FORMATS
 from datetime import datetime
+from cert_utils import *
 
 # Turn a project URN into a project name
 def from_project_urn(project_urn):
@@ -50,11 +50,19 @@ def urn_for_slice(slice_name, project_name):
     return "urn:publicid:IDN+%s:%s+slice+%s" % \
         (authority, project_name, slice_name)
 
-# turn a datetime string into a datetime object 
-def parse_datetime(time_string):
-    for format in DATETIME_FORMATS:
-        try:
-            return datetime.strptime(time_string, format)
-        except Exception as e:
-            pass
-    return None
+# Return the user display name
+# First, try '_GENI_MEMBER_DISPLAYNAME'
+# Then try 'MEMBER_FIRSTNAME' 'MEMBER_LASTNAME'
+# Then try 'MEMBER_EMAIL'
+# Then pull the username from the urn
+def get_member_display_name(member_identifying_info, member_urn):
+    if "_GENI_MEMBER_DISPLAYNAME" in member_identifying_info and member_identifying_info['_GENI_MEMBER_DISPLAYNAME']:
+        return member_identifying_info['_GENI_MEMBER_DISPLAYNAME']
+    elif "MEMBER_FIRSTNAME" in member_identifying_info and "MEMBER_LASTNAME" in member_identifying_info \
+            and member_identifying_info['MEMBER_FIRSTNAME'] and member_identifying_info['MEMBER_LASTNAME']:
+        return "%s %s" % (member_identifying_info['MEMBER_FIRSTNAME'], member_identifying_info['MEMBER_LASTNAME'])
+    elif "MEMBER_EMAIL" in member_identifying_info and member_identifying_info['MEMBER_EMAIL']:
+        return member_identifying_info['MEMBER_EMAIL']
+    else:
+        return get_name_from_urn(member_urn)
+

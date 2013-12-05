@@ -27,6 +27,7 @@ import optparse
 from omnilib.util.dossl import _do_ssl
 import xmlrpclib
 from omnilib.frameworks.framework_base import Framework_Base
+from portal_client import *
 
 # Generic client to speak XMLRPC/SSL SA/CH/MA API calls to 
 
@@ -52,6 +53,8 @@ def parseOptions(args):
                           default=os.path.join(gcf_home, 'alice-cert.pem'))
     parser.add_option("--method", help="Name of method to invoke", 
                       default="get_version")
+    parser.add_option("--page", help="Name of portal page to simulate (home, projects, slices)")
+    parser.add_option("--eppn", help="EPPN of user")
     parser.add_option("--agg_url",  help="URL of aggregate in some API calls",
                       default = None)
     parser.add_option("--string_arg", help="String argument for some calls",
@@ -102,7 +105,7 @@ def parseOptions(args):
 
     return opts, args
 
-def main(args = sys.argv, do_print=True):
+def main(args = sys.argv, do_print=False):
 
     opts, args = parseOptions(args)
     client_options = json.loads(opts.options)
@@ -126,7 +129,10 @@ def main(args = sys.argv, do_print=True):
     result = None
     msg = None
 
-    if opts.method in ['get_version', 'get_trust_roots']:
+    if opts.page:
+        emulate_portal_page(opts)
+
+    elif opts.method in ['get_version', 'get_trust_roots']:
         (result, msg) = _do_ssl(framework, suppress_errors, reason, fcn)
     # Methods that take options argument
     elif opts.method in ['lookup_member_authorities', 'lookup_slice_authorities', \
@@ -229,6 +235,19 @@ def main(args = sys.argv, do_print=True):
             _do_ssl(framework, suppress_errors, reason, fcn, opts.int_arg, 
                     opts.int2_arg, opts.int3_arg, opts.string_arg, \
                         opts.credentials, client_options)
+    elif opts.method in ['invite_member']:
+        (result, msg) = \
+            _do_ssl(framework, suppress_errors, reason, fcn, opts.int_arg, 
+                    opts.uuid_arg, 
+                    opts.credentials, client_options)
+        
+    elif opts.method in ['accept_invitation']:
+        (result, msg) = \
+            _do_ssl(framework, suppress_errors, reason, fcn, 
+                    opts.uuid_arg, # invite_id
+                    opts.uuid2_arg, # member_id
+                    opts.credentials, client_options)
+        
     elif opts.method in ['get_requests_for_context']:
         (result, msg) = \
             _do_ssl(framework, suppress_errors, reason, fcn, opts.int_arg, 
@@ -257,11 +276,24 @@ def main(args = sys.argv, do_print=True):
             _do_ssl(framework, suppress_errors, reason, fcn, opts.urn,
                     opts.credentials, options)
 
+    # MA add/revoke privilege methods
+    elif opts.method in ['add_member_privilege', 'revoke_member_privilege']:
+        options = {}
+        (result, msg) = \
+            _do_ssl(framework, suppress_errors, reason, fcn, opts.uuid_arg, \
+                        opts.string_arg, \
+                        opts.credentials, options)
+
+#    def add_member_privilege(self, cert, member_uid, privilege, credentials, options):
+
+
     # Methods that take attributes and options
     elif client_attributes:
         (result, msg) = _do_ssl(framework, suppress_errors, reason, fcn, \
                                     client_attributes, \
                                     opts.credentials, client_options)
+
+    
                              
     # Methods that take credentials and options and urn arguments
     elif opts.urn:

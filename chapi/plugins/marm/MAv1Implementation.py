@@ -23,30 +23,35 @@
 
 # Implementation of the Member Authority
 
-import MA_constants as MA
-from chapi.MemberAuthority import MAv1DelegateBase
-from chapi.Exceptions import *
-import chapi.Parameters
-from geni.util.urn_util import URN
+from datetime import datetime
+from dateutil.relativedelta import relativedelta
+import logging
+import os
+import re
+import subprocess
+import tempfile
+import uuid
+
+from sqlalchemy.orm import mapper
+
 import amsoil.core.pluginmanager as pm
-from tools.dbutils import *
-from tools.cert_utils import *
-from tools.chapi_log import *
+
+from geni.util.urn_util import URN
 import sfa.trust.gid as sfa_gid
 import sfa.trust.certificate as cert
 import geni.util.cred_util as cred_util
-from sqlalchemy.orm import mapper
-from datetime import datetime
-from dateutil.relativedelta import relativedelta
-import os
-import tempfile
-import subprocess
-import uuid
-import re
+
+import tools.MA_constants as MA
+from tools.dbutils import *
+from tools.cert_utils import *
+from tools.chapi_log import *
 from tools.guard_utils import *
+from tools.chapi_utils import *
 from tools.ABACManager import *
 from tools.mapped_tables import *
-from syslog import syslog
+from chapi.MemberAuthority import MAv1DelegateBase
+from chapi.Exceptions import *
+import chapi.Parameters
 
 # classes for mapping to sql tables
 
@@ -125,7 +130,8 @@ def username_exists(name):
     db = pm.getService('chdbengine')
     session = db.getSession()
     q = session.query(MemberAttribute.member_id)
-    q = q.filter(MemberAttribute.name == name)
+    q = q.filter(MemberAttribute.name == 'username')
+    q = q.filter(MemberAttribute.value == name)
     rows = q.all()
     session.close()
     return len(rows) > 0
@@ -152,6 +158,7 @@ class MAv1Implementation(MAv1DelegateBase):
         super(MAv1Implementation, self).__init__()
         self.db = pm.getService('chdbengine')
         self.config = pm.getService('config')
+        self._sa_handler = pm.getService('sav1handler')
         mapper(MemberAttribute, self.db.MEMBER_ATTRIBUTE_TABLE)
         mapper(OutsideCert, self.db.OUTSIDE_CERT_TABLE)
         mapper(InsideKey, self.db.INSIDE_KEY_TABLE)
@@ -166,6 +173,11 @@ class MAv1Implementation(MAv1DelegateBase):
             }
         self.cert = self.config.get('chapi.ma_cert')
         self.key = self.config.get('chapi.ma_key')
+
+        self.portal_admin_email = self.config.get('chapi.portal_admin_email')
+        self.portal_help_email = self.config.get('chapi.portal_help_email')
+        self.ch_from_email = self.config.get('chapi.ch_from_email')
+
         trusted_root = self.config.get('chapiv1rpc.ch_cert_root')
         self.trusted_roots = [os.path.join(trusted_root, f) \
             for f in os.listdir(trusted_root) if not f.startswith('CAT')]
@@ -179,6 +191,8 @@ class MAv1Implementation(MAv1DelegateBase):
     # This call is unprotected: no checking of credentials
     def get_version(self):
         method = 'get_version'
+#        user_email = get_email_from_cert(self.requestCertificate())
+#        chapi_log_invocation(MA_LOG_PREFIX, method, [], {}, {}, {'user': user_email})
         chapi_log_invocation(MA_LOG_PREFIX, method, [], {}, {})
 
         all_optional_fields = dict(MA.optional_fields.items() + \
@@ -190,6 +204,7 @@ class MAv1Implementation(MAv1DelegateBase):
                         "FIELDS": all_optional_fields}
         result =  self._successReturn(version_info)
 
+#        chapi_log_result(MA_LOG_PREFIX, method, result, {'user': user_email})
         chapi_log_result(MA_LOG_PREFIX, method, result)
         return result
 
@@ -212,6 +227,11 @@ class MAv1Implementation(MAv1DelegateBase):
             q = q.filter(MemberAttribute.value.in_(value))
         else:
             q = q.filter(MemberAttribute.value == value)
+
+        chapi_debug(MA_LOG_PREFIX, "get_uids_for_attrs: ATTR = %s, MAP = %s, VALUE = %s" % \
+                       (attr, MA.field_mapping[attr], value))
+#        chapi_debug(MA_LOG_PREFIX, "get_uids_for_attrs: ATTR = %s, MAP = %s, VALUE = %s, Q = %s" % \
+#                       (attr, MA.field_mapping[attr], value, q))
         rows = q.all()
         return [row.member_id for row in rows]
 
@@ -269,17 +289,19 @@ class MAv1Implementation(MAv1DelegateBase):
                 for attr, value in match_criteria.iteritems()]
         uids = set.intersection(*uids)
 
+        chapi_debug(MA_LOG_PREFIX, "UIDS = %s COLS = %s CRIT = %s" % (uids, selected_columns, match_criteria))
+
         # then, get the values
         members = {}
         for uid in uids:
-            urn = self.get_attr_for_uid(session, "MEMBER_URN", uid)[0]
+            row = self.get_attr_for_uid(session,"MEMBER_URN",uid)
+            if row is None or len(row) == 0:
+                chapi_info(MA_LOG_PREFIX, "lookup_member_info: no member_urn row from get_attr_for_uid %s (the MA?)" % uid)
+                continue
+            urn = row[0]
             values = {}
             for col in selected_columns:
-                if col == "_GENI_USER_CREDENTIAL":
-                    values[col] = self.get_user_credential(session, uid)
-                elif col == "_GENI_CREDENTIALS":
-                    values[col] = self.get_all_credentials(session, uid)
-                elif col in ["MEMBER_UID", "_GENI_IDENTIFYING_MEMBER_UID"]:
+                if col in ["MEMBER_UID", "_GENI_IDENTIFYING_MEMBER_UID"]:
                     values[col] = uid
                 else:
                     vals = None
@@ -298,40 +320,44 @@ class MAv1Implementation(MAv1DelegateBase):
         return self._successReturn(members)
 
     # This call is unprotected: no checking of credentials
-    def lookup_public_member_info(self, credentials, options):
+    def lookup_public_member_info(self, client_cert, credentials, options):
         method = 'lookup_public_member_info'
-        chapi_log_invocation(MA_LOG_PREFIX, method, credentials, options, {})
+        user_email = get_email_from_cert(client_cert)
+        chapi_log_invocation(MA_LOG_PREFIX, method, credentials, options, {}, {'user': user_email})
 
         result = self.lookup_member_info(options, MA.public_fields)
 
-        chapi_log_result(MA_LOG_PREFIX, method, result)
+        chapi_log_result(MA_LOG_PREFIX, method, result, {'user': user_email})
         return result
 
     # This call is protected
     def lookup_private_member_info(self, client_cert, credentials, options):
         method = 'lookup_private_member_info'
-        chapi_log_invocation(MA_LOG_PREFIX, method, credentials, options, {})
+        user_email = get_email_from_cert(client_cert)
+        chapi_log_invocation(MA_LOG_PREFIX, method, credentials, options, {}, {'user': user_email})
 
         result = self.lookup_member_info(options, MA.private_fields)
 
-        chapi_log_result(MA_LOG_PREFIX, method, result)
+        chapi_log_result(MA_LOG_PREFIX, method, result, {'user': user_email})
         return result
 
     # This call is protected
     def lookup_identifying_member_info(self, client_cert, credentials, options):
         method = 'lookup_identifying_member_info'
-        chapi_log_invocation(MA_LOG_PREFIX, method, credentials, options, {})
+        user_email = get_email_from_cert(client_cert)
+        chapi_log_invocation(MA_LOG_PREFIX, method, credentials, options, {}, {'user': user_email})
 
         result = self.lookup_member_info(options, MA.identifying_fields)
 
-        chapi_log_result(MA_LOG_PREFIX, method, result)
+        chapi_log_result(MA_LOG_PREFIX, method, result, {'user': user_email})
         return result
 
     # This call is protected
     def update_member_info(self, client_cert, member_urn, credentials, options):
         method = 'update_member_info'
         args = {'member_urn' : member_urn}
-        chapi_log_invocation(MA_LOG_PREFIX, method, credentials, options, args)
+        user_email = get_email_from_cert(client_cert)
+        chapi_log_invocation(MA_LOG_PREFIX, method, credentials, options, args, {'user': user_email})
 
         # determine whether self_asserted
         try:
@@ -365,7 +391,7 @@ class MAv1Implementation(MAv1DelegateBase):
 
         result = self._successReturn(True)
 
-        chapi_log_result(MA_LOG_PREFIX, method, result)
+        chapi_log_result(MA_LOG_PREFIX, method, result, {'user': user_email})
         return result
 
     # update or insert value of attribute attr for user uid
@@ -398,6 +424,7 @@ class MAv1Implementation(MAv1DelegateBase):
             q.update(keys)
         else:
             if "certificate" not in keys:
+                session.close()
                 raise CHAPIv1ArgumentError('Cannot insert just private key')
             obj = table()
             obj.member_id = uid
@@ -406,7 +433,7 @@ class MAv1Implementation(MAv1DelegateBase):
             session.add(obj)
         session.commit()
 
-    # delete all existing ssl keys, and replace them with specified ones
+    # delete all existing ssh keys, and replace them with specified ones
     def update_ssh_keys(self, session, keys, uid):
         q = session.query(SshKey)
         q = q.filter(SshKey.member_id == uid)
@@ -421,8 +448,9 @@ class MAv1Implementation(MAv1DelegateBase):
 
     # part of the API, mainly call get_all_credentials()
     def get_credentials(self, client_cert, member_urn, credentials, options):
+        user_email = get_email_from_cert(client_cert)
         chapi_log_invocation(MA_LOG_PREFIX, 'get_credentials', credentials,
-                             options, {'member_urn' : member_urn})
+                             options, {'member_urn' : member_urn}, {'user': user_email})
         session = self.db.getSession()
 
         uids = self.get_uids_for_attribute(session, "MEMBER_URN", member_urn)
@@ -430,25 +458,28 @@ class MAv1Implementation(MAv1DelegateBase):
             session.close()
             raise CHAPIv1ArgumentError('No member with URN ' + member_urn)
         uid = uids[0]
-        creds = self.get_all_credentials(session, uid)
+        creds = self.get_all_credentials(session, uid, client_cert)
 
         session.close()
-        chapi_log_result(MA_LOG_PREFIX, 'get_credentials', creds)
+        chapi_log_result(MA_LOG_PREFIX, 'get_credentials', creds, {'user': user_email})
         return self._successReturn(creds)
 
     # Construct a list of credentials in AM format
     # [{'geni_type' : type, 'geni_version' : version, 'geni_value' : value}]
     # where type is SFA for a UserCredential or ABAC for ABAC credentials
-    def get_all_credentials(self, session, uid):
+    def get_all_credentials(self, session, uid, client_cert):
         creds = []
-        sfa_raw_creds = [self.get_user_credential(session, uid)]
+        sfa_raw_creds = [self.get_user_credential(session, uid, client_cert)]
         abac_assertions = []
         user_urn = convert_member_uid_to_urn(uid)
-                #syslog('GUC: outside certs = '+str(certs))                   
+        #chapi_debug(MA_LOG_PREFIX, 'GUC: outside certs = '+str(certs))
         certs = self.get_val_for_uid(session, OutsideCert, "certificate", uid)
         if not certs:
             certs = self.get_val_for_uid(session, InsideKey, "certificate", 
                                          uid)
+        if not certs:
+            return creds
+
         user_cert = certs[0]
 
         abac_raw_creds = []
@@ -461,38 +492,50 @@ class MAv1Implementation(MAv1DelegateBase):
                                                  self.cert, self.key, {"CALLER" : user_cert})
             abac_raw_creds.append(assertion)
         sfa_creds = \
-            [{'geni_type' : 'SFA', 'geni_version' : 1, 'geni_value' : cred} 
+            [{'geni_type' : 'geni_sfa', 'geni_version' : 1, 'geni_value' : cred} 
              for cred in sfa_raw_creds]
         abac_creds = \
-            [{'geni_type' : 'ABAC', 'geni_version' : 1, 'geni_value' : cred} 
+            [{'geni_type' : 'geni_abac', 'geni_version' : 1, 'geni_value' : cred} 
              for cred in abac_raw_creds]
         creds = sfa_creds + abac_creds
         return creds
 
 
     # build a user credential based on the user's cert
-    def get_user_credential(self, session, uid):
+    def get_user_credential(self, session, uid, client_cert):
+        user_email = get_email_from_cert(client_cert)
+        cred_cert = None
         certs = self.get_val_for_uid(session, OutsideCert, "certificate", uid)
-        #syslog('GUC: outside certs = '+str(certs))
-        if not certs:
+        for cert in certs:
+            if cert.startswith(client_cert):
+                chapi_debug(MA_LOG_PREFIX, 'found client in outside certs', {'user': user_email})
+                cred_cert = cert
+                break
+        if not cred_cert:
             certs = self.get_val_for_uid(session, InsideKey, "certificate", uid)
-            #syslog('GUC: inside certs = '+str(certs))
-        if not certs:
-            #syslog('GUC: no certs')
+            for cert in certs:
+                if cert.startswith(client_cert):
+                    chapi_debug(MA_LOG_PREFIX, 'found client in inside certs', {'user': user_email})
+                    cred_cert = cert
+                    break
+        if not cred_cert:
+            chapi_debug(MA_LOG_PREFIX, 'no cred_cert', {'user': user_email})
             return None
-        gid = sfa_gid.GID(string = certs[0])
-        #syslog('GUC: gid = '+str(gid))
+
+        gid = sfa_gid.GID(string=cred_cert)
+        #chapi_debug(MA_LOG_PREFIX, 'GUC: gid = '+str(gid))
         expires = datetime.utcnow() + relativedelta(years=1)
         cred = cred_util.create_credential(gid, gid, expires, "user", \
                   self.key, self.cert, self.trusted_roots)
-        #syslog('GUC: cred = '+cred.save_to_string())
+        #chapi_debug(MA_LOG_PREFIX, 'GUC: cred = '+cred.save_to_string())
         return cred.save_to_string()
 
     def create_member(self, client_cert, attributes, credentials, options):
 
         method = 'create_member'
         args = {'attributes' : attributes}
-        chapi_log_invocation(MA_LOG_PREFIX, method, credentials, options, args)
+        user_email = get_email_from_cert(client_cert)
+        chapi_log_invocation(MA_LOG_PREFIX, method, credentials, options, args, {'user': user_email})
 
         # if it weren't for needing to track which attributes were self-asserted
         # we could just use options['fields']
@@ -529,22 +572,25 @@ class MAv1Implementation(MAv1DelegateBase):
 
         # Log the successful creation of member
         #self.logging_service = pm.getService('loggingv1handler')
-        msg = "Activated GENI user : %s" % member_id
+        msg = "Activated GENI user : %s (%s)" % (self._get_displayname_for_member_urn(user_urn), user_urn)
         attrs = {"MEMBER" : member_id}
         self.logging_service.log_event(msg, attrs, member_id)
+        chapi_audit_and_log(MA_LOG_PREFIX, msg, logging.INFO, {'user': user_email})
+        # FIXME: Send email to portal admins
 
         result = self._successReturn(atmap.values())
 
-        chapi_log_result(MA_LOG_PREFIX, method, result)
+        chapi_log_result(MA_LOG_PREFIX, method, result, {'user': user_email})
         return result
 
     # Implementation of KEY Service methods
 
-    def create_key(self, client_cert, member_urn, credentials, options):
+    def create_key(self, client_cert, credentials, options):
         
         method = 'create_key'
-        args = {'member_urn' : member_urn}
-        chapi_log_invocation(MA_LOG_PREFIX, method, credentials, options, args)
+        args = {}
+        user_email = get_email_from_cert(client_cert)
+        chapi_log_invocation(MA_LOG_PREFIX, method, credentials, options, args, {'user': user_email})
 
        # Check that all the fields are allowed to be updated
         if 'fields' not in options:
@@ -552,6 +598,8 @@ class MAv1Implementation(MAv1DelegateBase):
         fields = options['fields']
         validate_fields(fields, MA.required_create_key_fields, \
                             MA.allowed_create_key_fields)
+        member_urn = fields['KEY_MEMBER']
+        del fields['KEY_MEMBER']
         create_fields = \
             convert_dict_to_internal(fields, MA.key_field_mapping)
 
@@ -559,7 +607,7 @@ class MAv1Implementation(MAv1DelegateBase):
         lookup_member_id_options = {'match' : {'MEMBER_URN' : member_urn},
                                     'filter' : ['MEMBER_UID']}
         result = \
-            self.lookup_public_member_info(credentials, \
+            self.lookup_public_member_info(client_cert, credentials, \
                                                lookup_member_id_options)
         if result['code'] != NO_ERROR:
             return result # Shouldn't happen: Should raise exception instead
@@ -570,7 +618,7 @@ class MAv1Implementation(MAv1DelegateBase):
         session = self.db.getSession()
         ins = self.db.SSH_KEY_TABLE.insert().values(create_fields)
         result = session.execute(ins)
-        key_id = result.inserted_primary_key[0]
+        key_id = str(result.inserted_primary_key[0])
         fields["KEY_ID"] = key_id
         fields["KEY_MEMBER"] = member_urn
 
@@ -580,12 +628,13 @@ class MAv1Implementation(MAv1DelegateBase):
         # Log the creation of the SSH key
         client_uuid = get_uuid_from_cert(client_cert)
         attrs = {"MEMBER" : client_uuid}
-        msg = "%s registering SSH key %s" % (member_urn, key_id)
+        msg = "%s registering SSH key %s" % (self._get_displayname_for_member_urn(member_urn), key_id)
         self.logging_service.log_event(msg, attrs, client_uuid)
+        chapi_audit_and_log(MA_LOG_PREFIX, msg, logging.INFO, {'user': user_email})
 
         result = self._successReturn(fields)
 
-        chapi_log_result(MA_LOG_PREFIX, method, result)
+        chapi_log_result(MA_LOG_PREFIX, method, result, {'user': user_email})
         return result
 
     def delete_key(self, client_cert, member_urn, key_id, \
@@ -593,13 +642,15 @@ class MAv1Implementation(MAv1DelegateBase):
 
         method = 'delete_key'
         args = {'member_urn' : member_urn, 'key_id' : key_id}
-        chapi_log_invocation(MA_LOG_PREFIX, method, credentials, options, args)
+        user_email = get_email_from_cert(client_cert)
+        chapi_log_invocation(MA_LOG_PREFIX, method, credentials, options, args, {'user': user_email})
 
         session = self.db.getSession()
         q = session.query(SshKey)
         q = q.filter(SshKey.id == key_id)
         num_del = q.delete()
         if num_del == 0:
+            session.close()
             raise CHAPIv1DatabaseError("No key with id  %s" % key_id)
         session.commit()
         session.close()
@@ -607,12 +658,12 @@ class MAv1Implementation(MAv1DelegateBase):
         # Log the deletion of the SSH key
         client_uuid = get_uuid_from_cert(client_cert)
         attrs = {"MEMBER" : client_uuid}
-        msg = "%s deleting SSH key %s" % (member_urn, key_id)
+        msg = "%s deleting SSH key %s" % (self._get_displayname_for_member_urn(member_urn), key_id)
         self.logging_service.log_event(msg, attrs, client_uuid)
 
         result = self._successReturn(True)
         
-        chapi_log_result(MA_LOG_PREFIX, method, result)
+        chapi_log_result(MA_LOG_PREFIX, method, result, {'user': user_email})
         return result
 
     def update_key(self, client_cert, member_urn, key_id, \
@@ -620,7 +671,8 @@ class MAv1Implementation(MAv1DelegateBase):
 
         method = 'update_key'
         args = {'member_urn' : member_urn, 'key_id' : key_id}
-        chapi_log_invocation(MA_LOG_PREFIX, method, credentials, options, args)
+        user_email = get_email_from_cert(client_cert)
+        chapi_log_invocation(MA_LOG_PREFIX, method, credentials, options, args, {'user': user_email})
 
         # Check that all the fields are allowed to be updated
         if 'fields' not in options:
@@ -636,18 +688,20 @@ class MAv1Implementation(MAv1DelegateBase):
         num_upd = q.update(update_fields)
 
         if num_upd == 0:
+            session.close()
             raise CHAPIv1DatabaseError("No key with id %s" % key_id)
         session.commit()
         session.close()
 
         result = self._successReturn(True)
 
-        chapi_log_result(MA_LOG_PREFIX, method, result)
+        chapi_log_result(MA_LOG_PREFIX, method, result, {'user': user_email})
         return result
 
     def lookup_keys(self, client_cert, credentials, options):
         method = 'lookup_keys'
-        chapi_log_invocation(MA_LOG_PREFIX, method, credentials, options, {})
+        user_email = get_email_from_cert(client_cert)
+        chapi_log_invocation(MA_LOG_PREFIX, method, credentials, options, {}, {'user': user_email})
 
         selected_columns, match_criteria = \
             unpack_query_options(options, MA.key_field_mapping)
@@ -674,24 +728,22 @@ class MAv1Implementation(MAv1DelegateBase):
         q = add_filters(q, match_criteria, self.db.SSH_KEY_TABLE, MA.key_field_mapping)
         rows = q.all()
         session.close()
-
-        keys = [construct_result_row(row, selected_columns, \
-                                         MA.key_field_mapping) \
-                    for row in rows]
+        keys = {}
+        for row in rows:
+            if row.value not in keys:
+                keys[row.value] = []
+            keys[row.value].append(construct_result_row(row, \
+                         selected_columns, MA.key_field_mapping))
         result = self._successReturn(keys)
-
-        chapi_log_result(MA_LOG_PREFIX, method, result)
+        chapi_log_result(MA_LOG_PREFIX, method, result, {'user': user_email})
         return result
 
     # Member certificate methods
-    def create_certificate(self, client_cert, member_urn, \
-                               credentials, options):
+    def create_certificate(self, client_cert, member_urn, credentials, options):
         method = 'create_certificate'
         args = {'member_urn' : member_urn}
-        chapi_log_invocation(MA_LOG_PREFIX, method, credentials, options, args)
-
-#        print "In MAv1Implementation.create_cert : " + \
-#            str(member_urn) + " " + str(options)
+        user_email = get_email_from_cert(client_cert)
+        chapi_log_invocation(MA_LOG_PREFIX, method, credentials, options, args, {'user': user_email})
 
         # Grab the CSR or make CSR/KEY
         if 'csr' in options:
@@ -708,17 +760,15 @@ class MAv1Implementation(MAv1DelegateBase):
         # Lookup UID and email from URN
         match = {'MEMBER_URN' : member_urn}
         lookup_options = {'match' : match}
-        lookup_response = \
-            self.lookup_member_info(lookup_options, \
-                                        ['MEMBER_EMAIL', 'MEMBER_UID'])
+        lookup_response = self.lookup_member_info(lookup_options,
+                                                  ['MEMBER_EMAIL',
+                                                   'MEMBER_UID'])
         member_info = lookup_response['value'][member_urn]
-        urn = member_urn
-        email = str(member_info['MEMBER_EMAIL'])
-        uuid = str(member_info['MEMBER_UID'])
+        member_email = str(member_info['MEMBER_EMAIL'])
+        member_id = str(member_info['MEMBER_UID'])
 
-        cert_pem, private_key = \
-            make_cert_and_key(member_id, member_email, \
-                                  member_urn, self.cert, self.key, csr_file)
+        cert_pem = make_cert(member_id, member_email, member_urn,
+                             self.cert, self.key, csr_file)
 
         # Grab signer pem
         signer_pem = open(self.cert).read()
@@ -733,22 +783,29 @@ class MAv1Implementation(MAv1DelegateBase):
         insert_fields={'certificate' : cert_chain, 'member_id' : member_id}
         if private_key:
             insert_fields['private_key'] = private_key
-        ins = self.db.OUTSIDE_CERT_TABLE().values(insert_fields)
+        ins = self.db.OUTSIDE_CERT_TABLE.insert().values(insert_fields)
         result = session.execute(ins)
         session.commit()
         session.close()
 
         result = self._successReturn(True)
-        
-        chapi_log_result(MA_LOG_PREFIX, method, result)
+
+        # chapi_audit call
+        msg = "Created certificate for %s" % member_urn
+        if private_key:
+            msg = msg + " with private key"
+        chapi_audit_and_log(MA_LOG_PREFIX, msg, logging.INFO, {'user': user_email})
+
+        chapi_log_result(MA_LOG_PREFIX, method, result, {'user': user_email})
         return result
 
     ### ClientAuth
 
     # Dictionary of client_name => client_urn
-    def list_clients(self):
+    def list_clients(self, client_cert):
         method = 'list_clients'
-        chapi_log_invocation(MA_LOG_PREFIX, method, [], {}, {})
+        user_email = get_email_from_cert(client_cert)
+        chapi_log_invocation(MA_LOG_PREFIX, method, [], {}, {}, {'user': user_email})
 
         session = self.db.getSession()
         q = session.query(self.db.MA_CLIENT_TABLE)
@@ -759,7 +816,7 @@ class MAv1Implementation(MAv1DelegateBase):
             entries[row.client_name] = row.client_urn
         result = self._successReturn(entries)
 
-        chapi_log_result(MA_LOG_PREFIX, method, result)
+        chapi_log_result(MA_LOG_PREFIX, method, result, {'user': user_email})
         return result
 
     # List of URN's of all tools for which a given user (by ID) has
@@ -767,7 +824,8 @@ class MAv1Implementation(MAv1DelegateBase):
     def list_authorized_clients(self, client_cert, member_id):
         method = 'list_authorized_clients'
         args = {'member_id' : member_id}
-        chapi_log_invocation(MA_LOG_PREFIX, method, [], {}, args)
+        user_email = get_email_from_cert(client_cert)
+        chapi_log_invocation(MA_LOG_PREFIX, method, [], {}, args, {'user': user_email})
 
         session = self.db.getSession()
         q = session.query(self.db.INSIDE_KEY_TABLE.c.client_urn)
@@ -777,7 +835,7 @@ class MAv1Implementation(MAv1DelegateBase):
         entries = [str(row.client_urn) for row in rows]
         result = self._successReturn(entries)
 
-        chapi_log_result(MA_LOG_PREFIX, method, result)
+        chapi_log_result(MA_LOG_PREFIX, method, result, {'user': user_email})
         return result
 
     # Authorize/deauthorize a tool with respect to a user
@@ -786,11 +844,12 @@ class MAv1Implementation(MAv1DelegateBase):
         method = 'authorize_client'
         args = {'member_id' : member_id, 'client_urn' : client_urn, 
                 'authorize_sense' : authorize_sense}
-        chapi_log_invoation(MA_LOG_PREFIX, method, [], {}, args)
+        user_email = get_email_from_cert(client_cert)
+        chapi_log_invocation(MA_LOG_PREFIX, method, [], {}, args, {'user': user_email})
 
         member_urn = convert_member_uid_to_urn(member_id)
 
-        syslog("authorize_client "+member_id+' '+client_urn)
+        #chapi_audit(MA_LOG_PREFIX, "Called authorize_client "+member_id+' '+client_urn)
         if authorize_sense:
             private_key, csr_file = make_csr()
             member_email = convert_member_uid_to_email(member_id)
@@ -813,40 +872,44 @@ class MAv1Implementation(MAv1DelegateBase):
             session.close()
 
             # log_event
-            msg = "Authorizing client %s for member %s" % (client_urn, member_urn)
+            msg = "Authorizing client %s for member %s" % (client_urn, self._get_displayname_for_member_urn(member_urn))
             attribs = {"MEMBER" : member_id}
             self.logging_service.log_event(msg, attribs, member_id)
+            chapi_audit_and_log(MA_LOG_PREFIX, msg, logging.INFO, {'user': user_email})
 
         else:
             # delete from MA_INSIDE_KEY_TABLENAME
             # where member_id = member_id and client_urn = client_urn
             session = self.db.getSession()
-            q = q.filter(self.db.INSIDE_KEY_TABLE.c.member_id == member_id)
-            q = q.filter(self.db.INSIDE_KEY_TABLE.c.client_urn == client_urn)
+            q = session.query(InsideKey)
+            q = q.filter(InsideKey.member_id == member_id)
+            q = q.filter(InsideKey.client_urn == client_urn)
             q = q.delete()
             session.commit()
             session.close()
 
             # log_event
-            msg = "Deauthorizing client %s for member %s" % (client_urn, member_urn)
+            msg = "Deauthorizing client %s for member %s" % (client_urn, self._get_displayname_for_member_urn(member_urn))
             attribs = {"MEMBER" : member_id}
             self.logging_service.log_event(msg, attribs, member_id)
+            chapi_audit_and_log(MA_LOG_PREFIX, msg, logging.INFO, {'user': user_email})
 
         result = self._successReturn(True)
-        chapi_log_result(MA_LOG_PREFIX, method, result)
+        chapi_log_result(MA_LOG_PREFIX, method, result, {'user': user_email})
         return result
 
     # enable/disable a user/member  (private)
-    def enable_user(self, member_urn, enable_sense, credentials, options):
+    def enable_user(self, client_cert, member_urn, enable_sense, credentials, options):
         '''Mark a member/user as enabled or disabled.
         IFF enabled_sense is True, then user is unconditionally enabled, otherwise disabled.
         returns the previous sense.'''
         method = 'enable_user'
         args = {'member_urn' : member_urn,
                 'enable_sense' : enable_sense}
-        chapi_log_invocation(MA_LOG_PREFIX, method, [], {}, args)
+        user_email = get_email_from_cert(client_cert)
+        chapi_log_invocation(MA_LOG_PREFIX, method, [], {}, args, {'user': user_email})
 
-        syslog(method+' '+member_urn+' '+str(enable_sense))
+#        chapi_audit(MA_LOG_PREFIX, "Called " + method+' '+member_urn+' '+str(enable_sense))
 
         session = self.db.getSession()
         # find the uid
@@ -882,14 +945,16 @@ class MAv1Implementation(MAv1DelegateBase):
         msg = "Setting member %s status to %s" % \
             (member_urn, 'enabled' if enable_sense else 'disabled')
         attribs = {"MEMBER" : member_urn}
-        self.logging_service.log_event(msg, attribs, member_urn)
+        self.logging_service.log_event(msg, attribs, member_id)
+        chapi_audit_and_log(MA_LOG_PREFIX, msg, logging.INFO, {'user': user_email})
 
         result = self._successReturn(was_enabled)
-        chapi_log_result(MA_LOG_PREFIX, method, result)
+        chapi_log_result(MA_LOG_PREFIX, method, result, {'user': user_email})
         return result
 
     def check_user_enabled(self, client_cert):
         client_urn = get_urn_from_cert(client_cert)
+        client_email = get_email_from_cert(client_cert)
         client_uuid = get_uuid_from_cert(client_cert)
         client_name = get_name_from_urn(client_urn)
 
@@ -902,12 +967,42 @@ class MAv1Implementation(MAv1DelegateBase):
         session.close()
 
         if is_enabled:
-            syslog("CUE: user '%s' (%s) enabled" % (client_name, client_urn))
+            chapi_debug(MA_LOG_PREFIX, "CUE: user '%s' (%s) enabled" % (client_name, client_urn))
             pass
         else:
-            syslog("CUE: user '%s' (%s) disabled" % (client_name, client_urn))
+            chapi_audit_and_log(MA_LOG_PREFIX, "CUE: user '%s' (%s) disabled" % (client_name, client_urn), logging.INFO, {'user': user_email})
             raise CHAPIv1AuthorizationError("User %s (%s) disabled" % (client_name, client_urn));
 
+    # send email about new lead/operator privilege
+    def mail_new_privilege(self,member_id, privilege):
+        options = {'match' : {'MEMBER_UID' : member_id },'filter': ['_GENI_MEMBER_DISPLAYNAME','MEMBER_FIRSTNAME','MEMBER_LASTNAME','MEMBER_EMAIL']}  
+        info = self.lookup_member_info(options, MA.identifying_fields)
+        member_info = info['value']
+        pretty_name = ""
+        member_email = None
+        if len(member_info) > 0:
+            for row in member_info:
+                pretty_name = get_member_display_name(member_info[row],row)
+                member_email = member_info[row]['MEMBER_EMAIL']
+        msgbody = "Dear " + pretty_name + ",\n\n"
+        msgbody += "Congratulations, you have been made a 'Project Lead', meaning you can create GENI"
+        msgbody += " Projects, as well as create slices in projects and reserve resources.\n\n"
+        
+        msgbody += "If you are using the GENI Portal, see "
+        msgbody += "http://groups.geni.net/geni/wiki/SignMeUp#a2b.CreateaGENIProject "  #FIXME: Edit if page moves
+        msgbody += "for instructions on creating a project.\n\n"
+        
+        #  msgbody .= "Please visit https://" . $_SERVER['SERVER_NAME'];
+        #  msgbody .= "/secure/home.php for more information, or to get started.\n\n";
+        
+        msgbody += "Sincerely,\n"
+        msgbody += "GENI Clearinghouse operations\n"
+
+        if privilege == "PROJECT_LEAD":
+            subject = "You are now a GENI Project Lead" 
+        else:
+            subject = "You are now a GENI Operator" 
+        send_email(member_email, self.ch_from_email,self.portal_help_email,subject,msgbody,self.portal_admin_email)
 
     #  member_privilege (private)
     def add_member_privilege(self, cert, member_uid, privilege, credentials, options):
@@ -916,9 +1011,10 @@ class MAv1Implementation(MAv1DelegateBase):
         method = 'add_member_privilege'
         args = {'member_id' : member_uid,
                 'privilege' : privilege}
-        chapi_log_invocation(MA_LOG_PREFIX, method, [], {}, args)
+        user_email = get_email_from_cert(cert)
+        chapi_log_invocation(MA_LOG_PREFIX, method, [], {}, args, {'user': user_email})
 
-        syslog(method+' '+member_uid+' '+privilege)
+#        chapi_audit(MA_LOG_PREFIX, "Called " + method+' '+member_uid+' '+privilege)
 
         if not (privilege in ['OPERATOR', 'PROJECT_LEAD']):
             raise CHAPIv1ArgumentError('Privilege %s undefined' % (privilege))
@@ -943,12 +1039,20 @@ class MAv1Implementation(MAv1DelegateBase):
         session.close()
 
         # log_event
-        msg = "Setting member %s privilege %s" %  (member_uid, privilege)
+        msg = "Setting member %s privilege %s" %  (self._get_displayname_for_member_id(member_uid), privilege)
         attribs = {"MEMBER" : member_uid}
         self.logging_service.log_event(msg, attribs, member_uid)
+        chapi_audit_and_log(MA_LOG_PREFIX, msg, logging.INFO, {'user': user_email})
+
+        # Email admins, new project lead/operator
+        self.mail_new_privilege(member_uid,privilege)
+
+
+
+
 
         result = self._successReturn(was_enabled)
-        chapi_log_result(MA_LOG_PREFIX, method, result)
+        chapi_log_result(MA_LOG_PREFIX, method, result, {'user': user_email})
         return result
 
     def revoke_member_privilege(self, cert, member_uid, privilege, credentials, options):
@@ -957,8 +1061,9 @@ class MAv1Implementation(MAv1DelegateBase):
         method = 'revoke_member_privilege'
         args = {'member_id' : member_uid,
                 'privilege' : privilege}
-        chapi_log_invocation(MA_LOG_PREFIX, method, [], {}, args)
-        syslog(method+' '+member_uid+' '+privilege)
+        user_email = get_email_from_cert(cert)
+        chapi_log_invocation(MA_LOG_PREFIX, method, [], {}, args, {'user': user_email})
+#        chapi_audit(MA_LOG_PREFIX, "Called " + method+' '+member_uid+' '+privilege)
 
         if not (privilege in ['OPERATOR', 'PROJECT_LEAD']):
             raise CHAPIv1ArgumentError('Privilege %s undefined' % (privilege))
@@ -977,15 +1082,158 @@ class MAv1Implementation(MAv1DelegateBase):
             was_enabled = (rows[0][0] == 'true')
 
         if was_enabled:
+            # if revoking lead privilege, first check if member is lead on any projects
+            # if yes, look for an admin with lead authorization and make him/her lead on the project
+            # if there isn't an authorized admin, don't revoke lead privilege
+            if privilege=="PROJECT_LEAD":
+                row = self.get_attr_for_uid(session,"MEMBER_URN",member_uid)
+                member_urn = row[0]
+                #get projects for which member is lead
+
+                projects = self._sa_handler._delegate.lookup_projects_for_member(cert, member_urn, credentials, {})
+
+                for project in projects['value']:
+                    new_lead_urn = None
+                    if (project['EXPIRED'] == False and project['PROJECT_ROLE'] == 'LEAD'):
+                        project_urn = project['PROJECT_URN']
+                        #look for authorized admin to be new lead
+                        members = self._sa_handler._delegate.lookup_project_members(cert, project_urn, credentials, {})
+                        for member in members['value']:
+                            if member['PROJECT_ROLE'] == 'ADMIN':
+                                q = session.query(MemberAttribute.value).\
+                                    filter(MemberAttribute.member_id == member['PROJECT_MEMBER_UID']).\
+                                    filter(MemberAttribute.name == 'PROJECT_LEAD')
+                                rows = q.all()
+                                if rows[0][0] == 'true':
+                                    row = self.get_attr_for_uid(session,"MEMBER_URN",member['PROJECT_MEMBER_UID'])
+                                    new_lead_urn = row[0]
+                                    
+                                    options = {'members_to_change':[{'PROJECT_MEMBER': member_urn,'PROJECT_ROLE':'MEMBER'}, \
+                                                                        {'PROJECT_MEMBER': new_lead_urn,'PROJECT_ROLE':'LEAD'}]}
+                                    result = self._sa_handler._delegate.modify_project_membership(cert, project['PROJECT_URN'], credentials, options)
+                                    break
+                        if new_lead_urn == None:
+                            session.close()
+                            raise CHAPIv1ArgumentError('Cannot revoke lead privilege.  No authorized admin to take lead role on project %s' %project_urn)                            
+        if was_enabled:
             self.delete_attr(session, privilege, member_uid)
+            # log_event
+            msg = "Revoking member %s privilege %s" %  (self._get_displayname_for_member_id(member_uid), privilege)
+            attribs = {"MEMBER" : member_uid}
+            self.logging_service.log_event(msg, attribs, member_uid)
+            chapi_audit_and_log(MA_LOG_PREFIX, msg, logging.INFO, {'user': user_email})
+
+        session.close()
+
+        result = self._successReturn(was_enabled)
+        chapi_log_result(MA_LOG_PREFIX, method, result, {'user': user_email})
+        return result
+
+
+    #  member_attribute (private)
+    def add_member_attribute(self, cert, member_urn, attr_name, attr_value, attr_self_assert,
+                             credentials, options):
+        method = 'add_member_attribute'
+        args = {'member_urn' : member_urn,
+                'name' : attr_name,
+                'value' : attr_value,
+                'self_assert' : attr_self_assert}
+        user_email = get_email_from_cert(cert)
+        chapi_log_invocation(MA_LOG_PREFIX, method, [], {}, args, {'user': user_email})
+
+#        chapi_audit(MA_LOG_PREFIX, "Called " + method+' '+member_urn+' '+attr_name+' = '+attr_value)
+
+        session = self.db.getSession()
+        # find the uid
+        uids = self.get_uids_for_attribute(session, "MEMBER_URN", member_urn)
+        if len(uids) == 0:
+            session.close()
+            raise CHAPIv1ArgumentError('No member with URN ' + member_urn)
+        member_uid = uids[0]
+
+        # find the old value
+        q = session.query(MemberAttribute.value).\
+            filter(MemberAttribute.member_id == member_uid).\
+            filter(MemberAttribute.name == attr_name)
+        rows = q.all()
+
+        was_defined = (len(rows)>0)
+        old_value = None
+        if was_defined:
+            old_value = rows[0][0]
+
+        self.update_attr(session, attr_name, attr_value, member_uid, attr_self_assert)
+        session.commit()
+        session.close()
+
+        # log_event
+        msg = "Setting member %s attribute %s to %s" %  (self._get_displayname_for_member_urn(member_urn), attr_name, attr_value )
+        attribs = {"MEMBER" : member_urn}
+        self.logging_service.log_event(msg, attribs, member_uid)
+        chapi_audit_and_log(MA_LOG_PREFIX, msg, logging.INFO, {'user': user_email})
+
+        result = self._successReturn(old_value)
+        chapi_log_result(MA_LOG_PREFIX, method, result, {'user': user_email})
+        return result
+
+    def remove_member_attribute(self, cert, member_urn, attr_name, credentials, options):
+        method = 'remove_member_attribute'
+        args = {'member_urn' : member_urn,
+                'name' : attr_name}
+        user_email = get_email_from_cert(cert)
+        chapi_log_invocation(MA_LOG_PREFIX, method, [], {}, args, {'user': user_email})
+#        chapi_audit(MA_LOG_PREFIX, "Called " + method+' '+member_urn+' '+attr_name)
+
+        session = self.db.getSession()
+        # find the uid
+        uids = self.get_uids_for_attribute(session, "MEMBER_URN", member_urn)
+        if len(uids) == 0:
+            session.close()
+            raise CHAPIv1ArgumentError('No member with URN ' + member_urn)
+        member_uid = uids[0]
+
+        # find the old value
+        q = session.query(MemberAttribute.value).\
+            filter(MemberAttribute.member_id == member_uid).\
+            filter(MemberAttribute.name == attr_name)
+        rows = q.all()
+
+        was_defined = (len(rows)>0)
+
+        chapi_debug(MA_LOG_PREFIX, 'RMA.ROWS = %s' % rows, {'user': user_email})
+
+        old_value = None
+        if was_defined:
+            old_value = rows[0][0]
+
+        if not was_defined:
+            self.delete_attr(session, attr_name, member_uid)
 
         session.close()
 
         # log_event
-        msg = "Revoking member %s privilege %s" %  (member_uid, privilege)
-        attribs = {"MEMBER" : member_uid}
+        msg = "Removing member %s attribute %s" %  (self._get_displayname_for_member_urn(member_urn), attr_name)
+        attribs = {"MEMBER" : member_urn}
         self.logging_service.log_event(msg, attribs, member_uid)
+        chapi_audit_and_log(MA_LOG_PREFIX, msg, logging.INFO, {'user': user_email})
 
-        result = self._successReturn(was_enabled)
-        chapi_log_result(MA_LOG_PREFIX, method, result)
+        result = self._successReturn(old_value)
+        chapi_log_result(MA_LOG_PREFIX, method, result, {'user': user_email})
         return result
+
+    def _get_displayname_for_member_id(self, member_id):
+        member_urn = convert_member_uid_to_urn(member_id)
+        return self._get_displayname_for_member_urn(member_urn)
+
+    def _get_displayname_for_member_urn(self, member_urn):
+        urns = []
+        urns.append(member_urn)
+        options = {\
+            "match" : {"MEMBER_URN" : urns}, 
+            "filter" : ["_GENI_MEMBER_DISPLAYNAME", "MEMBER_FIRSTNAME", 
+                        "MEMBER_LASTNAME", "MEMBER_EMAIL"]}
+        result = self.lookup_member_info(options, MA.identifying_fields)
+        if result['code'] != NO_ERROR or member_urn not in result['value']:
+            return member_urn
+        else:
+            return get_member_display_name(result['value'][member_urn], member_urn)
