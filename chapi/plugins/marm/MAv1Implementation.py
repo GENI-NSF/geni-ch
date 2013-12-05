@@ -130,7 +130,8 @@ def username_exists(name):
     db = pm.getService('chdbengine')
     session = db.getSession()
     q = session.query(MemberAttribute.member_id)
-    q = q.filter(MemberAttribute.name == name)
+    q = q.filter(MemberAttribute.name == 'username')
+    q = q.filter(MemberAttribute.value == name)
     rows = q.all()
     session.close()
     return len(rows) > 0
