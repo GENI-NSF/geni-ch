@@ -43,7 +43,7 @@ import amsoil.core.pluginmanager as pm
 from tools.chapi_log import *
 from tools.mapped_tables import MemberAttribute
 import logging
-import MA_constants
+from tools import MA_constants
 
 logger = amsoil.core.log.getLogger('ABAC')
 
