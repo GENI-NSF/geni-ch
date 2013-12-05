@@ -628,7 +628,7 @@ class MAv1Implementation(MAv1DelegateBase):
         # Log the creation of the SSH key
         client_uuid = get_uuid_from_cert(client_cert)
         attrs = {"MEMBER" : client_uuid}
-        msg = "%s registering SSH key %s" % (self._get_displayname_for_member_urn(member_urn), key_id)
+        msg = "%s registered SSH key %s" % (self._get_displayname_for_member_urn(member_urn), key_id)
         self.logging_service.log_event(msg, attrs, client_uuid)
         chapi_audit_and_log(MA_LOG_PREFIX, msg, logging.INFO, {'user': user_email})
 
@@ -658,7 +658,7 @@ class MAv1Implementation(MAv1DelegateBase):
         # Log the deletion of the SSH key
         client_uuid = get_uuid_from_cert(client_cert)
         attrs = {"MEMBER" : client_uuid}
-        msg = "%s deleting SSH key %s" % (self._get_displayname_for_member_urn(member_urn), key_id)
+        msg = "%s deleted SSH key %s" % (self._get_displayname_for_member_urn(member_urn), key_id)
         self.logging_service.log_event(msg, attrs, client_uuid)
 
         result = self._successReturn(True)
@@ -872,7 +872,7 @@ class MAv1Implementation(MAv1DelegateBase):
             session.close()
 
             # log_event
-            msg = "Authorizing client %s for member %s" % (client_urn, self._get_displayname_for_member_urn(member_urn))
+            msg = "Authorized client %s for member %s" % (client_urn, self._get_displayname_for_member_urn(member_urn))
             attribs = {"MEMBER" : member_id}
             self.logging_service.log_event(msg, attribs, member_id)
             chapi_audit_and_log(MA_LOG_PREFIX, msg, logging.INFO, {'user': user_email})
@@ -889,7 +889,7 @@ class MAv1Implementation(MAv1DelegateBase):
             session.close()
 
             # log_event
-            msg = "Deauthorizing client %s for member %s" % (client_urn, self._get_displayname_for_member_urn(member_urn))
+            msg = "Deauthorized client %s for member %s" % (client_urn, self._get_displayname_for_member_urn(member_urn))
             attribs = {"MEMBER" : member_id}
             self.logging_service.log_event(msg, attribs, member_id)
             chapi_audit_and_log(MA_LOG_PREFIX, msg, logging.INFO, {'user': user_email})
@@ -942,7 +942,7 @@ class MAv1Implementation(MAv1DelegateBase):
         session.close()
 
         # log_event
-        msg = "Setting member %s status to %s" % \
+        msg = "Set member %s status to %s" % \
             (member_urn, 'enabled' if enable_sense else 'disabled')
         attribs = {"MEMBER" : member_urn}
         self.logging_service.log_event(msg, attribs, member_id)
@@ -1039,7 +1039,7 @@ class MAv1Implementation(MAv1DelegateBase):
         session.close()
 
         # log_event
-        msg = "Setting member %s privilege %s" %  (self._get_displayname_for_member_id(member_uid), privilege)
+        msg = "Granted member %s privilege %s" %  (self._get_displayname_for_member_id(member_uid), privilege)
         attribs = {"MEMBER" : member_uid}
         self.logging_service.log_event(msg, attribs, member_uid)
         chapi_audit_and_log(MA_LOG_PREFIX, msg, logging.INFO, {'user': user_email})
@@ -1118,7 +1118,7 @@ class MAv1Implementation(MAv1DelegateBase):
         if was_enabled:
             self.delete_attr(session, privilege, member_uid)
             # log_event
-            msg = "Revoking member %s privilege %s" %  (self._get_displayname_for_member_id(member_uid), privilege)
+            msg = "Revoked member %s privilege %s" %  (self._get_displayname_for_member_id(member_uid), privilege)
             attribs = {"MEMBER" : member_uid}
             self.logging_service.log_event(msg, attribs, member_uid)
             chapi_audit_and_log(MA_LOG_PREFIX, msg, logging.INFO, {'user': user_email})
@@ -1167,7 +1167,7 @@ class MAv1Implementation(MAv1DelegateBase):
         session.close()
 
         # log_event
-        msg = "Setting member %s attribute %s to %s" %  (self._get_displayname_for_member_urn(member_urn), attr_name, attr_value )
+        msg = "Set member %s attribute %s to %s" %  (self._get_displayname_for_member_urn(member_urn), attr_name, attr_value )
         attribs = {"MEMBER" : member_urn}
         self.logging_service.log_event(msg, attribs, member_uid)
         chapi_audit_and_log(MA_LOG_PREFIX, msg, logging.INFO, {'user': user_email})
@@ -1212,7 +1212,7 @@ class MAv1Implementation(MAv1DelegateBase):
         session.close()
 
         # log_event
-        msg = "Removing member %s attribute %s" %  (self._get_displayname_for_member_urn(member_urn), attr_name)
+        msg = "Removed member %s attribute %s" %  (self._get_displayname_for_member_urn(member_urn), attr_name)
         attribs = {"MEMBER" : member_urn}
         self.logging_service.log_event(msg, attribs, member_uid)
         chapi_audit_and_log(MA_LOG_PREFIX, msg, logging.INFO, {'user': user_email})

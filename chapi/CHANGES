@@ -3,6 +3,7 @@
 = GENI Clearinghouse Release Notes =
 
 == 1.1 ==
+ * Use past tense in logging service log messages (#128)
 
 == 1.0 ==
  * Initial release of new clearinghouse implementing the
