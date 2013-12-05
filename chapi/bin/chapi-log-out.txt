@@ -1,7 +1,7 @@
 DEBUG
 INFO.*Invoked
 INFO.*Result.*'code': 0
-INFO] MA: Result from get_credentials
+INFO    :chapi:MA:.* Result from get_credentials
 root:Configured logging from file
 INFO    :root:Configured logging
 DEBUG   :root:Looking at parent
@@ -18,6 +18,7 @@ INFO    :amsoil:\[chv1
 INFO    :amsoil:\[sav1
 INFO    :amsoil:\[mav1
 INFO    :amsoil:\[logv1
+INFO    :amsoil:\[pgchv1
 INFO    :chapi:MA: lookup_member_info: no member_urn row
 INFO    :chapi:SA: Returning empty list of slices
 INFO    :chapi:LOG:.*Result from 
