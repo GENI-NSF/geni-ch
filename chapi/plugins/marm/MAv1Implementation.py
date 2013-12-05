@@ -1094,7 +1094,7 @@ class MAv1Implementation(MAv1DelegateBase):
 
                 for project in projects['value']:
                     new_lead_urn = None
-                    if (project['EXPIRED'] == False and project['PROJECT_ROLE'] == 'LEAD'):
+                    if project['PROJECT_ROLE'] == 'LEAD':
                         project_urn = project['PROJECT_URN']
                         #look for authorized admin to be new lead
                         members = self._sa_handler._delegate.lookup_project_members(cert, project_urn, credentials, {})
