@@ -519,7 +519,9 @@ class MAv1Implementation(MAv1DelegateBase):
                     cred_cert = cert
                     break
         if not cred_cert:
-            chapi_debug(MA_LOG_PREFIX, 'no cred_cert', {'user': user_email})
+            chapi_warn(MA_LOG_PREFIX,
+                       'get_user_credential did not find a matching certificate',
+                       {'user': user_email})
             return None
 
         gid = sfa_gid.GID(string=cred_cert)
