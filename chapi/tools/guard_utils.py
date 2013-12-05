@@ -395,30 +395,36 @@ def assert_shares_project(caller_urn, member_urns, label, options, abac_manager)
     # lead or admin on a project, allow it
     if 'match' in options and len(options['match']) == 1 and \
        'MEMBER_EMAIL' in options['match']:
-        q = session.query(pm1.c.member_id)
-        q = q.filter(pm1.c.member_id == ma1.c.member_id)
+        member_uids = options['match']['MEMBER_UID']
+        q = session.query(ma1.c.value)
         q = q.filter(ma1.c.name == 'urn')
-        q = q.filter(ma1.c.value == caller_urn)
+        q = q.filter(pm1.c.member_id == ma1.c.member_id)
+        q = q.filter(ma1.c.member_id.in_(member_uids))
         q = q.filter(pm1.c.role.in_([LEAD_ATTRIBUTE, ADMIN_ATTRIBUTE]))
         rows = q.all()
 
-        if len(rows) > 0:
-            assertion = "ME.IS_LEAD_AND_SEARCHING_EMAIL<-CALLER"
+        for row in rows:
+            member_urn = row.value
+            assertion = \
+                "ME.IS_LEAD_AND_SEARCHING_EMAIL_%s<-CALLER" % flatten_urn(member_urn)
             abac_manager.register_assertion(assertion)
 
     # If looking up a member by member_uid who is a 
-    # lead of a project, allow it
+    # lead of an unexpired  project, allow it
     if 'match' in options and len(options['match']) == 1 and \
        'MEMBER_UID' in options['match']:
-        q = session.query(pm1.c.member_id)
-        q = q.filter(pm1.c.member_id == ma1.c.member_id)
+        member_uids = options['match']['MEMBER_UID']
+        q = session.query(ma1.c.value)
         q = q.filter(ma1.c.name == 'urn')
-        q = q.filter(ma1.c.value == caller_urn)
-        q = q.filter(pm1.c.role.in_([LEAD_ATTRIBUTE]))
+        q = q.filter(ma1.c.member_id == ma2.c.member_id)
+        q = q.filter(ma2.c.name == 'PROJECT_LEAD')
+        q = q.filter(ma2.c.member_id.in_(member_uids))
         rows = q.all()
 
-        if len(rows) > 0:
-            assertion = "ME.IS_LEAD_AND_SEARCHING_UID<-CALLER"
+        for row in rows:
+            member_urn = row.value
+            assertion = \
+                "ME.IS_LEAD_AND_SEARCHING_UID_%s<-CALLER" % flatten_urn(member_urn)
             abac_manager.register_assertion(assertion)
 
     session.close()
