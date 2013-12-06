@@ -626,7 +626,13 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
             if field=="SLICE_EXPIRATION":
                 # convert value to datetime object
                 new_exp = dateutil.parser.parse(value)
-#                chapi_debug(SA_LOG_PREFIX, "Slice %s Requested new slice expiration %s" % (slice_name, value)
+                # Be sure the requested time is naive UTC
+                if new_exp.tzinfo:
+                    tz_utc = dateutil.tz.tzutc()
+                    new_exp = new_exp.astimezone(tz_utc)
+                    new_exp = new_exp.replace(tzinfo=None)
+                    value = new_exp
+#                chapi_debug(SA_LOG_PREFIX, "Slice %s Requested new slice expiration %s" % (slice_name, value))
                 # don't renew past project expiration time
                 if project_expiration != None and new_exp > project_expiration:
                     if project_expiration < slice_expiration:
