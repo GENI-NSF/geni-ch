@@ -9,6 +9,7 @@
  * Times to renew slice should be convered to naive UTC (#139)
  * Email to new operators shouldn't say project lead (#123)
  * Do not use add/remove attribute methods for privileges (#130)
+ * Send mail on enable/disable users (#129)
 
 == 1.0 ==
  * Initial release of new clearinghouse implementing the
