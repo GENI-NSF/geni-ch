@@ -377,22 +377,6 @@ class PGCHv1Delegate(DelegateBase):
                 if s['EXPIRED'] == True:
                     continue
                 slices.append(s['SLICE_URN'])
-            slices = [s['SLICE_URN'] for s in slice_info]
-
-#            # Now determine which slices are active...
-#            options = { 'match' : { 'SLICE_URN' : slices},
-#                        'filter' : ['SLICE_EXPIRED'] }
-##            expired_return = sa.lookup_slices(client_cert, [], options)
-#            expired_return = sa.lookup_slices([], options)
-#            if expired_return['code'] != NO_ERROR:
-#                return expired_return[:150]
-#            slice_info = expired_return['value']
-            # slices = []
-            # for urn in slice_info.keys():
-            #     if not slice_info[urn]['SLICE_EXPIRED']:
-            #         slices.append(urn)
-#            slices = [urn for urn in slice_info
-#                      if not slice_info[urn]['SLICE_EXPIRED']]
 
             resolve = {'uid' : member_uuid,  # login(Emulab) ID of user \
                            'hrn' : member_hrn, \
