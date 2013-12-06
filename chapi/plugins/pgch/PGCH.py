@@ -28,6 +28,7 @@ from amsoil.core import serviceinterface
 from chapi.DelegateBase import DelegateBase
 from chapi.HandlerBase import HandlerBase
 from chapi.Exceptions import *
+from chapi.MethodContext import *
 from tools.cert_utils import get_uuid_from_cert, get_urn_from_cert, get_email_from_cert
 from tools.chapi_log import *
 import sfa.trust.gid as gid
@@ -40,98 +41,75 @@ class PGCHv1Handler(HandlerBase):
     def __init__(self):
         super(PGCHv1Handler, self).__init__(pgch_logger)
 
-    # Override error return to log exception
-    def _errorReturn(self, e):
-        user_email = get_email_from_cert(self.requestCertificate())
-        chapi_log_exception(PGCH_LOG_PREFIX, e, {'user': user_email})
-        return super(PGCHv1Handler, self)._errorReturn(e)
-
     def GetVersion(self):
-        method = 'GetVersion'
-        args = None
-        user_email = get_email_from_cert(self.requestCertificate())
-        chapi_log_invocation(PGCH_LOG_PREFIX, method, [], {}, args, {'user': user_email})
-        try:
-            client_cert = self.requestCertificate()
-            result = self._delegate.GetVersion(client_cert)
-            chapi_log_result(PGCH_LOG_PREFIX, method, result, {'user': user_email})
-            return result
-        except Exception as e:
-            return self._errorReturn(e)
-
+        with MethodContext(self, PGCH_LOG_PREFIX, 'GetVersion', 
+                           {}, [], {}, read_only=True) as mc:
+            if not mc._error:
+                mc._result = \
+                    self._delegate.GetVersion(mc._client_cert, 
+                                              mc._session)
+        return mc._result
 
     def GetCredential(self, args=None):
-        method = 'GetCredential'
-        user_email = get_email_from_cert(self.requestCertificate())
-        chapi_log_invocation(PGCH_LOG_PREFIX, method, [], {}, args, {'user': user_email})
-        try:
-            client_cert = self.requestCertificate()
-            result = self._delegate.GetCredential(client_cert, args)
-            chapi_log_result(PGCH_LOG_PREFIX, method, result, {'user': user_email})
-            return result
-        except Exception as e:
-            return self._errorReturn(e)
+        with MethodContext(self, PGCH_LOG_PREFIX, 'GetCredential', 
+                           args, [], {}, read_only=True) as mc:
+            if not mc._error:
+                mc._result = \
+                    self._delegate.GetCredential(mc._client_cert, 
+                                                 args,
+                                                 mc._session)
+        return mc._result
 
     def Resolve(self, args):
-        method = 'Resolve'
-        user_email = get_email_from_cert(self.requestCertificate())
-        chapi_log_invocation(PGCH_LOG_PREFIX, method, [], {}, args, {'user': user_email})
-        try:
-            client_cert = self.requestCertificate()
-            result = self._delegate.Resolve(client_cert, args)
-            chapi_log_result(PGCH_LOG_PREFIX, method, result, {'user': user_email})
-            return result
-        except Exception as e:
-            return self._errorReturn(e)
+        with MethodContext(self, PGCH_LOG_PREFIX, 'Resolve', 
+                           args, [], {}, read_only=True) as mc:
+            if not mc._error:
+                mc._result = \
+                    self._delegate.Resolve(mc._client_cert, 
+                                           args,
+                                           mc._session)
+        return mc._result
 
     def Register(self, args):
-        method = 'Register'
-        user_email = get_email_from_cert(self.requestCertificate())
-        chapi_log_invocation(PGCH_LOG_PREFIX, method, [], {}, args, {'user': user_email})
-        try:
-            client_cert = self.requestCertificate()
-            result = self._delegate.Register(client_cert, args)
-            chapi_log_result(PGCH_LOG_PREFIX, method, result, {'user': user_email})
-            return result
-        except Exception as e:
-            return self._errorReturn(e)
-
+        with MethodContext(self, PGCH_LOG_PREFIX, 'Register', 
+                           args, [], {}, read_only=True) as mc:
+            if not mc._error:
+                mc._result = \
+                    self._delegate.Register(mc._client_cert, 
+                                           args,
+                                           mc._session)
+        return mc._result
 
     def RenewSlice(self, args):
-        method = 'RenewSlice'
-        user_email = get_email_from_cert(self.requestCertificate())
-        chapi_log_invocation(PGCH_LOG_PREFIX, method, [], {}, args, {'user': user_email})
-        try:
-            client_cert = self.requestCertificate()
-            result = self._delegate.RenewSlice(client_cert, args)
-            chapi_log_result(PGCH_LOG_PREFIX, method, result, {'user': user_email})
-            return result
-        except Exception as e:
-            return self._errorReturn(e)
+        with MethodContext(self, PGCH_LOG_PREFIX, 'RenewSlice',
+                           args, [], {}, read_only=True) as mc:
+            if not mc._error:
+                mc._result = \
+                    self._delegate.RenewSlice(mc._client_cert, 
+                                              args,
+                                              mc._session)
+        return mc._result
 
     def GetKeys(self, args):
-        method = 'GetKeys'
-        user_email = get_email_from_cert(self.requestCertificate())
-        chapi_log_invocation(PGCH_LOG_PREFIX, method, [], {}, args, {'user': user_email})
-        try:
-            client_cert = self.requestCertificate()
-            result = self._delegate.GetKeys(client_cert, args)
-            chapi_log_result(PGCH_LOG_PREFIX, method, result, {'user': user_email})
-            return result
-        except Exception as e:
-            return self._errorReturn(e)
+        with MethodContext(self, PGCH_LOG_PREFIX, 'GetKeys',
+                           args, [], {}, read_only=True) as mc:
+            if not mc._error:
+                mc._result = \
+                    self._delegate.GetKeys(mc._client_cert, 
+                                              args,
+                                              mc._session)
+        return mc._result
 
     def ListComponents(self, args):
-        method = 'ListComponents'
-        user_email = get_email_from_cert(self.requestCertificate())
-        chapi_log_invocation(PGCH_LOG_PREFIX, method, [], {}, args, {'user': user_email})
-        try:
-            client_cert = self.requestCertificate()
-            result = self._delegate.ListComponents(client_cert, args)
-            chapi_log_result(PGCH_LOG_PREFIX, method, result, {'user': user_email})
-            return result
-        except Exception as e:
-            return self._errorReturn(e)
+        with MethodContext(self, PGCH_LOG_PREFIX, 'ListComponents',
+                           args, [], {}, read_only=True) as mc:
+            if not mc._error:
+                mc._result = \
+                    self._delegate.ListComponents(mc._client_cert, 
+                                                  args,
+                                                  mc._session)
+        return mc._result
+
 
 class PGCHv1Delegate(DelegateBase):
 
@@ -141,7 +119,7 @@ class PGCHv1Delegate(DelegateBase):
         self._sa_handler = pm.getService('sav1handler')
         self._ma_handler = pm.getService('mav1handler')
 
-    def GetVersion(self, client_cert):
+    def GetVersion(self, client_cert, session):
         self.logger.info("Called GetVersion")
 
         user_email = get_email_from_cert(client_cert)
@@ -180,7 +158,7 @@ class PGCHv1Delegate(DelegateBase):
                        hostname=CH_HOSTNAME)
         return self._successReturn(version)
 
-    def GetCredential(self, client_cert, args):
+    def GetCredential(self, client_cert, args, session):
         # all none means return user cred
         # else cred is user cred, id is uuid or urn of object, type=Slice
         #    where omni always uses the urn
@@ -203,7 +181,7 @@ class PGCHv1Delegate(DelegateBase):
             client_urn = get_urn_from_cert(client_cert)
             creds = self._ma_handler._delegate.get_credentials(client_cert,
                                                               client_urn,
-                                                              [], {})
+                                                              [], {}, session)
             if creds['code'] != NO_ERROR: return creds
 
             # Extract the SFA user credential from the returned set
@@ -245,7 +223,8 @@ class PGCHv1Delegate(DelegateBase):
             creds = []
             options = {'match' : match_clause, 'filter' : filter_clause}
             lookup_slices_return = \
-                self._sa_handler._delegate.lookup_slices(client_cert, creds, options)
+                self._sa_handler._delegate.lookup_slices(client_cert, creds, 
+                                                         options, session)
             if lookup_slices_return['code'] != NO_ERROR:
                 return lookup_slices_return
             slice_urn = lookup_slices_return ['value'].keys()[0]
@@ -255,15 +234,17 @@ class PGCHv1Delegate(DelegateBase):
 
         options = {}
         get_credentials_return = \
-            self._sa_handler._delegate.get_credentials(client_cert, slice_urn, \
-                                                           credentials, options)
+            self._sa_handler._delegate.get_credentials(client_cert, 
+                                                       slice_urn, 
+                                                       credentials, 
+                                                       options, session)
         if get_credentials_return['code'] != NO_ERROR:
             return get_credentials_return
 
         slice_credential = get_credentials_return['value'][0]['geni_value']
         return self._successReturn(slice_credential)
 
-    def Resolve(self, client_cert, args):
+    def Resolve(self, client_cert, args, session):
         # Omni uses this, Flack may not need it
 
         # ID may be a uuid, hrn, or urn
@@ -329,7 +310,8 @@ class PGCHv1Delegate(DelegateBase):
                               "filter" : public_filter_clause}
             creds = []
             lookup_public_return = \
-                ma.lookup_public_member_info(client_cert, creds, public_options)
+                ma.lookup_public_member_info(client_cert, creds, 
+                                             public_option, session)
             if lookup_public_return['code'] != NO_ERROR:
                 return lookup_public_return
             public_info = lookup_public_return['value']
@@ -341,7 +323,8 @@ class PGCHv1Delegate(DelegateBase):
                                    'filter' : identifying_filter_clause }
             lookup_identifying_return = \
                 ma.lookup_identifying_member_info(client_cert, creds,
-                                                  identifying_options)
+                                                  identifying_options,
+                                                  session)
             if lookup_identifying_return['code'] != NO_ERROR:
                 return lookup_identifying_return
             identifying_info = lookup_identifying_return['value']
@@ -357,7 +340,8 @@ class PGCHv1Delegate(DelegateBase):
             # Slices
             sa = self._sa_handler._delegate
             lookup_slices_return = sa.lookup_slices_for_member(client_cert,
-                                                               urn, [], {})
+                                                               urn, [], {},
+                                                               session)
             if lookup_slices_return['code'] != NO_ERROR:
                 return lookup_slices_return
             slice_info = lookup_slices_return['value']
@@ -366,7 +350,7 @@ class PGCHv1Delegate(DelegateBase):
             # Now determine which slices are active...
             options = { 'match' : { 'SLICE_URN' : slices},
                         'filter' : ['SLICE_EXPIRED'] }
-            expired_return = sa.lookup_slices(client_cert, [], options)
+            expired_return = sa.lookup_slices(client_cert, [], options, session)
             if expired_return['code'] != NO_ERROR:
                 return expired_return
             slice_info = expired_return['value']
@@ -395,7 +379,7 @@ class PGCHv1Delegate(DelegateBase):
             options = {'match' : match_clause, 'filter' : filter_clause}
             creds = []
             lookup_slices_return = \
-                self._sa_handler._delegate.lookup_slices(client_cert, creds, options)
+                self._sa_handler._delegate.lookup_slices(client_cert, creds, options, session)
 
             if lookup_slices_return['code'] != NO_ERROR:
                 return lookup_slices_return
@@ -415,7 +399,7 @@ class PGCHv1Delegate(DelegateBase):
             filter_clause = ['MEMBER_URN']
             options = {'match' : match_clause, 'filter' : filter_clause}
             lookup_member_return = \
-                self._ma_handler._delegate.lookup_public_member_info(client_cert, creds, options)
+                self._ma_handler._delegate.lookup_public_member_info(client_cert, creds, options, session)
 
             if lookup_member_return['code'] != NO_ERROR:
                 return lookup_member_return
@@ -441,7 +425,7 @@ class PGCHv1Delegate(DelegateBase):
 
         return self._successReturn(resolve)
 
-    def Register(self, client_cert, args):
+    def Register(self, client_cert, args, session):
         # Omni uses this, Flack should not for our purposes
         # args are credential, hrn, urn, type
         # cred is user cred, type must be Slice
@@ -496,7 +480,7 @@ class PGCHv1Delegate(DelegateBase):
                               '_GENI_SLICE_EMAIL' : slice_email }}
 
         sa = self._sa_handler._delegate
-        create_slice_return = sa.create_slice(client_cert, creds, options)
+        create_slice_return = sa.create_slice(client_cert, creds, options, session)
         if create_slice_return['code'] != NO_ERROR:
             return create_slice_return
 
@@ -517,7 +501,7 @@ class PGCHv1Delegate(DelegateBase):
             return self._errorReturn('No slice credential available')
         return self._successReturn(slice_cred)
 
-    def RenewSlice(self, client_cert, args):
+    def RenewSlice(self, client_cert, args, session):
         # args are credential, expiration
         # cred is user cred
         # returns renewed slice credential
@@ -533,12 +517,12 @@ class PGCHv1Delegate(DelegateBase):
         options = {'fields' : {'SLICE_EXPIRATION' : expiration}}
         sa = self._sa_handler._delegate
         update_slice_return = sa.update_slice(client_cert, slice_urn,
-                                              credentials, options)
+                                              credentials, options, session)
         if update_slice_return['code'] != NO_ERROR:
             return update_slice_return
 
         creds_return = sa.get_credentials(client_cert, slice_urn,
-                                          credentials, {})
+                                          credentials, {}, session)
         if creds_return['code'] != NO_ERROR:
             return creds_return
 
@@ -553,7 +537,7 @@ class PGCHv1Delegate(DelegateBase):
             return self._errorReturn('No slice credential available')
         return self._successReturn(slice_cred)
 
-    def GetKeys(self, client_cert, args):
+    def GetKeys(self, client_cert, args, session):
         # cred is user cred
         # return list( of dict(type='ssh', key=$key))
         # args: credential
@@ -569,7 +553,8 @@ class PGCHv1Delegate(DelegateBase):
                    "filter" : ['KEY_PUBLIC']
                    }
         ssh_keys_result = \
-            self._ma_handler._delegate.lookup_keys(client_cert, creds, options)
+            self._ma_handler._delegate.lookup_keys(client_cert, creds, 
+                                                   options, session)
 #        print "SSH_KEYS_RESULT = " + str(ssh_keys_result)
         if ssh_keys_result['code'] != NO_ERROR:
             return ssh_keys_result
@@ -581,7 +566,7 @@ class PGCHv1Delegate(DelegateBase):
         
         return self._successReturn(keys)
 
-    def ListComponents(self, client_cert, args):
+    def ListComponents(self, client_cert, args, session):
         """Get the list of CMs (AMs).
 
         Return a list of dicts. Each dict has keys gid, urn, hrn, url.
@@ -589,7 +574,9 @@ class PGCHv1Delegate(DelegateBase):
         self.logger.info("Called ListComponents")
         filter = ['SERVICE_CERT', 'SERVICE_URN', 'SERVICE_URL']
         options = dict(filter=filter)
-        get_aggregates_result = self._ch_handler.lookup_aggregates(options)
+        get_aggregates_result = \
+            self._ch_handler._delegate.lookup_aggregates(client_cert, 
+                                                         options, session)
         if get_aggregates_result['code'] != NO_ERROR:
             return get_aggregates_result
         aggregates = get_aggregates_result['value']

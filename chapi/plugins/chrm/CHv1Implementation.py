@@ -112,28 +112,28 @@ class CHv1Implementation(CHv1DelegateBase):
 
     version_number = "1.0"
 
-    def get_version(self):
+    def get_version(self, session):
         version_info = {"VERSION": self.version_number, 
                         "SERVICES": ["SERVICE"],
                         "OBJECTS": ["SERVICE"],
                         "FIELDS": self.supplemental_fields}
         return self._successReturn(version_info)
 
-    def lookup_member_authorities(self, client_cert, options):
+    def lookup_member_authorities(self, client_cert, options, session):
         member_authorities = self.select_services_of_type(self.MA_SERVICE_TYPE)
         return self.select_entries_and_fields(member_authorities, options)
 
-    def lookup_slice_authorities(self, client_cert, options):
+    def lookup_slice_authorities(self, client_cert, options, session):
         member_authorities = self.select_services_of_type(self.SA_SERVICE_TYPE)
         return self.select_entries_and_fields(member_authorities, options)
 
-    def lookup__aggregates(self, client_cert, options):
+    def lookup__aggregates(self, client_cert, options, session):
         member_authorities = self.select_services_of_type(self.AGGREGATE_SERVICE_TYPE)
         return self.select_entries_and_fields(member_authorities, options)
 
     # Take an option 'urns' with a list of urns to lookup
     # Return a dictionary of each URN mapped to the URL of associated URN, or None if not found
-    def lookup_authorities_for_urns(self, client_cert, urns):
+    def lookup_authorities_for_urns(self, client_cert, urns, session):
         urns_to_authorities = {}
         for urn in urns:
             urns_to_authorities[urn] = self.lookup_authority_for_urn(urn)
@@ -167,7 +167,7 @@ class CHv1Implementation(CHv1DelegateBase):
             authority_url = authority['service_url']
         return authority_url
             
-    def get_trust_roots(self, client_cert):
+    def get_trust_roots(self, client_cert, session):
         return []
 
 

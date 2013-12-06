@@ -37,54 +37,38 @@ class CHv1PersistentImplementation(CHv1Implementation):
         self.db = pm.getService('chdbengine')
 
     # Get all MAs (authorities of type MA)
-    def lookup_member_authorities(self, client_cert, options):
-        method = 'lookup_member_authorities'
-        user_email = get_email_from_cert(client_cert)
-        chapi_log_invocation(SR_LOG_PREFIX, method, [], options, {}, {'user': user_email})
-        result = self.lookup_authorities(client_cert, self.MA_SERVICE_TYPE, options)
-        chapi_log_result(SR_LOG_PREFIX, method, result, {'user': user_email})
+    def lookup_member_authorities(self, client_cert, options, session):
+        result = self.lookup_authorities(client_cert, self.MA_SERVICE_TYPE, 
+                                         options, session)
         return result
 
     # Get all SA's (authorities of type SA)
     def lookup_slice_authorities(self, client_cert, options):
-        method = 'lookup_slice_authorities'
-        user_email = get_email_from_cert(client_cert)
-        chapi_log_invocation(SR_LOG_PREFIX, method, [], options, {}, {'user': user_email})
-        result = self.lookup_authorities(client_cert, self.SA_SERVICE_TYPE, options)
-        chapi_log_result(SR_LOG_PREFIX, method, result, {'user': user_email})
+        result = self.lookup_authorities(client_cert, self.SA_SERVICE_TYPE, 
+                                         options, session)
         return result
 
     # Get all aggregates (authorities of type aggregate)
     def lookup_aggregates(self, client_cert, options):
-        method = 'lookup_aggregates'
-        user_email = get_email_from_cert(client_cert)
-        chapi_log_invocation(SR_LOG_PREFIX, method, [], options, {}, {'user': user_email})
-        result = self.lookup_authorities(client_cert, self.AGGREGATE_SERVICE_TYPE, options)
-        chapi_log_result(SR_LOG_PREFIX, method, result, {'user': user_email})
+        result = self.lookup_authorities(client_cert, 
+                                         self.AGGREGATE_SERVICE_TYPE, 
+                                         options, session)
         return result
 
     # Lookup all authorities for given service type
     # Add on a service type filter clause before adding any option clauses
-    def lookup_authorities(self, client_cert, service_type, options):
-
-        method = 'lookup_authorities'
-        args = {'service_type' : service_type}
-        user_email = get_email_from_cert(client_cert)
-        chapi_log_invocation(SR_LOG_PREFIX, method, [], options, args, {'user': user_email})
-
+    def lookup_authorities(self, client_cert, service_type, options, session):
         selected_columns, match_criteria = unpack_query_options(options, self.field_mapping)
 
-        session = self.db.getSession()
         q = session.query(self.db.SERVICES_TABLE)
         q = q.filter(self.db.SERVICES_TABLE.c.service_type == service_type)
         q = add_filters(q,  match_criteria, self.db.SERVICES_TABLE, self.field_mapping)
         rows = q.all()
-        session.close()
 
         authorities = [construct_result_row(row, selected_columns, self.field_mapping) for row in rows]
 
         result = self._successReturn(authorities)
-        chapi_log_result(SR_LOG_PREFIX, method, result, {'user': user_email})
+
         return result
 
 

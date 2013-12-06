@@ -32,6 +32,7 @@ from chapi.Exceptions import *
 from sqlalchemy import *
 from datetime import *
 from dateutil.relativedelta import relativedelta
+from chapi.MethodContext import *
 from tools.guard_utils import *
 from tools.dbutils import *
 from tools.cert_utils import *
@@ -49,55 +50,33 @@ class CSv1Handler(HandlerBase):
     def __init__(self):
         super(CSv1Handler, self).__init__(cs_logger)
 
-    # Override error return to log exception
-    def _errorReturn(self, e):
-        user_email = get_email_from_cert(self.requestCertificate())
-        chapi_log_exception(CS_LOG_PREFIX, e, {'user': user_email})
-        return super(CSv1Handler, self)._errorReturn(e)
-
     def get_attributes(self, principal, context_type, context, \
                            credentials, options):
         if context == 'None': context = None # For testing with the client
-        client_cert = self.requestCertificate()
-        user_email = get_email_from_cert(client_cert)
-        method = 'get_attributes'
-        args = {'principal' : principal, \
-                    'context_type' : context_type, \
-                    'context' : context}
-        chapi_log_invocation(CS_LOG_PREFIX, method, credentials, options, args, {'user': user_email})
-        try:
-            self._guard.validate_call(client_cert, method, \
-                                          credentials, options,  args)
-            client_cert, options = \
-                self._guard.adjust_client_identity(client_cert, \
-                                                       credentials, options)
-            result = self._delegate.get_attributes(client_cert, principal, \
-                                                       context_type, context, \
-                                                       credentials, options)
-            chapi_log_result(CS_LOG_PREFIX, method, result, {'user': user_email})
-            return result
-        except Exception as e:
-            return self._errorReturn(e)
+        with MethodContext(self, CS_LOG_PREFIX, 'get_attributes',
+                           {'principal' : principal,
+                            'context_type' : context_type,
+                            'context' : context},
+                            credentials, options, read_only=True) as mc:
+            if not mc._error:
+                mc._result = \
+                    self._delegate.get_attributes(mc._client_cert,
+                                                  principal, context_type, 
+                                                  context, credentials, 
+                                                  options, mc._session)
+            return mc._result
 
     def get_permissions(self, principal, credentials, options):
-        client_cert = self.requestCertificate()
-        user_email = get_email_from_cert(client_cert)
-        method = 'get_permissions'
-        args = {'principal' : principal}
-        chapi_log_invocation(CS_LOG_PREFIX, method, credentials, options, args, {'user': user_email})
-        try:
-            self._guard.validate_call(client_cert, method, \
-                                          credentials, options, args)
-            client_cert, options = \
-                self._guard.adjust_client_identity(client_cert, \
-                                                       credentials, options);
-            result = self._delegate.get_permissions(client_cert, principal, \
-                                                        credentials, options)
-            chapi_log_result(CS_LOG_PREFIX, method, result, {'user': user_email})
-            return result
-        except Exception as e:
-            return self._errorReturn(e)
-
+        with MethodContext(self, CS_LOG_PREFIX, 'get_permissions',
+                           {'principal' : principal},
+                            credentials, options, read_only=True) as mc:
+            if not mc._error:
+                mc._result = \
+                    self._delegate.get_permissions(mc._client_cert,
+                                                   principal,
+                                                   credentials, options,
+                                                   mc._session)
+            return mc._result
 
 class CSv1Delegate(DelegateBase):
 
@@ -106,9 +85,8 @@ class CSv1Delegate(DelegateBase):
         self.db = pm.getService('chdbengine')
 
     def get_attributes(self, client_cert, principal, context_type, context, \
-                           credentials, options):
+                           credentials, options, session):
 
-        session = self.db.getSession()
 
         # Project attributes
         q = session.query(self.db.MEMBER_ATTRIBUTE_TABLE.c.name, self.db.PROJECT_MEMBER_TABLE.c.project_id)
@@ -149,7 +127,6 @@ class CSv1Delegate(DelegateBase):
             project_lead_rows = q.all()
 #            print "PIs = %d" % len(project_lead_rows)
 
-        session.close()
         rows = proj_rows + slice_rows + operator_rows + project_lead_rows
 
         response = []
@@ -168,8 +145,8 @@ class CSv1Delegate(DelegateBase):
         return None
 
 
-    def get_permissions(self, client_cert, principal, credentials, options):
-        session = self.db.getSession()
+    def get_permissions(self, client_cert, principal, credentials, 
+                        options, session):
 
         q = session.query(self.db.CS_ACTION_TABLE.c.name, 
                           self.db.CS_ACTION_TABLE.c.context_type, 
@@ -220,7 +197,6 @@ class CSv1Delegate(DelegateBase):
 
         rows = project_rows + slice_rows + operator_rows + lead_rows
 
-        session.close()
         # Convert from unicode to string
         response = [( str(row.name), str(row.context_type), self.get_context(row) ) for row in rows] 
         return self._successReturn(response)

@@ -29,6 +29,7 @@ from HandlerBase import HandlerBase
 from Exceptions import *
 from tools.cert_utils import *
 from tools.chapi_log import *
+from MethodContext import *
 
 ma_logger = amsoil.core.log.getLogger('mav1')
 xmlrpc = pm.getService('xmlrpc')
@@ -38,20 +39,16 @@ class MAv1Handler(HandlerBase):
     def __init__(self):
         super(MAv1Handler, self).__init__(ma_logger)
 
-    # Override error return to log exception
-    def _errorReturn(self, e):
-        user_email = get_email_from_cert(self.requestCertificate())
-        chapi_log_exception(MA_LOG_PREFIX, e, {'user': user_email})
-        return super(MAv1Handler, self)._errorReturn(e)
-
     def get_version(self):
         """Return version of MA API including object model
         This call is unprotected: no checking of credentials
         """
-        try:
-            return self._delegate.get_version()
-        except Exception as e:
-            return self._errorReturn(e)
+        with MethodContext(self, MA_LOG_PREFIX, 'get_version',
+                           {}, [], {}, read_only=True) as mc:
+            if not mc._error:
+                mc._result = \
+                    self._delegate.get_version(mc._session)
+            return mc._result
 
     # MEMBER service methods
     def lookup_public_member_info(self, credentials, options):
@@ -60,12 +57,15 @@ class MAv1Handler(HandlerBase):
         
         This call is unprotected: no checking of credentials
         """
-
-        client_cert = self.requestCertificate()
-        try:
-            return self._delegate.lookup_public_member_info(client_cert, credentials, options)
-        except Exception as e:
-            return self._errorReturn(e)
+        with MethodContext(self, MA_LOG_PREFIX, 'lookup_public_member_info', 
+                           {}, credentials, options, read_only=True) as mc:
+            if not mc._error:
+                mc._result = \
+                    self._delegate.lookup_public_member_info(mc._client_cert, 
+                                                             credentials, 
+                                                             options,
+                                                             mc._session)
+            return mc._result
 
     def lookup_private_member_info(self, credentials, options):
         """Return private information about members specified in options
@@ -74,27 +74,15 @@ class MAv1Handler(HandlerBase):
         This call is protected
         Authorized by client cert and credentials
         """
-        client_cert = self.requestCertificate()
-        method = 'lookup_private_member_info'
-        try:
-            client_cert, options = \
-                self._guard.adjust_client_identity(client_cert, \
-                                                       credentials, options)
-            self._guard.validate_call(client_cert, method, \
-                                          credentials, options)
-            results = self._delegate.lookup_private_member_info(client_cert, \
-                                                                    credentials, \
-                                                                    options)
-
-            if results['code'] == NO_ERROR:
-                results_value = results['value']
-                new_results_value = self._guard.protect_results(client_cert, method, credentials, results_value)
-                results = self._successReturn(new_results_value)
-
-            return results
-
-        except Exception as e:
-            return self._errorReturn(e)
+        with MethodContext(self, MA_LOG_PREFIX, 'lookup_private_member_info', 
+                           {}, credentials, options, read_only=True) as mc:
+            if not mc._error:
+                mc._result = \
+                    self._delegate.lookup_private_member_info(mc._client_cert, 
+                                                              credentials, 
+                                                              options,
+                                                              mc._session)
+            return mc._result
 
     def lookup_identifying_member_info(self, credentials, options):
         """Return identifying information about members specified in options
@@ -103,26 +91,16 @@ class MAv1Handler(HandlerBase):
         This call is protected
         Authorized by client cert and credentials
         """
-        client_cert = self.requestCertificate()
-        method = 'lookup_identifying_member_info'
-        try:
-            client_cert, options = \
-                self._guard.adjust_client_identity(client_cert, \
-                                                       credentials, options)
-            self._guard.validate_call(client_cert, method, \
-                                          credentials, options)
-            results = self._delegate.lookup_identifying_member_info(client_cert, \
-                                                                        credentials, \
-                                                                        options)
-            if results['code'] == NO_ERROR:
-                results_value = results['value']
-                new_results_value = self._guard.protect_results(client_cert, method, credentials, results_value)
-                results = self._successReturn(new_results_value)
-
-            return results
-
-        except Exception as e:
-            return self._errorReturn(e)
+        with MethodContext(self, MA_LOG_PREFIX, 
+                           'lookup_identifying_member_info', 
+                           {}, credentials, options, read_only=True) as mc:
+            if not mc._error:
+                mc._result = \
+                    self._delegate.lookup_identifying_member_info(mc._client_cert, 
+                                                                  credentials, 
+                                                                  options,
+                                                                  mc._session)
+            return mc._result
 
     def get_credentials(self, member_urn, credentials, options):
         """Get credentials for given user
@@ -130,25 +108,18 @@ class MAv1Handler(HandlerBase):
         This call is protected
         Authorization based on client cert and given credentials
         """
-        client_cert = self.requestCertificate()
-        method = 'get_credentials'
-        try:
-            client_cert, options = \
-                self._guard.adjust_client_identity(client_cert, \
-                                                       credentials, options)
-            self._guard.validate_call(client_cert, method, \
-                                          credentials, options, \
-                                          {'member_urn' : member_urn})
-            results = self._delegate.get_credentials(client_cert, member_urn, \
-                                                         credentials, options)
-            if results['code'] == NO_ERROR:
-                results_value = results['value']
-                new_results_value = self._guard.protect_results(client_cert, method, credentials, results_value)
-                results = self._successReturn(new_results_value)
-
-            return results
-        except Exception as e:
-            return self._errorReturn(e)
+        with MethodContext(self, MA_LOG_PREFIX, 
+                           'get_credentials', 
+                           {'member_urn' : member_urn}, 
+                           credentials, options, read_only=True) as mc:
+            if not mc._error:
+                mc._result = \
+                    self._delegate.get_credentials(mc._client_cert, 
+                                                   member_urn, 
+                                                   credentials, 
+                                                   options,
+                                                   mc._session)
+            return mc._result
 
     def update_member_info(self, member_urn, credentials, options):
         """Update given member with new data provided in options
@@ -156,25 +127,18 @@ class MAv1Handler(HandlerBase):
         This call is protected
         Authorized by client cert and credentials
         """
-        client_cert = self.requestCertificate()
-        method = 'update_member_info'
-        try:
-            client_cert, options = \
-                self._guard.adjust_client_identity(client_cert, \
-                                                       credentials, options)
-            self._guard.validate_call(client_cert, method,
-                                          credentials, options, \
-                                          {'member_urn' : member_urn})
-            results = self._delegate.update_member_info(client_cert, member_urn, \
-                                                            credentials, options)
-            if results['code'] == NO_ERROR:
-                results_value = results['value']
-                new_results_value = self._guard.protect_results(client_cert, method, credentials, results_value)
-                results = self._successReturn(new_results_value)
-
-            return results
-        except Exception as e:
-            return self._errorReturn(e)
+        with MethodContext(self, MA_LOG_PREFIX, 
+                           'update_member_info', 
+                           {'member_urn' : member_urn},
+                           credentials, options, read_only=False) as mc:
+            if not mc._error:
+                mc._result = \
+                    self._delegate.update_member_info(mc._client_cert, 
+                                                      member_urn,
+                                                      credentials, 
+                                                      options,
+                                                      mc._session)
+            return mc._result
 
     def create_member(self, attributes, credentials, options):
         """Create a new member using the specified attributes.  Attribute email is 
@@ -184,27 +148,18 @@ class MAv1Handler(HandlerBase):
         This call is protected
         Authorized by client cert and credentials
         """
-        client_cert = self.requestCertificate()
-        method = 'create_member'
-        try:
-            client_cert, options = \
-                self._guard.adjust_client_identity(client_cert, \
-                                                       credentials, options)
-            self._guard.validate_call(client_cert, method, \
-                                          credentials, options, \
-                                          {'attributes' : attributes})
-            results =  self._delegate.create_member(client_cert, \
-                                                    attributes, \
-                                                    credentials, options)
-            if results['code'] == NO_ERROR:
-                results_value = results['value']
-                new_results_value = self._guard.protect_results(client_cert, method, credentials, results_value)
-                results = self._successReturn(new_results_value)
-
-            return results
-
-        except Exception as e:
-            return self._errorReturn(e)
+        with MethodContext(self, MA_LOG_PREFIX, 
+                           'create_member',
+                           {'attributes' : attributes}, 
+                           credentials, options, read_only=False) as mc:
+            if not mc._error:
+                mc._result = \
+                    self._delegate.create_member(mc._client_cert, 
+                                                 attributes,
+                                                 credentials, 
+                                                 options,
+                                                 mc._session)
+            return mc._result
 
     # KEY service methods
 
@@ -219,24 +174,16 @@ class MAv1Handler(HandlerBase):
        Should return DUPLICATE_ERROR if a key with the same KEY_ID is 
        already stored for given user
        """
-        client_cert = self.requestCertificate()
-        method = 'create_key'
-        try:
-            client_cert, options = \
-                self._guard.adjust_client_identity(client_cert, \
-                                                       credentials, options)
-            self._guard.validate_call(client_cert, method,
-                                      credentials, options, {})
-            results = self._delegate.create_key(client_cert, \
-                                                    credentials, options)
-            if results['code'] == NO_ERROR:
-                results_value = results['value']
-                new_results_value = self._guard.protect_results(client_cert, method, credentials, results_value)
-                results = self._successReturn(new_results_value)
-                
-            return results
-        except Exception as e:
-            return self._errorReturn(e)
+        with MethodContext(self, MA_LOG_PREFIX, 
+                           'create_key', 
+                           {}, credentials, options, read_only=False) as mc:
+            if not mc._error:
+                mc._result = \
+                    self._delegate.create_key(mc._client_cert, 
+                                              credentials, 
+                                              options,
+                                              mc._session)
+            return mc._result
 
     def delete_key(self, member_urn, key_id, credentials, options):
         """Delete a key pair for given member
@@ -248,27 +195,19 @@ class MAv1Handler(HandlerBase):
             
         Should return ARGUMENT_ERROR if no such key is found for user
         """
-        client_cert = self.requestCertificate()
-        method = 'delete_key'
-        try:
-            client_cert, options = \
-                self._guard.adjust_client_identity(client_cert, \
-                                                       credentials, options)
-            self._guard.validate_call(client_cert, method,
-                                      credentials, options, \
-                                          {'member_urn' : member_urn, 
-                                           'key_id' : key_id})
-            results = self._delegate.delete_key(client_cert, member_urn, \
-                                                    key_id, \
-                                                    credentials, options)
-            if results['code'] == NO_ERROR:
-                results_value = results['value']
-                new_results_value = self._guard.protect_results(client_cert, method, credentials, results_value)
-                results = self._successReturn(new_results_value)
-                
-            return results
-        except Exception as e:
-            return self._errorReturn(e)
+        with MethodContext(self, MA_LOG_PREFIX, 
+                           'delete_key', 
+                           {'member_urn' : member_urn, 'key_id' : key_id}, 
+                           credentials, options, read_only=False) as mc:
+            if not mc._error:
+                mc._result = \
+                    self._delegate.delete_key(mc._client_cert, 
+                                              member_urn,
+                                              key_id,
+                                              credentials, 
+                                              options,
+                                              mc._session)
+            return mc._result
 
     def update_key(self, member_urn, key_id, credentials, options):
         """
@@ -283,27 +222,18 @@ class MAv1Handler(HandlerBase):
             True if succeeded
         Should return ARGUMENT_ERROR if no such key is found for user
         """
-        client_cert = self.requestCertificate()
-        method = 'update_key'
-        try:
-            client_cert, options = \
-                self._guard.adjust_client_identity(client_cert, \
-                                                       credentials, options)
-            self._guard.validate_call(client_cert, method,
-                                      credentials, options, \
-                                          {'member_urn' : member_urn,
-                                           'key_id' : key_id})
-            results = self._delegate.update_key(client_cert, member_urn, \
-                                                    key_id, \
-                                                    credentials, options)
-            if results['code'] == NO_ERROR:
-                results_value = results['value']
-                new_results_value = self._guard.protect_results(client_cert, method, credentials, results_value)
-                results = self._successReturn(new_results_value)
-                
-            return results
-        except Exception as e:
-            return self._errorReturn(e)
+        with MethodContext(self, MA_LOG_PREFIX, 
+                           'update_key', 
+                           {'member_urn' : member_urn, 'key_id' : key_id}, 
+                           credentials, options, read_only=False) as mc:
+            if not mc._error:
+                mc._result = \
+                    self._delegate.update_key(mc._client_cert, 
+                                              member_urn, key_id,
+                                              credentials, 
+                                              options,
+                                              mc._session)
+            return mc._result
 
     def lookup_keys(self, credentials, options):
         """Lookup keys for given match criteria return fields in given 
@@ -316,206 +246,171 @@ class MAv1Handler(HandlerBase):
         #  Dictionary (indexed by member_urn) of dictionaries containing 
         #     name/value pairs for all keys registered for that given user.
         """
-        client_cert = self.requestCertificate()
-        method = 'lookup_keys'
-        try:
-            client_cert, options = \
-                self._guard.adjust_client_identity(client_cert, \
-                                                       credentials, options)
-            self._guard.validate_call(client_cert, method,
-                                      credentials, options)
-            results = self._delegate.lookup_keys(client_cert, \
-                                                    credentials, options)
-            if results['code'] == NO_ERROR:
-                results_value = results['value']
-                new_results_value = self._guard.protect_results(client_cert, method, credentials, results_value)
-                results = self._successReturn(new_results_value)
-                
-            return results
-        except Exception as e:
-            return self._errorReturn(e)
+        with MethodContext(self, MA_LOG_PREFIX, 
+                           'lookup_keys_keys', 
+                           {}, credentials, options, read_only=True) as mc:
+            if not mc._error:
+                mc._result = \
+                    self._delegate.lookup_keys(mc._client_cert, 
+                                              credentials, 
+                                              options,
+                                              mc._session)
+            return mc._result
 
     def create_certificate(self, member_urn, credentials, options):
         """Methods for managing user certs
         # options: 
         # 'csr' => certificate signing request (if null, create cert/key)
         """
-        client_cert = self.requestCertificate()
-        method = 'create_certificate'
-        try:
-            client_cert, options = \
-                self._guard.adjust_client_identity(client_cert, \
-                                                       credentials, options)
-            self._guard.validate_call(client_cert, method, \
-                                          credentials, options, \
-                                          {'member_urn': member_urn})
-            results = self._delegate.create_certificate(client_cert, \
-                                                            member_urn, 
-                                                            credentials, \
-                                                            options)
-            return results
-        except Exception as e:
-            return self._errorReturn(e)
+        with MethodContext(self, MA_LOG_PREFIX, 
+                           'create_certificate', 
+                           {'member_urn' : member_urn}, 
+                           credentials, options, read_only=False) as mc:
+            if not mc._error:
+                mc._result = \
+                    self._delegate.create_certificate(mc._client_cert, 
+                                              member_urn,
+                                              credentials, 
+                                              options,
+                                              mc._session)
+            return mc._result
 
     # ClientAuth API
     def list_clients(self):
         """
         """
-        client_cert = self.requestCertificate()
-        try:
-            return self._delegate.list_clients(client_cert)
-        except Exception as e:
-            return self._errorReturn(e)
+        with MethodContext(self, MA_LOG_PREFIX, 
+                           'list_clients', 
+                           {}, [], {}, read_only=True) as mc:
+            if not mc._error:
+                mc._result = \
+                    self._delegate.list_clients(mc._session)
+            return mc._result
 
     def list_authorized_clients(self, member_id):
         """
         """
-        method = 'list_authorized_clients'
-        client_cert = self.requestCertificate()
-        try:
-            self._guard.validate_call(client_cert, method, \
-                                          [], {}, {'member_id': member_id})
-            results = self._delegate.list_authorized_clients(client_cert, \
-                                                                 member_id)
-            return results;
-        except Exception as e:
-            return self._errorReturn(e)
+        with MethodContext(self, MA_LOG_PREFIX, 
+                           'list_authorized_clients', 
+                           {'member_id' : member_id}, [], {}, 
+                           read_only=True) as mc:
+            if not mc._error:
+                mc._result = \
+                    self._delegate.list_authorized_clients(mc._client_cert,
+                                                           member_id,
+                                                           mc._session)
+            return mc._result
 
     def authorize_client(self, member_id, client_urn, authorize_sense):
         """
         """
-        method = 'authorize_client'
-        client_cert = self.requestCertificate()
-        try:
-            self._guard.validate_call(client_cert, method, [], {}, \
-                                          {'member_id' : member_id, \
-                                               'client_urn' : client_urn})
-            results = self._delegate.authorize_client(client_cert, \
-                                                           member_id, \
-                                                           client_urn, \
-                                                           authorize_sense)
-            return results;
-        except Exception as e:
-            return self._errorReturn(e)
+        with MethodContext(self, MA_LOG_PREFIX, 
+                           'authorized_client', 
+                           {'member_id' : member_id,'client_urn' : client_urn},
+                           [], {}, read_only=False) as mc:
+            if not mc._error:
+                mc._result = \
+                    self._delegate.list_authorized_client(mc._client_cert,
+                                                          member_id,
+                                                          client_urn,
+                                                          mc._session)
+            return mc._result
+
 
     # member disable API
     def enable_user(self, member_urn, enable_sense, credentials, options):
         """Enable or disable a user based on URN. If enable_sense is False, then user 
         will be disabled.
         """
-        client_cert = self.requestCertificate()
-        method = 'enable_user'
-        try:
-            self._guard.validate_call(client_cert, method,
-                                      credentials, options,
-                                      {'member_urn': member_urn})
-            client_cert, options = self._guard.adjust_client_identity(
-                client_cert, credentials, options)
-            results = self._delegate.enable_user(client_cert,
-                                                 member_urn, 
-                                                 enable_sense,
-                                                 credentials,
-                                                 options)
-            return results
-        except Exception as e:
-            return self._errorReturn(e)
-
+        with MethodContext(self, MA_LOG_PREFIX, 
+                           'enable_user', 
+                           {'member_urn' : member_urn,
+                            'enable_sense' : enable_sense},
+                           credentials, options, read_only=False) as mc:
+            if not mc._error:
+                mc._result = \
+                    self._delegate.list_authorized_clients(mc._client_cert,
+                                                           member_urn,
+                                                           enable_sense,
+                                                           credentials,
+                                                           options,
+                                                           mc._session)
+            return mc._result
 
     # member privilege (private)
     def add_member_privilege(self, member_uid, privilege, credentials, options):
         """Add a privilege to a member.
         privilege is either OPERATOR or PROJECT_LEAD
         """
-        client_cert = self.requestCertificate()
-        method = 'add_member_privilege'
-        try:
-            self._guard.validate_call(client_cert, method,
-                                      credentials, options,
-                                      {'member_uid': member_uid,
-                                       'privilege': privilege})
-            client_cert, options = self._guard.adjust_client_identity(
-                client_cert, credentials, options)
-            results = self._delegate.add_member_privilege(client_cert,
-                                                          member_uid, 
-                                                          privilege,
-                                                          credentials,
-                                                          options)
-            return results
-        except Exception as e:
-            return self._errorReturn(e)
+        with MethodContext(self, MA_LOG_PREFIX, 
+                           'add_member_privilege', 
+                           {'member_uid' : member_uid,'privilege' : privilege},
+                           credentials, options, read_only=False) as mc:
+            if not mc._error:
+                mc._result = \
+                    self._delegate.add_member_privilege(mc._client_cert,
+                                                        member_uid,
+                                                        privilege,
+                                                        credentials,
+                                                        options,
+                                                        mc._session)
+            return mc._result
 
     def revoke_member_privilege(self, member_uid, privilege, credentials, options):
         """Revoke a privilege for a member."""
-        client_cert = self.requestCertificate()
-        method = 'revoke_member_privilege'
-        try:
-            self._guard.validate_call(client_cert, method,
-                                      credentials, options,
-                                      {'member_uid': member_uid,
-                                       'privilege': privilege})
-            client_cert, options = self._guard.adjust_client_identity(client_cert,
-                                                                      credentials, options)
-            results = self._delegate.revoke_member_privilege(client_cert,
-                                                             member_uid, 
-                                                             privilege,
-                                                             credentials,
-                                                             options)
-            return results
-        except Exception as e:
-            return self._errorReturn(e)
+        with MethodContext(self, MA_LOG_PREFIX, 
+                           'revoke_member_privilege', 
+                           {'member_uid' : member_uid,'privilege' : privilege},
+                           credentials, options, read_only=False) as mc:
+            if not mc._error:
+                mc._result = \
+                    self._delegate.revoke_member_privilege(mc._client_cert,
+                                                           member_uid,
+                                                           privilege,
+                                                           credentials,
+                                                           options,
+                                                           mc._session)
+            return mc._result
 
     def add_member_attribute(self,
                              member_urn, name, value, self_asserted,
                              credentials, options):
         """Add an attribute to member"""
-        client_cert = self.requestCertificate()
-        method = 'add_member_attribute'
-        try:
-            client_cert, options = \
-                self._guard.adjust_client_identity(client_cert,
-                                                   credentials, options)
-            self._guard.validate_call(client_cert, 
-                                      method,
-                                      credentials, 
-                                      options,
-                                      {'member_urn' : member_urn})
-            results = self._delegate.add_member_attribute(client_cert, member_urn, name, value,
-                                                          self_asserted,
-                                                          credentials, options)
-            if results['code'] == NO_ERROR:
-                results_value = results['value']
-                new_results_value = self._guard.protect_results(client_cert, method, credentials, results_value)
-                results = self._successReturn(new_results_value)
-
-            return results
-        except Exception as e:
-            return self._errorReturn(e)
+        with MethodContext(self, MA_LOG_PREFIX, 
+                           'add_member_attribute', 
+                           {'member_urn' : member_urn, 
+                            'name' : name, 'value' : value, 
+                            'self_asserted' : self_asserted},
+                           credentials, options, read_only=False) as mc:
+            if not mc._error:
+                mc._result = \
+                    self._delegate.add_member_attribute(mc._client_cert,
+                                                        member_urn,
+                                                        name, 
+                                                        value,
+                                                        self_asserted,
+                                                        credentials,
+                                                        options,
+                                                        mc._session)
+            return mc._result
 
     def remove_member_attribute(self, 
                                 member_urn, name,
                                 credentials, options):
         """Remove attribute to member"""
-        client_cert = self.requestCertificate()
-        method = 'remove_member_attribute'
-        try:
-            client_cert, options = \
-                self._guard.adjust_client_identity(client_cert,
-                                                   credentials, options)
-            self._guard.validate_call(client_cert, 
-                                      method,
-                                      credentials, 
-                                      options,
-                                      {'member_urn' : member_urn})
-            results = self._delegate.remove_member_attribute(client_cert, member_urn, name,
-                                                             credentials, options)
-            if results['code'] == NO_ERROR:
-                results_value = results['value']
-                new_results_value = self._guard.protect_results(client_cert, method, credentials, results_value)
-                results = self._successReturn(new_results_value)
-
-            return results
-        except Exception as e:
-            return self._errorReturn(e)
+        with MethodContext(self, MA_LOG_PREFIX, 
+                           'remove_member_attribute', 
+                           {'member_urn' : member_urn, 'name' : name},
+                           credentials, options, read_only=False) as mc:
+            if not mc._error:
+                mc._result = \
+                    self._delegate.remove_member_attribute(mc._client_cert,
+                                                        member_urn,
+                                                        name, 
+                                                        credentials,
+                                                        options,
+                                                        mc._session)
+            return mc._result
 
 
 # Base class for implementations of MA API
@@ -533,79 +428,88 @@ class MAv1DelegateBase(DelegateBase):
     # MEMBER service methods
 
     # This call is unprotected: no checking of credentials
-    def lookup_public_member_info(self, client_cert, credentials, options):
+    def lookup_public_member_info(self, client_cert, 
+                                  credentials, options, session):
         raise CHAPIv1NotImplementedError('')
 
     # This call is protected
-    def lookup_private_member_info(self, client_cert, credentials, options):
+    def lookup_private_member_info(self, client_cert, 
+                                   credentials, options, session):
         raise CHAPIv1NotImplementedError('')
 
     # This call is protected
-    def lookup_identifying_member_info(self, client_cert, credentials, options):
+    def lookup_identifying_member_info(self, client_cert, 
+                                       credentials, options, session):
         raise CHAPIv1NotImplementedError('')
 
     # This call is protected
-    def get_credentials(self, client_cert, member_urn, credentials, options):
+    def get_credentials(self, client_cert, member_urn, 
+                        credentials, options, session):
         raise CHAPIv1NotImplementedError('')
 
     # This call is protected
-    def update_member_info(self, client_cert, member_urn, credentials, options):
+    def update_member_info(self, client_cert, member_urn, 
+                           credentials, options, session):
         raise CHAPIv1NotImplementedError('')
 
     # This call is protected
-    def create_member(self, client_cert, attributes, credentials, options):
+    def create_member(self, client_cert, attributes, 
+                      credentials, options, session):
         raise CHAPIv1NotImplementedError('')
 
     # KEY service methods
 
-    def create_key(self, client_cert, credentials, options):
+    def create_key(self, client_cert, credentials, options, session):
         raise CHAPIv1NotImplementedError('')
 
-    def delete_key(self, client_cert, member_urn, key_id, credentials, options):
+    def delete_key(self, client_cert, member_urn, key_id, 
+                   credentials, options, session):
         raise CHAPIv1NotImplementedError('')
 
-    def update_key(self, client_cert, member_urn, key_id, credentials, options):
+    def update_key(self, client_cert, member_urn, key_id, 
+                   credentials, options, session):
         raise CHAPIv1NotImplementedError('')
 
-    def lookup_keys(self, client_cert, credentials, options):
+    def lookup_keys(self, client_cert, credentials, options, session):
         raise CHAPIv1NotImplementedError('')
 
     # Member certificate methods
     def create_certificate(self, client_cert, member_urn, \
-                               credentials, options):
+                               credentials, options, session):
         raise CHAPIv1NotImplementedError('')
 
     # ClientAuth methods
-    def list_clients(self):
+    def list_clients(self, session):
         raise CHAPIv1NotImplementedError('')
 
     # List of URN's of all tools for which a given user (by ID) has
     # authorized use and has generated inside keys
-    def list_authorized_clients(self, client_cert, member_id):
+    def list_authorized_clients(self, client_cert, member_id, session):
         raise CHAPIv1NotImplementedError('')
 
     # Authorize/deauthorize a tool with respect to a user
     def authorize_client(self, client_cert, member_id, \
-                             client_urn, authorize_sense):
+                             client_urn, authorize_sense, session):
         raise CHAPIv1NotImplementedError('')
 
     # Private API
     def enable_user(self, client_cert, member_urn, enable_sense, 
-                    credentials, options):
+                    credentials, options, session):
         raise CHAPIv1NotImplementedError('')
 
     def add_member_privilege(self, client_cert, member_uid, privilege,
-                             credentials, options):
+                             credentials, options, session):
         raise CHAPIv1NotImplementedError('')
 
     def revoke_member_privilege(self, client_cert, member_uid, privilege,
-                                credentials, options):
+                                credentials, options, session):
         raise CHAPIv1NotImplementedError('')
 
-    def add_member_attribute(self, client_cert, member_urn, att_name, \
-                                 att_value, att_self_asserted, credentials, options):
+    def add_member_attribute(self, client_cert, member_urn, att_name, 
+                             att_value, att_self_asserted, 
+                             credentials, options, session):
         raise CHAPIv1NotImplementedError('')
 
     def remove_member_attribute(self, client_cert, member_urn, att_name, \
-                                    credentials, options):
+                                    credentials, options, session):
         raise CHAPIv1NotImplementedError('')

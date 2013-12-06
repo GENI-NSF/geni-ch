@@ -72,13 +72,11 @@ def flatten_urn(urn):
 
 
 # Return all names of projects for which a user (by urn) is a member
-def lookup_project_names_for_user(user_urn):
+def lookup_project_names_for_user(user_urn, session):
+    db = pm.getService('chdbengine')
     cache = cache_get('project_names_for_user')
     if user_urn in cache:
         return cache[user_urn]
-
-    db = pm.getService('chdbengine')
-    session = db.getSession()
 
     q = session.query(db.PROJECT_TABLE, db.MEMBER_ATTRIBUTE_TABLE, db.PROJECT_MEMBER_TABLE)
     q = q.filter(db.PROJECT_TABLE.c.expired == 'f')
@@ -87,7 +85,6 @@ def lookup_project_names_for_user(user_urn):
     q = q.filter(db.MEMBER_ATTRIBUTE_TABLE.c.member_id == db.PROJECT_MEMBER_TABLE.c.member_id)
     q = q.filter(db.MEMBER_ATTRIBUTE_TABLE.c.value == user_urn)
     rows = q.all()
-    session.close()
     
     project_names = [row.project_name for row in rows]
     cache[user_urn] = project_names
@@ -95,7 +92,8 @@ def lookup_project_names_for_user(user_urn):
 
 # Take a uid or list of uids, make sure they're all in the cache
 # and return a urn or list of urns
-def convert_slice_uid_to_urn(slice_uid):
+def convert_slice_uid_to_urn(slice_uid, session):
+    db = pm.getService('chdbengine')
     slice_uids = slice_uid
     if not isinstance(slice_uid, list): slice_uids = [slice_uid]
 
@@ -106,12 +104,9 @@ def convert_slice_uid_to_urn(slice_uid):
     uncached_uids = [id for id in slice_uids if id not in cache]
 
     if len(uncached_uids) > 0:
-        db = pm.getService('chdbengine')
-        session = db.getSession()
         q = session.query(db.SLICE_TABLE.c.slice_urn, db.SLICE_TABLE.c.slice_id)
         q = q.filter(db.SLICE_TABLE.c.slice_id.in_(uncached_uids))
         rows = q.all()
-        session.close()
         for row in rows:
             slice_id = row.slice_id
             slice_urn = row.slice_urn
@@ -127,8 +122,8 @@ def convert_slice_uid_to_urn(slice_uid):
 
 # Take a uid or list of uids, make sure they're all in the cache
 # and return a urn or list of urns
-def convert_project_uid_to_urn(project_uid):
-
+def convert_project_uid_to_urn(project_uid, session):
+    db = pm.getService('chdbengine')
     config = pm.getService('config')
     authority = config.get("chrm.authority")
 
@@ -143,13 +138,10 @@ def convert_project_uid_to_urn(project_uid):
     uncached_uids = [id for id in project_uids if id not in cache]
 
     if len(uncached_uids) > 0:
-        db = pm.getService('chdbengine')
-        session = db.getSession()
         q = session.query(db.PROJECT_TABLE.c.project_name, \
                               db.PROJECT_TABLE.c.project_id)
         q = q.filter(db.PROJECT_TABLE.c.project_id.in_(uncached_uids))
         rows = q.all()
-        session.close()
         for row in rows:
             project_id = row.project_id
             project_name = row.project_name
@@ -167,8 +159,8 @@ def convert_project_uid_to_urn(project_uid):
 
 # Take a uid or list of uids, make sure they're all in the cache
 # and return a urn or list of urns
-def convert_member_uid_to_urn(member_uid):
-
+def convert_member_uid_to_urn(member_uid, session):
+    db = pm.getService('chdbengine')
     member_uids = member_uid
     if not isinstance(member_uid, list): member_uids = [member_uid]
 
@@ -176,14 +168,11 @@ def convert_member_uid_to_urn(member_uid):
     uncached_uids = [id for id in member_uids if id not in cache]
 
     if len(uncached_uids) > 0:
-        db = pm.getService('chdbengine')
-        session = db.getSession()
         q = session.query(db.MEMBER_ATTRIBUTE_TABLE.c.value, \
                               db.MEMBER_ATTRIBUTE_TABLE.c.member_id)
         q = q.filter(db.MEMBER_ATTRIBUTE_TABLE.c.member_id.in_(uncached_uids))
         q = q.filter(db.MEMBER_ATTRIBUTE_TABLE.c.name == 'urn')
         rows = q.all()
-        session.close()
         for row in rows:
             member_urn = row.value
             member_id = row.member_id
@@ -199,8 +188,8 @@ def convert_member_uid_to_urn(member_uid):
 
 # Take a uid or list of uids, make sure they're all in the cache
 # and return an email or list of emails
-def convert_member_uid_to_email(member_uid):
-
+def convert_member_uid_to_email(member_uid, session):
+    db = pm.getService('chdbengine')
     member_uids = member_uid
     if not isinstance(member_uid, list): member_uids = [member_uid]
 
@@ -208,14 +197,11 @@ def convert_member_uid_to_email(member_uid):
     uncached_uids = [id for id in member_uids if id not in cache]
 
     if len(uncached_uids) > 0:
-        db = pm.getService('chdbengine')
-        session = db.getSession()
         q = session.query(db.MEMBER_ATTRIBUTE_TABLE.c.value, \
                               db.MEMBER_ATTRIBUTE_TABLE.c.member_id)
         q = q.filter(db.MEMBER_ATTRIBUTE_TABLE.c.member_id.in_(uncached_uids))
         q = q.filter(db.MEMBER_ATTRIBUTE_TABLE.c.name == 'email_address')
         rows = q.all()
-        session.close()
         for row in rows:
             member_email = row.value
             member_id = row.member_id
@@ -232,8 +218,8 @@ def convert_member_uid_to_email(member_uid):
 
 # Take an email or list of emails, make sure they're all in the cache
 # and return a uid or list of uids
-def convert_member_email_to_uid(member_email):
-
+def convert_member_email_to_uid(member_email, session):
+    db = pm.getService('chdbengine')
     member_emails = member_email
     if not isinstance(member_email, list): member_emails = [member_email]
 
@@ -241,14 +227,11 @@ def convert_member_email_to_uid(member_email):
     uncached_emails = [em for em in member_emails if em not in cache]
 
     if len(uncached_emails) > 0:
-        db = pm.getService('chdbengine')
-        session = db.getSession()
         q = session.query(db.MEMBER_ATTRIBUTE_TABLE.c.value, \
                               db.MEMBER_ATTRIBUTE_TABLE.c.member_id)
         q = q.filter(db.MEMBER_ATTRIBUTE_TABLE.c.value.in_(uncached_emails))
         q = q.filter(db.MEMBER_ATTRIBUTE_TABLE.c.name == 'email_address')
         rows = q.all()
-        session.close()
         for row in rows:
             member_email = row.value
             member_id = row.member_id
@@ -264,12 +247,11 @@ def convert_member_email_to_uid(member_email):
 
 # Lookup whether given user (by urn) has 'operator' 
 # as an attribute in ma_member_attribute
-def lookup_operator_privilege(user_urn):
+def lookup_operator_privilege(user_urn, session):
+    db = pm.getService('chdbengine')
     cache = cache_get('operator_privilege')
     if user_urn in cache:
         return cache[user_urn]
-    db = pm.getService('chdbengine')
-    session = db.getSession()
 
     ma1 = alias(db.MEMBER_ATTRIBUTE_TABLE)
     ma2 = alias(db.MEMBER_ATTRIBUTE_TABLE)
@@ -282,24 +264,22 @@ def lookup_operator_privilege(user_urn):
 #    print "Q = " + str(q)
 
     rows = q.all()
-    session.close()
     is_operator = (len(rows)>0)
     chapi_debug('UTILS', 'lookup_operator_privilege: '+user_urn+" = "+str(is_operator))
     cache[user_urn] = is_operator
     return is_operator
 
 # Is given user an authority?
-def lookup_authority_privilege(user_urn):
+def lookup_authority_privilege(user_urn, session):
     return user_urn.find("+authority+")>= 0
 
 # Lookup whether given user (by urn) has 'project_lead' 
 # as an attribute in ma_member_attribute
-def lookup_pi_privilege(user_urn):
+def lookup_pi_privilege(user_urn, session):
+    db = pm.getService('chdbengine')
     cache = cache_get('pi_privilege')
     if user_urn in cache:
         return cache[user_urn]
-    db = pm.getService('chdbengine')
-    session = db.getSession()
 
     ma1 = alias(db.MEMBER_ATTRIBUTE_TABLE)
     ma2 = alias(db.MEMBER_ATTRIBUTE_TABLE)
@@ -312,7 +292,6 @@ def lookup_pi_privilege(user_urn):
 #    print "Q = " + str(q)
 
     rows = q.all()
-    session.close()
     is_project_lead = (len(rows)>0)
     cache[user_urn] = is_project_lead
     return is_project_lead
@@ -331,7 +310,8 @@ def lookup_pi_privilege(user_urn):
 #     with given subject as lead
 # 3. If looking up a member by member_email who is a 
 #    project lead or admin, allow it
-def assert_shares_project(caller_urn, member_urns, label, options, abac_manager):
+def assert_shares_project(caller_urn, member_urns, label, options, 
+                          abac_manager, session):
 #    chapi_info('', "ASP %s %s %s %s" % (caller_urn, member_urns, 
 #                                        label, options))
     if label != "MEMBER_URN": return
@@ -343,8 +323,6 @@ def assert_shares_project(caller_urn, member_urns, label, options, abac_manager)
     else:
         member_urns = list(member_urns)
 
-    db = pm.getService('chdbengine')
-    session = db.getSession()
 
     pm1 = aliased(db.PROJECT_MEMBER_TABLE)
     pm2 = aliased(db.PROJECT_MEMBER_TABLE)
@@ -424,18 +402,17 @@ def assert_shares_project(caller_urn, member_urns, label, options, abac_manager)
                 "ME.IS_LEAD_AND_SEARCHING_UID_%s<-CALLER" % flatten_urn(member_urn)
             abac_manager.register_assertion(assertion)
 
-    session.close()
 
 
 # If given caller and given subject share a common slice
 # Generate an ME.SHARES_SLICE(subject)<-caller assertion
-def assert_shares_slice(caller_urn, member_urns, label, options, abac_manager):
+def assert_shares_slice(caller_urn, member_urns, label, options, 
+                        abac_manager, session):
+    db = pm.getService('chdbengine')
     if not isinstance(member_urns, list): 
         member_urns = list(member_urns)
 
     if label != "MEMBER_URN": return
-    db = pm.getService('chdbengine')
-    session = db.getSession()
 
     sm1 = aliased(db.SLICE_MEMBER_TABLE)
     sm2 = aliased(db.SLICE_MEMBER_TABLE)
@@ -456,7 +433,6 @@ def assert_shares_slice(caller_urn, member_urns, label, options, abac_manager):
 
     rows = q.all()
 #    print "ROWS = " + str(len(rows)) + " " + str(rows)
-    session.close()
 
     for row in rows:
         member_urn = row[3] # member_urn of member sharing slice
@@ -465,7 +441,8 @@ def assert_shares_slice(caller_urn, member_urns, label, options, abac_manager):
 
 # Assert ME.IS_$ROLE(SLICE)<-CALLER for all slices of given set 
 # of which caller is a member
-def assert_slice_role(caller_urn, urns, label, options, abac_manager):
+def assert_slice_role(caller_urn, urns, label, options, abac_manager, session):
+    db = pm.getService('chdbengine')
     config = pm.getService('config')
     authority = config.get("chrm.authority")
     if label == "SLICE_URN":
@@ -488,9 +465,8 @@ def assert_slice_role(caller_urn, urns, label, options, abac_manager):
         abac_manager.register_assertion(assertion)
 
 # Get role of member on each of list of projects
-def get_project_role_for_member(caller_urn, project_urns):
+def get_project_role_for_member(caller_urn, project_urns, session):
     db = pm.getService('chdbengine')
-    session = db.getSession()
     if not isinstance(project_urns, list): project_urns = [project_urns]
     project_names = \
         [get_name_from_urn(project_urn) for project_urn in project_urns]
@@ -502,16 +478,14 @@ def get_project_role_for_member(caller_urn, project_urns):
     q = q.filter(db.MEMBER_ATTRIBUTE_TABLE.c.value == caller_urn)
     q = q.filter(db.MEMBER_ATTRIBUTE_TABLE.c.member_id == db.PROJECT_MEMBER_TABLE.c.member_id)
     rows = q.all()
-    session.close()
     return rows
 
-def get_slice_role_for_member(caller_urn, slice_urns):
+def get_slice_role_for_member(caller_urn, slice_urns, session):
+    db = pm.getService('chdbengine')
     if not isinstance(slice_urns, list): slice_urns = [slice_urns]
     if len(slice_urns) == 0:
         return []
 
-    db = pm.getService('chdbengine')
-    session = db.getSession()
     q = session.query(db.SLICE_MEMBER_TABLE.c.role, \
                           db.SLICE_TABLE.c.slice_urn, \
                           db.MEMBER_ATTRIBUTE_TABLE)
@@ -522,14 +496,15 @@ def get_slice_role_for_member(caller_urn, slice_urns):
     q = q.filter(db.MEMBER_ATTRIBUTE_TABLE.c.name == 'urn')
     q = q.filter(db.MEMBER_ATTRIBUTE_TABLE.c.value == caller_urn)
     rows = q.all()
-    session.close()
     return rows
 
 
 # Assert ME.IS_$ROLE_$PROJECT<-CALLER for the projects among given set 
 # of which caller is a member
-def assert_project_role(caller_urn, project_urns, label, options, abac_manager):
+def assert_project_role(caller_urn, project_urns, label, options, 
+                        abac_manager, session):
     if label != "PROJECT_URN": return
+    db = pm.getService('chdbengine')
     rows = get_project_role_for_member(caller_urn, project_urns)
     config = pm.getService('config')
     authority = config.get("chrm.authority")
@@ -543,15 +518,15 @@ def assert_project_role(caller_urn, project_urns, label, options, abac_manager):
 
 
 # Assert ME.BELONGS_TO_$SLICE<-CALLER if caller is member of slice
-def assert_belongs_to_slice(caller_urn, slice_urns, label, options, abac_manager):
+def assert_belongs_to_slice(caller_urn, slice_urns, label, options, 
+                            abac_manager, session):
 
     if len(slice_urns) == 0:
         return []
 
     if label != "SLICE_URN": return
-    db = pm.getService('chdbengine')
-    session = db.getSession()
 
+    db = pm.getService('chdbengine')
     q = session.query(db.SLICE_MEMBER_TABLE.c.role, \
                           db.SLICE_TABLE.c.slice_urn, \
                           db.MEMBER_ATTRIBUTE_TABLE)
@@ -562,7 +537,6 @@ def assert_belongs_to_slice(caller_urn, slice_urns, label, options, abac_manager
     q = q.filter(db.MEMBER_ATTRIBUTE_TABLE.c.member_id == \
                      db.SLICE_MEMBER_TABLE.c.member_id)
     rows = q.all()
-    session.close()
 
     for row in rows:
         slice_urn = row.slice_urn
@@ -572,13 +546,12 @@ def assert_belongs_to_slice(caller_urn, slice_urns, label, options, abac_manager
 
 # Assert ME.BELONGS_TO_$PROJECT<-CALLER if caller is member of project
 def assert_belongs_to_project(caller_urn, project_urns, label, \
-                              options, abac_manager):
+                              options, abac_manager, session):
     if label != "PROJECT_URN": return
-    db = pm.getService('chdbengine')
-    session = db.getSession()
     project_names = \
         [get_name_from_urn(project_urn) for project_urn in project_urns]
 
+    db = pm.getService('chdbengine')
     q = session.query(db.PROJECT_MEMBER_TABLE.c.role, \
                           db.PROJECT_TABLE.c.project_name, \
                           db.MEMBER_ATTRIBUTE_TABLE)
@@ -590,7 +563,6 @@ def assert_belongs_to_project(caller_urn, project_urns, label, \
     q = q.filter(db.MEMBER_ATTRIBUTE_TABLE.c.member_id == \
                      db.PROJECT_MEMBER_TABLE.c.member_id)
     rows = q.all()
-    session.close()
 
     config = pm.getService('config')
     authority = config.get("chrm.authority")
@@ -604,19 +576,18 @@ def assert_belongs_to_project(caller_urn, project_urns, label, \
 # Take a request_id and from that determine the context(project) and requestor
 # From there, Assert whether the project membership requestor is the caller
 # And assert the role on the project of the caller (if any)
-def assert_request_id_requestor_and_project_role(caller_urn, request_id, \
-                                            label, options, abac_manager):
+def assert_request_id_requestor_and_project_role(caller_urn, request_id, 
+                                                 label, options, abac_manager,
+                                                 session):
     request_id = request_id[0] # turn list back into singleton
     if label != "REQUEST_ID" : return
     db = pm.getService('chdbengine')
-    session = db.getSession()
     q = session.query(db.PROJECT_TABLE.c.project_name, db.MEMBER_ATTRIBUTE_TABLE.c.value)
     q = q.filter(db.PROJECT_REQUEST_TABLE.c.requestor == db.MEMBER_ATTRIBUTE_TABLE.c.member_id)
     q = q.filter(db.MEMBER_ATTRIBUTE_TABLE.c.name == 'urn')
     q = q.filter(db.PROJECT_REQUEST_TABLE.c.id == request_id)
     q = q.filter(db.PROJECT_TABLE.c.project_id == db.PROJECT_REQUEST_TABLE.c.context_id)
     rows = q.all()
-    session.close()
     if len(rows) > 0:
         project_name = rows[0].project_name
         requestor_urn = rows[0].value
@@ -639,7 +610,7 @@ def assert_request_id_requestor_and_project_role(caller_urn, request_id, \
 # These return a dictionary of {'SUBJECT_TYPE : [List of SUBJECT IDENTIFIERS OF THIS TYPE]}
 
 # Default subject extractor, only take from the options, ignore arguments
-def standard_subject_extractor(options, arguments):
+def standard_subject_extractor(options, arguments, session):
     extracted = {}
     if 'match' not in options:
         return None
@@ -650,41 +621,42 @@ def standard_subject_extractor(options, arguments):
     if "SLICE_UID" in match_option:
         slice_uids = match_option['SLICE_UID']
         if not isinstance(slice_uids, list): slice_uids = [slice_uids]
-        slice_urns = convert_slice_uid_to_urn(slice_uids)
+        slice_urns = convert_slice_uid_to_urn(slice_uids, session)
         extracted["SLICE_URN"] = slice_urns
     if "PROJECT_URN" in match_option:
         extracted["PROJECT_URN"] =  match_option['PROJECT_URN']
     if "PROJECT_UID" in match_option:
         project_uids = match_option['PROJECT_UID']
         if not isinstance(project_uids, list): project_uids = [project_uids]
-        project_urns = convert_project_uid_to_urn(project_uids)
+        project_urns = convert_project_uid_to_urn(project_uids, session)
         extracted["PROJECT_URN"] = project_urns
     if "_GENI_PROJECT_UID" in match_option:
         project_uids = match_option['_GENI_PROJECT_UID']
         if not isinstance(project_uids, list): project_uids = [project_uids]
-        project_urns = convert_project_uid_to_urn(project_uids)
+        project_urns = convert_project_uid_to_urn(project_uids, session)
         extracted["PROJECT_URN"] = project_urns
     if "MEMBER_URN" in match_option:
         extracted["MEMBER_URN"] =  match_option['MEMBER_URN']
     if "MEMBER_UID" in match_option:
         member_uids = match_option['MEMBER_UID']
         if not isinstance(member_uids, list): member_uids = [member_uids]
-        member_urns = convert_member_uid_to_urn(member_uids)
+        member_urns = convert_member_uid_to_urn(member_uids, session)
         extracted["MEMBER_URN"] = member_urns
     if '_GENI_KEY_MEMBER_UID' in match_option:
         member_uids = match_option['_GENI_KEY_MEMBER_UID']
         if not isinstance(member_uids, list): member_uids =[member_uids]
-        member_urns = convert_member_uid_to_urn(member_uids)
+        member_urns = convert_member_uid_to_urn(member_uids, session)
         extracted['MEMBER_URN'] = member_urns
     if 'MEMBER_EMAIL' in match_option:
         member_emails = match_option['MEMBER_EMAIL']
-        member_uids = convert_member_email_to_uid(member_emails)
-        member_urns = convert_member_uid_to_urn(member_uids)
+        member_uids = convert_member_email_to_uid(member_emails, session)
+        member_urns = convert_member_uid_to_urn(member_uid, sessions)
         extracted['MEMBER_URN'] = member_urns
     return extracted
 
 # For key info methods, extract the subject from options or arguments
-def key_subject_extractor(options, arguments):
+def key_subject_extractor(options, arguments, session):
+    db = pm.getService('chdbengine')
     extracted = {}
     if 'match' in options:
         match_option = options['match']
@@ -699,46 +671,41 @@ def key_subject_extractor(options, arguments):
     elif '_GENI_KEY_MEMBER_UID' in match_option:
         member_uids = match_option['_GENI_KEY_MEMBER_UID']
         if not isinstance(member_uids, list): member_uids = [member_uids]
-        member_urns = [convert_member_uid_to_urn(member_uid) for member_uid in member_uids]
+        member_urns = [convert_member_uid_to_urn(member_uid, session) 
+                       for member_uid in member_uids]
         extracted['MEMBER_URN'] = member_urns
     else:
-        db = pm.getService('chdbengine')
-        session = db.getSession()
         q = session.query(db.MEMBER_ATTRIBUTE_TABLE.c.value)
         q = q.filter(db.SSH_KEY_TABLE.c.member_id ==
                      db.MEMBER_ATTRIBUTE_TABLE.c.member_id)
         q = q.filter(db.MEMBER_ATTRIBUTE_TABLE.c.name=='urn')
         q = add_filters(q, match_option, db.SSH_KEY_TABLE, MA.key_field_mapping)
         rows = q.all()
-        session.close()
         extracted['MEMBER_URN'] = [row.value for row in rows]
 
     return extracted
 
 # Extract project UID(s) from arguments
-def project_uid_extractor(options, arguments):
+def project_uid_extractor(options, arguments, session):
     if 'project_id' in arguments:
         return {'PROJECT_UID' : arguments['project_id']}
     return {}
 
 # Extract project UID from invite_id argument
-def project_uid_from_invitation_extractor(options, arguments):
+def project_uid_from_invitation_extractor(options, arguments, session):
     if 'invite_id' in arguments:
         invite_id = arguments['invite_id']
         db = pm.getService('chdbengine')
-        session = db.getSession()
         q = session.query(db.PROJECT_INVITATION_TABLE)
         q = q.filter(db.PROJECT_INVITATION_TABLE.c.invite_id == invite_id)
         rows = q.all()
-        session.close()
         if len(rows) > 0:
             project_id = rows[0].project_id
             return {'PROJECT_UID' : project_id}
     return {}
         
-
 # Extract project URN(s) from options or arguments
-def project_urn_extractor(options, arguments):
+def project_urn_extractor(options, arguments, session):
     if 'project_urn' in arguments:
         project_urn = arguments['project_urn']
     elif 'PROJECT_NAME' in options['fields']:
@@ -751,7 +718,7 @@ def project_urn_extractor(options, arguments):
     return {"PROJECT_URN" : [project_urn]}
 
 # Extract slice urn from options or arguments
-def slice_urn_extractor(options, arguments):
+def slice_urn_extractor(options, arguments, session):
     if 'slice_urn' in arguments:
         slice_urn = arguments['slice_urn']
     elif 'fields' in options and 'SLICE_URN' in options['fields']:
@@ -760,29 +727,25 @@ def slice_urn_extractor(options, arguments):
         slice_urn = options['fields']['SLIVER_INFO_SLICE_URN']
     elif 'sliver_urn' in arguments:
         db = pm.getService('chdbengine')
-        session = db.getSession()
         q = session.query(db.SLIVER_INFO_TABLE.c.slice_urn)
         q = q.filter(db.SLIVER_INFO_TABLE.c.sliver_urn == arguments['sliver_urn'])
         rows = q.all()
-        session.close()
         if len(rows) > 0:
             slice_urn = rows[0].slice_urn
     return {"SLICE_URN" : [slice_urn]}
 
 # Extract member urn from options or arguments
-def member_urn_extractor(options, arguments):
+def member_urn_extractor(options, arguments, session):
     member_urn = arguments['member_urn']
     return {"MEMBER_URN" : [member_urn]}
 
 # Pull project urn out of context_id
-def request_context_extractor(options, arguments):
+def request_context_extractor(options, arguments, session):
     project_uid = arguments['context_id']
     db = pm.getService('chdbengine')
-    session = db.getSession()
     q = session.query(db.PROJECT_TABLE.c.project_name)
     q = q.filter(db.PROJECT_TABLE.c.project_id == project_uid)
     rows = q.all()
-    session.close()
     extracted = {}
     if len(rows) > 0:
         project_name = rows[0].project_name
@@ -793,16 +756,14 @@ def request_context_extractor(options, arguments):
     return extracted
 
 # Pull project_id out as the subject
-def request_id_context_extractor(options, arguments):
+def request_id_context_extractor(options, arguments, session):
     request_id = arguments['request_id']
     db = pm.getService('chdbengine')
-    session = db.getSession()
     q = session.query(db.PROJECT_TABLE.c.project_name)
     q = q.filter(db.PROJECT_TABLE.c.project_id ==
                  db.PROJECT_REQUEST_TABLE.c.context_id)
     q = q.filter(request_id == db.PROJECT_REQUEST_TABLE.c.id)
     rows = q.all()
-    session.close()
     extracted = {}
     if len(rows) > 0:
         project_name = rows[0].project_name
@@ -813,22 +774,22 @@ def request_id_context_extractor(options, arguments):
     return extracted
 
 # Pull project_id out as the subject
-def request_id_extractor(options, arguments):
+def request_id_extractor(options, arguments, session):
     request_id = arguments['request_id']
     extracted = {"REQUEST_ID" : request_id}
     return extracted
 
 # Extract member_id and convert to member_urn
-def request_member_extractor(options, arguments):
+def request_member_extractor(options, arguments, session):
     member_uid = arguments['member_id']
-    member_urn = convert_member_uid_to_urn(member_uid)
+    member_urn = convert_member_uid_to_urn(member_uid, session)
     extracted = {"MEMBER_URN" : member_urn}
     return extracted
 
 # Pull principal out of arguments
-def principal_extractor(options, arguments):
+def principal_extractor(options, arguments, session):
     principal_uid = arguments['principal']
-    principal_urn = convert_member_uid_to_urn(principal_uid)
+    principal_urn = convert_member_uid_to_urn(principal_uid, session)
     return {'MEMBER_URN' : principal_urn}
 
 
