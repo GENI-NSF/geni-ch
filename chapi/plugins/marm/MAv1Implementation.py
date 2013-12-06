@@ -426,7 +426,7 @@ class MAv1Implementation(MAv1DelegateBase):
         creds = []
         sfa_raw_creds = [self.get_user_credential(session, uid, client_cert)]
         abac_assertions = []
-        user_urn = convert_member_uid_to_urn(uid)
+        user_urn = convert_member_uid_to_urn(uid, session)
         #chapi_debug(MA_LOG_PREFIX, 'GUC: outside certs = '+str(certs))
         certs = self.get_val_for_uid(session, OutsideCert, "certificate", uid)
         if not certs:
@@ -438,11 +438,11 @@ class MAv1Implementation(MAv1DelegateBase):
         user_cert = certs[0]
 
         abac_raw_creds = []
-        if lookup_operator_privilege(user_urn):
+        if lookup_operator_privilege(user_urn, session):
            assertion = generate_abac_credential("ME.IS_OPERATOR<-CALLER",
                                                 self.cert, self.key, {"CALLER" : user_cert})
            abac_raw_creds.append(assertion)
-        if lookup_pi_privilege(user_urn):
+        if lookup_pi_privilege(user_urn, session):
             assertion = generate_abac_credential("ME.IS_PI<-CALLER",
                                                  self.cert, self.key, {"CALLER" : user_cert})
             abac_raw_creds.append(assertion)
@@ -743,13 +743,13 @@ class MAv1Implementation(MAv1DelegateBase):
     def authorize_client(self, client_cert, member_id, \
                              client_urn, authorize_sense, session):
 
-        member_urn = convert_member_uid_to_urn(member_id)
+        member_urn = convert_member_uid_to_urn(member_id, session)
         user_email = get_email_from_cert(client_cert)
 
         #chapi_audit(MA_LOG_PREFIX, "Called authorize_client "+member_id+' '+client_urn)
         if authorize_sense:
             private_key, csr_file = make_csr()
-            member_email = convert_member_uid_to_email(member_id)
+            member_email = convert_member_uid_to_email(member_id, session)
             cert_pem = make_cert(member_id, member_email, member_urn, \
                                      self.cert, self.key, csr_file)
 

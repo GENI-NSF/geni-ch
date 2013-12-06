@@ -43,13 +43,13 @@ class CHv1PersistentImplementation(CHv1Implementation):
         return result
 
     # Get all SA's (authorities of type SA)
-    def lookup_slice_authorities(self, client_cert, options):
+    def lookup_slice_authorities(self, client_cert, options, session):
         result = self.lookup_authorities(client_cert, self.SA_SERVICE_TYPE, 
                                          options, session)
         return result
 
     # Get all aggregates (authorities of type aggregate)
-    def lookup_aggregates(self, client_cert, options):
+    def lookup_aggregates(self, client_cert, options, session):
         result = self.lookup_authorities(client_cert, 
                                          self.AGGREGATE_SERVICE_TYPE, 
                                          options, session)

@@ -62,7 +62,7 @@ import traceback
 class MethodContext:
     def __init__(self, authority, log_prefix, 
                  method_name, args_dict, 
-                 credentials, options, read_only):
+                 credentials, options, read_only, create_session=True):
         self._authority = authority
         self._log_prefix = log_prefix
         self._method_name = method_name
@@ -82,7 +82,9 @@ class MethodContext:
         self._error = False
 
         self._db = pm.getService('chdbengine')
-        self._session = self._db.getSession()
+        self._session = None
+        if create_session:
+            self._session = self._db.getSession()
 
 
     def __enter__(self):
@@ -123,9 +125,10 @@ class MethodContext:
                             CHAPIv1AuthorizationError):
                 self._authority._log.error(traceback.format_tb(traceback_object))
 
-        if not self._read_only:
-            self._session.commit()
-        self._session.close()
+        if self._session:
+            if not self._read_only:
+                self._session.commit()
+            self._session.close()
 
         chapi_log_result(self._log_prefix, self._method_name,
                          self._result, {'user': self._email})

@@ -57,9 +57,9 @@ class CHv1Handler(HandlerBase):
                            {}, [], options, read_only=True) as mc:
             if not mc._error:
                 mc._result = \
-                    self._delegate.lookup_member_authorities(
-                                                             options,
-                                                             mc._session)
+                    self._delegate.lookup_member_authorities( mc._client_cert,
+                                                              options,
+                                                              mc._session)
             return mc._result
 
     # This call is unprotected: no checking of credentials
@@ -70,8 +70,9 @@ class CHv1Handler(HandlerBase):
                            {}, [], options, read_only=True) as mc:
             if not mc._error:
                 mc._result = \
-                    self._delegate.lookup_slice_authorities(options,
-                                                                 mc._session)
+                    self._delegate.lookup_slice_authorities(mc._client_cert,
+                                                            options,
+                                                            mc._session)
             return mc._result
 
     # This call is unprotected: no checking of credentials
@@ -82,8 +83,9 @@ class CHv1Handler(HandlerBase):
                            {}, [], options, read_only=True) as mc:
             if not mc._error:
                 mc._result = \
-                    self._delegate.lookup_aggregates(options,
-                                                          mc._session)
+                    self._delegate.lookup_aggregates(mc._client_cert,
+                                                     options,
+                                                     mc._session)
             return mc._result
 
     # This call is unprotected: no checking of credentials
@@ -94,7 +96,8 @@ class CHv1Handler(HandlerBase):
                            {'urns' : urns}, [], {}, read_only=True) as mc:
             if not mc._error:
                 mc._result = \
-                    self._delegate.lookup_authorities__for_urns(urns,
+                    self._delegate.lookup_authorities__for_urns(mc._client_cert, 
+                                                                urns,
                                                                 mc._session)
             return mc._result
 
@@ -107,7 +110,8 @@ class CHv1Handler(HandlerBase):
                            {}, [], {}, read_only=True) as mc:
             if not mc._error:
                 mc._result = \
-                    self._delegate.get_trust_roots(mc._session)
+                    self._delegate.get_trust_roots(mc._client_cert, 
+                                                   mc._session)
             return mc._result
 
 # Base class for implementations of CH API

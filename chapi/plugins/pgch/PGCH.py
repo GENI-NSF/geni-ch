@@ -43,7 +43,8 @@ class PGCHv1Handler(HandlerBase):
 
     def GetVersion(self):
         with MethodContext(self, PGCH_LOG_PREFIX, 'GetVersion', 
-                           {}, [], {}, read_only=True) as mc:
+                           {}, [], {}, read_only=True, 
+                           create_sesion=False) as mc:
             if not mc._error:
                 mc._result = \
                     self._delegate.GetVersion(mc._client_cert, 
@@ -52,7 +53,8 @@ class PGCHv1Handler(HandlerBase):
 
     def GetCredential(self, args=None):
         with MethodContext(self, PGCH_LOG_PREFIX, 'GetCredential', 
-                           args, [], {}, read_only=True) as mc:
+                           args, [], {}, read_only=True,
+                           create_session=False) as mc:
             if not mc._error:
                 mc._result = \
                     self._delegate.GetCredential(mc._client_cert, 
@@ -62,7 +64,8 @@ class PGCHv1Handler(HandlerBase):
 
     def Resolve(self, args):
         with MethodContext(self, PGCH_LOG_PREFIX, 'Resolve', 
-                           args, [], {}, read_only=True) as mc:
+                           args, [], {}, read_only=True,
+                           create_session=False) as mc:
             if not mc._error:
                 mc._result = \
                     self._delegate.Resolve(mc._client_cert, 
@@ -72,7 +75,8 @@ class PGCHv1Handler(HandlerBase):
 
     def Register(self, args):
         with MethodContext(self, PGCH_LOG_PREFIX, 'Register', 
-                           args, [], {}, read_only=False) as mc:
+                           args, [], {}, read_only=False,
+                           create_session=False) as mc:
             if not mc._error:
                 mc._result = \
                     self._delegate.Register(mc._client_cert, 
@@ -82,7 +86,8 @@ class PGCHv1Handler(HandlerBase):
 
     def RenewSlice(self, args):
         with MethodContext(self, PGCH_LOG_PREFIX, 'RenewSlice',
-                           args, [], {}, read_only=False) as mc:
+                           args, [], {}, read_only=False,
+                           create_session=False) as mc:
             if not mc._error:
                 mc._result = \
                     self._delegate.RenewSlice(mc._client_cert, 
@@ -92,7 +97,8 @@ class PGCHv1Handler(HandlerBase):
 
     def GetKeys(self, args):
         with MethodContext(self, PGCH_LOG_PREFIX, 'GetKeys',
-                           args, [], {}, read_only=True) as mc:
+                           args, [], {}, read_only=True,
+                           create_session=False) as mc:
             if not mc._error:
                 mc._result = \
                     self._delegate.GetKeys(mc._client_cert, 
@@ -102,7 +108,8 @@ class PGCHv1Handler(HandlerBase):
 
     def ListComponents(self, args):
         with MethodContext(self, PGCH_LOG_PREFIX, 'ListComponents',
-                           args, [], {}, read_only=True) as mc:
+                           args, [], {}, read_only=True,
+                           create_session=False) as mc:
             if not mc._error:
                 mc._result = \
                     self._delegate.ListComponents(mc._client_cert, 
@@ -179,9 +186,7 @@ class PGCHv1Delegate(DelegateBase):
 #                 public_info['value'][client_urn]['_GENI_USER_CREDENTIAL']
 
             client_urn = get_urn_from_cert(client_cert)
-            creds = self._ma_handler._delegate.get_credentials(client_cert,
-                                                              client_urn,
-                                                              [], {}, session)
+            creds = self._ma_handler.get_credentials(client_urn, [], {})
             if creds['code'] != NO_ERROR: return creds
 
             # Extract the SFA user credential from the returned set
@@ -223,8 +228,7 @@ class PGCHv1Delegate(DelegateBase):
             creds = []
             options = {'match' : match_clause, 'filter' : filter_clause}
             lookup_slices_return = \
-                self._sa_handler._delegate.lookup_slices(client_cert, creds, 
-                                                         options, session)
+                self._sa_handler.lookup_slices(creds, options)
             if lookup_slices_return['code'] != NO_ERROR:
                 return lookup_slices_return
             slice_urn = lookup_slices_return ['value'].keys()[0]
@@ -234,10 +238,9 @@ class PGCHv1Delegate(DelegateBase):
 
         options = {}
         get_credentials_return = \
-            self._sa_handler._delegate.get_credentials(client_cert, 
-                                                       slice_urn, 
-                                                       credentials, 
-                                                       options, session)
+            self._sa_handler.get_credentials(slice_urn, 
+                                             credentials, 
+                                             options)
         if get_credentials_return['code'] != NO_ERROR:
             return get_credentials_return
 
@@ -299,7 +302,7 @@ class PGCHv1Delegate(DelegateBase):
 
         if type == 'user':
             # User
-            ma = self._ma_handler._delegate
+            ma = self._ma_handler
             match_clause = {'MEMBER_URN' : urn}
             if not urn:
                 match_clause = {'MEMBER_UID' : uuid}
@@ -310,8 +313,7 @@ class PGCHv1Delegate(DelegateBase):
                               "filter" : public_filter_clause}
             creds = []
             lookup_public_return = \
-                ma.lookup_public_member_info(client_cert, creds, 
-                                             public_option, session)
+                ma.lookup_public_member_info(creds, public_options)
             if lookup_public_return['code'] != NO_ERROR:
                 return lookup_public_return
             public_info = lookup_public_return['value']
@@ -322,9 +324,7 @@ class PGCHv1Delegate(DelegateBase):
             identifying_options = {'match' : match_clause,
                                    'filter' : identifying_filter_clause }
             lookup_identifying_return = \
-                ma.lookup_identifying_member_info(client_cert, creds,
-                                                  identifying_options,
-                                                  session)
+                ma.lookup_identifying_member_info(creds, identifying_options)
             if lookup_identifying_return['code'] != NO_ERROR:
                 return lookup_identifying_return
             identifying_info = lookup_identifying_return['value']
@@ -338,10 +338,8 @@ class PGCHv1Delegate(DelegateBase):
             member_name = public_info['MEMBER_USERNAME']
 
             # Slices
-            sa = self._sa_handler._delegate
-            lookup_slices_return = sa.lookup_slices_for_member(client_cert,
-                                                               urn, [], {},
-                                                               session)
+            sa = self._sa_handler
+            lookup_slices_return = sa.lookup_slices_for_member(urn, [], {})
             if lookup_slices_return['code'] != NO_ERROR:
                 return lookup_slices_return
             slice_info = lookup_slices_return['value']
@@ -350,7 +348,7 @@ class PGCHv1Delegate(DelegateBase):
             # Now determine which slices are active...
             options = { 'match' : { 'SLICE_URN' : slices},
                         'filter' : ['SLICE_EXPIRED'] }
-            expired_return = sa.lookup_slices(client_cert, [], options, session)
+            expired_return = sa.lookup_slices([], options)
             if expired_return['code'] != NO_ERROR:
                 return expired_return
             slice_info = expired_return['value']
@@ -379,7 +377,7 @@ class PGCHv1Delegate(DelegateBase):
             options = {'match' : match_clause, 'filter' : filter_clause}
             creds = []
             lookup_slices_return = \
-                self._sa_handler._delegate.lookup_slices(client_cert, creds, options, session)
+                self._sa_handler.lookup_slices(creds, options)
 
             if lookup_slices_return['code'] != NO_ERROR:
                 return lookup_slices_return
@@ -399,7 +397,7 @@ class PGCHv1Delegate(DelegateBase):
             filter_clause = ['MEMBER_URN']
             options = {'match' : match_clause, 'filter' : filter_clause}
             lookup_member_return = \
-                self._ma_handler._delegate.lookup_public_member_info(client_cert, creds, options, session)
+                self._ma_handlerlookup_public_member_info(creds, options)
 
             if lookup_member_return['code'] != NO_ERROR:
                 return lookup_member_return
@@ -479,14 +477,14 @@ class PGCHv1Delegate(DelegateBase):
                               'SLICE_NAME' : slice_name,
                               '_GENI_SLICE_EMAIL' : slice_email }}
 
-        sa = self._sa_handler._delegate
-        create_slice_return = sa.create_slice(client_cert, creds, options, session)
+        sa = self._sa_handler
+        create_slice_return = sa.create_slice(creds, options)
         if create_slice_return['code'] != NO_ERROR:
             return create_slice_return
 
         # Now get the slice credential so it can be returned
         slice_urn = create_slice_return['value']['SLICE_URN']
-        creds_return = sa.get_credentials(client_cert, slice_urn, creds, {})
+        creds_return = sa.get_credentials(slice_urn, creds, {})
         if creds_return['code'] != NO_ERROR:
             return creds_return
 
@@ -515,14 +513,13 @@ class PGCHv1Delegate(DelegateBase):
         # Renew via update_slice in SA
         credentials = [slice_credential]
         options = {'fields' : {'SLICE_EXPIRATION' : expiration}}
-        sa = self._sa_handler._delegate
-        update_slice_return = sa.update_slice(client_cert, slice_urn,
-                                              credentials, options, session)
+        sa = self._sa_handler
+        update_slice_return = sa.update_slice(slice_urn,
+                                              credentials, options)
         if update_slice_return['code'] != NO_ERROR:
             return update_slice_return
 
-        creds_return = sa.get_credentials(client_cert, slice_urn,
-                                          credentials, {}, session)
+        creds_return = sa.get_credentials(slice_urn, credentials, {})
         if creds_return['code'] != NO_ERROR:
             return creds_return
 
@@ -553,8 +550,7 @@ class PGCHv1Delegate(DelegateBase):
                    "filter" : ['KEY_PUBLIC']
                    }
         ssh_keys_result = \
-            self._ma_handler._delegate.lookup_keys(client_cert, creds, 
-                                                   options, session)
+            self._ma_handler.lookup_keys(creds, options)
 #        print "SSH_KEYS_RESULT = " + str(ssh_keys_result)
         if ssh_keys_result['code'] != NO_ERROR:
             return ssh_keys_result
@@ -575,8 +571,7 @@ class PGCHv1Delegate(DelegateBase):
         filter = ['SERVICE_CERT', 'SERVICE_URN', 'SERVICE_URL']
         options = dict(filter=filter)
         get_aggregates_result = \
-            self._ch_handler._delegate.lookup_aggregates(client_cert, 
-                                                         options, session)
+            self._ch_handler.lookup_aggregates(options)
         if get_aggregates_result['code'] != NO_ERROR:
             return get_aggregates_result
         aggregates = get_aggregates_result['value']

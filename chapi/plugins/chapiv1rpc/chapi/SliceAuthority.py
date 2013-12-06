@@ -45,10 +45,12 @@ class SAv1Handler(HandlerBase):
     # Return version information about this SA including what
     # services are provided and underlying object model
     def get_version(self):
-        try:
-            return self._delegate.get_version()
-        except Exception as e:
-            return self._errorReturn(e)
+        with MethodContext(self, SA_LOG_PREFIX, 'get_version',
+                           {}, [], {}, read_only=True) as mc:
+            if not mc._error:
+                mc._result = \
+                    self._delegate.get_version(mc._session)
+            return mc._result
 
     # This call is protected
     # Create a slice given provided options and authorized by client_cert

@@ -1539,8 +1539,8 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         expiration = invite_info.expiration
         role = invite_info.role
 
-        project_urn = convert_project_uid_to_urn(project_id)
-        member_urn = convert_member_uid_to_urn(member_id)
+        project_urn = convert_project_uid_to_urn(project_id, session)
+        member_urn = convert_member_uid_to_urn(member_id, session)
         role_name = attribute_type_names[role]
 
         # Add the member to the project
