@@ -252,7 +252,9 @@ class SAv1Guard(ABACGuardBase):
                 "ME.MAY_RESOLVE_PENDING_REQUEST<-ME.IS_OPERATOR",
                 "ME.MAY_RESOLVE_PENDING_REQUEST_$SUBJECT<-ME.IS_LEAD_$SUBJECT",
                 "ME.MAY_RESOLVE_PENDING_REQUEST_$SUBJECT<-ME.IS_ADMIN_$SUBJECT",
-                ], assert_project_role, request_id_context_extractor),
+                "ME.MAY_RESOLVE_PENDING_REQUEST<-ME.IS_REQUESTOR"
+                ], assert_request_id_requestor_and_project_role, 
+                                   request_id_extractor),
 
          # Only if you are operator or the lead/admin of the context
         'get_requests_for_context' :  
