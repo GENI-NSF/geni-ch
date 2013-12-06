@@ -446,9 +446,9 @@ def assert_slice_role(caller_urn, urns, label, options, abac_manager, session):
     config = pm.getService('config')
     authority = config.get("chrm.authority")
     if label == "SLICE_URN":
-        rows = get_slice_role_for_member(caller_urn, urns)
+        rows = get_slice_role_for_member(caller_urn, urns, session)
     elif label == "PROJECT_URN":
-        rows = get_project_role_for_member(caller_urn, urns)
+        rows = get_project_role_for_member(caller_urn, urns, session)
     else:
         raise CHAPIv1ArgumentError("Call to assert_slice_role with type %s" %\
                                    label)

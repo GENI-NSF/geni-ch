@@ -71,8 +71,14 @@ class MethodContext:
         self._options = options
         self._read_only = read_only
 
-        self._client_cert = self._authority.requestCertificate()
-        self._email = get_email_from_cert(self._client_cert)
+        self._client_cert = None
+        self._email = None
+        try:
+            self._client_cert = self._authority.requestCertificate()
+            self._email = get_email_from_cert(self._client_cert)
+        except Exception as e:
+            chapi_info("***MC***", "No request certificate")
+
         self._error = False
 
         self._db = pm.getService('chdbengine')

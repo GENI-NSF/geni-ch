@@ -72,7 +72,7 @@ class PGCHv1Handler(HandlerBase):
 
     def Register(self, args):
         with MethodContext(self, PGCH_LOG_PREFIX, 'Register', 
-                           args, [], {}, read_only=True) as mc:
+                           args, [], {}, read_only=False) as mc:
             if not mc._error:
                 mc._result = \
                     self._delegate.Register(mc._client_cert, 
@@ -82,7 +82,7 @@ class PGCHv1Handler(HandlerBase):
 
     def RenewSlice(self, args):
         with MethodContext(self, PGCH_LOG_PREFIX, 'RenewSlice',
-                           args, [], {}, read_only=True) as mc:
+                           args, [], {}, read_only=False) as mc:
             if not mc._error:
                 mc._result = \
                     self._delegate.RenewSlice(mc._client_cert, 
