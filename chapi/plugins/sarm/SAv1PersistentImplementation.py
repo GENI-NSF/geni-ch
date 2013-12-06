@@ -190,8 +190,6 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                 result = self._successReturn(slices)
                 chapi_info(SA_LOG_PREFIX,
                            "Returning empty list of slices for empty criteria")
-                chapi_log_result(SA_LOG_PREFIX, method, result, \
-                                     {'user': user_email})
                 return result
 
         q = session.query(self.db.SLICE_TABLE, self.db.PROJECT_TABLE.c.project_id, self.db.PROJECT_TABLE.c.project_name)
@@ -398,6 +396,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
     # create a new slice
     def create_slice(self, client_cert, credentials, options, session):
         client_uuid = get_uuid_from_cert(client_cert)
+        user_email = get_email_from_cert(client_cert)
         self.update_slice_expirations(client_uuid, session)
 
         name = options["fields"]["SLICE_NAME"]
@@ -495,7 +494,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
 
         # Add project lead and project admins as admin (if not same)
         admins_to_add = []
-        members = self.lookup_project_members(client_cert,project_urn, credentials,{})
+        members = self.lookup_project_members(client_cert,project_urn, credentials,{}, session)
         if members['code'] != NO_ERROR:
             raise CHAPIv1ArgumentError('No members for project ' + project_urn)
         for member in members['value']:
@@ -623,6 +622,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
     def create_project(self, client_cert, credentials, options, session):
 
         client_uuid = get_uuid_from_cert(client_cert)
+        user_email = get_email_from_cert(client_cert)
         self.update_project_expirations(client_uuid, session)
 
         name = options["fields"]["PROJECT_NAME"]
@@ -676,7 +676,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
 
         # get name of project lead
         ma_options = {'match' : {'MEMBER_UID' : project.lead_id },'filter': ['_GENI_MEMBER_DISPLAYNAME','MEMBER_FIRSTNAME','MEMBER_LASTNAME','MEMBER_EMAIL']}  
-        member_info = self._ma_handler._delegate.lookup_identifying_member_info(client_cert,credentials,ma_options)
+        member_info = self._ma_handler._delegate.lookup_identifying_member_info(client_cert,credentials,ma_option, session)
         leadname = ""
         info = member_info['value']
         if len(info) > 0:
@@ -801,7 +801,8 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
     def modify_project_membership(self, client_cert, project_urn, \
                                   credentials, options, session):
         client_uuid = get_uuid_from_cert(client_cert)
-        self.update_project_expirations(client_uuid, sesion)
+        user_email = get_email_from_cert(client_cert)
+        self.update_project_expirations(client_uuid, session)
 
         name = from_project_urn(project_urn)
         project_id = self.get_project_id(session, "project_name", name)
@@ -820,7 +821,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                     lookup_result = self.lookup_project_members(client_cert, \
                                                         project_urn, \
                                                         credentials, \
-                                                        {})
+                                                        {}, session)
                     if lookup_result['code'] != NO_ERROR:
                         return lookup_result   # Shouldn't happen: Should raise an exception
                     new_lead_urn = None
@@ -854,7 +855,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                     lookup_result = self.lookup_project_members(client_cert, \
                                                         project_urn, \
                                                         credentials, \
-                                                        {})
+                                                        {}, session)
                     if lookup_result['code'] != NO_ERROR:
                         return lookup_result   # Shouldn't happen: Should raise an exception
                     new_lead_urn = change['PROJECT_MEMBER']
@@ -909,7 +910,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         # make new project lead admin on slices
             opt = [{'SLICE_MEMBER': project_lead_urn, 'SLICE_ROLE': 'ADMIN'}]
             result3 = self.lookup_slices_for_member(client_cert, \
-                                 project_lead_urn, credentials, {})
+                                 project_lead_urn, credentials, {}, session)
 
             # change lead's role on slices he/she is member of
             for slice in result3['value']:
@@ -934,7 +935,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         if 'members_to_remove' in options:
             for member in options['members_to_remove']:
                 result3 = self.lookup_slices_for_member(client_cert, member, \
-                                                        credentials, {})
+                                                        credentials, {}, session)
                 for slice in result3['value']:
                     # skip slices that are not part of the current project
                     if not slice['SLICE_UID'] in slice_uids:
@@ -1055,6 +1056,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                           options, id_field,
                           member_str, role_str, text_str):
 
+        user_email = get_email_from_cert(client_cert)
         id_str = '%s.%s' % (member_class.__name__, id_field)
 
         # Grab the display names and IDs for all members whose membership we are changing
@@ -1076,7 +1078,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
             "filter" : ["_GENI_MEMBER_DISPLAYNAME", "MEMBER_FIRSTNAME", 
                         "MEMBER_LASTNAME", "MEMBER_EMAIL", "_GENI_IDENTIFYING_MEMBER_UID"]}
         ma_handler = pm.getService('mav1handler')
-        result = ma_handler._delegate.lookup_identifying_member_info(client_cert, credentials, lookup_identifying_options)
+        result = ma_handler._delegate.lookup_identifying_member_info(client_cert, credentials, lookup_identifying_options, session)
         urn_to_display_name = {}
         urn_to_id = {}
         # If we failed to get the display names, use the usernames
@@ -1157,7 +1159,6 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
             label2 = label
 
         # Log all removals
-        user_email = get_email_from_cert(client_cert)
         if 'members_to_remove' in options:
             members_to_remove = options['members_to_remove']
             for member_to_remove in members_to_remove:
@@ -1398,11 +1399,6 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
     def get_pending_requests_for_user(self, client_cert, member_id, \
                                           context_type, context_id, \
                                           credentials, options, session):
-        method = 'get_pending_requests_for_user'
-        args = {'member_id' : member_id, 'context_type' : context_type, 
-                'context_id' : context_id}
-        user_email = get_email_from_cert(client_cert)
-        chapi_log_invocation(SA_LOG_PREFIX, method, credentials, options, args, {'user': user_email})
 
         # Filter those projects with pending requsts to those for which
         # Given member is lead or admin
@@ -1476,8 +1472,6 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
 
         session.execute(ins)
         result = True
-
-        chapi_log_result(SA_LOG_PREFIX, method, result, {'user': user_email})
 
         return self._successReturn(result)
 
@@ -1554,7 +1548,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                 {"PROJECT_MEMBER" : member_urn, 
                  "PROJECT_ROLE" : role_name}
                 ]}
-        self.modify_project_membership(client_cert, project_urn, credentials, options)
+        self.modify_project_membership(client_cert, project_urn, credentials, options, session)
 
         # Delete the invitation:
         session.delete(invite_info)

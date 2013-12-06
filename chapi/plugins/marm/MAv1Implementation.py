@@ -313,7 +313,7 @@ class MAv1Implementation(MAv1DelegateBase):
     # This call is unprotected: no checking of credentials
     def lookup_public_member_info(self, client_cert, 
                                   credentials, options, session):
-        result = self.lookup_member_info(options, MA.public_fields)
+        result = self.lookup_member_info(options, MA.public_fields, session)
         return result
 
     # This call is protected
@@ -323,8 +323,8 @@ class MAv1Implementation(MAv1DelegateBase):
         return result
 
     # This call is protected
-    def lookup_identifying_member_info(self, client_cert, credentials, options):
-        result = self.lookup_member_info(options, MA.identifying_fields)
+    def lookup_identifying_member_info(self, client_cert, credentials, options, session):
+        result = self.lookup_member_info(options, MA.identifying_fields, session)
         return result
 
     # This call is protected
@@ -490,6 +490,8 @@ class MAv1Implementation(MAv1DelegateBase):
     def create_member(self, client_cert, attributes, 
                       credentials, options, session):
 
+        user_email = get_email_from_cert(client_cert)
+
         # if it weren't for needing to track which attributes were self-asserted
         # we could just use options['fields']
 
@@ -535,6 +537,8 @@ class MAv1Implementation(MAv1DelegateBase):
 
     def create_key(self, client_cert, credentials, options, session):
         
+        user_email = get_email_from_cert(client_cert)
+
        # Check that all the fields are allowed to be updated
         if 'fields' not in options:
             raise CHAPIv1ArgumentError("No fields in create_key")
@@ -657,6 +661,8 @@ class MAv1Implementation(MAv1DelegateBase):
     def create_certificate(self, client_cert, member_urn, 
                            credentials, options, session):
 
+        user_email = get_email_from_cert(client_cert)
+
         # Grab the CSR or make CSR/KEY
         if 'csr' in options:
             # CSR provided: Generate cert but no private key
@@ -738,6 +744,7 @@ class MAv1Implementation(MAv1DelegateBase):
                              client_urn, authorize_sense, session):
 
         member_urn = convert_member_uid_to_urn(member_id)
+        user_email = get_email_from_cert(client_cert)
 
         #chapi_audit(MA_LOG_PREFIX, "Called authorize_client "+member_id+' '+client_urn)
         if authorize_sense:
@@ -792,6 +799,7 @@ class MAv1Implementation(MAv1DelegateBase):
         IFF enabled_sense is True, then user is unconditionally enabled, otherwise disabled.
         returns the previous sense.'''
 
+        user_email = get_email_from_cert(client_cert)
 #        chapi_audit(MA_LOG_PREFIX, "Called " + method+' '+member_urn+' '+str(enable_sense))
 
         # find the uid
@@ -837,6 +845,7 @@ class MAv1Implementation(MAv1DelegateBase):
     def check_user_enabled(self, client_cert, session):
         client_urn = get_urn_from_cert(client_cert)
         client_email = get_email_from_cert(client_cert)
+        user_email = client_email
         client_uuid = get_uuid_from_cert(client_cert)
         client_name = get_name_from_urn(client_urn)
 
@@ -888,12 +897,13 @@ class MAv1Implementation(MAv1DelegateBase):
         send_email(member_email, self.ch_from_email,self.portal_help_email,subject,msgbody,self.portal_admin_email)
 
     #  member_privilege (private)
-    def add_member_privilege(self, cert, member_uid, privilege, 
+    def add_member_privilege(self, client_cert, member_uid, privilege, 
                              credentials, options, session):
         '''Mark a member/user as having a particular contextless privilege.
         privilege must be either OPERATOR or PROJECT_LEAD.'''
 
 
+        user_email = get_email_from_cert(client_cert)
 #        chapi_audit(MA_LOG_PREFIX, "Called " + method+' '+member_uid+' '+privilege)
 
         if not (privilege in ['OPERATOR', 'PROJECT_LEAD']):
@@ -928,11 +938,12 @@ class MAv1Implementation(MAv1DelegateBase):
 
         return result
 
-    def revoke_member_privilege(self, cert, member_uid, 
+    def revoke_member_privilege(self, client_cert, member_uid, 
                                 privilege, credentials, options, session):
         '''Mark a member/user as not having a particular contextless privilege.
         privilege must be either OPERATOR or PROJECT_LEAD.'''
 
+        user_email = get_email_from_cert(client_cert)
 #        chapi_audit(MA_LOG_PREFIX, "Called " + method+' '+member_uid+' '+privilege)
 
         if not (privilege in ['OPERATOR', 'PROJECT_LEAD']):
@@ -1000,10 +1011,11 @@ class MAv1Implementation(MAv1DelegateBase):
 
 
     #  member_attribute (private)
-    def add_member_attribute(self, cert, member_urn, attr_name, attr_value, 
+    def add_member_attribute(self, client_cert, member_urn, attr_name, attr_value, 
                              attr_self_assert,
                              credentials, options, session):
 
+        user_email = get_email_from_cert(client_cert)
 #        chapi_audit(MA_LOG_PREFIX, "Called " + method+' '+member_urn+' '+attr_name+' = '+attr_value)
 
         if attr_name in ['PROJECT_LEAD', 'OPERATOR']:
@@ -1041,8 +1053,9 @@ class MAv1Implementation(MAv1DelegateBase):
 
         return result
 
-    def remove_member_attribute(self, cert, member_urn, attr_name, 
+    def remove_member_attribute(self, client_cert, member_urn, attr_name, 
                                 credentials, options, session):
+        user_email = get_email_from_cert(client_cert)
 #        chapi_audit(MA_LOG_PREFIX, "Called " + method+' '+member_urn+' '+attr_name)
 
         if attr_name in ['PROJECT_LEAD', 'OPERATOR']:
@@ -1070,7 +1083,7 @@ class MAv1Implementation(MAv1DelegateBase):
             self.delete_attr(session, attr_name, member_uid)
 
             # log_event
-            msg = "Removed member %s attribute %s" %  (self._get_displayname_for_member_urn(member_urn, ses sion), attr_name)
+            msg = "Removed member %s attribute %s" %  (self._get_displayname_for_member_urn(member_urn, session), attr_name)
             attribs = {"MEMBER" : member_urn}
             self.logging_service.log_event(msg, attribs, member_uid)
             chapi_audit_and_log(MA_LOG_PREFIX, msg, logging.INFO, {'user': user_email})

@@ -324,6 +324,7 @@ def assert_shares_project(caller_urn, member_urns, label, options,
         member_urns = list(member_urns)
 
 
+    db = pm.getService('chdbengine')
     pm1 = aliased(db.PROJECT_MEMBER_TABLE)
     pm2 = aliased(db.PROJECT_MEMBER_TABLE)
     ma1 = aliased(db.MEMBER_ATTRIBUTE_TABLE)
@@ -505,7 +506,7 @@ def assert_project_role(caller_urn, project_urns, label, options,
                         abac_manager, session):
     if label != "PROJECT_URN": return
     db = pm.getService('chdbengine')
-    rows = get_project_role_for_member(caller_urn, project_urns)
+    rows = get_project_role_for_member(caller_urn, project_urns, session)
     config = pm.getService('config')
     authority = config.get("chrm.authority")
     for row in rows:
@@ -599,7 +600,7 @@ def assert_request_id_requestor_and_project_role(caller_urn, request_id,
             assertion = "ME.IS_REQUESTOR<-CALLER"
             abac_manager.register_assertion(assertion)
 
-        role_rows = get_project_role_for_member(caller_urn, project_urn)
+        role_rows = get_project_role_for_member(caller_urn, project_urn, session)
         for row in role_rows:
             role = row.role
             role_name = attribute_type_names[role]
@@ -650,7 +651,7 @@ def standard_subject_extractor(options, arguments, session):
     if 'MEMBER_EMAIL' in match_option:
         member_emails = match_option['MEMBER_EMAIL']
         member_uids = convert_member_email_to_uid(member_emails, session)
-        member_urns = convert_member_uid_to_urn(member_uid, sessions)
+        member_urns = convert_member_uid_to_urn(member_uids, session)
         extracted['MEMBER_URN'] = member_urns
     return extracted
 

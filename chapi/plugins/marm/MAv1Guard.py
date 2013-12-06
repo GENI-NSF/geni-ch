@@ -138,7 +138,7 @@ class MAv1Guard(ABACGuardBase):
         {
         'lookup_public_member_info' : \
             SubjectInvocationCheck([
-                "ME.MAY_LOOKUP_PUBLIC_MEMBER_INFO<-ME.IS_OPERATOR"
+                "ME.MAY_LOOKUP_PUBLIC_MEMBER_INFO<-CALLER"
             ], None, standard_subject_extractor),
         'lookup_identifying_member_info' : \
             SubjectInvocationCheck([
