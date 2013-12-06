@@ -620,6 +620,9 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
             raise CHAPIv1ArgumentError('Cannot update or renew an expired slice')
         slice_expiration = slice_info.expiration
         max_exp = datetime.utcnow() + relativedelta(days=SA.SLICE_MAX_RENEWAL_DAYS)
+#        # If this is marked as a long lived slice, then
+#        if True or slice_info.long_lived:
+#            max_exp = datetime.max
         new_exp = None # A dateutil for the new slice expiration
 
         for field, value in options['fields'].iteritems():
@@ -661,17 +664,17 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                 cert_exp = cert_exp.replace(tzinfo = new_exp.tzinfo)
                 if (cert_exp < new_exp):
                     cert, k = cert_util.create_cert(slice_urn, \
-                        issuer_key = self.key, issuer_cert = self.cert, \
-                        lifeDays = (new_exp - slice_info.creation).days + SA.SLICE_CERT_LIFETIME, \
-                        email = slice_info.slice_email, uuidarg=slice_info.slice_id)
+                                                        issuer_key = self.key, issuer_cert = self.cert, \
+                                                        lifeDays = (new_exp - slice_info.creation).days + SA.SLICE_CERT_LIFETIME, \
+                                                        email = slice_info.slice_email, uuidarg=slice_info.slice_id)
                     # FIXME: Ticket #149: Save the slice key and
                     # re-use it when re-generating the slice certifate
-                    updates['key'] = k.save_to_string()
+                    # updates['key'] = k.save_to_string()
                     updates['certificate'] = cert.save_to_string()
                     chapi_warn(SA_LOG_PREFIX, 
                                "Re-generated certificate for slice %s to last past new expiration %s" % (slice_urn,
                                                                                                          new_exp.isoformat()), 
-                               {'user': user_email}
+                               {'user': user_email})
                     
             updates[SA.slice_field_mapping[field]] = value
 
