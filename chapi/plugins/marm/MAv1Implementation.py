@@ -987,12 +987,19 @@ class MAv1Implementation(MAv1DelegateBase):
                 pretty_name = get_member_display_name(member_info[row],row)
                 member_email = member_info[row]['MEMBER_EMAIL']
         msgbody = "Dear " + pretty_name + ",\n\n"
-        msgbody += "Congratulations, you have been made a 'Project Lead', meaning you can create GENI"
-        msgbody += " Projects, as well as create slices in projects and reserve resources.\n\n"
-        
-        msgbody += "If you are using the GENI Portal, see "
-        msgbody += "http://groups.geni.net/geni/wiki/SignMeUp#a2b.CreateaGENIProject "  #FIXME: Edit if page moves
-        msgbody += "for instructions on creating a project.\n\n"
+        subject = ""
+        if privilege == "PROJECT_LEAD":
+            subject = "You are now a GENI Project Lead" 
+            msgbody += "Congratulations, you have been made a 'Project Lead', meaning you can create GENI"
+            msgbody += " Projects, as well as create slices in projects and reserve resources.\n\n"
+
+            msgbody += "If you are using the GENI Portal, see "
+            msgbody += "http://groups.geni.net/geni/wiki/SignMeUp#a2b.CreateaGENIProject "  #FIXME: Edit if page moves
+            msgbody += "for instructions on creating a project.\n\n"
+        else:
+            subject = "You are now a GENI Operator" 
+            msgbody += "You are now a GENI Operator on "
+            msgbody += self.config.get("chrm.authority") + ".\n\n"
         
         #  msgbody .= "Please visit https://" . $_SERVER['SERVER_NAME'];
         #  msgbody .= "/secure/home.php for more information, or to get started.\n\n";
@@ -1000,10 +1007,6 @@ class MAv1Implementation(MAv1DelegateBase):
         msgbody += "Sincerely,\n"
         msgbody += "GENI Clearinghouse operations\n"
 
-        if privilege == "PROJECT_LEAD":
-            subject = "You are now a GENI Project Lead" 
-        else:
-            subject = "You are now a GENI Operator" 
         send_email(member_email, self.ch_from_email,self.portal_help_email,subject,msgbody,self.portal_admin_email)
 
     #  member_privilege (private)
@@ -1048,10 +1051,6 @@ class MAv1Implementation(MAv1DelegateBase):
 
         # Email admins, new project lead/operator
         self.mail_new_privilege(member_uid,privilege)
-
-
-
-
 
         result = self._successReturn(was_enabled)
         chapi_log_result(MA_LOG_PREFIX, method, result, {'user': user_email})
