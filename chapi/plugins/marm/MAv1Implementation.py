@@ -1043,16 +1043,17 @@ class MAv1Implementation(MAv1DelegateBase):
 
         session.close()
 
-        # log_event
-        msg = "Granted member %s privilege %s" %  (self._get_displayname_for_member_id(member_uid), privilege)
-        attribs = {"MEMBER" : member_uid}
-        self.logging_service.log_event(msg, attribs, member_uid)
-        chapi_audit_and_log(MA_LOG_PREFIX, msg, logging.INFO, {'user': user_email})
+        if not was_enabled:
+            # log_event
+            msg = "Granted member %s privilege %s" %  (self._get_displayname_for_member_id(member_uid), privilege)
+            attribs = {"MEMBER" : member_uid}
+            self.logging_service.log_event(msg, attribs, member_uid)
+            chapi_audit_and_log(MA_LOG_PREFIX, msg, logging.INFO, {'user': user_email})
 
-        # Email admins, new project lead/operator
-        self.mail_new_privilege(member_uid,privilege)
+            # Email admins, new project lead/operator
+            self.mail_new_privilege(member_uid,privilege)
 
-        result = self._successReturn(was_enabled)
+        result = self._successReturn(not was_enabled)
         chapi_log_result(MA_LOG_PREFIX, method, result, {'user': user_email})
         return result
 
@@ -1118,13 +1119,15 @@ class MAv1Implementation(MAv1DelegateBase):
                             raise CHAPIv1ArgumentError('Cannot revoke lead privilege.  No authorized admin to take lead role on project %s' %project_urn)                            
         if was_enabled:
             self.delete_attr(session, privilege, member_uid)
+
+        session.close()
+
+        if was_enabled:
             # log_event
             msg = "Revoked member %s privilege %s" %  (self._get_displayname_for_member_id(member_uid), privilege)
             attribs = {"MEMBER" : member_uid}
             self.logging_service.log_event(msg, attribs, member_uid)
             chapi_audit_and_log(MA_LOG_PREFIX, msg, logging.INFO, {'user': user_email})
-
-        session.close()
 
         result = self._successReturn(was_enabled)
         chapi_log_result(MA_LOG_PREFIX, method, result, {'user': user_email})
@@ -1162,16 +1165,20 @@ class MAv1Implementation(MAv1DelegateBase):
         old_value = None
         if was_defined:
             old_value = rows[0][0]
+            if old_value != attr_value:
+                was_defined = False
 
-        self.update_attr(session, attr_name, attr_value, member_uid, attr_self_assert)
+        if not was_defined:
+            self.update_attr(session, attr_name, attr_value, member_uid, attr_self_assert)
         session.commit()
         session.close()
 
-        # log_event
-        msg = "Set member %s attribute %s to %s" %  (self._get_displayname_for_member_urn(member_urn), attr_name, attr_value )
-        attribs = {"MEMBER" : member_urn}
-        self.logging_service.log_event(msg, attribs, member_uid)
-        chapi_audit_and_log(MA_LOG_PREFIX, msg, logging.INFO, {'user': user_email})
+        if not was_defined:
+            # log_event
+            msg = "Set member %s attribute %s to %s" %  (self._get_displayname_for_member_urn(member_urn), attr_name, attr_value )
+            attribs = {"MEMBER" : member_urn}
+            self.logging_service.log_event(msg, attribs, member_uid)
+            chapi_audit_and_log(MA_LOG_PREFIX, msg, logging.INFO, {'user': user_email})
 
         result = self._successReturn(old_value)
         chapi_log_result(MA_LOG_PREFIX, method, result, {'user': user_email})
@@ -1206,17 +1213,16 @@ class MAv1Implementation(MAv1DelegateBase):
         old_value = None
         if was_defined:
             old_value = rows[0][0]
-
-        if not was_defined:
             self.delete_attr(session, attr_name, member_uid)
 
         session.close()
 
-        # log_event
-        msg = "Removed member %s attribute %s" %  (self._get_displayname_for_member_urn(member_urn), attr_name)
-        attribs = {"MEMBER" : member_urn}
-        self.logging_service.log_event(msg, attribs, member_uid)
-        chapi_audit_and_log(MA_LOG_PREFIX, msg, logging.INFO, {'user': user_email})
+        if was_defined:
+            # log_event
+            msg = "Removed member %s attribute %s" %  (self._get_displayname_for_member_urn(member_urn), attr_name)
+            attribs = {"MEMBER" : member_urn}
+            self.logging_service.log_event(msg, attribs, member_uid)
+            chapi_audit_and_log(MA_LOG_PREFIX, msg, logging.INFO, {'user': user_email})
 
         result = self._successReturn(old_value)
         chapi_log_result(MA_LOG_PREFIX, method, result, {'user': user_email})
