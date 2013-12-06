@@ -13,6 +13,7 @@
  * PGCH uses handler front door to SA/MA services, enforcing guards and argument checks (#144)
  * Slice certificates last 10 years (#147)
  * Log a warn when renewing slice certificates (#148)
+ * Allow canceling a project join request (#137)
 
 == 1.0 ==
  * Initial release of new clearinghouse implementing the
