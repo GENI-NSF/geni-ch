@@ -1147,6 +1147,9 @@ class MAv1Implementation(MAv1DelegateBase):
 
 #        chapi_audit(MA_LOG_PREFIX, "Called " + method+' '+member_urn+' '+attr_name+' = '+attr_value)
 
+        if attr_name in ['PROJECT_LEAD', 'OPERATOR']:
+            raise CHAPIv1ArgumentError('%s not a valid member attribute' % attr_name)
+
         session = self.db.getSession()
         # find the uid
         uids = self.get_uids_for_attribute(session, "MEMBER_URN", member_urn)
@@ -1191,6 +1194,9 @@ class MAv1Implementation(MAv1DelegateBase):
         user_email = get_email_from_cert(cert)
         chapi_log_invocation(MA_LOG_PREFIX, method, [], {}, args, {'user': user_email})
 #        chapi_audit(MA_LOG_PREFIX, "Called " + method+' '+member_urn+' '+attr_name)
+
+        if attr_name in ['PROJECT_LEAD', 'OPERATOR']:
+            raise CHAPIv1ArgumentError('%s not a valid member attribute' % attr_name)
 
         session = self.db.getSession()
         # find the uid
