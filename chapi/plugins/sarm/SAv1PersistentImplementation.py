@@ -654,20 +654,24 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                 if slice_expiration > new_exp:
                     session.close()
                     raise CHAPIv1ArgumentError('Cannot shorten slice lifetime')
+
                 # regenerate cert if necessary
                 cert = Certificate(string = slice_info.certificate)
-                t1 = dateutil.parser.parse(cert.cert.get_notAfter())
-                t2 = new_exp
-                # FIXME: Why are we assuming the cert's TZ is meant to be that from the input request time. In fact, the input request time should be treated as UTC if not specified, and the TZ in the cert should UTC. Or is a diff between 2 python datetimes something where .days gives you the total days in the diff, in which case we're just losing any hours/minutes.
-                t1 = t1.replace(tzinfo = t2.tzinfo)
-                if (t1 < t2):
-                    t3 = slice_info.creation
-                    # FIXME: Note the cert will be good past the slice expiration - why?
+                cert_exp = dateutil.parser.parse(cert.cert.get_notAfter())
+                cert_exp = cert_exp.replace(tzinfo = new_exp.tzinfo)
+                if (cert_exp < new_exp):
                     cert, k = cert_util.create_cert(slice_urn, \
                         issuer_key = self.key, issuer_cert = self.cert, \
-                        lifeDays = (t2 - t3).days + SA.SLICE_CERT_LIFETIME, \
+                        lifeDays = (new_exp - slice_info.creation).days + SA.SLICE_CERT_LIFETIME, \
                         email = slice_info.slice_email, uuidarg=slice_info.slice_id)
+                    # FIXME: Ticket #149: Save the slice key and
+                    # re-use it when re-generating the slice certifate
+                    updates['key'] = k.save_to_string()
                     updates['certificate'] = cert.save_to_string()
+                    chapi_warn(SA_LOG_PREFIX, 
+                               "Re-generated certificate for slice %s to last past new expiration %s" % (slice_urn,
+                                                                                                         new_exp.isoformat()), 
+                               {'user': user_email}
                     
             updates[SA.slice_field_mapping[field]] = value
 

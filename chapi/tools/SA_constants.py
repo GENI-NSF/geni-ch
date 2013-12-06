@@ -27,7 +27,7 @@ services = ["SLICE", "PROJECT", "SLICE_MEMBER", "PROJECT_MEMBER", "SLIVER_INFO"]
 
 credential_types = ["geni_sfa", "geni_abac"]
 
-SLICE_CERT_LIFETIME = 365 # days
+SLICE_CERT_LIFETIME = 365*10 # days
 SLICE_MAX_RENEWAL_DAYS = 185
 
 # The externally visible data schema for slices

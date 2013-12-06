@@ -11,6 +11,8 @@
  * Do not use add/remove attribute methods for privileges (#130)
  * Send mail on enable/disable users (#129)
  * PGCH uses handler front door to SA/MA services, enforcing guards and argument checks (#144)
+ * Slice certificates last 10 years (#147)
+ * Log a warn when renewing slice certificates (#148)
 
 == 1.0 ==
  * Initial release of new clearinghouse implementing the
