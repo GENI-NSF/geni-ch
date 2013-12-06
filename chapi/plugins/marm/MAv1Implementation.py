@@ -900,6 +900,10 @@ class MAv1Implementation(MAv1DelegateBase):
         chapi_log_result(MA_LOG_PREFIX, method, result, {'user': user_email})
         return result
 
+    def mail_enable_user(self, msg, subject):
+        msgbody = msg + " on " + self.config.get("chrm.authority")
+        send_email(self.portal_admin_email, self.ch_from_email,self.portal_admin_email,subject,msgbody)
+
     # enable/disable a user/member  (private)
     def enable_user(self, client_cert, member_urn, enable_sense, credentials, options):
         '''Mark a member/user as enabled or disabled.
@@ -924,7 +928,7 @@ class MAv1Implementation(MAv1DelegateBase):
         # find the old value
         q = session.query(MemberAttribute.value).\
             filter(MemberAttribute.member_id == member_id).\
-            filter(MemberAttribute.name == '_GENI_MEMBER_ENABLED')
+            filter(MemberAttribute.name == MA.field_mapping['_GENI_MEMBER_ENABLED'])
         rows = q.all()
 
         if len(rows)==0:
@@ -934,21 +938,24 @@ class MAv1Implementation(MAv1DelegateBase):
 
         # set the new value
         enabled_str = 'y' if enable_sense else 'n'
-        self.update_attr(session, '_GENI_MEMBER_ENABLED', enabled_str, member_id, 'f')
-        #ins = self.db.MEMBER_ATTRIBUTE_TABLE.insert().values({'member_id': str(member_id),
-        #'name': '_GENI_MEMBER_ENABLED',
-        #'value': enabled_str})
-        #session.execute(ins)
+        did_something = False
+        if (not was_enabled and enable_sense) or (was_enabled and not enable_sense):
+            did_something = True
+            self.update_attr(session, '_GENI_MEMBER_ENABLED', enabled_str, member_id, 'f')
 
         session.commit()
         session.close()
 
-        # log_event
-        msg = "Set member %s status to %s" % \
-            (member_urn, 'enabled' if enable_sense else 'disabled')
-        attribs = {"MEMBER" : member_urn}
-        self.logging_service.log_event(msg, attribs, member_id)
-        chapi_audit_and_log(MA_LOG_PREFIX, msg, logging.INFO, {'user': user_email})
+        if did_something:
+            # log_event
+            msg = "Set member %s status to %s" % \
+                (member_urn, 'enabled' if enable_sense else 'disabled')
+            attribs = {"MEMBER" : member_urn}
+            self.logging_service.log_event(msg, attribs, member_id)
+            chapi_audit_and_log(MA_LOG_PREFIX, msg, logging.INFO, {'user': user_email})
+            self.mail_enable_user(user_email + " " + msg, ("Enabled CH user" if enable_sense else "Disabled CH user"))
+        else:
+            chapi_info(MA_LOG_PREFIX, "Member %s already %s" % (member_urn, 'enabled' if enable_sense else 'disabled'), {'user': user_email})
 
         result = self._successReturn(was_enabled)
         chapi_log_result(MA_LOG_PREFIX, method, result, {'user': user_email})
@@ -963,7 +970,7 @@ class MAv1Implementation(MAv1DelegateBase):
         session = self.db.getSession()
         q = session.query(MemberAttribute.value).\
             filter(MemberAttribute.member_id == client_uuid).\
-            filter(MemberAttribute.name == '_GENI_MEMBER_ENABLED')
+            filter(MemberAttribute.name == MA.field_mapping['_GENI_MEMBER_ENABLED'])
         rows = q.all()
         is_enabled = (count(rows)==0 or rows[0][0] == 'y')
         session.close()
