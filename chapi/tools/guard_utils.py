@@ -793,26 +793,6 @@ def request_context_extractor(options, arguments):
     return extracted
 
 # Pull project_id out as the subject
-def request_id_context_extractor(options, arguments):
-    request_id = arguments['request_id']
-    db = pm.getService('chdbengine')
-    session = db.getSession()
-    q = session.query(db.PROJECT_TABLE.c.project_name)
-    q = q.filter(db.PROJECT_TABLE.c.project_id ==
-                 db.PROJECT_REQUEST_TABLE.c.context_id)
-    q = q.filter(request_id == db.PROJECT_REQUEST_TABLE.c.id)
-    rows = q.all()
-    session.close()
-    extracted = {}
-    if len(rows) > 0:
-        project_name = rows[0].project_name
-        config = pm.getService('config')
-        authority = config.get("chrm.authority")
-        project_urn = to_project_urn(authority, project_name)
-        extracted = {"PROJECT_URN" : project_urn}
-    return extracted
-
-# Pull project_id out as the subject
 def request_id_extractor(options, arguments):
     request_id = arguments['request_id']
     extracted = {"REQUEST_ID" : request_id}
