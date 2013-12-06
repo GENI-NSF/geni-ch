@@ -7,6 +7,7 @@
  * Log mismatched certificates at warn level (#140)
  * Include Auto-submitted header in emails (#124)
  * Times to renew slice should be convered to naive UTC (#139)
+ * Email to new operators shouldn't say project lead (#123)
 
 == 1.0 ==
  * Initial release of new clearinghouse implementing the
