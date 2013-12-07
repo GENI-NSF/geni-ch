@@ -47,8 +47,7 @@ class PGCHv1Handler(HandlerBase):
                            create_sesion=False) as mc:
             if not mc._error:
                 mc._result = \
-                    self._delegate.GetVersion(mc._client_cert, 
-                                              mc._session)
+                    self._delegate.GetVersion(mc._client_cert)
         return mc._result
 
     def GetCredential(self, args=None):
@@ -58,8 +57,7 @@ class PGCHv1Handler(HandlerBase):
             if not mc._error:
                 mc._result = \
                     self._delegate.GetCredential(mc._client_cert, 
-                                                 args,
-                                                 mc._session)
+                                                 args)
         return mc._result
 
     def Resolve(self, args):
@@ -69,8 +67,7 @@ class PGCHv1Handler(HandlerBase):
             if not mc._error:
                 mc._result = \
                     self._delegate.Resolve(mc._client_cert, 
-                                           args,
-                                           mc._session)
+                                           args)
         return mc._result
 
     def Register(self, args):
@@ -80,8 +77,7 @@ class PGCHv1Handler(HandlerBase):
             if not mc._error:
                 mc._result = \
                     self._delegate.Register(mc._client_cert, 
-                                           args,
-                                           mc._session)
+                                           args)
         return mc._result
 
     def RenewSlice(self, args):
@@ -91,8 +87,7 @@ class PGCHv1Handler(HandlerBase):
             if not mc._error:
                 mc._result = \
                     self._delegate.RenewSlice(mc._client_cert, 
-                                              args,
-                                              mc._session)
+                                              args)
         return mc._result
 
     def GetKeys(self, args):
@@ -102,8 +97,7 @@ class PGCHv1Handler(HandlerBase):
             if not mc._error:
                 mc._result = \
                     self._delegate.GetKeys(mc._client_cert, 
-                                              args,
-                                              mc._session)
+                                              args)
         return mc._result
 
     def ListComponents(self, args):
@@ -113,8 +107,7 @@ class PGCHv1Handler(HandlerBase):
             if not mc._error:
                 mc._result = \
                     self._delegate.ListComponents(mc._client_cert, 
-                                                  args,
-                                                  mc._session)
+                                                  args)
         return mc._result
 
 
@@ -126,7 +119,7 @@ class PGCHv1Delegate(DelegateBase):
         self._sa_handler = pm.getService('sav1handler')
         self._ma_handler = pm.getService('mav1handler')
 
-    def GetVersion(self, client_cert, session):
+    def GetVersion(self, client_cert):
         self.logger.info("Called GetVersion")
 
         user_email = get_email_from_cert(client_cert)
@@ -165,7 +158,7 @@ class PGCHv1Delegate(DelegateBase):
                        hostname=CH_HOSTNAME)
         return self._successReturn(version)
 
-    def GetCredential(self, client_cert, args, session):
+    def GetCredential(self, client_cert, args):
         # all none means return user cred
         # else cred is user cred, id is uuid or urn of object, type=Slice
         #    where omni always uses the urn
@@ -219,7 +212,7 @@ class PGCHv1Delegate(DelegateBase):
         credentials = []
         if 'credential' in args:
             credential = args['credential']
-            credentials = [credential]
+            credentials = [{'geni_type' : 'geni_sfa', 'geni_value' : credential}]
 
         if slice_uuid and not slice_urn:
             # Lookup slice_urn from slice_uuid
@@ -247,7 +240,7 @@ class PGCHv1Delegate(DelegateBase):
         slice_credential = get_credentials_return['value'][0]['geni_value']
         return self._successReturn(slice_credential)
 
-    def Resolve(self, client_cert, args, session):
+    def Resolve(self, client_cert, args):
         # Omni uses this, Flack may not need it
 
         # ID may be a uuid, hrn, or urn
@@ -397,7 +390,7 @@ class PGCHv1Delegate(DelegateBase):
             filter_clause = ['MEMBER_URN']
             options = {'match' : match_clause, 'filter' : filter_clause}
             lookup_member_return = \
-                self._ma_handlerlookup_public_member_info(creds, options)
+                self._ma_handler.lookup_public_member_info(creds, options)
 
             if lookup_member_return['code'] != NO_ERROR:
                 return lookup_member_return
@@ -423,7 +416,7 @@ class PGCHv1Delegate(DelegateBase):
 
         return self._successReturn(resolve)
 
-    def Register(self, client_cert, args, session):
+    def Register(self, client_cert, args):
         # Omni uses this, Flack should not for our purposes
         # args are credential, hrn, urn, type
         # cred is user cred, type must be Slice
@@ -439,7 +432,7 @@ class PGCHv1Delegate(DelegateBase):
         creds = []
         if 'credential' in args:
             cred = args['credential']
-            creds =[cred]
+            creds =[{'geni_type' : 'geni_sfa', 'geni_value' : cred} ]
 
         hrn = None
         if 'hrn' in args: 
@@ -499,7 +492,7 @@ class PGCHv1Delegate(DelegateBase):
             return self._errorReturn('No slice credential available')
         return self._successReturn(slice_cred)
 
-    def RenewSlice(self, client_cert, args, session):
+    def RenewSlice(self, client_cert, args):
         # args are credential, expiration
         # cred is user cred
         # returns renewed slice credential
@@ -534,15 +527,14 @@ class PGCHv1Delegate(DelegateBase):
             return self._errorReturn('No slice credential available')
         return self._successReturn(slice_cred)
 
-    def GetKeys(self, client_cert, args, session):
+    def GetKeys(self, client_cert, args):
         # cred is user cred
         # return list( of dict(type='ssh', key=$key))
         # args: credential
 
         self.logger.info("Called GetKeys")
 
-        credential = args['credential']
-        creds = [credential]
+        creds = []
 
         member_urn = get_urn_from_cert(client_cert)
 
@@ -562,7 +554,7 @@ class PGCHv1Delegate(DelegateBase):
         
         return self._successReturn(keys)
 
-    def ListComponents(self, client_cert, args, session):
+    def ListComponents(self, client_cert, args):
         """Get the list of CMs (AMs).
 
         Return a list of dicts. Each dict has keys gid, urn, hrn, url.
