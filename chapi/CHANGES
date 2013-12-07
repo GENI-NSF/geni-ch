@@ -14,6 +14,7 @@
  * Slice certificates last 10 years (#147)
  * Log a warn when renewing slice certificates (#148)
  * Allow canceling a project join request (#137)
+ * Check errors like bad username in PGCH (#150)
 
 == 1.0 ==
  * Initial release of new clearinghouse implementing the
