@@ -37,6 +37,7 @@ def send_email(toaddr,fromaddr,replyaddr,subject,msgbody,ccaddr=None):
     else:
         toaddrs = [toaddr]
     msg['Precedence'] = "bulk"
+    msg['Auto-Submitted'] = "auto-generated"
     s = smtplib.SMTP('localhost')
     s.sendmail(fromaddr,toaddrs,msg.as_string())
     s.quit()

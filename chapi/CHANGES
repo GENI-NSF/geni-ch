@@ -2,6 +2,20 @@
 
 = GENI Clearinghouse Release Notes =
 
+== 1.1 ==
+ * Use past tense in logging service log messages (#128)
+ * Log mismatched certificates at warn level (#140)
+ * Include Auto-submitted header in emails (#124)
+ * Times to renew slice should be convered to naive UTC (#139)
+ * Email to new operators shouldn't say project lead (#123)
+ * Do not use add/remove attribute methods for privileges (#130)
+ * Send mail on enable/disable users (#129)
+ * PGCH uses handler front door to SA/MA services, enforcing guards and argument checks (#144)
+ * Slice certificates last 10 years (#147)
+ * Log a warn when renewing slice certificates (#148)
+ * Allow canceling a project join request (#137)
+ * Check errors like bad username in PGCH (#150)
+
 == 1.0 ==
  * Initial release of new clearinghouse implementing the
  [http://groups.geni.net/geni/wiki/UniformClearinghouseAPI Uniform

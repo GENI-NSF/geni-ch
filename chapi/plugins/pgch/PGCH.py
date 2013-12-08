@@ -187,6 +187,7 @@ class PGCHv1Delegate(DelegateBase):
         # return is slice credential
         #args: credential, type, uuid, urn
 
+        user_email = get_email_from_cert(client_cert)
         # If no args, get a user credential
         if not args:
 #             client_uuid = get_uuid_from_cert(client_cert)
@@ -201,9 +202,7 @@ class PGCHv1Delegate(DelegateBase):
 #                 public_info['value'][client_urn]['_GENI_USER_CREDENTIAL']
 
             client_urn = get_urn_from_cert(client_cert)
-            creds = self._ma_handler._delegate.get_credentials(client_cert,
-                                                              client_urn,
-                                                              [], {})
+            creds = self._ma_handler.get_credentials(client_urn, [], {})
             if creds['code'] != NO_ERROR: return creds
 
             # Extract the SFA user credential from the returned set
@@ -212,6 +211,12 @@ class PGCHv1Delegate(DelegateBase):
                 if cred['geni_type'] == 'geni_sfa':
                     user_credential = cred['geni_value']
                     break
+
+            if user_credential is None:
+                msg = "User %s got no user credential for cert %s" % (client_urn, client_cert[:250])
+                chapi_warn(PGCH_LOG_PREFIX, msg,
+                          {'user': user_email})
+                raise CHAPIv1ServerError(msg)
 
             return self._successReturn(user_credential)
 
@@ -222,7 +227,7 @@ class PGCHv1Delegate(DelegateBase):
         if 'type' in args:
             cred_type = args['type']
         if cred_type and cred_type.lower() != 'slice':
-            raise Exception("PGCH.GetCredential called with type that isn't slice: %s" % \
+            raise CHAPIv1ArgumentError("PGCH.GetCredential called with type that isn't slice: %s" % \
                                 cred_type)
 
         slice_uuid = None
@@ -237,6 +242,9 @@ class PGCHv1Delegate(DelegateBase):
         if 'credential' in args:
             credential = args['credential']
             credentials = [credential]
+            # FIXME: SFA or geni_sfa?
+            if isinstance(credential, str) or isinstance(credential, unicode):
+                credentials = [{'geni_type': 'SFA', 'geni_value': credential}] 
 
         if slice_uuid and not slice_urn:
             # Lookup slice_urn from slice_uuid
@@ -245,21 +253,47 @@ class PGCHv1Delegate(DelegateBase):
             creds = []
             options = {'match' : match_clause, 'filter' : filter_clause}
             lookup_slices_return = \
-                self._sa_handler._delegate.lookup_slices(client_cert, creds, options)
+                self._sa_handler.lookup_slices(creds, options)
+            if lookup_slices_return['code'] == AUTHORIZATION_ERROR:
+                msg = "No slice found for uid %s" % slice_uuid
+                chapi_info(PGCH_LOG_PREFIX, msg, {'user': user_email})
+                # Return an error with this message
+                return { 'code' :  ARGUMENT_ERROR , 'value' : "", 'output' : msg }
+
             if lookup_slices_return['code'] != NO_ERROR:
                 return lookup_slices_return
+            if not lookup_slices_return or \
+                    not lookup_slces_return['value'] or \
+                    len(lookup_slces_return['value'].keys()) == 0:
+                msg = "No slice found for uid %s" % slice_uuid
+                chapi_info(PGCH_LOG_PREFIX, msg, {'user': user_email})
+                # Return an error with this message
+                return { 'code' :  ARGUMENT_ERROR , 'value' : "", 'output' : msg }
+
             slice_urn = lookup_slices_return ['value'].keys()[0]
 
         if not slice_uuid and not slice_urn:
-            raise Exception("SLICE URN or UUID not provided to PGCH.GetCredential");
+            raise CHAPIv1ArgumentError("SLICE URN or UUID not provided to PGCH.GetCredential");
 
         options = {}
         get_credentials_return = \
-            self._sa_handler._delegate.get_credentials(client_cert, slice_urn, \
+            self._sa_handler.get_credentials(slice_urn, \
                                                            credentials, options)
+        if get_credentials_return['code'] == AUTHORIZATION_ERROR:
+            msg = "No slice found for urn %s" % slice_urn
+            chapi_info(PGCH_LOG_PREFIX, msg, {'user': user_email})
+            # Return an error with this message
+            return { 'code' :  ARGUMENT_ERROR , 'value' : "", 'output' : msg }
+
         if get_credentials_return['code'] != NO_ERROR:
             return get_credentials_return
 
+        if not get_credentials_return['value'] or \
+                len(get_credentials_return['value']) == 0:
+            msg = "No slice found for urn %s" % slice_urn
+            chapi_info(PGCH_LOG_PREFIX, msg, {'user': user_email})
+            # Return an error with this message
+            return { 'code' :  ARGUMENT_ERROR , 'value' : "", 'output' : msg }
         slice_credential = get_credentials_return['value'][0]['geni_value']
         return self._successReturn(slice_credential)
 
@@ -292,11 +326,12 @@ class PGCHv1Delegate(DelegateBase):
 #  "name" : "common name",
 #}
 
+        user_email = get_email_from_cert(client_cert)
         type = None
         if 'type' in args:
             type = args['type'].lower()
         if type not in ('slice', 'user'):
-            raise Exception("Unknown type for PGH.Resolve: %s" % str(type))
+            raise CHAPIv1ArgumentError("Unknown type for PGH.Resolve: %s" % str(type))
 
         uuid = None
         if 'uuid' in args:
@@ -311,14 +346,14 @@ class PGCHv1Delegate(DelegateBase):
             hrn = args['hrn']
 
         if not hrn and not urn and not uuid:
-            raise Exception("No UUID, URN or HRN identifier provided")
+            raise CHAPIv1ArgumentError("No UUID, URN or HRN identifier provided")
 
         if hrn and not urn:
             urn = sfa.util.xrn.hrn_to_urn(hrn, type)
 
         if type == 'user':
             # User
-            ma = self._ma_handler._delegate
+            ma = self._ma_handler
             match_clause = {'MEMBER_URN' : urn}
             if not urn:
                 match_clause = {'MEMBER_UID' : uuid}
@@ -329,10 +364,23 @@ class PGCHv1Delegate(DelegateBase):
                               "filter" : public_filter_clause}
             creds = []
             lookup_public_return = \
-                ma.lookup_public_member_info(client_cert, creds, public_options)
+                ma.lookup_public_member_info(creds, public_options)
             if lookup_public_return['code'] != NO_ERROR:
                 return lookup_public_return
             public_info = lookup_public_return['value']
+            if not public_info or len(public_info.keys()) == 0 or \
+                    (urn and not public_info.has_key(urn)):
+                # no user by that urn or uuid
+                msg = ""
+                if urn:
+                    msg = "User requested not found: %s" % urn
+                else:
+                    msg = "User requested not found: %s" % uuid
+
+                chapi_info(PGCH_LOG_PREFIX, msg, {'user': user_email})
+                # Return an error with this message
+                return { 'code' :  ARGUMENT_ERROR , 'value' : {}, 'output' : msg }
+
             this_urn = public_info.keys()[0]
             public_info = public_info[this_urn]
 
@@ -340,7 +388,7 @@ class PGCHv1Delegate(DelegateBase):
             identifying_options = {'match' : match_clause,
                                    'filter' : identifying_filter_clause }
             lookup_identifying_return = \
-                ma.lookup_identifying_member_info(client_cert, creds,
+                ma.lookup_identifying_member_info(creds,
                                                   identifying_options)
             if lookup_identifying_return['code'] != NO_ERROR:
                 return lookup_identifying_return
@@ -355,27 +403,17 @@ class PGCHv1Delegate(DelegateBase):
             member_name = public_info['MEMBER_USERNAME']
 
             # Slices
-            sa = self._sa_handler._delegate
-            lookup_slices_return = sa.lookup_slices_for_member(client_cert,
+            sa = self._sa_handler
+            lookup_slices_return = sa.lookup_slices_for_member(
                                                                urn, [], {})
             if lookup_slices_return['code'] != NO_ERROR:
                 return lookup_slices_return
             slice_info = lookup_slices_return['value']
-            slices = [s['SLICE_URN'] for s in slice_info]
-
-            # Now determine which slices are active...
-            options = { 'match' : { 'SLICE_URN' : slices},
-                        'filter' : ['SLICE_EXPIRED'] }
-            expired_return = sa.lookup_slices(client_cert, [], options)
-            if expired_return['code'] != NO_ERROR:
-                return expired_return
-            slice_info = expired_return['value']
-            # slices = []
-            # for urn in slice_info.keys():
-            #     if not slice_info[urn]['SLICE_EXPIRED']:
-            #         slices.append(urn)
-            slices = [urn for urn in slice_info
-                      if not slice_info[urn]['SLICE_EXPIRED']]
+            slices = []
+            for s in slice_info:
+                if s['EXPIRED'] == True:
+                    continue
+                slices.append(s['SLICE_URN'])
 
             resolve = {'uid' : member_uuid,  # login(Emulab) ID of user \
                            'hrn' : member_hrn, \
@@ -395,14 +433,20 @@ class PGCHv1Delegate(DelegateBase):
             options = {'match' : match_clause, 'filter' : filter_clause}
             creds = []
             lookup_slices_return = \
-                self._sa_handler._delegate.lookup_slices(client_cert, creds, options)
+                self._sa_handler.lookup_slices(creds, options)
 
             if lookup_slices_return['code'] != NO_ERROR:
                 return lookup_slices_return
             slice_info_dict = lookup_slices_return['value']
             
             if len(slice_info_dict.keys()) == 0:
-                raise Exception("No slice found URN %s UUID %s" % (str(urn), str(uuid)))
+                msg = ""
+                if urn:
+                    msg = "No slice found URN %s" % str(urn)
+                else:
+                    msg = "No slice found UID %s" % str(uuid)
+                chapi_info(PGCH_LOG_PREFIX, msg, {'user': user_email})
+                return { 'code' : ARGUMENT_ERROR, 'value': {}, 'output': msg}
 
             slice_key = slice_info_dict.keys()[0]
             slice_info = slice_info_dict[slice_key]
@@ -415,10 +459,12 @@ class PGCHv1Delegate(DelegateBase):
             filter_clause = ['MEMBER_URN']
             options = {'match' : match_clause, 'filter' : filter_clause}
             lookup_member_return = \
-                self._ma_handler._delegate.lookup_public_member_info(client_cert, creds, options)
+                self._ma_handler.lookup_public_member_info(creds, options)
 
             if lookup_member_return['code'] != NO_ERROR:
                 return lookup_member_return
+            # If the slice owner listed is not in the DB this will
+            # give an error, but that is also a DB error
             creator_urn = lookup_member_return['value'].keys()[0]
 
             slice_cred_return = self.GetCredential(client_cert, \
@@ -447,17 +493,21 @@ class PGCHv1Delegate(DelegateBase):
         # cred is user cred, type must be Slice
         # returns slice cred
 
+        user_email = get_email_from_cert(client_cert)
         type = None
         if 'type' in args:
             type = args['type']
         if type and type.lower() != 'slice':
-            raise Exception("PGCH.Register called with non-slice type : %s" % type)
+            raise CHAPIv1ArgumentError("PGCH.Register called with non-slice type : %s" % type)
 
         cred = None
         creds = []
         if 'credential' in args:
             cred = args['credential']
-            creds =[cred]
+            creds = [cred]
+            # FIXME: SFA or geni_sfa?
+            if isinstance(cred, str) or isinstance(cred, unicode):
+                creds = [{'geni_type': 'SFA', 'geni_value': cred}] 
 
         hrn = None
         if 'hrn' in args: 
@@ -468,7 +518,7 @@ class PGCHv1Delegate(DelegateBase):
             urn = args['urn']
 
         if not urn and not hrn:
-            raise Exception("URN or HRN required for PGCH.Register")
+            raise CHAPIv1ArgumentError("URN or HRN required for PGCH.Register")
 
         if hrn and not urn:
             urn = sfa.util.xrn.hrn_to_urn(hrn, type)
@@ -495,14 +545,24 @@ class PGCHv1Delegate(DelegateBase):
                               'SLICE_NAME' : slice_name,
                               '_GENI_SLICE_EMAIL' : slice_email }}
 
-        sa = self._sa_handler._delegate
-        create_slice_return = sa.create_slice(client_cert, creds, options)
+        sa = self._sa_handler
+        create_slice_return = sa.create_slice(creds, options)
+
+        # FIXME: A bad project name results in an authorization error
+        # You'd also get that if you were an auditor in the project or
+        # not a member at all
+        if create_slice_return['code'] == AUTHORIZATION_ERROR:
+            # Maybe try to look up the project for me?
+            msg = "User not authorized to create slice %s in project %s. Check the project name." % (slice_name, project_name)
+            chapi_info(PGCH_LOG_PREFIX, msg, {'user': user_email})
+            return {'code': AUTHORIZATION_ERROR, 'value': "",
+                    'output': msg}
         if create_slice_return['code'] != NO_ERROR:
             return create_slice_return
 
         # Now get the slice credential so it can be returned
         slice_urn = create_slice_return['value']['SLICE_URN']
-        creds_return = sa.get_credentials(client_cert, slice_urn, creds, {})
+        creds_return = sa.get_credentials(slice_urn, creds, {})
         if creds_return['code'] != NO_ERROR:
             return creds_return
 
@@ -530,14 +590,16 @@ class PGCHv1Delegate(DelegateBase):
 
         # Renew via update_slice in SA
         credentials = [slice_credential]
+        if isinstance(slice_credential, str) or isinstance(slice_credential, unicode):
+            credentials = [{'geni_type': 'SFA', 'geni_value': slice_credential}] 
         options = {'fields' : {'SLICE_EXPIRATION' : expiration}}
-        sa = self._sa_handler._delegate
-        update_slice_return = sa.update_slice(client_cert, slice_urn,
+        sa = self._sa_handler
+        update_slice_return = sa.update_slice(slice_urn,
                                               credentials, options)
         if update_slice_return['code'] != NO_ERROR:
             return update_slice_return
 
-        creds_return = sa.get_credentials(client_cert, slice_urn,
+        creds_return = sa.get_credentials(slice_urn,
                                           credentials, {})
         if creds_return['code'] != NO_ERROR:
             return creds_return
@@ -562,6 +624,9 @@ class PGCHv1Delegate(DelegateBase):
 
         credential = args['credential']
         creds = [credential]
+        # FIXME: SFA or geni_sfa?
+        if isinstance(credential, str) or isinstance(credential, unicode):
+            creds = [{'geni_type': 'SFA', 'geni_value': credential}] 
 
         member_urn = get_urn_from_cert(client_cert)
 
@@ -569,12 +634,18 @@ class PGCHv1Delegate(DelegateBase):
                    "filter" : ['KEY_PUBLIC']
                    }
         ssh_keys_result = \
-            self._ma_handler._delegate.lookup_keys(client_cert, creds, options)
+            self._ma_handler.lookup_keys(creds, options)
 #        print "SSH_KEYS_RESULT = " + str(ssh_keys_result)
         if ssh_keys_result['code'] != NO_ERROR:
             return ssh_keys_result
 
         ssh_keys_value = ssh_keys_result['value']
+        if not ssh_keys_value or \
+                not ssh_keys_value.has_key(member_urn):
+            user_email = get_email_from_cert(client_cert)
+            msg = "GetKeys: No entry for member %s from lookup_keys" % member_urn
+            chapi_warn(PGCH_LOG_PREFIX, msg, {'user': user_email})
+            raise CHAPIv1ServerError(msg)
 
         keys = [{'type' : 'ssh' , 'key' : ssh_key['KEY_PUBLIC']} \
                     for ssh_key in ssh_keys_value[member_urn]]
