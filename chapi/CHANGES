@@ -15,6 +15,7 @@
  * Log a warn when renewing slice certificates (#148)
  * Allow canceling a project join request (#137)
  * Check errors like bad username in PGCH (#150)
+ * Send email on adding new project members (#33)
 
 == 1.0 ==
  * Initial release of new clearinghouse implementing the
