@@ -387,7 +387,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
             abac_raw_creds.append(slice_role_credential)
 
         sfa_creds = \
-            [{'geni_type' : 'geni_sfa', 'geni_version' : 1, 'geni_value' : cred} 
+            [{'geni_type' : 'geni_sfa', 'geni_version' : 3, 'geni_value' : cred} 
              for cred in sfa_raw_creds]
         abac_creds = \
             [{'geni_type' : 'geni_abac', 'geni_version' : 1, 'geni_value' : cred} 
@@ -499,7 +499,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         if ' ' in name:
             session.close()
             raise CHAPIv1ArgumentError('Slice name may not contain spaces.')
-        elif len(name) > 19:
+        elif len(name) > 19: # FIXME: Externalize this
             session.close()
             raise CHAPIv1ArgumentError('Slice name %s is too long - use at most 19 characters.' %name)
             
@@ -523,7 +523,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         # FIXME: Why check if slice.expiration is set. We are creating the slice here - how can it be set?
         if not slice.expiration:
             # FIXME: Externalize the #7 here
-            slice.expiration = slice.creation + relativedelta(days=7)
+            slice.expiration = slice.creation + relativedelta(days=SA.SLICE_DEFAULT_LIFE_DAYS)
         else:
             slice.expiration = dateutil.parser.parse(slice.expiration)
 
@@ -711,7 +711,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         # check that project name is valid
         if ' ' in name:
             raise CHAPIv1ArgumentError('Project name may not contain spaces.')
-        elif len(name) > 32:
+        elif len(name) > 32: # FIXME: Externalize this
             raise CHAPIv1ArgumentError('Project name %s is too long - use at most 32 characters.' %name)
             
         # FIXME: Put this in a constants file
@@ -1189,7 +1189,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                                           'slice')
         
 
-        # FIXME: Validate that new slice lead is not a project auditor
+        # FIXME: Validate that new slice lead is not a project auditor (#156)
 
         new_slice_lead = self.get_slice_lead(session,slice_id)
 

@@ -101,7 +101,7 @@ def derive_username(email_address):
         username = username[0:8]
     # remove unacceptable characters
     username = re.sub('![a-z0-9_]', '', username)
-    # remove leading non-alphabetic leading chars
+    # remove leading non-alphabetic chars
     username = re.sub('^[^a-z]*', '', username)
 
     if not username:
@@ -183,6 +183,7 @@ class MAv1Implementation(MAv1DelegateBase):
             for f in os.listdir(trusted_root) if not f.startswith('CAT')]
 
         self.logging_service = pm.getService('loggingv1handler')
+        # FIXME: Parametrize path to these certs
         # init for ClientAuth
         self.kmcert = '/usr/share/geni-ch/km/km-cert.pem'
         self.kmkey = '/usr/share/geni-ch/km/km-key.pem'
@@ -527,7 +528,7 @@ class MAv1Implementation(MAv1DelegateBase):
 
         gid = sfa_gid.GID(string=cred_cert)
         #chapi_debug(MA_LOG_PREFIX, 'GUC: gid = '+str(gid))
-        expires = datetime.utcnow() + relativedelta(years=1)
+        expires = datetime.utcnow() + relativedelta(years=MA.USER_CRED_LIFE_YEARS)
         cred = cred_util.create_credential(gid, gid, expires, "user", \
                   self.key, self.cert, self.trusted_roots)
         #chapi_debug(MA_LOG_PREFIX, 'GUC: cred = '+cred.save_to_string())
@@ -1008,9 +1009,6 @@ class MAv1Implementation(MAv1DelegateBase):
             subject = "You are now a GENI Operator" 
             msgbody += "You are now a GENI Operator on "
             msgbody += self.config.get("chrm.authority") + ".\n\n"
-        
-        #  msgbody .= "Please visit https://" . $_SERVER['SERVER_NAME'];
-        #  msgbody .= "/secure/home.php for more information, or to get started.\n\n";
         
         msgbody += "Sincerely,\n"
         msgbody += "GENI Clearinghouse operations\n"
