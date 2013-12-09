@@ -21,9 +21,10 @@
 # IN THE WORK.
 #----------------------------------------------------------------------
 
-from datetime import datetime
+from datetime import datetime, timedelta
 from dateutil.relativedelta import relativedelta
 import dateutil.parser
+import dateutil.tz
 import logging
 import os
 import re
@@ -810,6 +811,30 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
 
         # FIXME: Are there any rules on TZ for project expiration?
 
+        # Say what was updated in log message
+        change = ""
+        row = q.one()
+        if options['fields'].has_key('PROJECT_EXPIRATION'):
+            newval = options['fields']['PROJECT_EXPIRATION']
+            if (newval is None and row.expiration is not None) or \
+                    (newval is not None and row.expiration is None):
+                change = " expiration"
+            elif newval is not None and row.expiration is not None:
+                newtime = dateutil.parser.parse(newval)
+                if newtime.tzinfo:
+                    tz_utc = dateutil.tz.tzutc()
+                    newtime = newtime.astimezone(tz_utc)
+                    newtime = newtime.replace(tzinfo=None)
+                curtime = row.expiration
+                if newtime - curtime > timedelta.resolution:
+                    change = " expiration"
+        if options['fields'].has_key('PROJECT_DESCRIPTION') and \
+                options['fields']['PROJECT_DESCRIPTION'] != row.project_purpose:
+            if change != "":
+                change = change + ", " + "description"
+            else:
+                change = " description"
+
         for field, value in options['fields'].iteritems():
             updates[SA.project_field_mapping[field]] = value
         q = q.update(updates)
@@ -819,11 +844,11 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         # Log the update project
         client_uuid = get_uuid_from_cert(client_cert)
         attribs = {"PROJECT" : project_uuid}
-        # FIXME: Say what was updated
-        self.logging_service.log_event("Updated project " + name, 
+
+        self.logging_service.log_event("Updated project " + name + change, 
                                        attribs, client_uuid)
 
-        result =self._successReturn(True)
+        result = self._successReturn(True)
 
         chapi_log_result(SA_LOG_PREFIX, method, result, {'user': user_email})
         return result
@@ -1837,7 +1862,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                 {"PROJECT_MEMBER" : member_urn, 
                  "PROJECT_ROLE" : role_name}
                 ]}
-        self.modify_project_membership(client_cert, project_urn, credentials, options)
+        result = self.modify_project_membership(client_cert, project_urn, credentials, options)
 
         # Delete the invitation:
         session.delete(invite_info)
@@ -1845,7 +1870,6 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         session.commit()
         session.close()
 
-        result = None
         chapi_log_result(SA_LOG_PREFIX, method, result, {'user': user_email})
         return self._successReturn(result)
 
