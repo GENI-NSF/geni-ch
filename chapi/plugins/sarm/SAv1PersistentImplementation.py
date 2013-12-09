@@ -454,10 +454,9 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
 
         name = options["fields"]["SLICE_NAME"]
 
-        # FIXME: In old SA we made the slice email be null because FOAM didn't like
-        # the fake email addresses
-
         # Create email if not provided
+        # Do not set a fake email for now, since that breaks FOAM
+        # FIXME: Support a real slice email address
 #        if not '_GENI_SLICE_EMAIL' in options['fields'] or \
 #           not options['fields']['_GENI_SLICE_EMAIL']:
 #            options['fields']['_GENI_SLICE_EMAIL'] = \
@@ -518,8 +517,6 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                 session.close()
                 raise CHAPIv1DuplicateError('Already exists a slice named ' +
                                             name + ' in project ' + project_name)
-
-        # FIXME: Real slice email
 
         slice.creation = datetime.utcnow()
         # FIXME: Why check if slice.expiration is set. We are creating the slice here - how can it be set?
@@ -1203,6 +1200,10 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                 all_urns.append(member_to_change[member_str])
 #        chapi_info('SA', "ALL_URNS = %s" % all_urns)
 
+        # Also get the caller's pretty name
+        caller_urn = get_urn_from_cert(client_cert)
+        all_urns.append(caller_urn)
+
         credentials = []
         lookup_identifying_options = {\
             "match" : {"MEMBER_URN" : all_urns}, 
@@ -1308,20 +1309,39 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
 
         # Log all adds
         if 'members_to_add' in options:
+            caller_name = urn_to_display_name[caller_urn]
             members_to_add = options['members_to_add']
             for member_to_add in members_to_add:
                 member_urn = member_to_add[member_str]
                 member_name = urn_to_display_name[member_urn]
                 member_role = member_to_add[role_str]
                 attribs["MEMBER"] = urn_to_id[member_urn]
-                self.logging_service.log_event(
-                    "Added member %s in role %s to %s %s" % \
-                        (member_name, member_role, text_str, label), 
+                if caller_urn == member_urn:
+                    self.logging_service.log_event(
+                        "%s accepted an invitation to join %s %s in role %s" % \
+                            (member_name, text_str, label, member_role), 
                         attribs, client_uuid)
-                chapi_audit_and_log(SA_LOG_PREFIX, 
-                    "Added member %s in role %s to %s %s" % \
-                        (member_name, member_role, text_str, label2), logging.INFO, {'user': user_email})
-                # FIXME: Email admins of new project members
+                    chapi_audit_and_log(SA_LOG_PREFIX, 
+                                        "%s accepted an invitation to join %s %s in role %s" % \
+                                            (member_name, text_str, label2, member_role), logging.INFO, {'user': user_email})
+                else:
+                    self.logging_service.log_event(
+                        "%s Added member %s in role %s to %s %s" % \
+                            (caller_name, member_name, member_role, text_str, label), 
+                        attribs, client_uuid)
+                    chapi_audit_and_log(SA_LOG_PREFIX, 
+                                        "%s Added member %s in role %s to %s %s" % \
+                                            (caller_name, member_name, member_role, text_str, label2), logging.INFO, {'user': user_email})
+                # Email system admins about new project members
+                if text_str == 'project':
+                    subject = "New GENI CH project member added"
+                    if caller_urn == member_urn:
+                        msgbody = "%s accepted an invitation to join project %s in role %s on CH %s" % \
+                            (member_name, member_role, label, self.config.get("chrm.authority"))
+                    else:
+                        msgbody = "%s added member %s in role %s to project %s on CH %s" % \
+                            (caller_name, member_name, member_role, label, self.config.get("chrm.authority"))
+                    send_email(self.portal_admin_email, self.ch_from_email, self.portal_admin_email, subject, msgbody)
 
         # Log all changes
         if 'members_to_change' in options:
@@ -1800,7 +1820,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         q = q.filter(ProjectInvitation.invite_id == invite_id)
         rows = q.all()
 
-        # If no such inviation, return error
+        # If no such invitation, return error
         if len(rows) < 1:
             raise CHAPIv1ArgumentError("No invitation with given invite_id %s" % invite_id)
         invite_info = rows[0]
