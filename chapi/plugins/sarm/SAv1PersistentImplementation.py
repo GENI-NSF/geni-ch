@@ -1318,11 +1318,11 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                 attribs["MEMBER"] = urn_to_id[member_urn]
                 if caller_urn == member_urn:
                     self.logging_service.log_event(
-                        "%s accepted invitation to join %s %s in role %s" % \
+                        "%s accepted an invitation to join %s %s in role %s" % \
                             (member_name, text_str, label, member_role), 
                         attribs, client_uuid)
                     chapi_audit_and_log(SA_LOG_PREFIX, 
-                                        "%s accepted invitation to join %s %s in role %s" % \
+                                        "%s accepted an invitation to join %s %s in role %s" % \
                                             (member_name, text_str, label2, member_role), logging.INFO, {'user': user_email})
                 else:
                     self.logging_service.log_event(
@@ -1336,7 +1336,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                 if text_str == 'project':
                     subject = "New GENI CH project member added"
                     if caller_urn == member_urn:
-                        msgbody = "%s accepted invitation to join project %s in role %s on CH %s" % \
+                        msgbody = "%s accepted an invitation to join project %s in role %s on CH %s" % \
                             (member_name, member_role, label, self.config.get("chrm.authority"))
                     else:
                         msgbody = "%s added member %s in role %s to project %s on CH %s" % \
