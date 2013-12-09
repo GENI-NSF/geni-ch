@@ -22,6 +22,9 @@
  * Do not return empty user cred (#140)
  * Use constants for a couple numbers (#57)
  * Avoid sending mail with no to address (#109)
+ * Fix guard on add and remove member attributes to allow authorities and self.
+   Fix add and remove member attribute functions to check self-asserted attribute.
+   Fix member attribute utilities to handle non standard attributes. (#145)
 
 == 1.0 ==
  * Initial release of new clearinghouse implementing the

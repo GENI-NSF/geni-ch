@@ -239,7 +239,10 @@ class MAv1Implementation(MAv1DelegateBase):
     # find the value of an attribute for a given user
     def get_attr_for_uid(self, session, attr, uid):
         q = session.query(MemberAttribute.value)
-        q = q.filter(MemberAttribute.name == MA.field_mapping[attr])
+        if MA.field_mapping.has_key(attr):
+            q = q.filter(MemberAttribute.name == MA.field_mapping[attr])
+        else:
+            q = q.filter(MemberAttribute.name == attr)
         q = q.filter(MemberAttribute.member_id == uid)
         rows = q.all()
         return [row.value for row in rows]
@@ -399,12 +402,19 @@ class MAv1Implementation(MAv1DelegateBase):
     def update_attr(self, session, attr, value, uid, self_asserted):
         if len(self.get_attr_for_uid(session, attr, uid)) > 0:
             q = session.query(MemberAttribute)
-            q = q.filter(MemberAttribute.name == MA.field_mapping[attr])
+            if MA.field_mapping.has_key(attr):
+                q = q.filter(MemberAttribute.name == MA.field_mapping[attr])
+            else:
+                q = q.filter(MemberAttribute.name == attr)
             q = q.filter(MemberAttribute.member_id == uid)
             q.update({"value": value})
         else:
-            obj = MemberAttribute(MA.field_mapping[attr], value, \
-                                  uid, self_asserted)
+            if MA.field_mapping.has_key(attr):
+                obj = MemberAttribute(MA.field_mapping[attr], value, \
+                                          uid, self_asserted)
+            else:
+                obj = MemberAttribute(attr, value, \
+                                          uid, self_asserted)
             session.add(obj)
         session.commit()
 
@@ -412,7 +422,10 @@ class MAv1Implementation(MAv1DelegateBase):
     def delete_attr(self, session, attr, uid):
         if len(self.get_attr_for_uid(session, attr, uid)) > 0:
             q = session.query(MemberAttribute)
-            q = q.filter(MemberAttribute.name == MA.field_mapping[attr])
+            if MA.field_mapping.has_key(attr):
+                q = q.filter(MemberAttribute.name == MA.field_mapping[attr])
+            else:
+                q = q.filter(MemberAttribute.name == attr)
             q = q.filter(MemberAttribute.member_id == uid)
             q.delete()
         session.commit()
@@ -1149,6 +1162,7 @@ class MAv1Implementation(MAv1DelegateBase):
                 'value' : attr_value,
                 'self_assert' : attr_self_assert}
         user_email = get_email_from_cert(cert)
+        caller_uid = get_uuid_from_cert(cert)
         chapi_log_invocation(MA_LOG_PREFIX, method, [], {}, args, {'user': user_email})
 
 #        chapi_audit(MA_LOG_PREFIX, "Called " + method+' '+member_urn+' '+attr_name+' = '+attr_value)
@@ -1163,6 +1177,19 @@ class MAv1Implementation(MAv1DelegateBase):
             session.close()
             raise CHAPIv1ArgumentError('No member with URN ' + member_urn)
         member_uid = uids[0]
+
+        # If the caller is the member whose attribute is being acted
+        # on then mark this self_asserted regardless of what they said
+        if attr_self_assert == 'f' and member_uid == caller_uid:
+            # Unless they are an operator
+            q2 = session.query(MemberAttribute.value).\
+                filter(MemberAttribute.member_id == member_uid).\
+                filter(MemberAttribute.name == "OPERATOR").\
+                filter(MemberAttribute.value == "true")
+            is_op = q2.count() > 0
+            if not is_op:
+                chapi_warn(MA_LOG_PREFIX, "Caller tried to add own attribute %s and say it was not self asserted" % attr_name, {'user': user_email})
+                attr_self_assert = 't'
 
         # find the old value
         q = session.query(MemberAttribute.value).\
@@ -1198,6 +1225,7 @@ class MAv1Implementation(MAv1DelegateBase):
         args = {'member_urn' : member_urn,
                 'name' : attr_name}
         user_email = get_email_from_cert(cert)
+        caller_urn = get_urn_from_cert(cert)
         chapi_log_invocation(MA_LOG_PREFIX, method, [], {}, args, {'user': user_email})
 #        chapi_audit(MA_LOG_PREFIX, "Called " + method+' '+member_urn+' '+attr_name)
 
@@ -1213,7 +1241,7 @@ class MAv1Implementation(MAv1DelegateBase):
         member_uid = uids[0]
 
         # find the old value
-        q = session.query(MemberAttribute.value).\
+        q = session.query(MemberAttribute.value, MemberAttribute.self_asserted).\
             filter(MemberAttribute.member_id == member_uid).\
             filter(MemberAttribute.name == attr_name)
         rows = q.all()
@@ -1223,20 +1251,40 @@ class MAv1Implementation(MAv1DelegateBase):
         chapi_debug(MA_LOG_PREFIX, 'RMA.ROWS = %s' % rows, {'user': user_email})
 
         old_value = None
+        do_remove = True
         if was_defined:
             old_value = rows[0][0]
-            self.delete_attr(session, attr_name, member_uid)
+            was_self = rows[0][1]
+            if member_urn == caller_urn:
+                if not was_self:
+                    # If the person is an operator, fine. Otherwise,
+                    # bail
+                    q2 = session.query(MemberAttribute.value).\
+                        filter(MemberAttribute.member_id == member_uid).\
+                        filter(MemberAttribute.name == "OPERATOR").\
+                        filter(MemberAttribute.value == "true")
+                    is_op = q2.count() > 0
+                    if not is_op:
+                        chapi_info(MA_LOG_PREFIX, "User %s tried to remove own non self-asserted attribute %s" % (member_urn,
+                                                                                                                  attr_name), {'user': user_email})
+                        do_remove = False
+            if do_remove:
+                self.delete_attr(session, attr_name, member_uid)
 
         session.close()
 
-        if was_defined:
+        if was_defined and do_remove:
             # log_event
             msg = "Removed member %s attribute %s" %  (self._get_displayname_for_member_urn(member_urn), attr_name)
             attribs = {"MEMBER" : member_urn}
             self.logging_service.log_event(msg, attribs, member_uid)
             chapi_audit_and_log(MA_LOG_PREFIX, msg, logging.INFO, {'user': user_email})
 
-        result = self._successReturn(old_value)
+        if do_remove:
+            result = self._successReturn(old_value)
+        else:
+            result = {'code': AUTHORIZATION_ERROR, 'value': old_value,
+                      'output': "Cannot remove own non self-asserted attribute"}
         chapi_log_result(MA_LOG_PREFIX, method, result, {'user': user_email})
         return result
 
