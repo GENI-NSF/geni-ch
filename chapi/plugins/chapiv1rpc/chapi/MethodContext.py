@@ -23,8 +23,11 @@
 
 from tools.chapi_log import *
 from tools.cert_utils import *
+from tools.guard_utils import *
+from tools.geni_constants import *
 from Exceptions import *
 import amsoil.core.pluginmanager as pm
+import os
 import sys
 import traceback
 
@@ -105,6 +108,25 @@ class MethodContext:
             self._options = new_options
 
             try:
+
+                # If we're in maintenance mode, only operators can use CH
+                config = pm.getService('config')
+                maintenance_outage_location = \
+                    config.get('geni.maintenance_outage_location')
+                outage_mode = os.path.exists(maintenance_outage_location)
+                if outage_mode:
+                    if self._session and self._client_cert:
+                        user_urn = get_urn_from_cert(self._client_cert)
+                        is_operator = \
+                            lookup_operator_privilege(user_urn, 
+                                                      self._session)
+                        if not is_operator:
+                            raise CHAPIv1AuthorizationError(
+                                "Cannot access GENI Clearinghouse " + 
+                                "during maintenance outage")
+            
+
+
                 self._authority._guard.validate_call(self._client_cert, 
                                                      self._method_name,
                                                      self._credentials,

@@ -154,6 +154,11 @@ default_parameters = [
         NAME_KEY: "flask.debug",
         VALUE_KEY: True,
         DESC_KEY: "Write logging messages for the Flask RPC server."
+    },
+    {
+        NAME_KEY: "geni.maintenance_outage_location",
+        VALUE_KEY: "/etc/geni-ch/geni_maintenance_outage.msg",
+        DESC_KEY: "Location of the GENI 'maintenance outage' message"
     }
 ]
 
