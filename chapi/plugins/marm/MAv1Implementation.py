@@ -419,7 +419,7 @@ class MAv1Implementation(MAv1DelegateBase):
         session.commit()
 
     # delete attribute row if it is there
-    def delete_attr(self, session, attr, uid):
+    def delete_attr(self, session, attr, uid, value=None):
         if len(self.get_attr_for_uid(session, attr, uid)) > 0:
             q = session.query(MemberAttribute)
             if MA.field_mapping.has_key(attr):
@@ -427,6 +427,8 @@ class MAv1Implementation(MAv1DelegateBase):
             else:
                 q = q.filter(MemberAttribute.name == attr)
             q = q.filter(MemberAttribute.member_id == uid)
+            if value is not None:
+                q = q.filter(MemberAttribute.value == value)
             q.delete()
         session.commit()
 
@@ -1220,7 +1222,8 @@ class MAv1Implementation(MAv1DelegateBase):
         chapi_log_result(MA_LOG_PREFIX, method, result, {'user': user_email})
         return result
 
-    def remove_member_attribute(self, cert, member_urn, attr_name, credentials, options):
+    def remove_member_attribute(self, cert, member_urn, attr_name,
+                                credentials, options, attr_value=None):
         method = 'remove_member_attribute'
         args = {'member_urn' : member_urn,
                 'name' : attr_name}
@@ -1244,6 +1247,8 @@ class MAv1Implementation(MAv1DelegateBase):
         q = session.query(MemberAttribute.value, MemberAttribute.self_asserted).\
             filter(MemberAttribute.member_id == member_uid).\
             filter(MemberAttribute.name == attr_name)
+        if attr_value is not None:
+            q = q.filter(MemberAttribute.value == attr_value)
         rows = q.all()
 
         was_defined = (len(rows)>0)
@@ -1269,13 +1274,15 @@ class MAv1Implementation(MAv1DelegateBase):
                                                                                                                   attr_name), {'user': user_email})
                         do_remove = False
             if do_remove:
-                self.delete_attr(session, attr_name, member_uid)
+                self.delete_attr(session, attr_name, member_uid, attr_value)
 
         session.close()
 
         if was_defined and do_remove:
             # log_event
             msg = "Removed member %s attribute %s" %  (self._get_displayname_for_member_urn(member_urn), attr_name)
+            if attr_value is not None:
+                msg = msg + "=%s" % attr_value
             attribs = {"MEMBER" : member_urn}
             self.logging_service.log_event(msg, attribs, member_uid)
             chapi_audit_and_log(MA_LOG_PREFIX, msg, logging.INFO, {'user': user_email})
