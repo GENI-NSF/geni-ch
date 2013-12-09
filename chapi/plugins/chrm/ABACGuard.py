@@ -102,6 +102,12 @@ class SubjectInvocationCheck(InvocationCheck):
             if subjects and len(subjects) > 1:
                 raise CHAPIv1ArgumentError("Can't provide mixture of subject types for call %s: %s" % \
                                                (method, subjects.keys()))
+            if len(subjects) > 0:
+                subject_type = subjects.keys()[0]
+                subjects_of_type = subjects[subject_type]
+                ensure_valid_urns(subject_type, subjects_of_type, session)
+
+        chapi_info('ABACGuard', 'SUBJECTS = %s' % subjects)
         return subjects
 
     def load_policies(self, abac_manager, subject_name):

@@ -90,6 +90,65 @@ def lookup_project_names_for_user(user_urn, session):
     cache[user_urn] = project_names
     return project_names
 
+# Check that a list of UID's are all in the cache, otherwise raise ArgumentException
+def validate_uid_list(uids, cache, label):
+    bad_uids = []
+    good_urns = []
+    for uid in uids:
+        if uid in cache:
+            good_urns.append(cache[uid])
+        else:
+            bad_uids.append(uid)
+    if len(bad_uids) > 0:
+        raise CHAPIv1ArgumentError("Unknown %s uids [%s] " % (label, bad_uids))
+    return good_urns
+
+# Look at a list of URN's of a given type and determine that they are all valid
+def ensure_valid_urns(urn_type, urns, session):
+    if not isinstance(urns, list): urns = [urns]
+    db = pm.getService('chdbengine')
+    if urn_type == 'PROJECT_URN':
+        authority = pm.getService('config').get("chrm.authority")
+        cache = cache_get('project_urns')
+        not_found_urns = [urn for urn in urns if urn not in cache]
+        not_found_names = [not_found_urn.split('+')[3] for not_found_urn in not_found_urns]
+        q = session.query(db.PROJECT_TABLE.c.project_name)
+        q = q.filter(db.PROJECT_TABLE.c.project_name.in_(not_found_names))
+        rows = q.all()
+        for row in rows:
+            project_name = row.project_name
+            project_urn = to_project_urn(authority, project_name)
+            cache[project_urn] = True
+        bad_urns = [urn for urn in not_found_urns if urn not in cache]
+        if len(bad_urns) > 0: 
+            raise CHAPIv1ArgumentError('Unknown slice urns: [%s]' % bad_urns)
+    elif urn_type == 'SLICE_URN':
+        cache = cache_get('slice_urns')
+        not_found_urns = [urn for urn in urns if urn not in cache]
+        q = session.query(db.SLICE_TABLE.c.slice_urn)
+        q = q.filter(db.SLICE_TABLE.c.slice_urn.in_(not_found_urns))
+        rows = q.all()
+        for row in rows:
+            cache[row.slice_urn] = True
+        bad_urns = [urn for urn in not_found_urns if urn not in cache]
+        if len(bad_urns) > 0: 
+            raise CHAPIv1ArgumentError('Unknown slice urns: [%s]' % bad_urns)
+    elif urn_type == 'MEMBER_URN':
+        cache = cache_get('member_urns')
+        not_found_urns = [urn for urn in urns if urn not in cache]
+        q = session.query(db.MEMBER_ATTRIBUTE_TABLE.c.value)
+        q = q.filter(db.MEMBER_ATTRIBUTE_TABLE.c.name == 'urn')
+        q = q.filter(db.MEMBER_ATTRIBUTE_TABLE.c.value.in_(not_found_urns))
+        rows = q.all()
+        for row in rows:
+            cache[row.value] = True
+        bad_urns = [urn for urn in not_found_urns if urn not in cache]
+        chapi_info('GU', 'BAD %s NFU %s URNS %s' % (bad_urns, not_found_urns, urns))
+        if len(bad_urns) > 0: 
+            raise CHAPIv1ArgumentError('Unknown member urns: [%s]' % bad_urns)
+    else:
+        pass
+
 # Take a uid or list of uids, make sure they're all in the cache
 # and return a urn or list of urns
 def convert_slice_uid_to_urn(slice_uid, session):
@@ -116,9 +175,9 @@ def convert_slice_uid_to_urn(slice_uid, session):
         if slice_uid in cache:
             return cache[slice_uid]
         else:
-            return None
+            raise CHAPIvArgumentError('Unnown slice uid: %s' % slice_uid)
     else:
-        return [cache[id] for id in slice_uids if id in cache]
+        return validate_uid_list(slice_uids, cache, 'slice')
 
 # Take a uid or list of uids, make sure they're all in the cache
 # and return a urn or list of urns
@@ -152,10 +211,9 @@ def convert_project_uid_to_urn(project_uid, session):
         if project_uid in cache:
             return cache[project_uid]
         else:
-            return None
+            raise CHAPIv1ArgumentError("Unknown project uid: %s " % project_uid)
     else:
-        return [cache[id] for id in project_uids if id in cache]
-
+        return validate_uid_list(project_uids, cache, 'project')
 
 # Take a uid or list of uids, make sure they're all in the cache
 # and return a urn or list of urns
@@ -182,9 +240,9 @@ def convert_member_uid_to_urn(member_uid, session):
         if member_uid in cache:
             return cache[member_uid]
         else:
-            return None
+            raise CHAPIv1ArgumentError('Unknown member uid: %s ' % member_uid)
     else:
-        return [cache[id] for id in member_uids if id in cache]
+        return validate_uid_list(member_uids, cache, 'member')
 
 # Take a uid or list of uids, make sure they're all in the cache
 # and return an email or list of emails
@@ -211,10 +269,9 @@ def convert_member_uid_to_email(member_uid, session):
         if member_uid in cache:
             return cache[member_uid]
         else:
-            return None
+            raise CHAPIv1ArgumentError('Unknown member uid: %s' % member_uid)
     else:
-        return [cache[id] for id in member_uids if id in cache]
-
+        return validate_uid_list(member_uids, cache, 'member')
 
 # Take an email or list of emails, make sure they're all in the cache
 # and return a uid or list of uids
@@ -241,9 +298,9 @@ def convert_member_email_to_uid(member_email, session):
         if member_email in cache:
             return cache[member_email]
         else:
-            return None
+            raise CHAPIv1ArgumentError('Unknown member email: %s ' % member_email)
     else:
-        return [cache[em] for em in member_emails if em in cache]
+        return validate_uid_list(member_emails, cache, 'member email')
 
 # Lookup whether given user (by urn) has 'operator' 
 # as an attribute in ma_member_attribute
