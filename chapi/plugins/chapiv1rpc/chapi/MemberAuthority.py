@@ -493,7 +493,7 @@ class MAv1Handler(HandlerBase):
 
     def remove_member_attribute(self, 
                                 member_urn, name,
-                                credentials, options):
+                                credentials, options, value=None):
         """Remove attribute to member"""
         client_cert = self.requestCertificate()
         method = 'remove_member_attribute'
@@ -507,7 +507,8 @@ class MAv1Handler(HandlerBase):
                                       options,
                                       {'member_urn' : member_urn})
             results = self._delegate.remove_member_attribute(client_cert, member_urn, name,
-                                                             credentials, options)
+                                                             credentials,
+                                                             options, value)
             if results['code'] == NO_ERROR:
                 results_value = results['value']
                 new_results_value = self._guard.protect_results(client_cert, method, credentials, results_value)
@@ -607,5 +608,5 @@ class MAv1DelegateBase(DelegateBase):
         raise CHAPIv1NotImplementedError('')
 
     def remove_member_attribute(self, client_cert, member_urn, att_name, \
-                                    credentials, options):
+                                    credentials, options, att_value=None):
         raise CHAPIv1NotImplementedError('')
