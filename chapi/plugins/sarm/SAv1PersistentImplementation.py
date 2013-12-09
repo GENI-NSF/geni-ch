@@ -21,9 +21,10 @@
 # IN THE WORK.
 #----------------------------------------------------------------------
 
-from datetime import datetime
+from datetime import datetime, timedelta
 from dateutil.relativedelta import relativedelta
 import dateutil.parser
+import dateutil.tz
 import logging
 import os
 import re
@@ -341,7 +342,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
             abac_raw_creds.append(slice_role_credential)
 
         sfa_creds = \
-            [{'geni_type' : 'geni_sfa', 'geni_version' : 1, 'geni_value' : cred} 
+            [{'geni_type' : 'geni_sfa', 'geni_version' : 3, 'geni_value' : cred} 
              for cred in sfa_raw_creds]
         abac_creds = \
             [{'geni_type' : 'geni_abac', 'geni_version' : 1, 'geni_value' : cred} 
@@ -441,7 +442,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         # Check that slice name is valid
         if ' ' in name:
             raise CHAPIv1ArgumentError('Slice name may not contain spaces.')
-        elif len(name) > 19:
+        elif len(name) > 19: # FIXME: Externalize this
             raise CHAPIv1ArgumentError('Slice name %s is too long - use at most 19 characters.' %name)
             
         # FIXME: Externalize this
@@ -462,7 +463,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         # FIXME: Why check if slice.expiration is set. We are creating the slice here - how can it be set?
         if not slice.expiration:
             # FIXME: Externalize the #7 here
-            slice.expiration = slice.creation + relativedelta(days=7)
+            slice.expiration = slice.creation + relativedelta(days=SA.SLICE_DEFAULT_LIFE_DAYS)
         else:
             slice.expiration = dateutil.parser.parse(slice.expiration)
 
@@ -633,7 +634,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         # check that project name is valid
         if ' ' in name:
             raise CHAPIv1ArgumentError('Project name may not contain spaces.')
-        elif len(name) > 32:
+        elif len(name) > 32: # FIXME: Externalize this
             raise CHAPIv1ArgumentError('Project name %s is too long - use at most 32 characters.' %name)
             
         # FIXME: Put this in a constants file
@@ -723,6 +724,30 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
 
         # FIXME: Are there any rules on TZ for project expiration?
 
+        # Say what was updated in log message
+        change = ""
+        row = q.one()
+        if options['fields'].has_key('PROJECT_EXPIRATION'):
+            newval = options['fields']['PROJECT_EXPIRATION']
+            if (newval is None and row.expiration is not None) or \
+                    (newval is not None and row.expiration is None):
+                change = " expiration"
+            elif newval is not None and row.expiration is not None:
+                newtime = dateutil.parser.parse(newval)
+                if newtime.tzinfo:
+                    tz_utc = dateutil.tz.tzutc()
+                    newtime = newtime.astimezone(tz_utc)
+                    newtime = newtime.replace(tzinfo=None)
+                curtime = row.expiration
+                if newtime - curtime > timedelta.resolution:
+                    change = " expiration"
+        if options['fields'].has_key('PROJECT_DESCRIPTION') and \
+                options['fields']['PROJECT_DESCRIPTION'] != row.project_purpose:
+            if change != "":
+                change = change + ", " + "description"
+            else:
+                change = " description"
+
         for field, value in options['fields'].iteritems():
             updates[SA.project_field_mapping[field]] = value
         q = q.update(updates)
@@ -730,11 +755,11 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         # Log the update project
         client_uuid = get_uuid_from_cert(client_cert)
         attribs = {"PROJECT" : project_uuid}
-        # FIXME: Say what was updated
-        self.logging_service.log_event("Updated project " + name, 
+
+        self.logging_service.log_event("Updated project " + name + change, 
                                        attribs, client_uuid)
 
-        result =self._successReturn(True)
+        result = self._successReturn(True)
 
         return result
 
@@ -1042,7 +1067,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                                           'slice')
         
 
-        # FIXME: Validate that new slice lead is not a project auditor
+        # FIXME: Validate that new slice lead is not a project auditor (#156)
 
         new_slice_lead = self.get_slice_lead(session,slice_id)
 
@@ -1575,12 +1600,10 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                 {"PROJECT_MEMBER" : member_urn, 
                  "PROJECT_ROLE" : role_name}
                 ]}
-        self.modify_project_membership(client_cert, project_urn, credentials, options, session)
+        result = self.modify_project_membership(client_cert, project_urn, credentials, options, session)
 
         # Delete the invitation:
         session.delete(invite_info)
-        
-        result = None
 
         return self._successReturn(result)
 

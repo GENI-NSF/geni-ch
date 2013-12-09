@@ -186,12 +186,14 @@ class PGCHv1Delegate(DelegateBase):
             # Extract the SFA user credential from the returned set
             user_credential = None
             for cred in creds['value']:
+                if cred is None:
+                    continue
                 if cred['geni_type'] == 'geni_sfa':
                     user_credential = cred['geni_value']
                     break
 
             if user_credential is None:
-                msg = "User %s got no user credential for cert %s" % (client_urn, client_cert[:250])
+                msg = "User %s got no user credential - try re-downloading your certificate. Used cert: '%s...'" % (client_urn, client_cert[:250])
                 chapi_warn(PGCH_LOG_PREFIX, msg,
                           {'user': user_email})
                 raise CHAPIv1ServerError(msg)

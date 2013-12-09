@@ -170,3 +170,7 @@ allowed_create_key_fields = [
     "_GENI_KEY_FILENAME", "KEY_MEMBER"
 ]
 updatable_key_fields = ["KEY_DESCRIPTION", "_GENI_KEY_FILENAME"]
+
+USER_CRED_LIFE_YEARS = 1 # See MA.get_user_credential
+# FIXME: username regex
+

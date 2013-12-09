@@ -25,13 +25,22 @@
 
 import smtplib
 from email.mime.text import MIMEText
+from chapi_log import *
 
 def send_email(toaddr,fromaddr,replyaddr,subject,msgbody,ccaddr=None):
+    if msgbody is None:
+        msgbody = ""
     msg = MIMEText(msgbody)
+    if subject is None:
+        subject = ""
     msg['Subject'] = subject
+    if not toaddr or toaddr.strip() == "":
+        chapi_warn("SENDMAIL", "No to address for message with subject '%s'" % subject)
+        return
     msg['To'] = toaddr
-    msg['Reply-To'] = replyaddr
-    if ccaddr != None:
+    if replyaddr and replyaddr.strip() != "":
+        msg['Reply-To'] = replyaddr
+    if ccaddr != None and ccaddr.strip() != "":
         msg['Cc'] = ccaddr
         toaddrs = [toaddr,ccaddr] 
     else:

@@ -101,7 +101,7 @@ def derive_username(email_address, session):
         username = username[0:8]
     # remove unacceptable characters
     username = re.sub('![a-z0-9_]', '', username)
-    # remove leading non-alphabetic leading chars
+    # remove leading non-alphabetic chars
     username = re.sub('^[^a-z]*', '', username)
 
     if not username:
@@ -180,6 +180,7 @@ class MAv1Implementation(MAv1DelegateBase):
             for f in os.listdir(trusted_root) if not f.startswith('CAT')]
 
         self.logging_service = pm.getService('loggingv1handler')
+        # FIXME: Parametrize path to these certs
         # init for ClientAuth
         self.kmcert = '/usr/share/geni-ch/km/km-cert.pem'
         self.kmkey = '/usr/share/geni-ch/km/km-key.pem'
@@ -433,6 +434,7 @@ class MAv1Implementation(MAv1DelegateBase):
             certs = self.get_val_for_uid(session, InsideKey, "certificate", 
                                          uid)
         if not certs:
+            chapi_warn(MA_LOG_PREFIX, "Get Credentials found no cert for uid %s" % uid, {'user': get_email_from_cert(client_cert)})
             return creds
 
         user_cert = certs[0]
@@ -447,8 +449,8 @@ class MAv1Implementation(MAv1DelegateBase):
                                                  self.cert, self.key, {"CALLER" : user_cert})
             abac_raw_creds.append(assertion)
         sfa_creds = \
-            [{'geni_type' : 'geni_sfa', 'geni_version' : 1, 'geni_value' : cred} 
-             for cred in sfa_raw_creds]
+            [{'geni_type' : 'geni_sfa', 'geni_version' : 3, 'geni_value' : cred} 
+             for cred in sfa_raw_creds if cred is not None]
         abac_creds = \
             [{'geni_type' : 'geni_abac', 'geni_version' : 1, 'geni_value' : cred} 
              for cred in abac_raw_creds]
@@ -481,7 +483,7 @@ class MAv1Implementation(MAv1DelegateBase):
 
         gid = sfa_gid.GID(string=cred_cert)
         #chapi_debug(MA_LOG_PREFIX, 'GUC: gid = '+str(gid))
-        expires = datetime.utcnow() + relativedelta(years=1)
+        expires = datetime.utcnow() + relativedelta(years=MA.USER_CRED_LIFE_YEARS)
         cred = cred_util.create_credential(gid, gid, expires, "user", \
                   self.key, self.cert, self.trusted_roots)
         #chapi_debug(MA_LOG_PREFIX, 'GUC: cred = '+cred.save_to_string())
@@ -888,9 +890,6 @@ class MAv1Implementation(MAv1DelegateBase):
             msgbody += "You are now a GENI Operator on "
             msgbody += self.config.get("chrm.authority") + ".\n\n"
         
-        #  msgbody .= "Please visit https://" . $_SERVER['SERVER_NAME'];
-        #  msgbody .= "/secure/home.php for more information, or to get started.\n\n";
-        
         msgbody += "Sincerely,\n"
         msgbody += "GENI Clearinghouse operations\n"
 
@@ -973,7 +972,7 @@ class MAv1Implementation(MAv1DelegateBase):
 
                 for project in projects['value']:
                     new_lead_urn = None
-                    if (project['EXPIRED'] == False and project['PROJECT_ROLE'] == 'LEAD'):
+                    if project['PROJECT_ROLE'] == 'LEAD':
                         project_urn = project['PROJECT_URN']
                         #look for authorized admin to be new lead
                         members = self._sa_handler._delegate.lookup_project_members(cert, project_urn, credentials, {})

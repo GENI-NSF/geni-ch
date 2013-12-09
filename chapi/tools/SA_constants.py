@@ -29,6 +29,8 @@ credential_types = ["geni_sfa", "geni_abac"]
 
 SLICE_CERT_LIFETIME = 365*10 # days
 SLICE_MAX_RENEWAL_DAYS = 185
+SLICE_DEFAULT_LIFE_DAYS = 7 # See create_slice
+# FIXME: Slice name regex, length
 
 # The externally visible data schema for slices
 slice_mandatory_fields  = {
@@ -132,6 +134,7 @@ project_request_columns = [
 ]
 
 PROJECT_DEFAULT_INVITATION_EXPIRATION_HOURS = 72
+# FIXME: project name length, regex
 
 project_request_field_mapping = {
     'id' : 'id', 
