@@ -75,9 +75,9 @@ class SAv1Handler(HandlerBase):
             if not mc._error:
                 mc._result = \
                     self._delegate.lookup_slices(mc._client_cert, 
-                                                credentials, 
-                                                options,
-                                                mc._session)
+                                                 credentials, 
+                                                 options,
+                                                 mc._session)
             return mc._result
 
     # This call is protected

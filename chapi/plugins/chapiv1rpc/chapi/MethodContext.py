@@ -25,6 +25,7 @@ from tools.chapi_log import *
 from tools.cert_utils import *
 from Exceptions import *
 import amsoil.core.pluginmanager as pm
+import sys
 import traceback
 
 # Class to wrap all calls from handlers to delegates
@@ -111,19 +112,28 @@ class MethodContext:
                                                      self._args_dict,
                                                      self._session)
             except Exception as e:
-                self._result = self._authority._errorReturn(e)
-                self._error = True
+                exc_type, exc_value, exc_traceback = sys.exc_info()
+                self._handleError(e, exc_traceback)
         return self
+
+    def _handleError(self, e, tb=None):
+        if not isinstance(e, CHAPIv1BaseError):
+            e = CHAPIv1ServerError(str(e))
+
+        self._authority._log.error(e)
+        if type(e) in (CHAPIv1ServerError,
+                       CHAPIv1NotImplementedError,
+                       CHAPIv1DatabaseError):
+            if tb:
+                self._authority._log.error("\n".join(traceback.format_tb(tb)))
+        self._error = True
+        self._result = self._authority._errorReturn(e)
+
 
     def __exit__(self, type, value, traceback_object):
 #        chapi_info("MC.__exit__", "%s %s %s" % (type, value, traceback_object))
         if type:
-            self._result = self._authority._errorReturn(value)
-            self._authority._log.error(value)
-            if type not in (CHAPIv1ArgumentError, 
-                            CHAPIv1DuplicateError, 
-                            CHAPIv1AuthorizationError):
-                self._authority._log.error(traceback.format_tb(traceback_object))
+            self._handleError(value, traceback_object)
 
         if self._session:
             if not self._read_only:
@@ -133,6 +143,7 @@ class MethodContext:
         chapi_log_result(self._log_prefix, self._method_name,
                          self._result, {'user': self._email})
         return True
+
 
 
 
