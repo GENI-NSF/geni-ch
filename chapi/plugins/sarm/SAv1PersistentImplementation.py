@@ -1855,7 +1855,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         now = datetime.utcnow()
         q = session.query(ProjectInvitation)
         q = q.filter(ProjectInvitation.expiration < now)
-        chapi_debug(SA_LOG_PREFIX, "expire_project_invitations Q = %s" % str(q))
+#        chapi_debug(SA_LOG_PREFIX, "expire_project_invitations Q = %s" % str(q))
         rows = q.all()
         for row in rows:
             chapi_info('SA', 'Expiring project invitation ID %s Project %s role %s' % \
