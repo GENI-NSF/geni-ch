@@ -478,6 +478,7 @@ class MAv1Implementation(MAv1DelegateBase):
             certs = self.get_val_for_uid(session, InsideKey, "certificate", 
                                          uid)
         if not certs:
+            chapi_warn(MA_LOG_PREFIX, "Get Credentials found no cert for uid %s" % uid, {'user': get_email_from_cert(client_cert)})
             return creds
 
         user_cert = certs[0]
@@ -492,8 +493,8 @@ class MAv1Implementation(MAv1DelegateBase):
                                                  self.cert, self.key, {"CALLER" : user_cert})
             abac_raw_creds.append(assertion)
         sfa_creds = \
-            [{'geni_type' : 'geni_sfa', 'geni_version' : 1, 'geni_value' : cred} 
-             for cred in sfa_raw_creds]
+            [{'geni_type' : 'geni_sfa', 'geni_version' : 3, 'geni_value' : cred} 
+             for cred in sfa_raw_creds if cred is not None]
         abac_creds = \
             [{'geni_type' : 'geni_abac', 'geni_version' : 1, 'geni_value' : cred} 
              for cred in abac_raw_creds]

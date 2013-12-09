@@ -19,6 +19,7 @@
  * Send email on adding new project members (#33)
  * Fix guard on invite_members (#154)
  * Updated project log message says what changed (#88)
+ * Do not return empty user cred (#140)
 
 == 1.0 ==
  * Initial release of new clearinghouse implementing the
