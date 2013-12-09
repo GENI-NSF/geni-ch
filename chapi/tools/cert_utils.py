@@ -85,9 +85,11 @@ def get_email_from_cert(cert):
             break
     return email
 
-# Pull the object name fro the URN
+# Pull the object name from the URN
 # It is the part after the last +
 def get_name_from_urn(urn):
+    if urn is None:
+        return None
     parts = urn.split("+")
     return str(parts[len(parts)-1])
 
