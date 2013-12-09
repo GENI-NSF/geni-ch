@@ -718,7 +718,9 @@ def key_subject_extractor(options, arguments):
 # Extract project UID(s) from arguments
 def project_uid_extractor(options, arguments):
     if 'project_id' in arguments:
-        return {'PROJECT_UID' : arguments['project_id']}
+        project_id = arguments['project_id']
+        project_urn = convert_project_uid_to_urn(project_id)
+        return {'PROJECT_URN' : project_urn}
     return {}
 
 # Extract project UID from invite_id argument
