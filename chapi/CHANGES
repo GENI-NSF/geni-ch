@@ -16,6 +16,7 @@
  * Allow canceling a project join request (#137)
  * Check errors like bad username in PGCH (#150)
  * Send email on adding new project members (#33)
+ * Fix guard on invite_members (#155)
 
 == 1.0 ==
  * Initial release of new clearinghouse implementing the
