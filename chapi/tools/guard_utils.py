@@ -689,7 +689,9 @@ def key_subject_extractor(options, arguments, session):
 # Extract project UID(s) from arguments
 def project_uid_extractor(options, arguments, session):
     if 'project_id' in arguments:
-        return {'PROJECT_UID' : arguments['project_id']}
+        project_id = arguments['project_id']
+        project_urn = convert_project_uid_to_urn(project_id)
+        return {'PROJECT_URN' : project_urn}
     return {}
 
 # Extract project UID from invite_id argument
@@ -756,25 +758,7 @@ def request_context_extractor(options, arguments, session):
         extracted = {"PROJECT_URN" : project_urn}
     return extracted
 
-# Pull project_id out as the subject
-def request_id_context_extractor(options, arguments, session):
-    request_id = arguments['request_id']
-    db = pm.getService('chdbengine')
-    q = session.query(db.PROJECT_TABLE.c.project_name)
-    q = q.filter(db.PROJECT_TABLE.c.project_id ==
-                 db.PROJECT_REQUEST_TABLE.c.context_id)
-    q = q.filter(request_id == db.PROJECT_REQUEST_TABLE.c.id)
-    rows = q.all()
-    extracted = {}
-    if len(rows) > 0:
-        project_name = rows[0].project_name
-        config = pm.getService('config')
-        authority = config.get("chrm.authority")
-        project_urn = to_project_urn(authority, project_name)
-        extracted = {"PROJECT_URN" : project_urn}
-    return extracted
-
-# Pull project_id out as the subject
+# Pull request_id out as the subject
 def request_id_extractor(options, arguments, session):
     request_id = arguments['request_id']
     extracted = {"REQUEST_ID" : request_id}

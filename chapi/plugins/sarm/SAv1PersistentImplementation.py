@@ -401,10 +401,9 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
 
         name = options["fields"]["SLICE_NAME"]
 
-        # FIXME: In old SA we made the slice email be null because FOAM didn't like
-        # the fake email addresses
-
         # Create email if not provided
+        # Do not set a fake email for now, since that breaks FOAM
+        # FIXME: Support a real slice email address
 #        if not '_GENI_SLICE_EMAIL' in options['fields'] or \
 #           not options['fields']['_GENI_SLICE_EMAIL']:
 #            options['fields']['_GENI_SLICE_EMAIL'] = \
@@ -458,8 +457,6 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
             if same_project and (set(same_name) & set(same_project)):
                 raise CHAPIv1DuplicateError('Already exists a slice named ' +
                                             name + ' in project ' + project_name)
-
-        # FIXME: Real slice email
 
         slice.creation = datetime.utcnow()
         # FIXME: Why check if slice.expiration is set. We are creating the slice here - how can it be set?
@@ -550,6 +547,9 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
             raise CHAPIv1ArgumentError('Cannot update or renew an expired slice')
         slice_expiration = slice_info.expiration
         max_exp = datetime.utcnow() + relativedelta(days=SA.SLICE_MAX_RENEWAL_DAYS)
+#        # If this is marked as a long lived slice, then
+#        if True or slice_info.long_lived:
+#            max_exp = datetime.max
         new_exp = None # A dateutil for the new slice expiration
 
         for field, value in options['fields'].iteritems():
@@ -583,20 +583,24 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                 # don't shorten slice lifetime
                 if slice_expiration > new_exp:
                     raise CHAPIv1ArgumentError('Cannot shorten slice lifetime')
+
                 # regenerate cert if necessary
                 cert = Certificate(string = slice_info.certificate)
-                t1 = dateutil.parser.parse(cert.cert.get_notAfter())
-                t2 = new_exp
-                # FIXME: Why are we assuming the cert's TZ is meant to be that from the input request time. In fact, the input request time should be treated as UTC if not specified, and the TZ in the cert should UTC. Or is a diff between 2 python datetimes something where .days gives you the total days in the diff, in which case we're just losing any hours/minutes.
-                t1 = t1.replace(tzinfo = t2.tzinfo)
-                if (t1 < t2):
-                    t3 = slice_info.creation
-                    # FIXME: Note the cert will be good past the slice expiration - why?
+                cert_exp = dateutil.parser.parse(cert.cert.get_notAfter())
+                cert_exp = cert_exp.replace(tzinfo = new_exp.tzinfo)
+                if (cert_exp < new_exp):
                     cert, k = cert_util.create_cert(slice_urn, \
-                        issuer_key = self.key, issuer_cert = self.cert, \
-                        lifeDays = (t2 - t3).days + SA.SLICE_CERT_LIFETIME, \
-                        email = slice_info.slice_email, uuidarg=slice_info.slice_id)
+                                                        issuer_key = self.key, issuer_cert = self.cert, \
+                                                        lifeDays = (new_exp - slice_info.creation).days + SA.SLICE_CERT_LIFETIME, \
+                                                        email = slice_info.slice_email, uuidarg=slice_info.slice_id)
+                    # FIXME: Ticket #149: Save the slice key and
+                    # re-use it when re-generating the slice certifate
+                    # updates['key'] = k.save_to_string()
                     updates['certificate'] = cert.save_to_string()
+                    chapi_warn(SA_LOG_PREFIX, 
+                               "Re-generated certificate for slice %s to last past new expiration %s" % (slice_urn,
+                                                                                                         new_exp.isoformat()), 
+                               {'user': user_email})
                     
             updates[SA.slice_field_mapping[field]] = value
 
@@ -1072,6 +1076,10 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                 all_urns.append(member_to_change[member_str])
 #        chapi_info('SA', "ALL_URNS = %s" % all_urns)
 
+        # Also get the caller's pretty name
+        caller_urn = get_urn_from_cert(client_cert)
+        all_urns.append(caller_urn)
+
         credentials = []
         lookup_identifying_options = {\
             "match" : {"MEMBER_URN" : all_urns}, 
@@ -1172,20 +1180,39 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
 
         # Log all adds
         if 'members_to_add' in options:
+            caller_name = urn_to_display_name[caller_urn]
             members_to_add = options['members_to_add']
             for member_to_add in members_to_add:
                 member_urn = member_to_add[member_str]
                 member_name = urn_to_display_name[member_urn]
                 member_role = member_to_add[role_str]
                 attribs["MEMBER"] = urn_to_id[member_urn]
-                self.logging_service.log_event(
-                    "Added member %s in role %s to %s %s" % \
-                        (member_name, member_role, text_str, label), 
+                if caller_urn == member_urn:
+                    self.logging_service.log_event(
+                        "%s accepted an invitation to join %s %s in role %s" % \
+                            (member_name, text_str, label, member_role), 
                         attribs, client_uuid)
-                chapi_audit_and_log(SA_LOG_PREFIX, 
-                    "Added member %s in role %s to %s %s" % \
-                        (member_name, member_role, text_str, label2), logging.INFO, {'user': user_email})
-                # FIXME: Email admins of new project members
+                    chapi_audit_and_log(SA_LOG_PREFIX, 
+                                        "%s accepted an invitation to join %s %s in role %s" % \
+                                            (member_name, text_str, label2, member_role), logging.INFO, {'user': user_email})
+                else:
+                    self.logging_service.log_event(
+                        "%s Added member %s in role %s to %s %s" % \
+                            (caller_name, member_name, member_role, text_str, label), 
+                        attribs, client_uuid)
+                    chapi_audit_and_log(SA_LOG_PREFIX, 
+                                        "%s Added member %s in role %s to %s %s" % \
+                                            (caller_name, member_name, member_role, text_str, label2), logging.INFO, {'user': user_email})
+                # Email system admins about new project members
+                if text_str == 'project':
+                    subject = "New GENI CH project member added"
+                    if caller_urn == member_urn:
+                        msgbody = "%s accepted an invitation to join project %s in role %s on CH %s" % \
+                            (member_name, member_role, label, self.config.get("chrm.authority"))
+                    else:
+                        msgbody = "%s added member %s in role %s to project %s on CH %s" % \
+                            (caller_name, member_name, member_role, label, self.config.get("chrm.authority"))
+                    send_email(self.portal_admin_email, self.ch_from_email, self.portal_admin_email, subject, msgbody)
 
         # Log all changes
         if 'members_to_change' in options:
@@ -1531,7 +1558,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         q = q.filter(ProjectInvitation.invite_id == invite_id)
         rows = q.all()
 
-        # If no such inviation, return error
+        # If no such invitation, return error
         if len(rows) < 1:
             raise CHAPIv1ArgumentError("No invitation with given invite_id %s" % invite_id)
         invite_info = rows[0]
@@ -1563,7 +1590,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         now = datetime.utcnow()
         q = session.query(ProjectInvitation)
         q = q.filter(ProjectInvitation.expiration < now)
-        chapi_debug(SA_LOG_PREFIX, "expire_project_invitations Q = %s" % str(q))
+#        chapi_debug(SA_LOG_PREFIX, "expire_project_invitations Q = %s" % str(q))
         rows = q.all()
         for row in rows:
             chapi_info('SA', 'Expiring project invitation ID %s Project %s role %s' % \
