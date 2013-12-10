@@ -26,6 +26,7 @@
    Fix add and remove member attribute functions to check self-asserted attribute.
    Fix member attribute utilities to handle non standard attributes. (#145)
  * Keep more logs (#158)
+ * Usernames properly exclude bad characters like period (#159)
 
 == 1.0 ==
  * Initial release of new clearinghouse implementing the
