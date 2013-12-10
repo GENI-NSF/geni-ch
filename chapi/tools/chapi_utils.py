@@ -28,6 +28,8 @@ from email.mime.text import MIMEText
 from chapi_log import *
 
 def send_email(to_list,fromaddr,replyaddr,subject,msgbody,cc_list=None):
+# Note that to make an address be pretty, create the string as 
+# "%s <%s>" % (pretty_name, email_address"
     if msgbody is None:
         msgbody = ""
     msg = MIMEText(msgbody)
