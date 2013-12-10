@@ -30,7 +30,8 @@
  * Use full name for members in to field when sending email (#127)
  * Send email on registering a new account (#63)
  * Support list of to or cc email addresses (#126)
- * Change ccaddr to cc_list in sendmail utility (#161)
+ * Change ccaddr to cc_list in send_email utility (#161)
+ * Input "to" addresses to send_email utility as a list (#162)
 
 == 1.0 ==
  * Initial release of new clearinghouse implementing the
