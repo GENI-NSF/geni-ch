@@ -28,6 +28,8 @@
  * Keep more logs (#158)
  * Usernames properly exclude bad characters like period (#159)
  * Use full name for members in to field when sending email (#127)
+ * Send email on registering a new account (#63)
+ * Support list of to or cc email addresses (#126)
 
 == 1.0 ==
  * Initial release of new clearinghouse implementing the
