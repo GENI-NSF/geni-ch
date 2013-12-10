@@ -27,6 +27,8 @@ import smtplib
 from email.mime.text import MIMEText
 from chapi_log import *
 
+# Note that to make an address be pretty, create the string as 
+# "%s <%s>" % (pretty_name, email_address"
 def send_email(toaddr,fromaddr,replyaddr,subject,msgbody,ccaddr=None):
     if msgbody is None:
         msgbody = ""
