@@ -597,14 +597,10 @@ class MAv1Implementation(MAv1DelegateBase):
         self.logging_service.log_event(msg, attrs, member_id)
         chapi_audit_and_log(MA_LOG_PREFIX, msg, logging.INFO, {'user': user_email})
         # Send email to portal admins
-        msgbody = "There is a new account registered on %s:\n" %self.server
+        msgbody = "There is a new account registered on %s:\n" % self.server
         msgbody += "\nmember_id: %s" %member_id
-        msgbody += "\neppn: %s" %atmap['eppn']['value']
-        msgbody += "\nfirst_name: %s" %atmap['first_name']['value']
-        msgbody += "\nlast_name: %s" %atmap['last_name']['value']
-        msgbody += "\nemail_address: %s" %atmap['email_address']['value']
-        msgbody += "\nusername: %s" %atmap['username']['value']
-        msgbody += "\nurn: %s" %user_urn
+        for key in atmap.keys():
+            msgbody += "\n%s: %s" %  (key, atmap[key]['value'])
 
         tolist = [self.portal_admin_email]
         subject = "New GENI CH account registered"
