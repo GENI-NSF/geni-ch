@@ -47,7 +47,7 @@ class CHv1Handler(HandlerBase):
             if not mc._error:
                 mc._result = \
                     self._delegate.get_version(mc._session)
-            return mc._result
+        return mc._result
     
     # This call is unprotected: no checking of credentials
     # Return list of member authorities with matching and filter criteria
@@ -60,7 +60,7 @@ class CHv1Handler(HandlerBase):
                     self._delegate.lookup_member_authorities( mc._client_cert,
                                                               options,
                                                               mc._session)
-            return mc._result
+        return mc._result
 
     # This call is unprotected: no checking of credentials
     # Return list of slice authorities with matching and filter criteria
@@ -73,7 +73,7 @@ class CHv1Handler(HandlerBase):
                     self._delegate.lookup_slice_authorities(mc._client_cert,
                                                             options,
                                                             mc._session)
-            return mc._result
+        return mc._result
 
     # This call is unprotected: no checking of credentials
     # Return list of aggregates with matching and filter criteria`
@@ -86,7 +86,7 @@ class CHv1Handler(HandlerBase):
                     self._delegate.lookup_aggregates(mc._client_cert,
                                                      options,
                                                      mc._session)
-            return mc._result
+         return mc._result
 
     # This call is unprotected: no checking of credentials
     # Return URL of authority (slice or member) for given URN
@@ -99,7 +99,7 @@ class CHv1Handler(HandlerBase):
                     self._delegate.lookup_authorities__for_urns(mc._client_cert, 
                                                                 urns,
                                                                 mc._session)
-            return mc._result
+         return mc._result
 
     # This call is unprotected: no checking of credentials
     # Return list of trust roots trusted by authorities and aggregates of
@@ -112,7 +112,7 @@ class CHv1Handler(HandlerBase):
                 mc._result = \
                     self._delegate.get_trust_roots(mc._client_cert, 
                                                    mc._session)
-            return mc._result
+         return mc._result
 
 # Base class for implementations of CH API
 # Must be  implemented in a derived class, and that derived class

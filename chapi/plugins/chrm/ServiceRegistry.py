@@ -50,7 +50,7 @@ class SRv1Handler(CHv1Handler):
             if not mc._error:
                 mc._result = \
                     self._delegate.get_services(mc._session)
-            return mc._result
+        return mc._result
 
     # Return list of all services of given type registed in SR
     def get_services_of_type(self, service_type):
@@ -61,7 +61,7 @@ class SRv1Handler(CHv1Handler):
                 mc._result = \
                     self._delegate.get_services_of_type(service_type, 
                                                         mc._session)
-            return mc._result
+        return mc._result
 
     # Get all service in service registry by ID
     # Return single row if found, exception otherwise

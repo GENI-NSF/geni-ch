@@ -48,7 +48,7 @@ class MAv1Handler(HandlerBase):
             if not mc._error:
                 mc._result = \
                     self._delegate.get_version(mc._session)
-            return mc._result
+        return mc._result
 
     # MEMBER service methods
     def lookup_public_member_info(self, credentials, options):
@@ -65,7 +65,7 @@ class MAv1Handler(HandlerBase):
                                                              credentials, 
                                                              options,
                                                              mc._session)
-            return mc._result
+        return mc._result
 
     def lookup_private_member_info(self, credentials, options):
         """Return private information about members specified in options
@@ -82,7 +82,7 @@ class MAv1Handler(HandlerBase):
                                                               credentials, 
                                                               options,
                                                               mc._session)
-            return mc._result
+        return mc._result
 
     def lookup_identifying_member_info(self, credentials, options):
         """Return identifying information about members specified in options
@@ -100,7 +100,7 @@ class MAv1Handler(HandlerBase):
                                                                   credentials, 
                                                                   options,
                                                                   mc._session)
-            return mc._result
+        return mc._result
 
     def get_credentials(self, member_urn, credentials, options):
         """Get credentials for given user
@@ -119,7 +119,7 @@ class MAv1Handler(HandlerBase):
                                                    credentials, 
                                                    options,
                                                    mc._session)
-            return mc._result
+        return mc._result
 
     def update_member_info(self, member_urn, credentials, options):
         """Update given member with new data provided in options
@@ -138,7 +138,7 @@ class MAv1Handler(HandlerBase):
                                                       credentials, 
                                                       options,
                                                       mc._session)
-            return mc._result
+        return mc._result
 
     def create_member(self, attributes, credentials, options):
         """Create a new member using the specified attributes.  Attribute email is 
@@ -159,7 +159,7 @@ class MAv1Handler(HandlerBase):
                                                  credentials, 
                                                  options,
                                                  mc._session)
-            return mc._result
+        return mc._result
 
     # KEY service methods
 
@@ -183,7 +183,7 @@ class MAv1Handler(HandlerBase):
                                               credentials, 
                                               options,
                                               mc._session)
-            return mc._result
+        return mc._result
 
     def delete_key(self, member_urn, key_id, credentials, options):
         """Delete a key pair for given member
@@ -207,7 +207,7 @@ class MAv1Handler(HandlerBase):
                                               credentials, 
                                               options,
                                               mc._session)
-            return mc._result
+        return mc._result
 
     def update_key(self, member_urn, key_id, credentials, options):
         """
@@ -233,7 +233,7 @@ class MAv1Handler(HandlerBase):
                                               credentials, 
                                               options,
                                               mc._session)
-            return mc._result
+        return mc._result
 
     def lookup_keys(self, credentials, options):
         """Lookup keys for given match criteria return fields in given 
@@ -255,7 +255,7 @@ class MAv1Handler(HandlerBase):
                                               credentials, 
                                               options,
                                               mc._session)
-            return mc._result
+        return mc._result
 
     def create_certificate(self, member_urn, credentials, options):
         """Methods for managing user certs
@@ -273,7 +273,7 @@ class MAv1Handler(HandlerBase):
                                               credentials, 
                                               options,
                                               mc._session)
-            return mc._result
+        return mc._result
 
     # ClientAuth API
     def list_clients(self):
@@ -285,7 +285,7 @@ class MAv1Handler(HandlerBase):
             if not mc._error:
                 mc._result = \
                     self._delegate.list_clients(mc._session)
-            return mc._result
+        return mc._result
 
     def list_authorized_clients(self, member_id):
         """
@@ -299,7 +299,7 @@ class MAv1Handler(HandlerBase):
                     self._delegate.list_authorized_clients(mc._client_cert,
                                                            member_id,
                                                            mc._session)
-            return mc._result
+        return mc._result
 
     def authorize_client(self, member_id, client_urn, authorize_sense):
         """
@@ -314,7 +314,7 @@ class MAv1Handler(HandlerBase):
                                                           member_id,
                                                           client_urn,
                                                           mc._session)
-            return mc._result
+        return mc._result
 
 
     # member disable API
@@ -335,7 +335,7 @@ class MAv1Handler(HandlerBase):
                                                            credentials,
                                                            options,
                                                            mc._session)
-            return mc._result
+        return mc._result
 
     # member privilege (private)
     def add_member_privilege(self, member_uid, privilege, credentials, options):
@@ -354,7 +354,7 @@ class MAv1Handler(HandlerBase):
                                                         credentials,
                                                         options,
                                                         mc._session)
-            return mc._result
+        return mc._result
 
     def revoke_member_privilege(self, member_uid, privilege, credentials, options):
         """Revoke a privilege for a member."""
@@ -370,7 +370,7 @@ class MAv1Handler(HandlerBase):
                                                            credentials,
                                                            options,
                                                            mc._session)
-            return mc._result
+        return mc._result
 
     def add_member_attribute(self,
                              member_urn, name, value, self_asserted,
@@ -392,7 +392,7 @@ class MAv1Handler(HandlerBase):
                                                         credentials,
                                                         options,
                                                         mc._session)
-            return mc._result
+        return mc._result
 
     def remove_member_attribute(self, 
                                 member_urn, name,
@@ -411,7 +411,7 @@ class MAv1Handler(HandlerBase):
                                                         credentials,
                                                         options,
                                                         mc._session, value)
-            return mc._result
+        return mc._result
 
 
 # Base class for implementations of MA API

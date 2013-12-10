@@ -50,7 +50,7 @@ class SAv1Handler(HandlerBase):
             if not mc._error:
                 mc._result = \
                     self._delegate.get_version(mc._session)
-            return mc._result
+        return mc._result
 
     # This call is protected
     # Create a slice given provided options and authorized by client_cert
@@ -64,7 +64,7 @@ class SAv1Handler(HandlerBase):
                                                 credentials, 
                                                 options,
                                                 mc._session)
-            return mc._result
+        return mc._result
 
     # This call is protected
     # Lookup slices with filters and match criterial given in options
@@ -78,7 +78,7 @@ class SAv1Handler(HandlerBase):
                                                  credentials, 
                                                  options,
                                                  mc._session)
-            return mc._result
+        return mc._result
 
     # This call is protected
     # Update slice with fields specified in given options for given slice
@@ -94,7 +94,7 @@ class SAv1Handler(HandlerBase):
                                                 credentials, 
                                                 options,
                                                 mc._session)
-            return mc._result
+        return mc._result
 
     # This call is protected
     # Get credentials for given user with respect to given slice
@@ -110,7 +110,7 @@ class SAv1Handler(HandlerBase):
                                                    credentials, 
                                                    options,
                                                    mc._session)
-            return mc._result
+        return mc._result
 
     ## SLICE MEMBER SERVICE methods
     
@@ -133,7 +133,7 @@ class SAv1Handler(HandlerBase):
                                                            credentials, 
                                                            options,
                                                            mc._session)
-            return mc._result
+        return mc._result
 
     # Lookup members of given slice and their roles within that slice
     def lookup_slice_members(self, slice_urn, credentials, options):
@@ -147,7 +147,7 @@ class SAv1Handler(HandlerBase):
                                                            credentials, 
                                                            options,
                                                            mc._session)
-            return mc._result
+        return mc._result
 
     # Lookup slices to which member belongs and their roles
     def lookup_slices_for_member(self, member_urn, credentials, options):
@@ -161,7 +161,7 @@ class SAv1Handler(HandlerBase):
                                                            credentials, 
                                                            options,
                                                            mc._session)
-            return mc._result
+        return mc._result
 
     ## SLIVER INFO SERVICE methods
 
@@ -178,7 +178,7 @@ class SAv1Handler(HandlerBase):
                                                       credentials, 
                                                       options,
                                                       mc._session)
-            return mc._result
+        return mc._result
 
     # Delete a sliver_info record of given sliver_urn
     def delete_sliver_info(self, sliver_urn, credentials, options):
@@ -192,7 +192,7 @@ class SAv1Handler(HandlerBase):
                                                       credentials, 
                                                       options,
                                                       mc._session)
-            return mc._result
+        return mc._result
 
     # Update the details of a sliver_info record of given sliver_urn
     def update_sliver_info(self, sliver_urn, credentials, options):
@@ -206,7 +206,7 @@ class SAv1Handler(HandlerBase):
                                                       credentials, 
                                                       options,
                                                       mc._session)
-            return mc._result
+        return mc._result
 
     # Lookup sliver info for given match criteria 
     # return fields in given fillter driteria
@@ -220,7 +220,7 @@ class SAv1Handler(HandlerBase):
                                                       credentials, 
                                                       options,
                                                       mc._session)
-            return mc._result
+        return mc._result
 
     ## PROJECT SERVICE methods
 
@@ -235,7 +235,7 @@ class SAv1Handler(HandlerBase):
                                                   credentials, 
                                                   options,
                                                   mc._session)
-            return mc._result
+        return mc._result
 
     # Lookup project detail for porject matching 'match' option
     # returning fields in 'filter' option
@@ -249,7 +249,7 @@ class SAv1Handler(HandlerBase):
                                                    credentials, 
                                                    options,
                                                    mc._session)
-            return mc._result
+        return mc._result
 
     # Update fields in given project object specified in options
     def update_project(self, project_urn, credentials, options):
@@ -263,7 +263,7 @@ class SAv1Handler(HandlerBase):
                                                   credentials, 
                                                   options,
                                                   mc._session)
-            return mc._result
+        return mc._result
 
 
     ## PROJECT MEMBER SERVICE methods
@@ -287,7 +287,7 @@ class SAv1Handler(HandlerBase):
                                                              credentials, 
                                                              options,
                                                              mc._session)
-            return mc._result
+        return mc._result
 
     # Lookup members of given project and their roles within that project
     def lookup_project_members(self, project_urn, credentials, options):
@@ -301,7 +301,7 @@ class SAv1Handler(HandlerBase):
                                                           credentials, 
                                                           options,
                                                           mc._session)
-            return mc._result
+        return mc._result
 
 
     # Lookup projects to which member belongs and their roles
@@ -316,7 +316,7 @@ class SAv1Handler(HandlerBase):
                                                           credentials, 
                                                           options,
                                                           mc._session)
-            return mc._result
+        return mc._result
 
     ## PROJECT ATTRIBUTE SERVICE methods
         
@@ -338,7 +338,7 @@ class SAv1Handler(HandlerBase):
                                                              credentials, 
                                                              options,
                                                              mc._session)
-            return mc._result
+        return mc._result
 
     # Add an attribute to a given project
     # arguments: project_urn
@@ -356,7 +356,7 @@ class SAv1Handler(HandlerBase):
                                                              credentials, 
                                                              options,
                                                              mc._session)
-            return mc._result
+        return mc._result
 
     # remove an attribute from a given project
     # arguments: project_urn
@@ -374,7 +374,7 @@ class SAv1Handler(HandlerBase):
                                                             credentials, 
                                                             options,
                                                             mc._session)
-            return mc._result
+        return mc._result
 
 
     # Methods for handling pending project / slice requests and invitations
@@ -400,7 +400,7 @@ class SAv1Handler(HandlerBase):
                                                   credentials, 
                                                   options,
                                                   mc._session)
-            return mc._result
+        return mc._result
 
     def resolve_pending_request(self, context_type, request_id, \
                                     resolution_status, resolution_description,  \
@@ -421,7 +421,7 @@ class SAv1Handler(HandlerBase):
                                                            credentials,
                                                            options,
                                                            mc._session)
-            return mc._result
+        return mc._result
 
     def get_requests_for_context(self, context_type, context_id, status, \
                                      credentials, options):
@@ -439,7 +439,7 @@ class SAv1Handler(HandlerBase):
                                                             credentials, 
                                                             options,
                                                             mc._session)
-            return mc._result
+        return mc._result
 
 
     def get_requests_by_user(self, member_id, context_type, 
@@ -461,7 +461,7 @@ class SAv1Handler(HandlerBase):
                                                         credentials, 
                                                         options,
                                                         mc._session)
-            return mc._result
+        return mc._result
 
     def get_pending_requests_for_user(self, member_id, context_type, context_id, \
                                      credentials, options):
@@ -479,7 +479,7 @@ class SAv1Handler(HandlerBase):
                                                                  credentials, 
                                                                  options,
                                                                  mc._session)
-            return mc._result
+        return mc._result
 
     def get_number_of_pending_requests_for_user(self, member_id, \
                                                     context_type, context_id, \
@@ -498,7 +498,7 @@ class SAv1Handler(HandlerBase):
                                                                            credentials,
                                                                            options,
                                                                            mc._session)
-            return mc._result
+        return mc._result
 
     def get_request_by_id(self, request_id, context_type, credentials, options):
         with MethodContext(self, SA_LOG_PREFIX, 'get_requests_by_id',
@@ -513,7 +513,7 @@ class SAv1Handler(HandlerBase):
                                                       credentials, 
                                                       options,
                                                       mc._session)
-            return mc._result
+        return mc._result
 
     def invite_member(self, role, project_id, credentials, options):
         with MethodContext(self, SA_LOG_PREFIX, 'invite_member',
@@ -526,7 +526,7 @@ class SAv1Handler(HandlerBase):
                                                  credentials,
                                                  options,
                                                  mc._session)
-            return mc._result
+        return mc._result
 
     def accept_invitation(self, invite_id, member_id, credentials, options):
         with MethodContext(self, SA_LOG_PREFIX, 'accept_invitation',
@@ -540,7 +540,7 @@ class SAv1Handler(HandlerBase):
                                                      credentials,
                                                      options,
                                                      mc._session)
-            return mc._result
+        return mc._result
 
 
 # Base class for implementing the SA Slice interface. Must be

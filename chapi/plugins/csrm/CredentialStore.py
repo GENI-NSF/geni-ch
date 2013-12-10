@@ -64,7 +64,7 @@ class CSv1Handler(HandlerBase):
                                                   principal, context_type, 
                                                   context, credentials, 
                                                   options, mc._session)
-            return mc._result
+        return mc._result
 
     def get_permissions(self, principal, credentials, options):
         with MethodContext(self, CS_LOG_PREFIX, 'get_permissions',
@@ -76,7 +76,7 @@ class CSv1Handler(HandlerBase):
                                                    principal,
                                                    credentials, options,
                                                    mc._session)
-            return mc._result
+        return mc._result
 
 class CSv1Delegate(DelegateBase):
 

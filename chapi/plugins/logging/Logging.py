@@ -91,7 +91,7 @@ class Loggingv1Handler(HandlerBase):
                                                                context_id,
                                                                num_hours,
                                                                mc._session)
-            return mc._result
+        return mc._result
 
     # Get all log entries corresponding to the UNION of a set
     # of context/id pairs in most recent hours
@@ -106,7 +106,7 @@ class Loggingv1Handler(HandlerBase):
                                                                attribute_sets,
                                                                num_hours,
                                                                mc._session)
-            return mc._result
+        return mc._result
 
     # Get set of attributes for given log entry
     def get_attributes_for_log_entry(self, event_id):
@@ -119,7 +119,7 @@ class Loggingv1Handler(HandlerBase):
                     self._delegate.get_attributes_for_log_entry(mc._client_cert,
                                                                 event_id,
                                                                 mc._session)
-            return mc._result
+        return mc._result
 
 class Loggingv1Delegate(DelegateBase):
 
