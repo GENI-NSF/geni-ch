@@ -36,7 +36,7 @@ def send_email(to_list,fromaddr,replyaddr,subject,msgbody,cc_list=None):
     if subject is None:
         subject = ""
     msg['Subject'] = subject
-    if not to_list or len(to_list) == 0:
+    if not to_list or len(to_list) == 0 or to_list[0].strip() == "":
         chapi_warn("SENDMAIL", "No to address for message with subject '%s'" % subject)
         return
     if replyaddr and replyaddr.strip() != "":
@@ -44,14 +44,18 @@ def send_email(to_list,fromaddr,replyaddr,subject,msgbody,cc_list=None):
 
     to_hdr = ""
     for to in to_list:
-        to_hdr += to + ","
-    msg['To'] = to_hdr
+        if to.strip() == "":
+            continue
+        to_hdr += to + ", "
+    msg['To'] = to_hdr[:-2]
     msg['Reply-To'] = replyaddr
-    if cc_list != None and len(cc_addr) != 0:
+    if cc_list != None and len(cc_addr) != 0 and cc_addr[0].strip() != "":
         cc_hdr = ""
         for cc in cc_list:
-            cc_hdr += cc + ","
-        msg['Cc'] = cc_hdr
+            if cc.strip() == "":
+                continue
+            cc_hdr += cc + ", "
+        msg['Cc'] = cc_hdr[:-2]
         toaddrs = to_list + cc_list 
     else:
         toaddrs = to_list
