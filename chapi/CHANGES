@@ -32,6 +32,7 @@
  * Support list of to or cc email addresses (#126)
  * Change ccaddr to cc_list in send_email utility (#161)
  * Input "to" addresses to send_email utility as a list (#162)
+ * Typo in PGCH getcredential (#163)
 
 == 1.0 ==
  * Initial release of new clearinghouse implementing the
