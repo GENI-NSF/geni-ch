@@ -177,6 +177,7 @@ class MAv1Implementation(MAv1DelegateBase):
         self.portal_admin_email = self.config.get('chapi.portal_admin_email')
         self.portal_help_email = self.config.get('chapi.portal_help_email')
         self.ch_from_email = self.config.get('chapi.ch_from_email')
+        self.server = self.config.get('chrm.authority')
 
         trusted_root = self.config.get('chapiv1rpc.ch_cert_root')
         self.trusted_roots = [os.path.join(trusted_root, f) \
@@ -595,7 +596,19 @@ class MAv1Implementation(MAv1DelegateBase):
         attrs = {"MEMBER" : member_id}
         self.logging_service.log_event(msg, attrs, member_id)
         chapi_audit_and_log(MA_LOG_PREFIX, msg, logging.INFO, {'user': user_email})
-        # FIXME: Send email to portal admins
+        # Send email to portal admins
+        msgbody = "There is a new account registered on %s:\n" %self.server
+        msgbody += "\nmember_id: %s" %member_id
+        msgbody += "\neppn: %s" %atmap['eppn']['value']
+        msgbody += "\nfirst_name: %s" %atmap['first_name']['value']
+        msgbody += "\nlast_name: %s" %atmap['last_name']['value']
+        msgbody += "\nemail_address: %s" %atmap['email_address']['value']
+        msgbody += "\nusername: %s" %atmap['username']['value']
+        msgbody += "\nurn: %s" %user_urn
+
+        tolist = [self.portal_admin_email]
+        subject = "New GENI CH account registered"
+        send_email(tolist, self.ch_from_email, self.portal_help_email,subject,msgbody)
 
         result = self._successReturn(atmap.values())
 
@@ -1028,7 +1041,9 @@ class MAv1Implementation(MAv1DelegateBase):
         msgbody += "Sincerely,\n"
         msgbody += "GENI Clearinghouse operations\n"
 
-        send_email(member_email, self.ch_from_email,self.portal_help_email,subject,msgbody,self.portal_admin_email)
+        tolist = [member_email]
+        cclist = [self.portal_admin_email]
+        send_email(tolist, self.ch_from_email,self.portal_help_email,subject,msgbody,cclist)
 
     #  member_privilege (private)
     def add_member_privilege(self, cert, member_uid, privilege, credentials, options):
