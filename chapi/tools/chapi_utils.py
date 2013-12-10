@@ -27,24 +27,32 @@ import smtplib
 from email.mime.text import MIMEText
 from chapi_log import *
 
-def send_email(toaddr,fromaddr,replyaddr,subject,msgbody,ccaddr=None):
+def send_email(to_list,fromaddr,replyaddr,subject,msgbody,cc_list=None):
     if msgbody is None:
         msgbody = ""
     msg = MIMEText(msgbody)
     if subject is None:
         subject = ""
     msg['Subject'] = subject
-    if not toaddr or toaddr.strip() == "":
+    if not to_list or len(to_list) == 0:
         chapi_warn("SENDMAIL", "No to address for message with subject '%s'" % subject)
         return
-    msg['To'] = toaddr
     if replyaddr and replyaddr.strip() != "":
         msg['Reply-To'] = replyaddr
-    if ccaddr != None and ccaddr.strip() != "":
-        msg['Cc'] = ccaddr
-        toaddrs = [toaddr,ccaddr] 
+
+    to_hdr = ""
+    for to in to_list:
+        to_hdr += to + ","
+    msg['To'] = to_hdr
+    msg['Reply-To'] = replyaddr
+    if cc_list != None and len(cc_addr) != 0:
+        cc_hdr = ""
+        for cc in cc_list:
+            cc_hdr += cc + ","
+        msg['Cc'] = cc_hdr
+        toaddrs = to_list + cc_list 
     else:
-        toaddrs = [toaddr]
+        toaddrs = to_list
     msg['Precedence'] = "bulk"
     msg['Auto-Submitted'] = "auto-generated"
     s = smtplib.SMTP('localhost')

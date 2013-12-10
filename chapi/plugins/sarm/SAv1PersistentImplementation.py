@@ -775,7 +775,8 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         # Email the admins that the project was created
         subject = "New GENI CH project created"
         msgbody = "Created project: %s with lead %s on CH %s" %(name, leadname, self.config.get("chrm.authority"))
-        send_email(self.portal_admin_email, self.ch_from_email, self.portal_help_email,subject,msgbody)
+        tolist = [self.portal_admin_email]
+        send_email(tolist, self.ch_from_email, self.portal_help_email,subject,msgbody)
 
         # do the database write
         result = self.finish_create(session, project,  SA.project_field_mapping, \
