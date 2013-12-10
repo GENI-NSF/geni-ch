@@ -25,6 +25,7 @@
  * Fix guard on add and remove member attributes to allow authorities and self.
    Fix add and remove member attribute functions to check self-asserted attribute.
    Fix member attribute utilities to handle non standard attributes. (#145)
+ * Keep more logs (#158)
 
 == 1.0 ==
  * Initial release of new clearinghouse implementing the
