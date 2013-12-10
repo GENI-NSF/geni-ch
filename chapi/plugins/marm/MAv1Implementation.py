@@ -78,7 +78,7 @@ def derive_username(email_address):
     # See http://www.linuxjournal.com/article/9585
     # try to figure out a reasonable username.
     # php: $email_addr = filter_var($email_address, FILTER_SANITIZE_EMAIL);
-    email_addr = re.sub('[^a-zA-Z0-9!#$%&\'*+\-/=?^_`{|}~@.[]]', '', email_address)
+    email_addr = re.sub('[^a-zA-Z0-9\!\#\$\%\&\'\*\+\-\/\=\?\^_`\{\|\}~@\.\[\]]', '', email_address)
     # print "<br/>derive2: email_addr = $email_addr<br/>\n"; */
 
     # Now get the username portion.
@@ -96,13 +96,13 @@ def derive_username(email_address):
 
     # lowercase the username
     username = username.lower()
+    # remove unacceptable characters
+    username = re.sub('[^a-z0-9_]', '', username)
+    # remove leading non-alphabetic chars
+    username = re.sub('^[^a-z]*', '', username)
     # trim the username to 8 chars
     if len(username)>8:
         username = username[0:8]
-    # remove unacceptable characters
-    username = re.sub('![a-z0-9_]', '', username)
-    # remove leading non-alphabetic chars
-    username = re.sub('^[^a-z]*', '', username)
 
     if not username:
         username = "geni1"
