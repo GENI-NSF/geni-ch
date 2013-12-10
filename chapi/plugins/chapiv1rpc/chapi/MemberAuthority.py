@@ -396,11 +396,12 @@ class MAv1Handler(HandlerBase):
 
     def remove_member_attribute(self, 
                                 member_urn, name,
-                                credentials, options):
+                                credentials, options, value=None):
         """Remove attribute to member"""
         with MethodContext(self, MA_LOG_PREFIX, 
                            'remove_member_attribute', 
-                           {'member_urn' : member_urn, 'name' : name},
+                           {'member_urn' : member_urn, 'name' : name, 
+                            'value' : value},
                            credentials, options, read_only=False) as mc:
             if not mc._error:
                 mc._result = \
@@ -409,7 +410,7 @@ class MAv1Handler(HandlerBase):
                                                         name, 
                                                         credentials,
                                                         options,
-                                                        mc._session)
+                                                        mc._session, value)
             return mc._result
 
 
@@ -511,5 +512,5 @@ class MAv1DelegateBase(DelegateBase):
         raise CHAPIv1NotImplementedError('')
 
     def remove_member_attribute(self, client_cert, member_urn, att_name, \
-                                    credentials, options, session):
+                                    credentials, options, session, att_value=None):
         raise CHAPIv1NotImplementedError('')
