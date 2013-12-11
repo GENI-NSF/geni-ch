@@ -56,6 +56,10 @@ class Loggingv1Handler(HandlerBase):
         client_cert = self.requestCertificate()
         method = 'log_event'
         try:
+            self._guard.validate_call(client_cert, method, \
+                                          [], {}, {'user_id' : user_id, 
+                                                                 'attributes' : attributes,
+                                                                 'message' : message})
             results = self._delegate.log_event(client_cert, \
                                                    message, \
                                                    attributes, user_id)
@@ -68,6 +72,9 @@ class Loggingv1Handler(HandlerBase):
         client_cert = self.requestCertificate()
         method = 'get_log_entries_by_author'
         try:
+            self._guard.validate_call(client_cert, method, 
+                                      [], {}, 
+                                      {'user_id' : user_id, 'num_hours' : num_hours})
             results = \
                 self._delegate.get_log_entries_by_author(client_cert, \
                                                              user_id, \
@@ -82,6 +89,11 @@ class Loggingv1Handler(HandlerBase):
         client_cert = self.requestCertificate()
         method = 'get_log_entries_for_context'
         try:
+            self._guard.validate_call(client_cert, method, 
+                                      [], {}, 
+                                      {'context_type' : context_type, 
+                                       'context_id' : context_id, 
+                                       'num_hours' : num_hours})
             results = \
                 self._delegate.get_log_entries_for_context(client_cert, \
                                                                 context_type, \
@@ -98,6 +110,9 @@ class Loggingv1Handler(HandlerBase):
         client_cert = self.requestCertificate()
         method = 'get_log_entries_by_attributes'
         try:
+            self._guard.validate_call(client_cert, method, 
+                                      [], {},
+                                      {'attribute_sets' : attribute_sets, 'num_hours' : num_hours})
             results = \
                 self._delegate.get_log_entries_by_attributes(client_cert, \
                                                                  attribute_sets, \
@@ -111,6 +126,8 @@ class Loggingv1Handler(HandlerBase):
         client_cert = self.requestCertificate()
         method = 'get_attributes_for_log_entry'
         try:
+            self._guard.validate_call(client_cert, method, 
+                                      [], {}, {'event_id' : event_id})
             results = \
                 self._delegate.get_attributes_for_log_entry(client_cert, \
                                                                 event_id)
@@ -249,13 +266,14 @@ class Loggingv1Guard(ABACGuardBase):
         {
         'log_event' : \
             SimpleArgumentCheck({'user_id': 'UID', 
+                                 'message' : 'STRING',
                                  'attributes' : 'ATTRIBUTE_SET'}),
         'get_log_entries_by_author' : \
             SimpleArgumentCheck({'user_id' : 'UID', 
                                  'num_hours' : 'POSITIVE'}),
         'get_log_entries_for_context' : \
             SimpleArgumentCheck({'context_type' : 'CONTEXT_TYPE', 
-                                 'context_id' : 'URN', 
+                                 'context_id' : 'UID', 
                                  'num_hours' : 'POSITIVE'}),
         'get_log_entries_by_attributes' : \
             None,
@@ -266,13 +284,13 @@ class Loggingv1Guard(ABACGuardBase):
     INVOCATION_CHECK_FOR_METHOD = \
         {
         # user_id must be self
-        # *** FIXME: caller must be member of project or slice 
+        # Must belong to slice or project of context (if any)
         'log_event' : \
             SubjectInvocationCheck([
                 "ME.MAY_LOG_EVENT<-ME.IS_AUTHORITY",
                 "ME.MAY_LOG_EVENT<-ME.IS_OPERATOR",
-                "ME.MA_LOG_EVENT_$SUBJECT<-ME.IS_$SUBJECT"
-                ], None, user_id_extractor),
+                "ME.MAY_LOG_EVENT_$SUBJECT<-ME.BELONGS_TO_$SUBJECT"
+                ], assert_user_belongs_to_slice_or_project, user_id_extractor),
         # user_id must be self
         'get_log_entries_by_author' : \
             SubjectInvocationCheck([
@@ -305,12 +323,14 @@ class Loggingv1Guard(ABACGuardBase):
 
     # Lookup argument check per method (or None if none registered)
     def get_argument_check(self, method):
+        chapi_info("LOG", "GAC %s" % method)
         if self.ARGUMENT_CHECK_FOR_METHOD.has_key(method):
             return self.ARGUMENT_CHECK_FOR_METHOD[method]
         return None
 
     # Lookup invocation check per method (or None if none registered)
     def get_invocation_check(self, method):
+        chapi_info("LOG", "GIC %s" % method)
         if self.INVOCATION_CHECK_FOR_METHOD.has_key(method):
             return self.INVOCATION_CHECK_FOR_METHOD[method]
         return None

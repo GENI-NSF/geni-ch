@@ -148,7 +148,7 @@ class SubjectInvocationCheck(InvocationCheck):
             if self._attribute_extractors:
                 for attribute_extractor in self._attribute_extractors:
                     attribute_extractor(client_urn, subjects_of_type, \
-                                        subject_type, options, abac_manager)
+                                        subject_type, options, arguments, abac_manager)
 
             # Register policies relative to the subjects
             # And try to prove that the user may call the method, 
