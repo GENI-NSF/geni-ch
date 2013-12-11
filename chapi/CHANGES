@@ -2,6 +2,8 @@
 
 = GENI Clearinghouse Release Notes =
 
+== 1.2 ==
+
 == 1.1 ==
  * Use past tense in logging service log messages (#128)
  * Log mismatched certificates at warn level (#140)
