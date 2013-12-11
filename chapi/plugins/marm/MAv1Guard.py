@@ -232,12 +232,16 @@ class MAv1Guard(ABACGuardBase):
 
         'add_member_attribute' :
             SubjectInvocationCheck([
+                    "ME.MAY_ADD_MEMBER_ATTRIBUTE<-ME.IS_AUTHORITY",
                     "ME.MAY_ADD_MEMBER_ATTRIBUTE<-ME.IS_OPERATOR", 
-                    ], None, None), 
-        'revoke_member_attribute' :
+                    "ME.MAY_ADD_MEMBER_ATTRIBUTE_$SUBJECT<-ME.IS_$SUBJECT"
+                    ], None, member_urn_extractor), 
+        'remove_member_attribute' :
             SubjectInvocationCheck([
+                    "ME.MAY_REMOVE_MEMBER_ATTRIBUTE<-ME.IS_AUTHORITY",
                     "ME.MAY_REMOVE_MEMBER_ATTRIBUTE<-ME.IS_OPERATOR", 
-                    ], None, None), 
+                    "ME.MAY_REMOVE_MEMBER_ATTRIBUTE_$SUBJECT<-ME.IS_$SUBJECT"
+                    ], None, member_urn_extractor), 
         }
 
 

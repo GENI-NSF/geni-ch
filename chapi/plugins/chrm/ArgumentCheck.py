@@ -166,10 +166,14 @@ class FieldsArgumentCheck(ArgumentCheck):
         if field_type == "URN":
             if isinstance(value, list):
                 for v in value:
-                    if not is_valid_urn(v):
+                    if isinstance(v, unicode):
+                        v = v.encode('utf-8')
+                    if not is_valid_urn(str(v)):
                         properly_formed = False
                         break
             else:
+                if isinstance(value, unicode):
+                    value = value.encode('utf-8')
                 properly_formed = is_valid_urn(value)
         elif field_type == "UID":
             try:

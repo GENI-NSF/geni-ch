@@ -2,6 +2,38 @@
 
 = GENI Clearinghouse Release Notes =
 
+== 1.1 ==
+ * Use past tense in logging service log messages (#128)
+ * Log mismatched certificates at warn level (#140)
+ * Include Auto-submitted header in emails (#124)
+ * Times to renew slice should be converted to naive UTC (#139)
+ * Email to new operators shouldn't say project lead (#123)
+ * Do not use add/remove attribute methods for privileges (#130)
+ * Send mail on enable/disable users (#129)
+ * PGCH uses handler front door to SA/MA services, enforcing guards and argument checks (#144)
+ * Slice certificates last 10 years (#147)
+ * Log a warn when renewing slice certificates (#148)
+ * Allow canceling a project join request (#137)
+ * Error looking up identifying member info (#143)
+ * Check errors like bad username in PGCH (#150)
+ * Send email on adding new project members (#33)
+ * Fix guard on invite_members (#154)
+ * Updated project log message says what changed (#88)
+ * Do not return empty user cred (#140)
+ * Use constants for a couple numbers (#57)
+ * Avoid sending mail with no to address (#109)
+ * Fix guard on add and remove member attributes to allow authorities and self.
+   Fix add and remove member attribute functions to check self-asserted attribute.
+   Fix member attribute utilities to handle non standard attributes. (#145)
+ * Keep more logs (#158)
+ * Usernames properly exclude bad characters like period (#159)
+ * Use full name for members in to field when sending email (#127)
+ * Send email on registering a new account (#63)
+ * Support list of to or cc email addresses (#126)
+ * Change ccaddr to cc_list in send_email utility (#161)
+ * Input "to" addresses to send_email utility as a list (#162)
+ * Typo in PGCH getcredential (#163)
+
 == 1.0 ==
  * Initial release of new clearinghouse implementing the
  [http://groups.geni.net/geni/wiki/UniformClearinghouseAPI Uniform

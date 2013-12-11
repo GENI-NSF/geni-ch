@@ -25,18 +25,42 @@
 
 import smtplib
 from email.mime.text import MIMEText
+from chapi_log import *
 
-def send_email(toaddr,fromaddr,replyaddr,subject,msgbody,ccaddr=None):
+def send_email(to_list,fromaddr,replyaddr,subject,msgbody,cc_list=None):
+# Note that to make an address be pretty, create the string as 
+# "%s <%s>" % (pretty_name, email_address"
+    if msgbody is None:
+        msgbody = ""
     msg = MIMEText(msgbody)
+    if subject is None:
+        subject = ""
     msg['Subject'] = subject
-    msg['To'] = toaddr
+    if not to_list or len(to_list) == 0 or to_list[0].strip() == "":
+        chapi_warn("SENDMAIL", "No to address for message with subject '%s'" % subject)
+        return
+    if replyaddr and replyaddr.strip() != "":
+        msg['Reply-To'] = replyaddr
+
+    to_hdr = ""
+    for to in to_list:
+        if to.strip() == "":
+            continue
+        to_hdr += to + ", "
+    msg['To'] = to_hdr[:-2]
     msg['Reply-To'] = replyaddr
-    if ccaddr != None:
-        msg['Cc'] = ccaddr
-        toaddrs = [toaddr,ccaddr] 
+    if cc_list != None and len(cc_list) != 0 and cc_list[0].strip() != "":
+        cc_hdr = ""
+        for cc in cc_list:
+            if cc.strip() == "":
+                continue
+            cc_hdr += cc + ", "
+        msg['Cc'] = cc_hdr[:-2]
+        toaddrs = to_list + cc_list 
     else:
-        toaddrs = [toaddr]
+        toaddrs = to_list
     msg['Precedence'] = "bulk"
+    msg['Auto-Submitted'] = "auto-generated"
     s = smtplib.SMTP('localhost')
     s.sendmail(fromaddr,toaddrs,msg.as_string())
     s.quit()

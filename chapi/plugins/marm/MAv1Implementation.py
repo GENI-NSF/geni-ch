@@ -78,7 +78,7 @@ def derive_username(email_address):
     # See http://www.linuxjournal.com/article/9585
     # try to figure out a reasonable username.
     # php: $email_addr = filter_var($email_address, FILTER_SANITIZE_EMAIL);
-    email_addr = re.sub('[^a-zA-Z0-9!#$%&\'*+\-/=?^_`{|}~@.[]]', '', email_address)
+    email_addr = re.sub('[^a-zA-Z0-9\!\#\$\%\&\'\*\+\-\/\=\?\^_`\{\|\}~@\.\[\]]', '', email_address)
     # print "<br/>derive2: email_addr = $email_addr<br/>\n"; */
 
     # Now get the username portion.
@@ -96,13 +96,13 @@ def derive_username(email_address):
 
     # lowercase the username
     username = username.lower()
+    # remove unacceptable characters
+    username = re.sub('[^a-z0-9_]', '', username)
+    # remove leading non-alphabetic chars
+    username = re.sub('^[^a-z]*', '', username)
     # trim the username to 8 chars
     if len(username)>8:
         username = username[0:8]
-    # remove unacceptable characters
-    username = re.sub('![a-z0-9_]', '', username)
-    # remove leading non-alphabetic leading chars
-    username = re.sub('^[^a-z]*', '', username)
 
     if not username:
         username = "geni1"
@@ -177,12 +177,14 @@ class MAv1Implementation(MAv1DelegateBase):
         self.portal_admin_email = self.config.get('chapi.portal_admin_email')
         self.portal_help_email = self.config.get('chapi.portal_help_email')
         self.ch_from_email = self.config.get('chapi.ch_from_email')
+        self.server = self.config.get('chrm.authority')
 
         trusted_root = self.config.get('chapiv1rpc.ch_cert_root')
         self.trusted_roots = [os.path.join(trusted_root, f) \
             for f in os.listdir(trusted_root) if not f.startswith('CAT')]
 
         self.logging_service = pm.getService('loggingv1handler')
+        # FIXME: Parametrize path to these certs
         # init for ClientAuth
         self.kmcert = '/usr/share/geni-ch/km/km-cert.pem'
         self.kmkey = '/usr/share/geni-ch/km/km-key.pem'
@@ -238,7 +240,10 @@ class MAv1Implementation(MAv1DelegateBase):
     # find the value of an attribute for a given user
     def get_attr_for_uid(self, session, attr, uid):
         q = session.query(MemberAttribute.value)
-        q = q.filter(MemberAttribute.name == MA.field_mapping[attr])
+        if MA.field_mapping.has_key(attr):
+            q = q.filter(MemberAttribute.name == MA.field_mapping[attr])
+        else:
+            q = q.filter(MemberAttribute.name == attr)
         q = q.filter(MemberAttribute.member_id == uid)
         rows = q.all()
         return [row.value for row in rows]
@@ -398,21 +403,33 @@ class MAv1Implementation(MAv1DelegateBase):
     def update_attr(self, session, attr, value, uid, self_asserted):
         if len(self.get_attr_for_uid(session, attr, uid)) > 0:
             q = session.query(MemberAttribute)
-            q = q.filter(MemberAttribute.name == MA.field_mapping[attr])
+            if MA.field_mapping.has_key(attr):
+                q = q.filter(MemberAttribute.name == MA.field_mapping[attr])
+            else:
+                q = q.filter(MemberAttribute.name == attr)
             q = q.filter(MemberAttribute.member_id == uid)
             q.update({"value": value})
         else:
-            obj = MemberAttribute(MA.field_mapping[attr], value, \
-                                  uid, self_asserted)
+            if MA.field_mapping.has_key(attr):
+                obj = MemberAttribute(MA.field_mapping[attr], value, \
+                                          uid, self_asserted)
+            else:
+                obj = MemberAttribute(attr, value, \
+                                          uid, self_asserted)
             session.add(obj)
         session.commit()
 
     # delete attribute row if it is there
-    def delete_attr(self, session, attr, uid):
+    def delete_attr(self, session, attr, uid, value=None):
         if len(self.get_attr_for_uid(session, attr, uid)) > 0:
             q = session.query(MemberAttribute)
-            q = q.filter(MemberAttribute.name == MA.field_mapping[attr])
+            if MA.field_mapping.has_key(attr):
+                q = q.filter(MemberAttribute.name == MA.field_mapping[attr])
+            else:
+                q = q.filter(MemberAttribute.name == attr)
             q = q.filter(MemberAttribute.member_id == uid)
+            if value is not None:
+                q = q.filter(MemberAttribute.value == value)
             q.delete()
         session.commit()
 
@@ -478,6 +495,7 @@ class MAv1Implementation(MAv1DelegateBase):
             certs = self.get_val_for_uid(session, InsideKey, "certificate", 
                                          uid)
         if not certs:
+            chapi_warn(MA_LOG_PREFIX, "Get Credentials found no cert for uid %s" % uid, {'user': get_email_from_cert(client_cert)})
             return creds
 
         user_cert = certs[0]
@@ -492,8 +510,8 @@ class MAv1Implementation(MAv1DelegateBase):
                                                  self.cert, self.key, {"CALLER" : user_cert})
             abac_raw_creds.append(assertion)
         sfa_creds = \
-            [{'geni_type' : 'geni_sfa', 'geni_version' : 1, 'geni_value' : cred} 
-             for cred in sfa_raw_creds]
+            [{'geni_type' : 'geni_sfa', 'geni_version' : 3, 'geni_value' : cred} 
+             for cred in sfa_raw_creds if cred is not None]
         abac_creds = \
             [{'geni_type' : 'geni_abac', 'geni_version' : 1, 'geni_value' : cred} 
              for cred in abac_raw_creds]
@@ -519,12 +537,14 @@ class MAv1Implementation(MAv1DelegateBase):
                     cred_cert = cert
                     break
         if not cred_cert:
-            chapi_debug(MA_LOG_PREFIX, 'no cred_cert', {'user': user_email})
+            chapi_warn(MA_LOG_PREFIX,
+                       'get_user_credential did not find a matching certificate',
+                       {'user': user_email})
             return None
 
         gid = sfa_gid.GID(string=cred_cert)
         #chapi_debug(MA_LOG_PREFIX, 'GUC: gid = '+str(gid))
-        expires = datetime.utcnow() + relativedelta(years=1)
+        expires = datetime.utcnow() + relativedelta(years=MA.USER_CRED_LIFE_YEARS)
         cred = cred_util.create_credential(gid, gid, expires, "user", \
                   self.key, self.cert, self.trusted_roots)
         #chapi_debug(MA_LOG_PREFIX, 'GUC: cred = '+cred.save_to_string())
@@ -572,11 +592,19 @@ class MAv1Implementation(MAv1DelegateBase):
 
         # Log the successful creation of member
         #self.logging_service = pm.getService('loggingv1handler')
-        msg = "Activated GENI user : %s (%s)" % (self._get_displayname_for_member_urn(user_urn), user_urn)
+        msg = "Activated GENI user: %s (%s)" % (self._get_displayname_for_member_urn(user_urn), user_urn)
         attrs = {"MEMBER" : member_id}
         self.logging_service.log_event(msg, attrs, member_id)
         chapi_audit_and_log(MA_LOG_PREFIX, msg, logging.INFO, {'user': user_email})
-        # FIXME: Send email to portal admins
+        # Send email to portal admins
+        msgbody = "There is a new account registered on %s:\n" % self.server
+        msgbody += "\nmember_id: %s" %member_id
+        for key in atmap.keys():
+            msgbody += "\n%s: %s" %  (key, atmap[key]['value'])
+
+        tolist = [self.portal_admin_email]
+        subject = "New GENI CH account registered"
+        send_email(tolist, self.ch_from_email, self.portal_help_email,subject,msgbody)
 
         result = self._successReturn(atmap.values())
 
@@ -628,7 +656,7 @@ class MAv1Implementation(MAv1DelegateBase):
         # Log the creation of the SSH key
         client_uuid = get_uuid_from_cert(client_cert)
         attrs = {"MEMBER" : client_uuid}
-        msg = "%s registering SSH key %s" % (self._get_displayname_for_member_urn(member_urn), key_id)
+        msg = "%s registered SSH key %s" % (self._get_displayname_for_member_urn(member_urn), key_id)
         self.logging_service.log_event(msg, attrs, client_uuid)
         chapi_audit_and_log(MA_LOG_PREFIX, msg, logging.INFO, {'user': user_email})
 
@@ -658,7 +686,7 @@ class MAv1Implementation(MAv1DelegateBase):
         # Log the deletion of the SSH key
         client_uuid = get_uuid_from_cert(client_cert)
         attrs = {"MEMBER" : client_uuid}
-        msg = "%s deleting SSH key %s" % (self._get_displayname_for_member_urn(member_urn), key_id)
+        msg = "%s deleted SSH key %s" % (self._get_displayname_for_member_urn(member_urn), key_id)
         self.logging_service.log_event(msg, attrs, client_uuid)
 
         result = self._successReturn(True)
@@ -872,7 +900,7 @@ class MAv1Implementation(MAv1DelegateBase):
             session.close()
 
             # log_event
-            msg = "Authorizing client %s for member %s" % (client_urn, self._get_displayname_for_member_urn(member_urn))
+            msg = "Authorized client %s for member %s" % (client_urn, self._get_displayname_for_member_urn(member_urn))
             attribs = {"MEMBER" : member_id}
             self.logging_service.log_event(msg, attribs, member_id)
             chapi_audit_and_log(MA_LOG_PREFIX, msg, logging.INFO, {'user': user_email})
@@ -889,7 +917,7 @@ class MAv1Implementation(MAv1DelegateBase):
             session.close()
 
             # log_event
-            msg = "Deauthorizing client %s for member %s" % (client_urn, self._get_displayname_for_member_urn(member_urn))
+            msg = "Deauthorized client %s for member %s" % (client_urn, self._get_displayname_for_member_urn(member_urn))
             attribs = {"MEMBER" : member_id}
             self.logging_service.log_event(msg, attribs, member_id)
             chapi_audit_and_log(MA_LOG_PREFIX, msg, logging.INFO, {'user': user_email})
@@ -897,6 +925,11 @@ class MAv1Implementation(MAv1DelegateBase):
         result = self._successReturn(True)
         chapi_log_result(MA_LOG_PREFIX, method, result, {'user': user_email})
         return result
+
+    def mail_enable_user(self, msg, subject):
+        msgbody = msg + " on " + self.config.get("chrm.authority")
+        tolist = [self.portal_admin_email]
+        send_email(tolist, self.ch_from_email,self.portal_admin_email,subject,msgbody)
 
     # enable/disable a user/member  (private)
     def enable_user(self, client_cert, member_urn, enable_sense, credentials, options):
@@ -922,7 +955,7 @@ class MAv1Implementation(MAv1DelegateBase):
         # find the old value
         q = session.query(MemberAttribute.value).\
             filter(MemberAttribute.member_id == member_id).\
-            filter(MemberAttribute.name == '_GENI_MEMBER_ENABLED')
+            filter(MemberAttribute.name == MA.field_mapping['_GENI_MEMBER_ENABLED'])
         rows = q.all()
 
         if len(rows)==0:
@@ -932,21 +965,24 @@ class MAv1Implementation(MAv1DelegateBase):
 
         # set the new value
         enabled_str = 'y' if enable_sense else 'n'
-        self.update_attr(session, '_GENI_MEMBER_ENABLED', enabled_str, member_id, 'f')
-        #ins = self.db.MEMBER_ATTRIBUTE_TABLE.insert().values({'member_id': str(member_id),
-        #'name': '_GENI_MEMBER_ENABLED',
-        #'value': enabled_str})
-        #session.execute(ins)
+        did_something = False
+        if (not was_enabled and enable_sense) or (was_enabled and not enable_sense):
+            did_something = True
+            self.update_attr(session, '_GENI_MEMBER_ENABLED', enabled_str, member_id, 'f')
 
         session.commit()
         session.close()
 
-        # log_event
-        msg = "Setting member %s status to %s" % \
-            (member_urn, 'enabled' if enable_sense else 'disabled')
-        attribs = {"MEMBER" : member_urn}
-        self.logging_service.log_event(msg, attribs, member_id)
-        chapi_audit_and_log(MA_LOG_PREFIX, msg, logging.INFO, {'user': user_email})
+        if did_something:
+            # log_event
+            msg = "Set member %s status to %s" % \
+                (member_urn, 'enabled' if enable_sense else 'disabled')
+            attribs = {"MEMBER" : member_urn}
+            self.logging_service.log_event(msg, attribs, member_id)
+            chapi_audit_and_log(MA_LOG_PREFIX, msg, logging.INFO, {'user': user_email})
+            self.mail_enable_user(user_email + " " + msg, ("Enabled CH user" if enable_sense else "Disabled CH user"))
+        else:
+            chapi_info(MA_LOG_PREFIX, "Member %s already %s" % (member_urn, 'enabled' if enable_sense else 'disabled'), {'user': user_email})
 
         result = self._successReturn(was_enabled)
         chapi_log_result(MA_LOG_PREFIX, method, result, {'user': user_email})
@@ -961,7 +997,7 @@ class MAv1Implementation(MAv1DelegateBase):
         session = self.db.getSession()
         q = session.query(MemberAttribute.value).\
             filter(MemberAttribute.member_id == client_uuid).\
-            filter(MemberAttribute.name == '_GENI_MEMBER_ENABLED')
+            filter(MemberAttribute.name == MA.field_mapping['_GENI_MEMBER_ENABLED'])
         rows = q.all()
         is_enabled = (count(rows)==0 or rows[0][0] == 'y')
         session.close()
@@ -983,26 +1019,28 @@ class MAv1Implementation(MAv1DelegateBase):
         if len(member_info) > 0:
             for row in member_info:
                 pretty_name = get_member_display_name(member_info[row],row)
-                member_email = member_info[row]['MEMBER_EMAIL']
+                member_email = "%s <%s>" % (pretty_name, member_info[row]['MEMBER_EMAIL'])
         msgbody = "Dear " + pretty_name + ",\n\n"
-        msgbody += "Congratulations, you have been made a 'Project Lead', meaning you can create GENI"
-        msgbody += " Projects, as well as create slices in projects and reserve resources.\n\n"
-        
-        msgbody += "If you are using the GENI Portal, see "
-        msgbody += "http://groups.geni.net/geni/wiki/SignMeUp#a2b.CreateaGENIProject "  #FIXME: Edit if page moves
-        msgbody += "for instructions on creating a project.\n\n"
-        
-        #  msgbody .= "Please visit https://" . $_SERVER['SERVER_NAME'];
-        #  msgbody .= "/secure/home.php for more information, or to get started.\n\n";
+        subject = ""
+        if privilege == "PROJECT_LEAD":
+            subject = "You are now a GENI Project Lead" 
+            msgbody += "Congratulations, you have been made a 'Project Lead', meaning you can create GENI"
+            msgbody += " Projects, as well as create slices in projects and reserve resources.\n\n"
+
+            msgbody += "If you are using the GENI Portal, see "
+            msgbody += "http://groups.geni.net/geni/wiki/SignMeUp#a2b.CreateaGENIProject "  #FIXME: Edit if page moves
+            msgbody += "for instructions on creating a project.\n\n"
+        else:
+            subject = "You are now a GENI Operator" 
+            msgbody += "You are now a GENI Operator on "
+            msgbody += self.config.get("chrm.authority") + ".\n\n"
         
         msgbody += "Sincerely,\n"
         msgbody += "GENI Clearinghouse operations\n"
 
-        if privilege == "PROJECT_LEAD":
-            subject = "You are now a GENI Project Lead" 
-        else:
-            subject = "You are now a GENI Operator" 
-        send_email(member_email, self.ch_from_email,self.portal_help_email,subject,msgbody,self.portal_admin_email)
+        tolist = [member_email]
+        cclist = [self.portal_admin_email]
+        send_email(tolist, self.ch_from_email,self.portal_help_email,subject,msgbody,cclist)
 
     #  member_privilege (private)
     def add_member_privilege(self, cert, member_uid, privilege, credentials, options):
@@ -1038,20 +1076,17 @@ class MAv1Implementation(MAv1DelegateBase):
 
         session.close()
 
-        # log_event
-        msg = "Setting member %s privilege %s" %  (self._get_displayname_for_member_id(member_uid), privilege)
-        attribs = {"MEMBER" : member_uid}
-        self.logging_service.log_event(msg, attribs, member_uid)
-        chapi_audit_and_log(MA_LOG_PREFIX, msg, logging.INFO, {'user': user_email})
+        if not was_enabled:
+            # log_event
+            msg = "Granted member %s privilege %s" %  (self._get_displayname_for_member_id(member_uid), privilege)
+            attribs = {"MEMBER" : member_uid}
+            self.logging_service.log_event(msg, attribs, member_uid)
+            chapi_audit_and_log(MA_LOG_PREFIX, msg, logging.INFO, {'user': user_email})
 
-        # Email admins, new project lead/operator
-        self.mail_new_privilege(member_uid,privilege)
+            # Email admins, new project lead/operator
+            self.mail_new_privilege(member_uid,privilege)
 
-
-
-
-
-        result = self._successReturn(was_enabled)
+        result = self._successReturn(not was_enabled)
         chapi_log_result(MA_LOG_PREFIX, method, result, {'user': user_email})
         return result
 
@@ -1094,7 +1129,7 @@ class MAv1Implementation(MAv1DelegateBase):
 
                 for project in projects['value']:
                     new_lead_urn = None
-                    if (project['EXPIRED'] == False and project['PROJECT_ROLE'] == 'LEAD'):
+                    if project['PROJECT_ROLE'] == 'LEAD':
                         project_urn = project['PROJECT_URN']
                         #look for authorized admin to be new lead
                         members = self._sa_handler._delegate.lookup_project_members(cert, project_urn, credentials, {})
@@ -1117,13 +1152,15 @@ class MAv1Implementation(MAv1DelegateBase):
                             raise CHAPIv1ArgumentError('Cannot revoke lead privilege.  No authorized admin to take lead role on project %s' %project_urn)                            
         if was_enabled:
             self.delete_attr(session, privilege, member_uid)
+
+        session.close()
+
+        if was_enabled:
             # log_event
-            msg = "Revoking member %s privilege %s" %  (self._get_displayname_for_member_id(member_uid), privilege)
+            msg = "Revoked member %s privilege %s" %  (self._get_displayname_for_member_id(member_uid), privilege)
             attribs = {"MEMBER" : member_uid}
             self.logging_service.log_event(msg, attribs, member_uid)
             chapi_audit_and_log(MA_LOG_PREFIX, msg, logging.INFO, {'user': user_email})
-
-        session.close()
 
         result = self._successReturn(was_enabled)
         chapi_log_result(MA_LOG_PREFIX, method, result, {'user': user_email})
@@ -1139,9 +1176,13 @@ class MAv1Implementation(MAv1DelegateBase):
                 'value' : attr_value,
                 'self_assert' : attr_self_assert}
         user_email = get_email_from_cert(cert)
+        caller_uid = get_uuid_from_cert(cert)
         chapi_log_invocation(MA_LOG_PREFIX, method, [], {}, args, {'user': user_email})
 
 #        chapi_audit(MA_LOG_PREFIX, "Called " + method+' '+member_urn+' '+attr_name+' = '+attr_value)
+
+        if attr_name in ['PROJECT_LEAD', 'OPERATOR']:
+            raise CHAPIv1ArgumentError('%s not a valid member attribute' % attr_name)
 
         session = self.db.getSession()
         # find the uid
@@ -1150,6 +1191,19 @@ class MAv1Implementation(MAv1DelegateBase):
             session.close()
             raise CHAPIv1ArgumentError('No member with URN ' + member_urn)
         member_uid = uids[0]
+
+        # If the caller is the member whose attribute is being acted
+        # on then mark this self_asserted regardless of what they said
+        if attr_self_assert == 'f' and member_uid == caller_uid:
+            # Unless they are an operator
+            q2 = session.query(MemberAttribute.value).\
+                filter(MemberAttribute.member_id == member_uid).\
+                filter(MemberAttribute.name == "OPERATOR").\
+                filter(MemberAttribute.value == "true")
+            is_op = q2.count() > 0
+            if not is_op:
+                chapi_warn(MA_LOG_PREFIX, "Caller tried to add own attribute %s and say it was not self asserted" % attr_name, {'user': user_email})
+                attr_self_assert = 't'
 
         # find the old value
         q = session.query(MemberAttribute.value).\
@@ -1161,28 +1215,37 @@ class MAv1Implementation(MAv1DelegateBase):
         old_value = None
         if was_defined:
             old_value = rows[0][0]
+            if old_value != attr_value:
+                was_defined = False
 
-        self.update_attr(session, attr_name, attr_value, member_uid, attr_self_assert)
+        if not was_defined:
+            self.update_attr(session, attr_name, attr_value, member_uid, attr_self_assert)
         session.commit()
         session.close()
 
-        # log_event
-        msg = "Setting member %s attribute %s to %s" %  (self._get_displayname_for_member_urn(member_urn), attr_name, attr_value )
-        attribs = {"MEMBER" : member_urn}
-        self.logging_service.log_event(msg, attribs, member_uid)
-        chapi_audit_and_log(MA_LOG_PREFIX, msg, logging.INFO, {'user': user_email})
+        if not was_defined:
+            # log_event
+            msg = "Set member %s attribute %s to %s" %  (self._get_displayname_for_member_urn(member_urn), attr_name, attr_value )
+            attribs = {"MEMBER" : member_urn}
+            self.logging_service.log_event(msg, attribs, member_uid)
+            chapi_audit_and_log(MA_LOG_PREFIX, msg, logging.INFO, {'user': user_email})
 
         result = self._successReturn(old_value)
         chapi_log_result(MA_LOG_PREFIX, method, result, {'user': user_email})
         return result
 
-    def remove_member_attribute(self, cert, member_urn, attr_name, credentials, options):
+    def remove_member_attribute(self, cert, member_urn, attr_name,
+                                credentials, options, attr_value=None):
         method = 'remove_member_attribute'
         args = {'member_urn' : member_urn,
                 'name' : attr_name}
         user_email = get_email_from_cert(cert)
+        caller_urn = get_urn_from_cert(cert)
         chapi_log_invocation(MA_LOG_PREFIX, method, [], {}, args, {'user': user_email})
 #        chapi_audit(MA_LOG_PREFIX, "Called " + method+' '+member_urn+' '+attr_name)
+
+        if attr_name in ['PROJECT_LEAD', 'OPERATOR']:
+            raise CHAPIv1ArgumentError('%s not a valid member attribute' % attr_name)
 
         session = self.db.getSession()
         # find the uid
@@ -1193,9 +1256,11 @@ class MAv1Implementation(MAv1DelegateBase):
         member_uid = uids[0]
 
         # find the old value
-        q = session.query(MemberAttribute.value).\
+        q = session.query(MemberAttribute.value, MemberAttribute.self_asserted).\
             filter(MemberAttribute.member_id == member_uid).\
             filter(MemberAttribute.name == attr_name)
+        if attr_value is not None:
+            q = q.filter(MemberAttribute.value == attr_value)
         rows = q.all()
 
         was_defined = (len(rows)>0)
@@ -1203,21 +1268,42 @@ class MAv1Implementation(MAv1DelegateBase):
         chapi_debug(MA_LOG_PREFIX, 'RMA.ROWS = %s' % rows, {'user': user_email})
 
         old_value = None
+        do_remove = True
         if was_defined:
             old_value = rows[0][0]
-
-        if not was_defined:
-            self.delete_attr(session, attr_name, member_uid)
+            was_self = rows[0][1]
+            if member_urn == caller_urn:
+                if not was_self:
+                    # If the person is an operator, fine. Otherwise,
+                    # bail
+                    q2 = session.query(MemberAttribute.value).\
+                        filter(MemberAttribute.member_id == member_uid).\
+                        filter(MemberAttribute.name == "OPERATOR").\
+                        filter(MemberAttribute.value == "true")
+                    is_op = q2.count() > 0
+                    if not is_op:
+                        chapi_info(MA_LOG_PREFIX, "User %s tried to remove own non self-asserted attribute %s" % (member_urn,
+                                                                                                                  attr_name), {'user': user_email})
+                        do_remove = False
+            if do_remove:
+                self.delete_attr(session, attr_name, member_uid, attr_value)
 
         session.close()
 
-        # log_event
-        msg = "Removing member %s attribute %s" %  (self._get_displayname_for_member_urn(member_urn), attr_name)
-        attribs = {"MEMBER" : member_urn}
-        self.logging_service.log_event(msg, attribs, member_uid)
-        chapi_audit_and_log(MA_LOG_PREFIX, msg, logging.INFO, {'user': user_email})
+        if was_defined and do_remove:
+            # log_event
+            msg = "Removed member %s attribute %s" %  (self._get_displayname_for_member_urn(member_urn), attr_name)
+            if attr_value is not None:
+                msg = msg + "=%s" % attr_value
+            attribs = {"MEMBER" : member_urn}
+            self.logging_service.log_event(msg, attribs, member_uid)
+            chapi_audit_and_log(MA_LOG_PREFIX, msg, logging.INFO, {'user': user_email})
 
-        result = self._successReturn(old_value)
+        if do_remove:
+            result = self._successReturn(old_value)
+        else:
+            result = {'code': AUTHORIZATION_ERROR, 'value': old_value,
+                      'output': "Cannot remove own non self-asserted attribute"}
         chapi_log_result(MA_LOG_PREFIX, method, result, {'user': user_email})
         return result
 
