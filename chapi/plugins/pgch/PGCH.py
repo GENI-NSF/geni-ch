@@ -234,8 +234,8 @@ class PGCHv1Delegate(DelegateBase):
             if lookup_slices_return['code'] != NO_ERROR:
                 return lookup_slices_return
             if not lookup_slices_return or \
-                    not lookup_slces_return['value'] or \
-                    len(lookup_slces_return['value'].keys()) == 0:
+                    not lookup_slices_return['value'] or \
+                    len(lookup_slices_return['value'].keys()) == 0:
                 msg = "No slice found for uid %s" % slice_uuid
                 chapi_info(PGCH_LOG_PREFIX, msg, {'user': user_email})
                 # Return an error with this message

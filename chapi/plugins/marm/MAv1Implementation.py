@@ -78,7 +78,7 @@ def derive_username(email_address, session):
     # See http://www.linuxjournal.com/article/9585
     # try to figure out a reasonable username.
     # php: $email_addr = filter_var($email_address, FILTER_SANITIZE_EMAIL);
-    email_addr = re.sub('[^a-zA-Z0-9!#$%&\'*+\-/=?^_`{|}~@.[]]', '', email_address)
+    email_addr = re.sub('[^a-zA-Z0-9\!\#\$\%\&\'\*\+\-\/\=\?\^_`\{\|\}~@\.\[\]]', '', email_address)
     # print "<br/>derive2: email_addr = $email_addr<br/>\n"; */
 
     # Now get the username portion.
@@ -96,13 +96,13 @@ def derive_username(email_address, session):
 
     # lowercase the username
     username = username.lower()
+    # remove unacceptable characters
+    username = re.sub('[^a-z0-9_]', '', username)
+    # remove leading non-alphabetic chars
+    username = re.sub('^[^a-z]*', '', username)
     # trim the username to 8 chars
     if len(username)>8:
         username = username[0:8]
-    # remove unacceptable characters
-    username = re.sub('![a-z0-9_]', '', username)
-    # remove leading non-alphabetic chars
-    username = re.sub('^[^a-z]*', '', username)
 
     if not username:
         username = "geni1"
@@ -174,6 +174,7 @@ class MAv1Implementation(MAv1DelegateBase):
         self.portal_admin_email = self.config.get('chapi.portal_admin_email')
         self.portal_help_email = self.config.get('chapi.portal_help_email')
         self.ch_from_email = self.config.get('chapi.ch_from_email')
+        self.server = self.config.get('chrm.authority')
 
         trusted_root = self.config.get('chapiv1rpc.ch_cert_root')
         self.trusted_roots = [os.path.join(trusted_root, f) \
@@ -544,7 +545,15 @@ class MAv1Implementation(MAv1DelegateBase):
         attrs = {"MEMBER" : member_id}
         self.logging_service.log_event(msg, attrs, member_id)
         chapi_audit_and_log(MA_LOG_PREFIX, msg, logging.INFO, {'user': user_email})
-        # FIXME: Send email to portal admins
+        # Send email to portal admins
+        msgbody = "There is a new account registered on %s:\n" % self.server
+        msgbody += "\nmember_id: %s" %member_id
+        for key in atmap.keys():
+            msgbody += "\n%s: %s" %  (key, atmap[key]['value'])
+
+        tolist = [self.portal_admin_email]
+        subject = "New GENI CH account registered"
+        send_email(tolist, self.ch_from_email, self.portal_help_email,subject,msgbody)
 
         result = self._successReturn(atmap.values())
 
@@ -807,7 +816,8 @@ class MAv1Implementation(MAv1DelegateBase):
 
     def mail_enable_user(self, msg, subject):
         msgbody = msg + " on " + self.config.get("chrm.authority")
-        send_email(self.portal_admin_email, self.ch_from_email,self.portal_admin_email,subject,msgbody)
+        tolist = [self.portal_admin_email]
+        send_email(tolist, self.ch_from_email,self.portal_admin_email,subject,msgbody)
 
     # enable/disable a user/member  (private)
     def enable_user(self, client_cert, member_urn, enable_sense, 
@@ -889,7 +899,7 @@ class MAv1Implementation(MAv1DelegateBase):
         if len(member_info) > 0:
             for row in member_info:
                 pretty_name = get_member_display_name(member_info[row],row)
-                member_email = member_info[row]['MEMBER_EMAIL']
+                member_email = "%s <%s>" % (pretty_name, member_info[row]['MEMBER_EMAIL'])
         msgbody = "Dear " + pretty_name + ",\n\n"
         subject = ""
         if privilege == "PROJECT_LEAD":
@@ -908,7 +918,9 @@ class MAv1Implementation(MAv1DelegateBase):
         msgbody += "Sincerely,\n"
         msgbody += "GENI Clearinghouse operations\n"
 
-        send_email(member_email, self.ch_from_email,self.portal_help_email,subject,msgbody,self.portal_admin_email)
+        tolist = [member_email]
+        cclist = [self.portal_admin_email]
+        send_email(tolist, self.ch_from_email,self.portal_help_email,subject,msgbody,cclist)
 
     #  member_privilege (private)
     def add_member_privilege(self, client_cert, member_uid, privilege, 
