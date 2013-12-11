@@ -820,7 +820,7 @@ def user_id_extractor(options, arguments):
     return {'MEMBER_URN' : user_urn}
 
 def context_extractor(options, arguemnts):
-    if 'context_type' in arguments and 'context_id' in arguments:: 
+    if 'context_type' in arguments and 'context_id' in arguments:
         context_type = arguments['context_type']
         context_uid = arguments['context_id']
         if context_type == 'PROJECT':

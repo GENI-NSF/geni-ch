@@ -215,7 +215,7 @@ class FieldsArgumentCheck(ArgumentCheck):
         elif field_type == "CONTEXT_TYPE":
             # Must be a number and one of the defined attributes
             try:
-                index = int(value):
+                index = int(value)
                 properly_formed = index in attribute_type_names
             except Exception as e:
                 properly_formed = False
