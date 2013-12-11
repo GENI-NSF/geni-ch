@@ -814,5 +814,25 @@ def principal_extractor(options, arguments):
     return {'MEMBER_URN' : principal_urn}
 
 
+def user_id_extractor(options, arguments):
+    user_uid = arguments['user_id']
+    user_urn = convert_member_id_to_urn(member_uid)
+    return {'MEMBER_URN' : user_urn}
+
+def context_extractor(options, arguemnts):
+    if 'context_type' in arguments and 'context_id' in arguments:: 
+        context_type = arguments['context_type']
+        context_uid = arguments['context_id']
+        if context_type == 'PROJECT':
+            project_uid = context_uid
+            project_urn = convert_project_uid_to_urn(project_uid)
+            return {'PROJECT_URN' : project_urn}
+        elif context_type == 'SLICE':
+            slice_uid = context_uid
+            slice_urn = convert_slice_uid_to_urn(slice_uid)
+            return {'SLICE_URN' : slice_urn}
+    else:
+        return {}
+        
 
 

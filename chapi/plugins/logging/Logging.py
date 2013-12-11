@@ -29,11 +29,13 @@ from CHDatabaseEngine import *
 from chapi.DelegateBase import DelegateBase
 from chapi.HandlerBase import HandlerBase
 from chapi.Exceptions import *
+from ABACGuard import *
 
 from tools.dbutils import *
 from tools.geni_constants import context_type_names
 from tools.chapi_log import *
 from tools.cert_utils import get_email_from_cert
+from tools.guard_utils import *
 
 from sqlalchemy import *
 from datetime import datetime
@@ -235,6 +237,83 @@ class Loggingv1Delegate(DelegateBase):
                                         self.attribute_field_mapping) for row in rows]
         chapi_log_result(LOG_LOG_PREFIX, method, entries, {'user': user_email})
         return self._successReturn(entries)
+
+
+
+class Loggingv1Guard(ABACGuardBase):
+    def __init__(self):
+        ABACGuardBase.__init__(self)
+
+        # Set of argument checks indexed by method name
+    ARGUMENT_CHECK_FOR_METHOD = \
+        {
+        'log_event' : \
+            SimpleArgumentCheck({'user_id': 'UID', 
+                                 'attributes' : 'ATTRIBUTE_SET'}),
+        'get_log_entries_by_author' : \
+            SimpleArgumentCheck({'user_id' : 'UID', 
+                                 'num_hours' : 'POSITIVE'}),
+        'get_log_entries_for_context' : \
+            SimpleArgumentCheck({'context_type' : 'CONTEXT_TYPE', 
+                                 'context_id' : 'URN', 
+                                 'num_hours' : 'POSITIVE'}),
+        'get_log_entries_by_attributes' : \
+            None,
+        'get_attributes_for_log_entry' : \
+            None
+        }
+
+    INVOCATION_CHECK_FOR_METHOD = \
+        {
+        # user_id must be self
+        # *** FIXME: caller must be member of project or slice 
+        'log_event' : \
+            SubjectInvocationCheck([
+                "ME.MAY_LOG_EVENT<-ME.IS_AUTHORITY",
+                "ME.MAY_LOG_EVENT<-ME.IS_OPERATOR",
+                "ME.MA_LOG_EVENT_$SUBJECT<-ME.IS_$SUBJECT"
+                ], None, user_id_extractor),
+        # user_id must be self
+        'get_log_entries_by_author' : \
+            SubjectInvocationCheck([
+                "ME.GET_LOG_ENTRIES_BY_AUTHOR<-ME.IS_AUTHORITY",
+                "ME.GET_LOG_ENTRIES_BY_AUTHOR<-ME.IS_OPERATOR",
+                "ME.MA_LOG_EVENT_$SUBJECT<-ME.IS_$SUBJECT"
+                ], None, user_id_extractor),
+        # Must be member of project or slice
+        'get_log_entries_for_context' : \
+            SubjectInvocationCheck([
+                "ME.MAY_GET_LOG_ENTRIES_FOR_CONTEXT<-ME.IS_AUTHORITY",
+                "ME.MAY_GET_LOG_ENTRIES_FOR_CONTEXT<-ME.IS_OPERATOR",
+                'ME.MAY_GET_LOG_ENTRIES_FOR_CONTEXT_$SUBJECT<_ME.IS_LEAD_$SUBJECT',
+                'ME.MAY_GET_LOG_ENTRIES_FOR_CONTEXT_$SUBJECT<_ME.IS_ADMIN_$SUBJECT',
+                'ME.MAY_GET_LOG_ENTRIES_FOR_CONTEXT_$SUBJECT<_ME.IS_MEMBER_$SUBJECT',
+                'ME.MAY_GET_LOG_ENTRIES_FOR_CONTEXT_$SUBJECT<_ME.IS_AUDITOR_$SUBJECT'
+                ], [assert_belongs_to_slice, assert_belongs_to_project], context_extractor),
+        # For now, leave open (we don't think anyone uses this)
+        'get_log_entries_by_attributes' : \
+            SubjectInvocationCheck([
+                "ME.MAY_GET_LOG_ENTRIES_BY_ATTRIBUTES<-CALLER",
+                ], None, None),
+        # For now, leave open
+        'get_attributes_for_log_entry' : \
+            SubjectInvocationCheck([
+                "ME.MAY_GET_ATTRIBUTES_FOR_LOG_ENTRY<-CALLER"
+                ], None, None)
+        }
+
+
+    # Lookup argument check per method (or None if none registered)
+    def get_argument_check(self, method):
+        if self.ARGUMENT_CHECK_FOR_METHOD.has_key(method):
+            return self.ARGUMENT_CHECK_FOR_METHOD[method]
+        return None
+
+    # Lookup invocation check per method (or None if none registered)
+    def get_invocation_check(self, method):
+        if self.INVOCATION_CHECK_FOR_METHOD.has_key(method):
+            return self.INVOCATION_CHECK_FOR_METHOD[method]
+        return None
 
 
 
