@@ -1363,7 +1363,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                     subject = "New GENI CH project member added"
                     if caller_urn == member_urn:
                         msgbody = "%s accepted an invitation to join project %s in role %s on CH %s" % \
-                            (member_name, member_role, label, self.config.get("chrm.authority"))
+                            (member_name, label, member_role, self.config.get("chrm.authority"))
                     else:
                         msgbody = "%s added member %s in role %s to project %s on CH %s" % \
                             (caller_name, member_name, member_role, label, self.config.get("chrm.authority"))
@@ -1818,9 +1818,11 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         self._expire_project_invitations(session)
 
         invite_id = str(uuid.uuid4())
+        sys.stderr.write("\nINVITE ID: " + str(invite_id))
         expiration = datetime.utcnow() + relativedelta(hours=SA.PROJECT_DEFAULT_INVITATION_EXPIRATION_HOURS)
         ins = self.db.PROJECT_INVITATION_TABLE.insert().values(expiration=expiration, project_id=project_id, role=role, invite_id=invite_id)
         session.execute(ins)
+        sys.stderr.write("\nINS: "+ str(ins))
 
         session.commit()
         session.close()
