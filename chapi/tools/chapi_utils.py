@@ -49,7 +49,7 @@ def send_email(to_list,fromaddr,replyaddr,subject,msgbody,cc_list=None):
         to_hdr += to + ", "
     msg['To'] = to_hdr[:-2]
     msg['Reply-To'] = replyaddr
-    if cc_list != None and len(cc_addr) != 0 and cc_addr[0].strip() != "":
+    if cc_list != None and len(cc_list) != 0 and cc_list[0].strip() != "":
         cc_hdr = ""
         for cc in cc_list:
             if cc.strip() == "":

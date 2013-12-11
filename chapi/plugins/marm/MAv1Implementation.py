@@ -928,7 +928,8 @@ class MAv1Implementation(MAv1DelegateBase):
 
     def mail_enable_user(self, msg, subject):
         msgbody = msg + " on " + self.config.get("chrm.authority")
-        send_email(self.portal_admin_email, self.ch_from_email,self.portal_admin_email,subject,msgbody)
+        tolist = [self.portal_admin_email]
+        send_email(tolist, self.ch_from_email,self.portal_admin_email,subject,msgbody)
 
     # enable/disable a user/member  (private)
     def enable_user(self, client_cert, member_urn, enable_sense, credentials, options):

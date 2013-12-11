@@ -1367,7 +1367,8 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                     else:
                         msgbody = "%s added member %s in role %s to project %s on CH %s" % \
                             (caller_name, member_name, member_role, label, self.config.get("chrm.authority"))
-                    send_email(self.portal_admin_email, self.ch_from_email, self.portal_admin_email, subject, msgbody)
+                    to_list = [self.portal_admin_email]
+                    send_email(to_list, self.ch_from_email, self.portal_admin_email, subject, msgbody)
 
         # Log all changes
         if 'members_to_change' in options:
