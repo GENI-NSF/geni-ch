@@ -508,12 +508,12 @@ class SAv1Handler(HandlerBase):
                            credentials, options, read_only=True) as mc:
             if not mc._error:
                 mc._result = \
-                    self._delegate.get_requests_by_id(mc._client_cert, 
-                                                      request_id,
-                                                      context_type,
-                                                      credentials, 
-                                                      options,
-                                                      mc._session)
+                    self._delegate.get_request_by_id(mc._client_cert, 
+                                                     request_id,
+                                                     context_type,
+                                                     credentials, 
+                                                     options,
+                                                     mc._session)
         return mc._result
 
     def invite_member(self, role, project_id, credentials, options):
