@@ -706,7 +706,7 @@ class MAv1Implementation(MAv1DelegateBase):
         lookup_options = {'match' : match}
         lookup_response = self.lookup_member_info(lookup_options,
                                                   ['MEMBER_EMAIL',
-                                                   'MEMBER_UID'])
+                                                   'MEMBER_UID'], session)
         member_info = lookup_response['value'][member_urn]
         member_email = str(member_info['MEMBER_EMAIL'])
         member_id = str(member_info['MEMBER_UID'])
@@ -892,7 +892,7 @@ class MAv1Implementation(MAv1DelegateBase):
     # send email about new lead/operator privilege
     def mail_new_privilege(self,member_id, privilege):
         options = {'match' : {'MEMBER_UID' : member_id },'filter': ['_GENI_MEMBER_DISPLAYNAME','MEMBER_FIRSTNAME','MEMBER_LASTNAME','MEMBER_EMAIL']}  
-        info = self.lookup_member_info(options, MA.identifying_fields)
+        info = self.lookup_member_info(options, MA.identifying_fields, session)
         member_info = info['value']
         pretty_name = ""
         member_email = None
