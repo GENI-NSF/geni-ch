@@ -1,3 +1,4 @@
+
 #----------------------------------------------------------------------
 # Copyright (c) 2011-2013 Raytheon BBN Technologies
 #
@@ -1067,11 +1068,30 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                                           'SLICE_MEMBER', 'SLICE_ROLE', \
                                           'slice')
         
-
-        # FIXME: Validate that new slice lead is not a project auditor (#156)
-
+        # Validate that new slice lead is not a project auditor
         new_slice_lead = self.get_slice_lead(session,slice_id)
+        new_lead_urn = self.get_member_urn_for_id(session, new_slice_lead)
+        # get project id
+        q = session.query(Slice.project_id)
+        q = q.filter(Slice.slice_id == slice_id)
+        slice_row = q.one()
 
+        rows = self.lookup_for_member(new_lead_urn, self.db.PROJECT_TABLE, \
+                  self.db.PROJECT_MEMBER_TABLE, "project_name", "project_id")
+        projects = [{"PROJECT_ROLE" : row.name, \
+                         "PROJECT_UID" : row.project_id, \
+                         "PROJECT_URN": row_to_project_urn(row), \
+                         "EXPIRED" : row.expired } \
+                        for row in rows]
+        role = None
+        for proj in projects:
+            if proj['PROJECT_UID'] == slice_row.project_id:
+                role = proj['PROJECT_ROLE']
+                break
+
+        if role == 'AUDITOR':
+            raise CHAPIv1ArgumentError('Cannot make project auditor a slice lead')
+        
         # if slice lead has changed, change in sa_slice table
         if new_slice_lead != old_slice_lead:
             q = session.query(Slice)
@@ -1564,11 +1584,9 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         self._expire_project_invitations(session)
 
         invite_id = str(uuid.uuid4())
-        sys.stderr.write("\nINVITE ID: " + str(invite_id))
         expiration = datetime.utcnow() + relativedelta(hours=SA.PROJECT_DEFAULT_INVITATION_EXPIRATION_HOURS)
         ins = self.db.PROJECT_INVITATION_TABLE.insert().values(expiration=expiration, project_id=project_id, role=role, invite_id=invite_id)
         session.execute(ins)
-        sys.stderr.write("\nINS: "+ str(ins))
 
         result = {'expiration' : str(expiration), 'invite_id' : invite_id}
 

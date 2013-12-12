@@ -402,6 +402,18 @@ class PGCHv1Delegate(DelegateBase):
                 self._sa_handler.lookup_slices(creds, options)
 
             if lookup_slices_return['code'] != NO_ERROR:
+                if lookup_slices_return['code'] == AUTHORIZATION_ERROR:
+                    # Only slice members or operators can look up a
+                    # slice
+                    # So this might mean you are not in the slice, or
+                    # not in the project, or the slice does not exist
+                    msg = ""
+                    if urn:
+                        msg = "No slice found or authorization failed (URN %s)" % str(urn)
+                    else:
+                        msg = "No slice found or authorization failed (UID %s)" % str(uuid)
+                    chapi_info(PGCH_LOG_PREFIX, msg, {'user': user_email})
+                    return { 'code': 12, 'value': {}, 'output': msg} # 12 is what Flack expects for a nonexistent slice
                 return lookup_slices_return
             slice_info_dict = lookup_slices_return['value']
             

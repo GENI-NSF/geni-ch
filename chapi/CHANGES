@@ -3,8 +3,9 @@
 = GENI Clearinghouse Release Notes =
 == 1.2 ==
   * Fix role/project names in email for accepting an invitation (#183)
-
-== 1.2 ==
+  * Do not allow project auditor to become slice lead (#156)
+  * Return code 12 and a better error message when Resolve gets an authorization error doing lookup slices,
+    to indicate that the slice possibly just doesn't exist. (#180,#184)
 
 == 1.2 ==
 
