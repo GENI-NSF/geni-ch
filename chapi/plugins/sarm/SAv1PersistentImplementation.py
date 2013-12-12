@@ -306,7 +306,6 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
             raise CHAPIv1ArgumentError("Can't get slice credential " + \
                                            "on expired or non-existent slice %s"\
                                            % slice_urn)
-
         
         row = rows[0]
         expiration = row.expiration

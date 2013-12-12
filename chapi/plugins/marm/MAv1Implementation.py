@@ -1,4 +1,4 @@
-#----------------------------------------------------------------------         
+x#----------------------------------------------------------------------         
 # Copyright (c) 2011-2013 Raytheon BBN Technologies                             
 #                                                                               
 # Permission is hereby granted, free of charge, to any person obtaining         
@@ -1035,8 +1035,15 @@ class MAv1Implementation(MAv1DelegateBase):
 
         return result
 
+    def valid_attr(self, attr):
+        if attr.isspace():
+            return False
+        core_attrs = ['PROJECT_LEAD', 'OPERATOR', 'eppn', 'urn', 'username', 'first_name', 'last_name', 'affiliation', 'displayName', 'email_address', 'reference']
+        if attr in core_attrs:
+            return False
+        return True
 
-    #  member_attribute (private)
+    #  add member_attribute (private)
     def add_member_attribute(self, client_cert, member_urn, attr_name, attr_value, 
                              attr_self_assert,
                              credentials, options, session):
@@ -1044,7 +1051,7 @@ class MAv1Implementation(MAv1DelegateBase):
         caller_uid = get_uuid_from_cert(client_cert)
 #        chapi_audit(MA_LOG_PREFIX, "Called " + method+' '+member_urn+' '+attr_name+' = '+attr_value)
 
-        if attr_name in ['PROJECT_LEAD', 'OPERATOR']:
+        if not self.valid_attr(attr_name):
             raise CHAPIv1ArgumentError('%s not a valid member attribute' % attr_name)
 
         # find the uid
@@ -1098,7 +1105,7 @@ class MAv1Implementation(MAv1DelegateBase):
         caller_urn = get_urn_from_cert(client_cert)
 #        chapi_audit(MA_LOG_PREFIX, "Called " + method+' '+member_urn+' '+attr_name)
 
-        if attr_name in ['PROJECT_LEAD', 'OPERATOR']:
+        if not self.valid_attr(attr_name):
             raise CHAPIv1ArgumentError('%s not a valid member attribute' % attr_name)
 
         # find the uid
