@@ -303,9 +303,9 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         q = q.filter(self.db.SLICE_TABLE.c.expired == 'f')
         rows = q.all()
         if len(rows) == 0:
-            return self._errorReturn("Can't get slice credential " + \
-                                         "on expired or non-existent slice %s"\
-                                         % slice_urn)
+            raise CHAPIv1ArgumentError("Can't get slice credential " + \
+                                           "on expired or non-existent slice %s"\
+                                           % slice_urn)
 
         
         row = rows[0]
