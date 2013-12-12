@@ -72,8 +72,7 @@ class MethodContext:
                  credentials, # Credentials argument passed to method call
                  options,  # Options argument passed to method call
                  read_only, # Whether the method is read-only (and thus no need to commit)
-                 create_session=True,  # Whether the method requires a DB session 
-                 check_existing_urns=True): # Whether to check whether URN arguments exist at call time
+                 create_session=True):  # Whether the method requires a DB session 
         self._handler = handler
         self._log_prefix = log_prefix
         self._method_name = method_name
@@ -81,7 +80,6 @@ class MethodContext:
         self._credentials = credentials
         self._options = options
         self._read_only = read_only
-        self._check_existing_urns = check_existing_urns
 
         # Grab the request certificate and email at initialization
         self._client_cert = None
@@ -145,7 +143,6 @@ class MethodContext:
                                                      self._credentials,
                                                      self._options,
                                                      self._args_dict,
-                                                     self._check_existing_urns,
                                                      self._session)
             except Exception as e:
                 exc_type, exc_value, exc_traceback = sys.exc_info()

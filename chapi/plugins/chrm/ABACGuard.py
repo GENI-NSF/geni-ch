@@ -68,9 +68,9 @@ class InvocationCheck(object):
 
     # Validate arguments and check authorization
     def validate(self, client_cert, method, credentials, options, 
-                 arguments, check_existing_urns, session):
+                 arguments, session):
         subjects = self.validate_arguments(client_cert, method, \
-                                               options, arguments, check_existing_urns, session)
+                                               options, arguments, session)
         self.authorize_call(client_cert, method, credentials, \
                                 options, arguments, subjects, session)
 
@@ -93,7 +93,7 @@ class SubjectInvocationCheck(InvocationCheck):
     # Check that there are subjects in the arguments if required
     # Store the list of subjects for later authorization
     def validate_arguments(self, client_cert, method, options, arguments, 
-                           check_existing_urns, session):
+                           session):
         subjects = {}
         if self._subject_extractor:
             subjects = self._subject_extractor(options, arguments, session)
@@ -102,7 +102,7 @@ class SubjectInvocationCheck(InvocationCheck):
             if subjects and len(subjects) > 1:
                 raise CHAPIv1ArgumentError("Can't provide mixture of subject types for call %s: %s" % \
                                                (method, subjects.keys()))
-            if check_existing_urns and subjects and len(subjects) > 0:
+            if subjects and len(subjects) > 0:
                 subject_type = subjects.keys()[0]
                 subjects_of_type = subjects[subject_type]
                 ensure_valid_urns(subject_type, subjects_of_type, session)
@@ -231,7 +231,7 @@ class ABACGuardBase(GuardBase):
 
 
     def validate_call(self, client_cert, method, credentials, options, 
-                      arguments, check_existing_urns, session):
+                      arguments, session):
 #        print "ABACGuardBase.validate_call : " + method + " " + str(arguments) + " " + str(options)
 
         self.user_check(client_cert, session)
@@ -244,7 +244,6 @@ class ABACGuardBase(GuardBase):
         if invocation_check:
             invocation_check.validate(client_cert, method, 
                                       credentials, options, arguments,
-                                      check_existing_urns,
                                       session)
 
     def user_check(self, client_cert, session):

@@ -32,7 +32,6 @@ class GuardBase(object):
     # Plus dictionary of additional call arguments provided)
     # and session with which to perform database operations
     def validate_call(self, client_cert, method, credentials, options, args,
-                      check_existing_urns, 
                       session):
 #        print "VALIDATING " + method + " " + str(options)
         return True
