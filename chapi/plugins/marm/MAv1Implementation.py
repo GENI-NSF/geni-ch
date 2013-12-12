@@ -1166,20 +1166,22 @@ class MAv1Implementation(MAv1DelegateBase):
         chapi_log_result(MA_LOG_PREFIX, method, result, {'user': user_email})
         return result
 
+    # Do not allow add/remove attribute to modify certain attribute names
     def valid_attr(self, attr):
-        if attr.isspace():
+        if attr is None or attr.isspace():
             return False
-        core_attrs = ['PROJECT_LEAD', 'OPERATOR', 'eppn', 'urn', 'username', 'first_name', 'last_name', 'affiliation', 'displayName', 'email_address', 'reference']
-        if attr in core_attrs:
+#        core_attrs = ['PROJECT_LEAD', 'OPERATOR', 'eppn', 'urn',
+#        'username', 'first_name', 'last_name', 'affiliation',
+#        'displayName', 'email_address', 'reference', 'member_enabled']
+        core_attrs = ['PROJECT_LEAD', 'OPERATOR', 'eppn', 'urn',
+                      'username', 'email_address', 'member_enabled']
+        if attr.strip() in core_attrs:
             return False
         return True
 
     #  member_attribute (private)
     def add_member_attribute(self, cert, member_urn, attr_name, attr_value, attr_self_assert,
                              credentials, options):
-
-        if not self.valid_attr(attr_name):
-            raise CHAPIv1ArgumentError('%s not a valid member attribute' % attr_name)
 
         method = 'add_member_attribute'
         args = {'member_urn' : member_urn,
@@ -1191,6 +1193,10 @@ class MAv1Implementation(MAv1DelegateBase):
         chapi_log_invocation(MA_LOG_PREFIX, method, [], {}, args, {'user': user_email})
 
 #        chapi_audit(MA_LOG_PREFIX, "Called " + method+' '+member_urn+' '+attr_name+' = '+attr_value)
+
+        if not self.valid_attr(attr_name):
+            raise CHAPIv1ArgumentError('%s not a valid member attribute' % attr_name)
+        attr_name = attr_name.strip()
 
         session = self.db.getSession()
         # find the uid
@@ -1254,6 +1260,7 @@ class MAv1Implementation(MAv1DelegateBase):
 
         if not self.valid_attr(attr_name):
             raise CHAPIv1ArgumentError('%s not a valid member attribute' % attr_name)
+        attr_name = attr_name.strip()
 
         session = self.db.getSession()
         # find the uid
