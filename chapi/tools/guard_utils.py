@@ -367,7 +367,7 @@ def lookup_pi_privilege(user_urn, session):
 #     with given subject as lead
 # 3. If looking up a member by member_email who is a 
 #    project lead or admin, allow it
-def assert_shares_project(caller_urn, member_urns, label, options, 
+def assert_shares_project(caller_urn, member_urns, label, options, arguments,
                           abac_manager, session):
 #    chapi_info('', "ASP %s %s %s %s" % (caller_urn, member_urns, 
 #                                        label, options))
@@ -464,7 +464,7 @@ def assert_shares_project(caller_urn, member_urns, label, options,
 
 # If given caller and given subject share a common slice
 # Generate an ME.SHARES_SLICE(subject)<-caller assertion
-def assert_shares_slice(caller_urn, member_urns, label, options, 
+def assert_shares_slice(caller_urn, member_urns, label, options, arguments,
                         abac_manager, session):
     db = pm.getService('chdbengine')
     if not isinstance(member_urns, list): 
@@ -499,7 +499,7 @@ def assert_shares_slice(caller_urn, member_urns, label, options,
 
 # Assert ME.IS_$ROLE(SLICE)<-CALLER for all slices of given set 
 # of which caller is a member
-def assert_slice_role(caller_urn, urns, label, options, abac_manager, session):
+def assert_slice_role(caller_urn, urns, label, options, arguments, abac_manager, session):
     db = pm.getService('chdbengine')
     config = pm.getService('config')
     authority = config.get("chrm.authority")
@@ -559,7 +559,7 @@ def get_slice_role_for_member(caller_urn, slice_urns, session):
 
 # Assert ME.IS_$ROLE_$PROJECT<-CALLER for the projects among given set 
 # of which caller is a member
-def assert_project_role(caller_urn, project_urns, label, options, 
+def assert_project_role(caller_urn, project_urns, label, options, arguments,
                         abac_manager, session):
     if label != "PROJECT_URN": return
     db = pm.getService('chdbengine')
@@ -576,8 +576,10 @@ def assert_project_role(caller_urn, project_urns, label, options,
 
 
 # Assert ME.BELONGS_TO_$SLICE<-CALLER if caller is member of slice
-def assert_belongs_to_slice(caller_urn, slice_urns, label, options, 
+def assert_belongs_to_slice(caller_urn, slice_urns, label, options, arguments,
                             abac_manager, session):
+
+    chapi_info('*** ABTS ***', '%s %s %s' % (caller_urn, slice_urns, label))
 
     if len(slice_urns) == 0:
         return []
@@ -604,7 +606,7 @@ def assert_belongs_to_slice(caller_urn, slice_urns, label, options,
 
 # Assert ME.BELONGS_TO_$PROJECT<-CALLER if caller is member of project
 def assert_belongs_to_project(caller_urn, project_urns, label, \
-                              options, abac_manager, session):
+                              options, arguments, abac_manager, session):
     if label != "PROJECT_URN": return
     project_names = \
         [get_name_from_urn(project_urn) for project_urn in project_urns]
@@ -635,7 +637,7 @@ def assert_belongs_to_project(caller_urn, project_urns, label, \
 # From there, Assert whether the project membership requestor is the caller
 # And assert the role on the project of the caller (if any)
 def assert_request_id_requestor_and_project_role(caller_urn, request_id, 
-                                                 label, options, abac_manager,
+                                                 label, options, arguments, abac_manager,
                                                  session):
     request_id = request_id[0] # turn list back into singleton
     if label != "REQUEST_ID" : return
@@ -663,6 +665,32 @@ def assert_request_id_requestor_and_project_role(caller_urn, request_id,
             role_name = attribute_type_names[role]
             assertion = "ME.IS_%s_%s<-CALLER" % (role_name, request_id)
             abac_manager.register_assertion(assertion)
+
+# If the 'user_id' argument matches the caller_urn, then we look at the 'attributes' message 
+# and determine if the callers is a member of the slice (if present) or project (if present)
+def assert_user_belongs_to_slice_or_project(caller_urn, subject_urns, \
+                                            label, options, arguments, abac_manager):
+    chapi_info("AUBTSOP", '*** HERE *** %s %s %s' % (caller_urn, label, arguments))
+    # First, make sure the user_id argument matches the caller. Otherwise get out
+    if 'user_id' not in arguments: return
+    user_uid = arguments['user_id']
+    user_urn = convert_member_uid_to_urn(user_uid)
+    if user_urn != caller_urn: return
+
+    # Second, get the attributes. 
+    # If there is one for slice, assert_belongs_to_slice
+    # Otherwise, if there is one for project, assert_belogs_to_project
+    if 'attributes' not in arguments: return
+    attributes = arguments['attributes']
+    if 'SLICE' in attributes:
+        slice_uid = attributes['SLICE']
+        slice_urn = convert_slice_uid_to_urn(slice_uid)
+        assert_belongs_to_slice(caller_urn, [slice_urn], 'SLICE', options, arguments, abac_manager)
+    elif 'PROJECT' in attributes:
+        project_uid = attributes['PROJECT']
+        project_urn = convert_project_uid_to_urn(project_uid)
+        assert_belongs_to_project(caller_urn, [project_urn], 'PROJECTS', options, arguments, abac_manager)
+                                
 
 # Extractors to extract subject identifiers from request
 # These return a dictionary of {'SUBJECT_TYPE : [List of SUBJECT IDENTIFIERS OF THIS TYPE]}
@@ -835,5 +863,25 @@ def principal_extractor(options, arguments, session):
     return {'MEMBER_URN' : principal_urn}
 
 
+def user_id_extractor(options, arguments):
+    user_uid = arguments['user_id']
+    user_urn = convert_member_uid_to_urn(user_uid)
+    return {'MEMBER_URN' : user_urn}
+
+def context_extractor(options, arguments):
+    if 'context_type' in arguments and 'context_id' in arguments:
+        context_type = arguments['context_type']
+        context_uid = arguments['context_id']
+        if context_type == 'PROJECT':
+            project_uid = context_uid
+            project_urn = convert_project_uid_to_urn(project_uid)
+            return {'PROJECT_URN' : project_urn}
+        elif context_type == 'SLICE':
+            slice_uid = context_uid
+            slice_urn = convert_slice_uid_to_urn(slice_uid)
+            return {'SLICE_URN' : slice_urn}
+    else:
+        return {}
+        
 
 

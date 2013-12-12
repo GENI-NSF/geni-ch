@@ -130,7 +130,7 @@ class SubjectInvocationCheck(InvocationCheck):
                                     cert_files_by_name = {"ME" : self.cert_file}, 
                                     key_files_by_name = {"ME" : self.key_file},
                                     manage_context = False)
-        #abac_manager._verbose = True
+        abac_manager._verbose = True
 
         client_urn = get_urn_from_cert(client_cert)
 
@@ -157,7 +157,7 @@ class SubjectInvocationCheck(InvocationCheck):
             if self._attribute_extractors:
                 for attribute_extractor in self._attribute_extractors:
                     attribute_extractor(client_urn, subjects_of_type, \
-                                        subject_type, options, abac_manager,
+                                        subject_type, options, arguments, abac_manager,
                                         session)
 
             # Register policies relative to the subjects

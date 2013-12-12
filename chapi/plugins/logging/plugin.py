@@ -22,7 +22,7 @@
 #----------------------------------------------------------------------
 
 import amsoil.core.pluginmanager as pm
-from Logging import Loggingv1Delegate, Loggingv1Handler
+from Logging import Loggingv1Delegate, Loggingv1Handler, Loggingv1Guard
 
 # Plugin for logging service implementation
 
@@ -33,6 +33,9 @@ def setup():
 
     log_delegate = Loggingv1Delegate()
     log_handler.setDelegate(log_delegate)
+
+    log_guard = Loggingv1Guard() 
+    log_handler.setGuard(log_guard)
 
     xmlrpc = pm.getService('xmlrpc')
     xmlrpc.registerXMLRPC('log1', log_handler, '/LOG')
