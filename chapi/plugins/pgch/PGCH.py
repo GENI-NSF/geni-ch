@@ -603,7 +603,7 @@ class PGCHv1Delegate(DelegateBase):
                 break
         if slice_cred is None:
             # No SFA credential found!
-            return self._errorReturn('No slice credential available')
+            raise CHAPIv1ArgumentError('No slice credential available')
         return self._successReturn(slice_cred)
 
     def RenewSlice(self, client_cert, args):
@@ -641,7 +641,7 @@ class PGCHv1Delegate(DelegateBase):
                 break
         if slice_cred is None:
             # No SFA credential found!
-            return self._errorReturn('No slice credential available')
+            raise CHAPIv1ArgumentError('No slice credential available')
         return self._successReturn(slice_cred)
 
     def GetKeys(self, client_cert, args):
