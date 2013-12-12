@@ -90,7 +90,7 @@ class MethodContext:
             self._client_cert = self._handler.requestCertificate()
             self._email = get_email_from_cert(self._client_cert)
         except Exception as e:
-            chapi_info("***MC***", "No request certificate")
+            chapi_info("MethodContext", "No request certificate")
 
         self._error = False
 
@@ -183,9 +183,26 @@ class MethodContext:
 
         # Close the session and commit if necessary
         if self._session and not self._provided_session:
-            if not self._read_only:
-                self._session.commit()
-            self._session.close()
+            try:
+                if not self._read_only:
+                    if self._error:
+                        self._session.rollback()
+                    else:
+                        self._session.commit()
+                self._session.close()
+            except Exception as db_error:
+                # We got an error committing, rolling back or closing session
+                # If there's an existing error
+                # Log the database error, but return the previous  error
+                # Otherwise return the database error
+                exc_type, exc_value, exc_traceback = sys.exc_info()
+                if self._error:
+                    pretty_db_error_traceback = \
+                        "\n".join(traceback.format_tb(exc_traceback))
+                    self._handler._log.error(pretty_db_error_traceback)
+                else:
+                    self._handleError(db_error, exc_traceback)
+                
 
         # Log the result
         chapi_log_result(self._log_prefix, self._method_name,

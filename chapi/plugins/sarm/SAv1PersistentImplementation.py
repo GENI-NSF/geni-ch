@@ -1077,7 +1077,8 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         slice_row = q.one()
 
         rows = self.lookup_for_member(new_lead_urn, self.db.PROJECT_TABLE, \
-                  self.db.PROJECT_MEMBER_TABLE, "project_name", "project_id")
+                  self.db.PROJECT_MEMBER_TABLE, "project_name", "project_id", 
+                                      session)
         projects = [{"PROJECT_ROLE" : row.name, \
                          "PROJECT_UID" : row.project_id, \
                          "PROJECT_URN": row_to_project_urn(row), \
