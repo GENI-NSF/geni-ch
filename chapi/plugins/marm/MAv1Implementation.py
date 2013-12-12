@@ -949,8 +949,6 @@ class MAv1Implementation(MAv1DelegateBase):
         if not was_enabled:
             self.update_attr(session, privilege, 'true', member_uid, 'f')
 
-
-        if not was_enabled:
             # log_event
             msg = "Granted member %s privilege %s" %  (self._get_displayname_for_member_id(member_uid, session), privilege)
             attribs = {"MEMBER" : member_uid}
@@ -1022,7 +1020,6 @@ class MAv1Implementation(MAv1DelegateBase):
         if was_enabled:
             self.delete_attr(session, privilege, member_uid)
 
-        if was_enabled:
             # log_event
             msg = "Revoking member %s privilege %s" %  (self._get_displayname_for_member_id(member_uid, session), privilege)
             attribs = {"MEMBER" : member_uid}
@@ -1090,7 +1087,7 @@ class MAv1Implementation(MAv1DelegateBase):
         if not was_defined:
             # log_event
             msg = "Set member %s attribute %s to %s" %  (self._get_displayname_for_member_urn(member_urn, session), attr_name, attr_value )
-            attribs = {"MEMBER" : member_urn}
+            attribs = {"MEMBER" : member_uid}
             self.logging_service.log_event(msg, attribs, member_uid)
             chapi_audit_and_log(MA_LOG_PREFIX, msg, logging.INFO, {'user': user_email})
         result = self._successReturn(old_value)
@@ -1150,7 +1147,7 @@ class MAv1Implementation(MAv1DelegateBase):
             msg = "Removed member %s attribute %s" %  (self._get_displayname_for_member_urn(member_urn, session), attr_name)
             if attr_value is not None:
                 msg = msg + "=%s" % attr_value
-            attribs = {"MEMBER" : member_urn}
+            attribs = {"MEMBER" : member_uid}
             self.logging_service.log_event(msg, attribs, member_uid)
             chapi_audit_and_log(MA_LOG_PREFIX, msg, logging.INFO, {'user': user_email})
 
