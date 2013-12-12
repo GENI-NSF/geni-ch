@@ -284,7 +284,7 @@ class MAv1Handler(HandlerBase):
                            {}, [], {}, read_only=True) as mc:
             if not mc._error:
                 mc._result = \
-                    self._delegate.list_clients(mc._session)
+                    self._delegate.list_clients(mc._client_cert, mc._session)
         return mc._result
 
     def list_authorized_clients(self, member_id):
@@ -305,15 +305,16 @@ class MAv1Handler(HandlerBase):
         """
         """
         with MethodContext(self, MA_LOG_PREFIX, 
-                           'authorized_client', 
+                           'authorize_client', 
                            {'member_id' : member_id,'client_urn' : client_urn},
                            [], {}, read_only=False) as mc:
             if not mc._error:
                 mc._result = \
-                    self._delegate.list_authorized_client(mc._client_cert,
-                                                          member_id,
-                                                          client_urn,
-                                                          mc._session)
+                    self._delegate.authorize_client(mc._client_cert,
+                                                    member_id,
+                                                    client_urn,
+                                                    authorize_sense,
+                                                    mc._session)
         return mc._result
 
 
@@ -329,12 +330,12 @@ class MAv1Handler(HandlerBase):
                            credentials, options, read_only=False) as mc:
             if not mc._error:
                 mc._result = \
-                    self._delegate.list_authorized_clients(mc._client_cert,
-                                                           member_urn,
-                                                           enable_sense,
-                                                           credentials,
-                                                           options,
-                                                           mc._session)
+                    self._delegate.enable_user(mc._client_cert,
+                                               member_urn,
+                                               enable_sense,
+                                               credentials,
+                                               options,
+                                               mc._session)
         return mc._result
 
     # member privilege (private)
@@ -480,7 +481,7 @@ class MAv1DelegateBase(DelegateBase):
         raise CHAPIv1NotImplementedError('')
 
     # ClientAuth methods
-    def list_clients(self, session):
+    def list_clients(self, client_cert, session):
         raise CHAPIv1NotImplementedError('')
 
     # List of URN's of all tools for which a given user (by ID) has

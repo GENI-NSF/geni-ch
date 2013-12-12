@@ -825,6 +825,12 @@ def member_urn_extractor(options, arguments, session):
     member_urn = arguments['member_urn']
     return {"MEMBER_URN" : [member_urn]}
 
+# Extract member urn from member_id argument
+def member_id_extractor(options, arguments, session):
+    member_id = arguments['member_id']
+    member_urn = convert_member_uid_to_urn(member_id, session)
+    return {"MEMBER_URN" : member_urn}
+
 # Pull project urn out of context_id
 def request_context_extractor(options, arguments, session):
     project_uid = arguments['context_id']

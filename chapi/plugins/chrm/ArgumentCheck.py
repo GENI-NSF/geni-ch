@@ -229,7 +229,7 @@ class FieldsArgumentCheck(ArgumentCheck):
                         try:
                             uuid.UUID(attr_value)
                         except Exception as e:
-                            properly_formed = false
+                            properly_formed = False
         else:
             raise CHAPIv1ArgumentError("Unsupported field type : %s %s" % (field, field_type))
 
