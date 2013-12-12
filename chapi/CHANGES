@@ -1,10 +1,11 @@
 # Note: keep this file in wiki format for easy pasting to the proto-ch wiki
 
 = GENI Clearinghouse Release Notes =
-
 == 1.2 ==
- * Return code 12 and a better error message when Resolve gets an authorization error doing lookup slices,
-   to indicate that the slice possibly just doesn't exist. (#180,#184)
+  * Fix role/project names in email for accepting an invitation (#183)
+  * Do not allow project auditor to become slice lead (#156)
+  * Return code 12 and a better error message when Resolve gets an authorization error doing lookup slices,
+    to indicate that the slice possibly just doesn't exist. (#180,#184)
 
 == 1.1 ==
  * Use past tense in logging service log messages (#128)
