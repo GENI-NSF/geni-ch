@@ -120,7 +120,7 @@ def derive_username(email_address, session):
             else:
                 tmpname = username+str(i)
             # print "trying $tmpname<br/>\n";
-            if not username_exists(tmpname):
+            if not username_exists(tmpname, session):
                 # print "no conflict with $tmpname<br/>\n";
                 return tmpname
 
