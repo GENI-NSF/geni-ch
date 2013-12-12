@@ -6,6 +6,7 @@
   * Do not allow project auditor to become slice lead (#156)
   * Return code 12 and a better error message when Resolve gets an authorization error doing lookup slices,
     to indicate that the slice possibly just doesn't exist. (#180,#184)
+  * Fix error renewing non-existent slice in PGCH (#182)
 
 == 1.1 ==
  * Use past tense in logging service log messages (#128)
