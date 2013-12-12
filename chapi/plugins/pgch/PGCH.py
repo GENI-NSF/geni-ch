@@ -438,6 +438,18 @@ class PGCHv1Delegate(DelegateBase):
                 self._sa_handler.lookup_slices(creds, options)
 
             if lookup_slices_return['code'] != NO_ERROR:
+                if lookup_slices_return['code'] == AUTHORIZATION_ERROR:
+                    # Only slice members or operators can look up a
+                    # slice
+                    # So this might mean you are not in the slice, or
+                    # not in the project, or the slice does not exist
+                    msg = ""
+                    if urn:
+                        msg = "No slice found or authorization failed (URN %s)" % str(urn)
+                    else:
+                        msg = "No slice found or authorization failed (UID %s)" % str(uuid)
+                    chapi_info(PGCH_LOG_PREFIX, msg, {'user': user_email})
+                    return { 'code': 12, 'value': {}, 'output': msg} # 12 is what Flack expects for a nonexistent slice
                 return lookup_slices_return
             slice_info_dict = lookup_slices_return['value']
             
@@ -469,12 +481,27 @@ class PGCHv1Delegate(DelegateBase):
             # give an error, but that is also a DB error
             creator_urn = lookup_member_return['value'].keys()[0]
 
-            slice_cred_return = self.GetCredential(client_cert, \
-                                                       {'type' : 'slice', \
-                                                            'uuid' : slice_uuid})
-            if slice_cred_return['code'] != NO_ERROR:
-                return slice_cred_return
-            slice_cred = slice_cred_return['value']
+            options = {}
+            get_credentials_return = \
+                self._sa_handler.get_credentials(slice_urn, \
+                                                     [], options)
+            if get_credentials_return['code'] == AUTHORIZATION_ERROR:
+                msg = "No slice found for urn %s" % slice_urn
+                chapi_info(PGCH_LOG_PREFIX, msg, {'user': user_email})
+            # Return an error with this message
+                return { 'code' :  ARGUMENT_ERROR , 'value' : "", 'output' : msg }
+
+            if get_credentials_return['code'] != NO_ERROR:
+                return get_credentials_return
+
+            if not get_credentials_return['value'] or \
+                    len(get_credentials_return['value']) == 0:
+                msg = "No slice found for urn %s" % slice_urn
+                chapi_info(PGCH_LOG_PREFIX, msg, {'user': user_email})
+                # Return an error with this message
+                return { 'code' :  ARGUMENT_ERROR , 'value' : "", 'output' : msg }
+
+            slice_cred = get_credentials_return['value'][0]['geni_value']
             slice_gid = gid.GID(slice_cred)
 
             resolve = {'urn' : slice_urn, \
@@ -576,7 +603,7 @@ class PGCHv1Delegate(DelegateBase):
                 break
         if slice_cred is None:
             # No SFA credential found!
-            return self._errorReturn('No slice credential available')
+            raise CHAPIv1ArgumentError('No slice credential available')
         return self._successReturn(slice_cred)
 
     def RenewSlice(self, client_cert, args):
@@ -614,7 +641,7 @@ class PGCHv1Delegate(DelegateBase):
                 break
         if slice_cred is None:
             # No SFA credential found!
-            return self._errorReturn('No slice credential available')
+            raise CHAPIv1ArgumentError('No slice credential available')
         return self._successReturn(slice_cred)
 
     def GetKeys(self, client_cert, args):

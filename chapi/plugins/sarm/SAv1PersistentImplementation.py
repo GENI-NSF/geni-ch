@@ -347,7 +347,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         rows = q.all()
         if len(rows) == 0:
             session.close()
-            return self._errorReturn("Can't get slice credential " + \
+            raise CHAPIv1ArgumentError("Can't get slice credential " + \
                                          "on expired or non-existent slice %s"\
                                          % slice_urn)
 
