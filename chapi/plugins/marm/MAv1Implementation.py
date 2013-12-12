@@ -1,4 +1,4 @@
-x#----------------------------------------------------------------------         
+#----------------------------------------------------------------------         
 # Copyright (c) 2011-2013 Raytheon BBN Technologies                             
 #                                                                               
 # Permission is hereby granted, free of charge, to any person obtaining         
