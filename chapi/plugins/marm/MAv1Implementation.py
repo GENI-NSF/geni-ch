@@ -1015,7 +1015,7 @@ class MAv1Implementation(MAv1DelegateBase):
                                     
                                     options = {'members_to_change':[{'PROJECT_MEMBER': member_urn,'PROJECT_ROLE':'MEMBER'}, \
                                                                         {'PROJECT_MEMBER': new_lead_urn,'PROJECT_ROLE':'LEAD'}]}
-                                    result = self._sa_handler._delegate.modify_project_membership(cert, project['PROJECT_URN'], credentials, options, session)
+                                    result = self._sa_handler._delegate.modify_project_membership(client_cert, project['PROJECT_URN'], credentials, options, session)
                                     break
                         if new_lead_urn == None:
                             raise CHAPIv1ArgumentError('Cannot revoke lead privilege.  No authorized admin to take lead role on project %s' %project_urn)                            
