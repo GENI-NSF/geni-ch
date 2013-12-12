@@ -176,7 +176,7 @@ class MethodContext:
     # value is the exception and traceback_object is the stack trace.
     # Otherwise, these are all None
     def __exit__(self, type, value, traceback_object):
-#        chapi_info("MC.__exit__", "%s %s %s" % (type, value, traceback_object))
+#        chapi_info("MethodContext", "__exit__ %s %s %s" % (type, value, traceback_object))
         # If there is an error, handle in standard way (setting result and error)
         if type:
             self._handleError(value, traceback_object)
