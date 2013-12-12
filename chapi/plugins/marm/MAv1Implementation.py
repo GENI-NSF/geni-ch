@@ -120,7 +120,7 @@ def derive_username(email_address, session):
             else:
                 tmpname = username+str(i)
             # print "trying $tmpname<br/>\n";
-            if not username_exists(tmpname):
+            if not username_exists(tmpname, session):
                 # print "no conflict with $tmpname<br/>\n";
                 return tmpname
 
@@ -890,7 +890,7 @@ class MAv1Implementation(MAv1DelegateBase):
             raise CHAPIv1AuthorizationError("User %s (%s) disabled" % (client_name, client_urn));
 
     # send email about new lead/operator privilege
-    def mail_new_privilege(self,member_id, privilege):
+    def mail_new_privilege(self,member_id, privilege, session):
         options = {'match' : {'MEMBER_UID' : member_id },'filter': ['_GENI_MEMBER_DISPLAYNAME','MEMBER_FIRSTNAME','MEMBER_LASTNAME','MEMBER_EMAIL']}  
         info = self.lookup_member_info(options, MA.identifying_fields, session)
         member_info = info['value']
@@ -956,7 +956,7 @@ class MAv1Implementation(MAv1DelegateBase):
             chapi_audit_and_log(MA_LOG_PREFIX, msg, logging.INFO, {'user': user_email})
 
             # Email admins, new project lead/operator
-            self.mail_new_privilege(member_uid,privilege)
+            self.mail_new_privilege(member_uid,privilege, session)
 
         result = self._successReturn(not was_enabled)
 
