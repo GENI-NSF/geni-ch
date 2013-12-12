@@ -1022,8 +1022,6 @@ class MAv1Implementation(MAv1DelegateBase):
         if was_enabled:
             self.delete_attr(session, privilege, member_uid)
 
-        session.close()
-
         if was_enabled:
             # log_event
             msg = "Revoking member %s privilege %s" %  (self._get_displayname_for_member_id(member_uid, session), privilege)
