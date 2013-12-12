@@ -53,11 +53,11 @@ class Loggingv1Handler(HandlerBase):
 
     # Enter new logging entry in database for given sets of attributes
     # And logging user (author)
-    def log_event(self, message, attributes, user_id):
+    def log_event(self, message, attributes, user_id, session=None):
         with MethodContext(self, LOG_LOG_PREFIX, 'log_event',
                            {'message' : message, 'attributes' : attributes, 
                             'user_id' : user_id},
-                           [], {}, read_only=False) as mc:
+                           [], {}, read_only=False, session=session) as mc:
             if not mc._error:
                 mc._result = \
                     self._delegate.log_event(mc._client_cert,

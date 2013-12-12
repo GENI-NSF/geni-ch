@@ -509,12 +509,11 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
 
         # do the database write
         result = self.finish_create(session, slice, SA.slice_field_mapping)
-        session.commit() # Commit at this point so the logging service can see the slice and members
 
         # Log the slice create event
         attribs = {"SLICE" : slice.slice_id, "PROJECT" : slice.project_id}
         self.logging_service.log_event("Created slice " + name, 
-                                       attribs, client_uuid)
+                                       attribs, client_uuid, session=session)
         chapi_audit_and_log(SA_LOG_PREFIX, "Created slice " + name + " in project " + slice.project_id, logging.INFO, {'user': user_email})
 
         return result
@@ -685,7 +684,6 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         # do the database write
         result = self.finish_create(session, project,  SA.project_field_mapping, \
                                         {"PROJECT_URN": row_to_project_urn(project)})
-        session.commit() # Commit at this point so the logging service can see the project and members
 
         # get name of project lead
         ma_options = {'match' : {'MEMBER_UID' : project.lead_id },'filter': ['_GENI_MEMBER_DISPLAYNAME','MEMBER_FIRSTNAME','MEMBER_LASTNAME','MEMBER_EMAIL']}  
@@ -697,7 +695,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                 leadname = get_member_display_name(info[row],row)
 
         self.logging_service.log_event("Created project " + name + " with lead " + leadname, 
-                                       attribs, client_uuid)
+                                       attribs, client_uuid, session=session)
         chapi_audit_and_log(SA_LOG_PREFIX, "Created project " + name + " with lead " + leadname, logging.INFO, {'user': user_email})
 
         # Email the admins that the project was created

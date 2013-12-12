@@ -72,6 +72,7 @@ class MethodContext:
                  credentials, # Credentials argument passed to method call
                  options,  # Options argument passed to method call
                  read_only, # Whether the method is read-only (and thus no need to commit)
+                 session=None, # Optionally provide an existing session in which to perform method
                  create_session=True):  # Whether the method requires a DB session 
         self._handler = handler
         self._log_prefix = log_prefix
@@ -80,6 +81,7 @@ class MethodContext:
         self._credentials = credentials
         self._options = options
         self._read_only = read_only
+        self._provided_session = (session != None)
 
         # Grab the request certificate and email at initialization
         self._client_cert = None
@@ -94,8 +96,8 @@ class MethodContext:
 
         # Create the session if needed
         self._db = pm.getService('chdbengine')
-        self._session = None
-        if create_session:
+        self._session = session
+        if create_session and not session:
             self._session = self._db.getSession()
 
 
@@ -180,7 +182,7 @@ class MethodContext:
             self._handleError(value, traceback_object)
 
         # Close the session and commit if necessary
-        if self._session:
+        if self._session and not self._provided_session:
             if not self._read_only:
                 self._session.commit()
             self._session.close()
