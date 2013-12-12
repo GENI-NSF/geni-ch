@@ -1097,7 +1097,7 @@ class MAv1Implementation(MAv1DelegateBase):
         return result
 
     def remove_member_attribute(self, client_cert, member_urn, attr_name, 
-                                credentials, options, session):
+                                credentials, options, session, attr_value=None):
         user_email = get_email_from_cert(client_cert)
         caller_urn = get_urn_from_cert(client_cert)
 #        chapi_audit(MA_LOG_PREFIX, "Called " + method+' '+member_urn+' '+attr_name)
