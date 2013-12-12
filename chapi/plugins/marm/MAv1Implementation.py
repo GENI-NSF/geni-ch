@@ -993,7 +993,7 @@ class MAv1Implementation(MAv1DelegateBase):
                 member_urn = row[0]
                 #get projects for which member is lead
 
-                projects = self._sa_handler._delegate.lookup_projects_for_member(cert, member_urn, 
+                projects = self._sa_handler._delegate.lookup_projects_for_member(client_cert, member_urn, 
                                                                                  credentials, {}, session)
 
                 for project in projects['value']:
@@ -1001,7 +1001,7 @@ class MAv1Implementation(MAv1DelegateBase):
                     if project['PROJECT_ROLE'] == 'LEAD':
                         project_urn = project['PROJECT_URN']
                         #look for authorized admin to be new lead
-                        members = self._sa_handler._delegate.lookup_project_members(cert, project_urn, 
+                        members = self._sa_handler._delegate.lookup_project_members(client_cert, project_urn, 
                                                                                     credentials, {}, session)
                         for member in members['value']:
                             if member['PROJECT_ROLE'] == 'ADMIN':

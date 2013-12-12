@@ -773,7 +773,7 @@ def key_subject_extractor(options, arguments, session):
 def project_uid_extractor(options, arguments, session):
     if 'project_id' in arguments:
         project_id = arguments['project_id']
-        project_urn = convert_project_uid_to_urn(project_id)
+        project_urn = convert_project_uid_to_urn(project_id, session)
         return {'PROJECT_URN' : project_urn}
     return {}
 
