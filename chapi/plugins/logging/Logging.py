@@ -294,9 +294,9 @@ class Loggingv1Guard(ABACGuardBase):
         # user_id must be self
         'get_log_entries_by_author' : \
             SubjectInvocationCheck([
-                "ME.GET_LOG_ENTRIES_BY_AUTHOR<-ME.IS_AUTHORITY",
-                "ME.GET_LOG_ENTRIES_BY_AUTHOR<-ME.IS_OPERATOR",
-                "ME.MA_LOG_EVENT_$SUBJECT<-ME.IS_$SUBJECT"
+                "ME.MAY_GET_LOG_ENTRIES_BY_AUTHOR<-ME.IS_AUTHORITY",
+                "ME.MAY_GET_LOG_ENTRIES_BY_AUTHOR<-ME.IS_OPERATOR",
+                "ME.MAY_GET_LOG_EVENT_$SUBJECT<-ME.IS_$SUBJECT"
                 ], None, user_id_extractor),
         # Must be member of project or slice
         'get_log_entries_for_context' : \

@@ -545,6 +545,8 @@ def assert_project_role(caller_urn, project_urns, label, options, arguments, aba
 # Assert ME.BELONGS_TO_$SLICE<-CALLER if caller is member of slice
 def assert_belongs_to_slice(caller_urn, slice_urns, label, options, arguments, abac_manager):
 
+    chapi_info('*** ABTS ***', '%s %s %s' % (caller_urn, slice_urns, label))
+
     if len(slice_urns) == 0:
         return []
 
@@ -637,9 +639,9 @@ def assert_request_id_requestor_and_project_role(caller_urn, request_id, \
 
 # If the 'user_id' argument matches the caller_urn, then we look at the 'attributes' message 
 # and determine if the callers is a member of the slice (if present) or project (if present)
-def assert_user_belongs_to_slice_or_project(caller_urn, request_id, \
+def assert_user_belongs_to_slice_or_project(caller_urn, subject_urns, \
                                             label, options, arguments, abac_manager):
-    chapi_info("AUBTSOP", '*** HERE ***')
+    chapi_info("AUBTSOP", '*** HERE *** %s %s %s' % (caller_urn, label, arguments))
     # First, make sure the user_id argument matches the caller. Otherwise get out
     if 'user_id' not in arguments: return
     user_uid = arguments['user_id']
