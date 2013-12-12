@@ -481,12 +481,27 @@ class PGCHv1Delegate(DelegateBase):
             # give an error, but that is also a DB error
             creator_urn = lookup_member_return['value'].keys()[0]
 
-            slice_cred_return = self.GetCredential(client_cert, \
-                                                       {'type' : 'slice', \
-                                                            'uuid' : slice_uuid})
-            if slice_cred_return['code'] != NO_ERROR:
-                return slice_cred_return
-            slice_cred = slice_cred_return['value']
+            options = {}
+            get_credentials_return = \
+                self._sa_handler.get_credentials(slice_urn, \
+                                                     [], options)
+            if get_credentials_return['code'] == AUTHORIZATION_ERROR:
+                msg = "No slice found for urn %s" % slice_urn
+                chapi_info(PGCH_LOG_PREFIX, msg, {'user': user_email})
+            # Return an error with this message
+                return { 'code' :  ARGUMENT_ERROR , 'value' : "", 'output' : msg }
+
+            if get_credentials_return['code'] != NO_ERROR:
+                return get_credentials_return
+
+            if not get_credentials_return['value'] or \
+                    len(get_credentials_return['value']) == 0:
+                msg = "No slice found for urn %s" % slice_urn
+                chapi_info(PGCH_LOG_PREFIX, msg, {'user': user_email})
+                # Return an error with this message
+                return { 'code' :  ARGUMENT_ERROR , 'value' : "", 'output' : msg }
+
+            slice_cred = get_credentials_return['value'][0]['geni_value']
             slice_gid = gid.GID(slice_cred)
 
             resolve = {'urn' : slice_urn, \
