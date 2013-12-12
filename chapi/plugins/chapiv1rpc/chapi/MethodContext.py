@@ -133,6 +133,7 @@ class MethodContext:
                         is_operator = \
                             lookup_operator_privilege(user_urn, 
                                                       self._session)
+                        chapi_info("OUTAGE", "USER_URN = %s IS_OPERATOR = %s" % (user_urn, is_operator))
                         if not is_operator:
                             raise CHAPIv1AuthorizationError(
                                 "Cannot access GENI Clearinghouse " + 
