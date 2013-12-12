@@ -250,7 +250,7 @@ class Loggingv1Guard(ABACGuardBase):
                 "ME.MAY_LOG_EVENT<-ME.IS_AUTHORITY",
                 "ME.MAY_LOG_EVENT<-ME.IS_OPERATOR",
                 "ME.MAY_LOG_EVENT_$SUBJECT<-ME.BELONGS_TO_$SUBJECT"
-                ], assert_user_belongs_to_slice_or_project, user_id_extractor),
+                ], assert_user_belongs_to_slice_or_project, attribute_extractor),
         # user_id must be self
         'get_log_entries_by_author' : \
             SubjectInvocationCheck([
@@ -283,14 +283,12 @@ class Loggingv1Guard(ABACGuardBase):
 
     # Lookup argument check per method (or None if none registered)
     def get_argument_check(self, method):
-        chapi_info("LOG", "GAC %s" % method)
         if self.ARGUMENT_CHECK_FOR_METHOD.has_key(method):
             return self.ARGUMENT_CHECK_FOR_METHOD[method]
         return None
 
     # Lookup invocation check per method (or None if none registered)
     def get_invocation_check(self, method):
-        chapi_info("LOG", "GIC %s" % method)
         if self.INVOCATION_CHECK_FOR_METHOD.has_key(method):
             return self.INVOCATION_CHECK_FOR_METHOD[method]
         return None

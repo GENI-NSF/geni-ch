@@ -507,13 +507,15 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
             add_attribute(self.db, session, client_uuid, admin_uid, \
                               ADMIN_ATTRIBUTE, SLICE_CONTEXT, slice.slice_id)
 
+        # do the database write
+        result = self.finish_create(session, slice, SA.slice_field_mapping)
+        session.commit() # Commit at this point so the logging service can see the slice and members
+
+        # Log the slice create event
         attribs = {"SLICE" : slice.slice_id, "PROJECT" : slice.project_id}
         self.logging_service.log_event("Created slice " + name, 
                                        attribs, client_uuid)
         chapi_audit_and_log(SA_LOG_PREFIX, "Created slice " + name + " in project " + slice.project_id, logging.INFO, {'user': user_email})
-
-        # do the database write
-        result = self.finish_create(session, slice, SA.slice_field_mapping)
 
         return result
 
@@ -680,9 +682,14 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
 
         attribs = {"PROJECT" : project.project_id}
 
+        # do the database write
+        result = self.finish_create(session, project,  SA.project_field_mapping, \
+                                        {"PROJECT_URN": row_to_project_urn(project)})
+        session.commit() # Commit at this point so the logging service can see the project and members
+
         # get name of project lead
         ma_options = {'match' : {'MEMBER_UID' : project.lead_id },'filter': ['_GENI_MEMBER_DISPLAYNAME','MEMBER_FIRSTNAME','MEMBER_LASTNAME','MEMBER_EMAIL']}  
-        member_info = self._ma_handler._delegate.lookup_identifying_member_info(client_cert,credentials,ma_option, session)
+        member_info = self._ma_handler._delegate.lookup_identifying_member_info(client_cert,credentials,ma_options, session)
         leadname = ""
         info = member_info['value']
         if len(info) > 0:
@@ -698,10 +705,6 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         msgbody = "Created project: %s with lead %s on CH %s" %(name, leadname, self.config.get("chrm.authority"))
         tolist = [self.portal_admin_email]
         send_email(tolist, self.ch_from_email, self.portal_help_email,subject,msgbody)
-
-        # do the database write
-        result = self.finish_create(session, project,  SA.project_field_mapping, \
-                                        {"PROJECT_URN": row_to_project_urn(project)})
 
         return result
 

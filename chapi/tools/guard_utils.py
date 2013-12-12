@@ -121,7 +121,7 @@ def ensure_valid_urns(urn_type, urns, session):
             cache[project_urn] = True
         bad_urns = [urn for urn in not_found_urns if urn not in cache]
         if len(bad_urns) > 0: 
-            raise CHAPIv1ArgumentError('Unknown slice urns: [%s]' % bad_urns)
+            raise CHAPIv1ArgumentError('Unknown project urns: [%s]' % bad_urns)
     elif urn_type == 'SLICE_URN':
         cache = cache_get('slice_urns')
         not_found_urns = [urn for urn in urns if urn not in cache]
@@ -143,7 +143,6 @@ def ensure_valid_urns(urn_type, urns, session):
         for row in rows:
             cache[row.value] = True
         bad_urns = [urn for urn in not_found_urns if urn not in cache]
-        chapi_info('GU', 'BAD %s NFU %s URNS %s' % (bad_urns, not_found_urns, urns))
         if len(bad_urns) > 0: 
             raise CHAPIv1ArgumentError('Unknown member urns: [%s]' % bad_urns)
     else:
@@ -175,7 +174,7 @@ def convert_slice_uid_to_urn(slice_uid, session):
         if slice_uid in cache:
             return cache[slice_uid]
         else:
-            raise CHAPIvArgumentError('Unnown slice uid: %s' % slice_uid)
+            raise CHAPIv1ArgumentError('Unknown slice uid: %s' % slice_uid)
     else:
         return validate_uid_list(slice_uids, cache, 'slice')
 
@@ -579,8 +578,6 @@ def assert_project_role(caller_urn, project_urns, label, options, arguments,
 def assert_belongs_to_slice(caller_urn, slice_urns, label, options, arguments,
                             abac_manager, session):
 
-    chapi_info('*** ABTS ***', '%s %s %s' % (caller_urn, slice_urns, label))
-
     if len(slice_urns) == 0:
         return []
 
@@ -669,12 +666,11 @@ def assert_request_id_requestor_and_project_role(caller_urn, request_id,
 # If the 'user_id' argument matches the caller_urn, then we look at the 'attributes' message 
 # and determine if the callers is a member of the slice (if present) or project (if present)
 def assert_user_belongs_to_slice_or_project(caller_urn, subject_urns, \
-                                            label, options, arguments, abac_manager):
-    chapi_info("AUBTSOP", '*** HERE *** %s %s %s' % (caller_urn, label, arguments))
+                                            label, options, arguments, abac_manager, session):
     # First, make sure the user_id argument matches the caller. Otherwise get out
     if 'user_id' not in arguments: return
     user_uid = arguments['user_id']
-    user_urn = convert_member_uid_to_urn(user_uid)
+    user_urn = convert_member_uid_to_urn(user_uid, session)
     if user_urn != caller_urn: return
 
     # Second, get the attributes. 
@@ -684,12 +680,14 @@ def assert_user_belongs_to_slice_or_project(caller_urn, subject_urns, \
     attributes = arguments['attributes']
     if 'SLICE' in attributes:
         slice_uid = attributes['SLICE']
-        slice_urn = convert_slice_uid_to_urn(slice_uid)
-        assert_belongs_to_slice(caller_urn, [slice_urn], 'SLICE', options, arguments, abac_manager)
+        slice_urn = convert_slice_uid_to_urn(slice_uid, session)
+        assert_belongs_to_slice(caller_urn, [slice_urn], 'SLICE_URN', options, arguments, 
+                                abac_manager, session)
     elif 'PROJECT' in attributes:
         project_uid = attributes['PROJECT']
-        project_urn = convert_project_uid_to_urn(project_uid)
-        assert_belongs_to_project(caller_urn, [project_urn], 'PROJECTS', options, arguments, abac_manager)
+        project_urn = convert_project_uid_to_urn(project_uid, session)
+        assert_belongs_to_project(caller_urn, [project_urn], 'PROJECT_URN', options, arguments, 
+                                  abac_manager, session)
                                 
 
 # Extractors to extract subject identifiers from request
@@ -863,25 +861,35 @@ def principal_extractor(options, arguments, session):
     return {'MEMBER_URN' : principal_urn}
 
 
-def user_id_extractor(options, arguments):
+def user_id_extractor(options, arguments, session):
     user_uid = arguments['user_id']
-    user_urn = convert_member_uid_to_urn(user_uid)
+    user_urn = convert_member_uid_to_urn(user_uid, session)
     return {'MEMBER_URN' : user_urn}
 
-def context_extractor(options, arguments):
+def context_extractor(options, arguments, session):
     if 'context_type' in arguments and 'context_id' in arguments:
         context_type = arguments['context_type']
         context_uid = arguments['context_id']
-        if context_type == 'PROJECT':
-            project_uid = context_uid
-            project_urn = convert_project_uid_to_urn(project_uid)
-            return {'PROJECT_URN' : project_urn}
-        elif context_type == 'SLICE':
+        if context_type == 'SLICE':
             slice_uid = context_uid
-            slice_urn = convert_slice_uid_to_urn(slice_uid)
+            slice_urn = convert_slice_uid_to_urn(slice_uid, session)
             return {'SLICE_URN' : slice_urn}
+        elif context_type == 'PROJECT':
+            project_uid = context_uid
+            project_urn = convert_project_uid_to_urn(project_uid, session)
+            return {'PROJECT_URN' : project_urn}
     else:
         return {}
         
-
+def attribute_extractor(options, arguments, session):
+    if 'attributes' not in arguments: return
+    attributes = arguments['attributes']
+    if 'SLICE' in attributes:
+        slice_uid = attributes['SLICE']
+        slice_urn = convert_slice_uid_to_urn(slice_uid, session)
+        return {'SLICE_URN' : slice_urn}
+    if 'PROJECT' in attributes:
+        project_uid = attributes['PROJECT']
+        project_urn = convert_project_uid_to_urn(project_uid, session)
+        return {'PROEJCT_URN' : project_urn}
 

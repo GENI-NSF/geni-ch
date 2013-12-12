@@ -228,7 +228,8 @@ class SAv1Handler(HandlerBase):
     def create_project(self, credentials, options):
         with MethodContext(self, SA_LOG_PREFIX, 'create_project',
                            {}, 
-                           credentials, options, read_only=False) as mc:
+                           credentials, options, 
+                           read_only=False, check_existing_urns=False) as mc:
             if not mc._error:
                 mc._result = \
                     self._delegate.create_project(mc._client_cert, 
