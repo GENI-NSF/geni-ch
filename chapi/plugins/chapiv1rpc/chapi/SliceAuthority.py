@@ -523,6 +523,7 @@ class SAv1Handler(HandlerBase):
             if not mc._error:
                 mc._result = \
                     self._delegate.invite_member(mc._client_cert, 
+                                                 role,
                                                  project_id,
                                                  credentials,
                                                  options,
