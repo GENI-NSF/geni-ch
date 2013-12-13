@@ -536,7 +536,7 @@ class SAv1Handler(HandlerBase):
                            credentials, options, read_only=False) as mc:
             if not mc._error:
                 mc._result = \
-                    self._delegate.accept_invitaiton(mc._client_cert, 
+                    self._delegate.accept_invitation(mc._client_cert, 
                                                      invite_id,
                                                      member_id,
                                                      credentials,
