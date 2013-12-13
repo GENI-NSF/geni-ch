@@ -106,20 +106,13 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         mapper(ProjectInvitation, self.db.PROJECT_INVITATION_TABLE, \
                    primary_key = self.db.PROJECT_INVITATION_TABLE.c.id)
 
-    def get_version(self):
-        method = 'get_version'
-#        user_email = get_email_from_cert(self.requestCertificate())
-#        chapi_log_invocation(SA_LOG_PREFIX, method, [], {}, {}, {'user': user_email})
-        chapi_log_invocation(SA_LOG_PREFIX, method, [], {}, {})
-
+    def get_version(self, session):
         version_info = {"VERSION" : chapi.Parameters.VERSION_NUMBER, 
                         "SERVICES" : SA.services,
                         "CREDENTIAL_TYPES" : SA.credential_types, 
                         "FIELDS": SA.supplemental_fields}
         result = self._successReturn(version_info)
 
-#        chapi_log_result(SA_LOG_PREFIX, method, result, {'user': user_email})
-        chapi_log_result(SA_LOG_PREFIX, method, result)
         return result
 
     def get_expiration_query(self, session, type, old_flag, resurrect):
@@ -140,7 +133,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
 
         return q
 
-    def update_expirations(self, client_uuid, type, resurrect):
+    def update_expirations(self, client_uuid, type, resurrect, session):
         if resurrect:
             old_flag = True
             new_flag = False
@@ -150,7 +143,6 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
             new_flag = True
             label = "Expired "
 
-        session = self.db.getSession()
         q = self.get_expiration_query(session, type, old_flag, resurrect)
         rows = q.all()
 
@@ -158,9 +150,6 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
             q = self.get_expiration_query(session, type, old_flag, resurrect)
             update_fields = {'expired' : new_flag}
             q = q.update(update_fields)
-            session.commit()
-        session.close()
-
 
         for row in rows:
             if type == 'slice':
@@ -175,24 +164,21 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
 
     # Check for
     #   Recently expired slices and set their expired flags to 't'
-    def update_slice_expirations(self, client_uuid):
-        self.update_expirations(client_uuid, 'slice', False)
+    def update_slice_expirations(self, client_uuid, session):
+        self.update_expirations(client_uuid, 'slice', False, session)
 
     # Check for 
     #   Recently expired projects and set their expired flags to 't'
     #   Recently extended expired projects and set their expired flags to 'f'
-    def update_project_expirations(self, client_uuid):
-        self.update_expirations(client_uuid, 'project', False)
-        self.update_expirations(client_uuid, 'project', True)
-        self.update_expirations(client_uuid, 'slice', False)
+    def update_project_expirations(self, client_uuid, session):
+        self.update_expirations(client_uuid, 'project', False, session)
+        self.update_expirations(client_uuid, 'project', True, session)
+        self.update_expirations(client_uuid, 'slice', False, session)
 
-    def lookup_slices(self, client_cert, credentials, options):
-        method = 'lookup_slices'
-        user_email = get_email_from_cert(client_cert)
-        chapi_log_invocation(SA_LOG_PREFIX, method, credentials, options, {}, {'user': user_email})
+    def lookup_slices(self, client_cert, credentials, options, session):
 
         client_uuid = get_uuid_from_cert(client_cert)
-        self.update_slice_expirations(client_uuid)
+        self.update_slice_expirations(client_uuid, session)
 
         selected_columns, match_criteria = \
             unpack_query_options(options, SA.slice_field_mapping)
@@ -206,11 +192,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                 result = self._successReturn(slices)
                 chapi_info(SA_LOG_PREFIX,
                            "Returning empty list of slices for empty criteria")
-                chapi_log_result(SA_LOG_PREFIX, method, result, \
-                                     {'user': user_email})
                 return result
-
-        session = self.db.getSession()
 
         q = session.query(self.db.SLICE_TABLE, self.db.PROJECT_TABLE.c.project_id, self.db.PROJECT_TABLE.c.project_name)
 
@@ -218,7 +200,6 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
 
         q = add_filters(q, match_criteria, self.db.SLICE_TABLE, SA.slice_field_mapping)
         rows = q.all()
-        session.close()
 
         # in python 2.7, could do dictionary comprehension !!!!!!!!
         slices = {}
@@ -228,65 +209,53 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
 
         result = self._successReturn(slices)
 
-        chapi_log_result(SA_LOG_PREFIX, method, result, {'user': user_email})
         return result
 
     # members in a slice
-    def lookup_slice_members(self, client_cert, slice_urn, credentials, options):
-        method = 'lookup_slice_members'
-        args = {'slice_urn' : slice_urn}
-        user_email = get_email_from_cert(client_cert)
-        chapi_log_invocation(SA_LOG_PREFIX, method, credentials, options, args, {'user': user_email})
+    def lookup_slice_members(self, client_cert, slice_urn, 
+                             credentials, options, session):
         slice_id = None
         if "match" in options:
             if 'SLICE_UID' in options['match']:
                 slice_id = options['match']['SLICE_UID']
 
         if slice_id == None:
-            session = self.db.getSession()
             q = session.query(self.db.SLICE_TABLE.c['slice_id'])
             q = q.filter(self.db.SLICE_TABLE.c['slice_urn']==slice_urn)
             q = q.order_by(desc(self.db.SLICE_TABLE.c['creation']))
             rows = q.all()
             slice_id = rows[0][0]
-            session.close()
 
         result = self.lookup_members(client_cert, self.db.SLICE_TABLE, 
                                      self.db.SLICE_MEMBER_TABLE, slice_urn, "slice_urn", 
                                      "slice_id", "SLICE_ROLE", "SLICE_MEMBER", "SLICE_MEMBER_UID",
-                                     slice_id)
+                                     slice_id, session)
 
-        chapi_log_result(SA_LOG_PREFIX, method, result, {'user': user_email})
         return result
 
 
     # members in a project
     def lookup_project_members(self, client_cert, project_urn, \
-                               credentials, options):
-        method =  'lookup_project_members'
-        args = {'project_urn' : project_urn}
-        user_email = get_email_from_cert(client_cert)
-        chapi_log_invocation(SA_LOG_PREFIX, method, credentials, options, args, {'user': user_email})
+                               credentials, options, session):
 
         project_name = from_project_urn(project_urn)
         result = self.lookup_members(client_cert, self.db.PROJECT_TABLE, 
                                      self.db.PROJECT_MEMBER_TABLE, project_name, "project_name", 
                                      "project_id", "PROJECT_ROLE", "PROJECT_MEMBER", 
-                                     "PROJECT_MEMBER_UID", None)
+                                     "PROJECT_MEMBER_UID", None, session)
 
-        chapi_log_result(SA_LOG_PREFIX, method, result, {'user': user_email})
         return result
 
 
     # shared code for lookup_slice_members() and lookup_project_members()
     def lookup_members(self, client_cert, table, member_table, \
                            name, name_field, \
-                           id_field, role_txt, member_txt, member_uid_txt, id_value):
+                           id_field, role_txt, member_txt, member_uid_txt, 
+                       id_value, session):
 
         client_uuid = get_uuid_from_cert(client_cert)
-        self.update_slice_expirations(client_uuid)
+        self.update_slice_expirations(client_uuid, session)
 
-        session = self.db.getSession()
         q = session.query(member_table, table.c[name_field],
                           self.db.MEMBER_ATTRIBUTE_TABLE.c.value,
                           self.db.ROLE_TABLE.c.name)
@@ -301,23 +270,17 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                      self.db.MEMBER_ATTRIBUTE_TABLE.c.member_id)
         q = q.filter(member_table.c.role == self.db.ROLE_TABLE.c.id)
         rows = q.all()
-        session.close()
         members = [{role_txt: row.name, member_txt: row.value, \
                         member_uid_txt : row.member_id} for row in rows]
         return self._successReturn(members)
 
     def lookup_slices_for_member(self, client_cert, member_urn, \
-                                 credentials, options):
-        method = 'lookup_slices_for_member'
-        args = {'member_urn' : member_urn}
-        user_email = get_email_from_cert(client_cert)
-        chapi_log_invocation(SA_LOG_PREFIX, method, credentials, options, args, {'user': user_email})
-
+                                 credentials, options, session):
         client_uuid = get_uuid_from_cert(client_cert)
-        self.update_slice_expirations(client_uuid)
+        self.update_slice_expirations(client_uuid, session)
 
         rows = self.lookup_for_member(member_urn, self.db.SLICE_TABLE, \
-                  self.db.SLICE_MEMBER_TABLE, "slice_urn", "slice_id")
+                  self.db.SLICE_MEMBER_TABLE, "slice_urn", "slice_id", session)
         slices = [{"SLICE_ROLE" : row.name, \
                        "SLICE_UID" : row.slice_id, \
                        "SLICE_URN": row.slice_urn, \
@@ -326,31 +289,23 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
 
         result = self._successReturn(slices)
 
-        chapi_log_result(SA_LOG_PREFIX, method, result, {'user': user_email})
         return result
 
-    def get_credentials(self, client_cert, slice_urn, credentials, options):
-
-        method = 'get_credentials'
-        args = {'slice_urn' : slice_urn}
-        user_email = get_email_from_cert(client_cert)
-        chapi_log_invocation(SA_LOG_PREFIX, method, credentials, options, args, {'user': user_email})
+    def get_credentials(self, client_cert, slice_urn, credentials, options, 
+                        session):
 
         client_uuid = get_uuid_from_cert(client_cert)
-        self.update_slice_expirations(client_uuid)
+        self.update_slice_expirations(client_uuid, session)
 
-        session = self.db.getSession()
         q = session.query(self.db.SLICE_TABLE.c.expiration, \
                               self.db.SLICE_TABLE.c.certificate)
         q = q.filter(self.db.SLICE_TABLE.c.slice_urn == slice_urn)
         q = q.filter(self.db.SLICE_TABLE.c.expired == 'f')
         rows = q.all()
         if len(rows) == 0:
-            session.close()
             raise CHAPIv1ArgumentError("Can't get slice credential " + \
-                                         "on expired or non-existent slice %s"\
-                                         % slice_urn)
-
+                                           "on expired or non-existent slice %s"\
+                                           % slice_urn)
         
         row = rows[0]
         expiration = row.expiration
@@ -375,7 +330,6 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         q = q.filter(self.db.SLICE_TABLE.c.slice_urn == slice_urn)
         q = q.filter(self.db.SLICE_MEMBER_TABLE.c.member_id == client_uuid)
         rows = q.all()
-        session.close()
         if len(rows) > 0:
             row = rows[0]
             role_name = attribute_type_names[row.role]
@@ -397,7 +351,6 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
 
         result = self._successReturn(creds)
 
-        chapi_log_result(SA_LOG_PREFIX, method, result, {'user': user_email})
         return result
 
 
@@ -439,20 +392,13 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
             if not isinstance(v, types.FunctionType) and getattr(object, v):
                 ret[k] = getattr(object, v)
         session.add(object)
-        session.commit()
-        session.close()
         return self._successReturn(ret)
 
     # create a new slice
-    def create_slice(self, client_cert, credentials, options):
-        method = 'create_slice'
-        user_email = get_email_from_cert(client_cert)
-        chapi_log_invocation(SA_LOG_PREFIX, method, credentials, options, {}, {'user': user_email})
-
+    def create_slice(self, client_cert, credentials, options, session):
         client_uuid = get_uuid_from_cert(client_cert)
-        self.update_slice_expirations(client_uuid)
-
-        session = self.db.getSession()
+        user_email = get_email_from_cert(client_cert)
+        self.update_slice_expirations(client_uuid, session)
 
         name = options["fields"]["SLICE_NAME"]
 
@@ -476,14 +422,12 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                 slice.project_id = self.get_project_id(session, \
                                       "project_name", project_name)
                 if not slice.project_id:
-                    session.close()
                     raise CHAPIv1ArgumentError('No project with urn ' + value)
             else:
                 setattr(slice, SA.slice_field_mapping[key], value)
 
         # Check if project is not null
         if project_urn == None:
-            session.close()
             raise CHAPIv1ArgumentError("No project specified for create_slice");
 
         # Check if project is not expired, get expiration for later use
@@ -493,22 +437,18 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         expired = project_info.expired
         project_expiration = project_info.expiration
         if project_info.expired:
-            session.close()
             raise CHAPIv1ArgumentError("May not create a slice on expired project");
         
         # Check that slice name is valid
         if ' ' in name:
-            session.close()
             raise CHAPIv1ArgumentError('Slice name may not contain spaces.')
         elif len(name) > 19: # FIXME: Externalize this
-            session.close()
             raise CHAPIv1ArgumentError('Slice name %s is too long - use at most 19 characters.' %name)
             
         # FIXME: Externalize this
         pattern = '^[a-zA-Z0-9][a-zA-Z0-9-]{0,18}$'
         valid = re.match(pattern,name)
         if valid == None:
-            session.close()
             raise CHAPIv1ArgumentError('Slice name %s is invalid - use at most 19 alphanumeric characters or hyphen. No leading hyphen.' %name)
         # before fill in rest, check that slice does not already exist
         same_name = self.get_slice_ids(session, "slice_name", name)
@@ -516,7 +456,6 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
             same_project = self.get_slice_ids(session, "project_id",
                                               slice.project_id)
             if same_project and (set(same_name) & set(same_project)):
-                session.close()
                 raise CHAPIv1DuplicateError('Already exists a slice named ' +
                                             name + ' in project ' + project_name)
 
@@ -553,9 +492,8 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
 
         # Add project lead and project admins as admin (if not same)
         admins_to_add = []
-        members = self.lookup_project_members(client_cert,project_urn, credentials,{})
+        members = self.lookup_project_members(client_cert,project_urn, credentials,{}, session)
         if members['code'] != NO_ERROR:
-            session.close()
             raise CHAPIv1ArgumentError('No members for project ' + project_urn)
         for member in members['value']:
             if member['PROJECT_ROLE'] == 'ADMIN' or member['PROJECT_ROLE'] == 'LEAD':
@@ -568,33 +506,27 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
             add_attribute(self.db, session, client_uuid, admin_uid, \
                               ADMIN_ATTRIBUTE, SLICE_CONTEXT, slice.slice_id)
 
-        attribs = {"SLICE" : slice.slice_id, "PROJECT" : slice.project_id}
-        self.logging_service.log_event("Created slice " + name, 
-                                       attribs, client_uuid)
-        chapi_audit_and_log(SA_LOG_PREFIX, "Created slice " + name + " in project " + slice.project_id, logging.INFO, {'user': user_email})
-
         # do the database write
         result = self.finish_create(session, slice, SA.slice_field_mapping)
 
-        chapi_log_result(SA_LOG_PREFIX, method, result, {'user': user_email})
+        # Log the slice create event
+        attribs = {"SLICE" : slice.slice_id, "PROJECT" : slice.project_id}
+        self.logging_service.log_event("Created slice " + name, 
+                                       attribs, client_uuid, session=session)
+        chapi_audit_and_log(SA_LOG_PREFIX, "Created slice " + name + " in project " + slice.project_id, logging.INFO, {'user': user_email})
+
         return result
 
     # update an existing slice
-    def update_slice(self, client_cert, slice_urn, credentials, options):
-
-        method = 'update_slice'
-        args = {'slice_urn' : slice_urn}
-        user_email = get_email_from_cert(client_cert)
-        chapi_log_invocation(SA_LOG_PREFIX, method, credentials, options, args, {'user': user_email})
+    def update_slice(self, client_cert, slice_urn, credentials, options,
+                     session):
 
         client_uuid = get_uuid_from_cert(client_cert)
-        self.update_slice_expirations(client_uuid)
+        self.update_slice_expirations(client_uuid, session)
 
-        session = self.db.getSession()
         slice_uuid = \
             self.get_slice_id(session, 'slice_urn', slice_urn) # MIK: only non-expired slices
         if not slice_uuid: 
-            session.close()
             raise CHAPIv1ArgumentError('No slice with urn ' + slice_urn)
         updates = {}
 
@@ -608,14 +540,12 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         project_info = q.one()
         project_expiration = project_info.expiration
         if project_info.expired:
-            session.close()
             raise CHAPIv1ArgumentError('Cannot update a slice for an expired project')
 
         q = session.query(Slice.expired, Slice.expiration, Slice.certificate, Slice.slice_email, Slice.slice_id, Slice.creation)
         q = q.filter(Slice.slice_id == slice_uuid)
         slice_info = q.one()
         if slice_info.expired:
-            session.close()
             raise CHAPIv1ArgumentError('Cannot update or renew an expired slice')
         slice_expiration = slice_info.expiration
         max_exp = datetime.utcnow() + relativedelta(days=SA.SLICE_MAX_RENEWAL_DAYS)
@@ -654,7 +584,6 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
 #                    chapi_debug(SA_LOG_PREFIX, "Slice %s Reset renew request %s to max exp %s" % (slice_name, new_exp, max_exp))
                 # don't shorten slice lifetime
                 if slice_expiration > new_exp:
-                    session.close()
                     raise CHAPIv1ArgumentError('Cannot shorten slice lifetime')
 
                 # regenerate cert if necessary
@@ -678,8 +607,6 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
             updates[SA.slice_field_mapping[field]] = value
 
         q = q.update(updates)
-        session.commit()
-        session.close()
 
         # Log the update slice
         client_uuid = get_uuid_from_cert(client_cert)
@@ -695,18 +622,14 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
 
         result = self._successReturn(True)
 
-        chapi_log_result(SA_LOG_PREFIX, method, result, {'user': user_email})
         return result
 
     # create a new project
-    def create_project(self, client_cert, credentials, options):
-
-        method = 'create_project'
-        user_email = get_email_from_cert(client_cert)
-        chapi_log_invocation(SA_LOG_PREFIX, method, credentials, options, {}, {'user': user_email})
+    def create_project(self, client_cert, credentials, options, session):
 
         client_uuid = get_uuid_from_cert(client_cert)
-        self.update_project_expirations(client_uuid)
+        user_email = get_email_from_cert(client_cert)
+        self.update_project_expirations(client_uuid, session)
 
         name = options["fields"]["PROJECT_NAME"]
         # check that project name is valid
@@ -721,11 +644,8 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         if valid == None:
             raise CHAPIv1ArgumentError('Project name %s is invalid - use at most 32 alphanumeric characters or hyphen or underscore. No leading hyphen or underscore.' %name)
         
-        session = self.db.getSession()
-
         # check that project does not already exist
         if self.get_project_id(session, "project_name", name):
-            session.close()
             raise CHAPIv1DuplicateError('Already exists a project named ' + name)
 
         # fill in the fields of the object
@@ -760,9 +680,13 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
 
         attribs = {"PROJECT" : project.project_id}
 
+        # do the database write
+        result = self.finish_create(session, project,  SA.project_field_mapping, \
+                                        {"PROJECT_URN": row_to_project_urn(project)})
+
         # get name of project lead
         ma_options = {'match' : {'MEMBER_UID' : project.lead_id },'filter': ['_GENI_MEMBER_DISPLAYNAME','MEMBER_FIRSTNAME','MEMBER_LASTNAME','MEMBER_EMAIL']}  
-        member_info = self._ma_handler._delegate.lookup_identifying_member_info(client_cert,credentials,ma_options)
+        member_info = self._ma_handler._delegate.lookup_identifying_member_info(client_cert,credentials,ma_options, session)
         leadname = ""
         info = member_info['value']
         if len(info) > 0:
@@ -770,7 +694,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                 leadname = get_member_display_name(info[row],row)
 
         self.logging_service.log_event("Created project " + name + " with lead " + leadname, 
-                                       attribs, client_uuid)
+                                       attribs, client_uuid, session=session)
         chapi_audit_and_log(SA_LOG_PREFIX, "Created project " + name + " with lead " + leadname, logging.INFO, {'user': user_email})
 
         # Email the admins that the project was created
@@ -779,29 +703,18 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         tolist = [self.portal_admin_email]
         send_email(tolist, self.ch_from_email, self.portal_help_email,subject,msgbody)
 
-        # do the database write
-        result = self.finish_create(session, project,  SA.project_field_mapping, \
-                                        {"PROJECT_URN": row_to_project_urn(project)})
-
-        chapi_log_result(SA_LOG_PREFIX, method, result, {'user': user_email})
         return result
 
     # update an existing project
-    def update_project(self, client_cert, project_urn, credentials, options):
-        method = 'update_project'
-        args = {'project_urn' : project_urn}
-        user_email = get_email_from_cert(client_cert)
-        chapi_log_invocation(SA_LOG_PREFIX, method, credentials, options, args, {'user': user_email})
-
+    def update_project(self, client_cert, project_urn, credentials, options,
+                       session):
 
         client_uuid = get_uuid_from_cert(client_cert)
-        self.update_project_expirations(client_uuid)
+        self.update_project_expirations(client_uuid, session)
 
-        session = self.db.getSession()
         name = from_project_urn(project_urn)
         project_uuid = self.get_project_id(session, 'project_name', name)
         if not project_uuid:
-            session.close()
             raise CHAPIv1ArgumentError('No project with urn ' + project_urn)
         q = session.query(Project)
         q = q.filter(getattr(Project, "project_name") == name)
@@ -840,8 +753,6 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         for field, value in options['fields'].iteritems():
             updates[SA.project_field_mapping[field]] = value
         q = q.update(updates)
-        session.commit()
-        session.close()
 
         # Log the update project
         client_uuid = get_uuid_from_cert(client_cert)
@@ -852,18 +763,13 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
 
         result = self._successReturn(True)
 
-        chapi_log_result(SA_LOG_PREFIX, method, result, {'user': user_email})
         return result
 
     # get info on a set of projects
-    def lookup_projects(self, client_cert, credentials, options):
-
-        method = 'lookup_projects'
-        user_email = get_email_from_cert(client_cert)
-        chapi_log_invocation(SA_LOG_PREFIX, method, credentials, options, {}, {'user': user_email})
+    def lookup_projects(self, client_cert, credentials, options, session):
 
         client_uuid = get_uuid_from_cert(client_cert)
-        self.update_project_expirations(client_uuid)
+        self.update_project_expirations(client_uuid, session)
 
         columns, match_criteria = \
             unpack_query_options(options, SA.project_field_mapping)
@@ -876,35 +782,29 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
             match_criteria['PROJECT_NAME'] = \
                 [from_project_urn(urn) for urn in urns]
 
-        session = self.db.getSession()
         q = session.query(self.db.PROJECT_TABLE)
         q = add_filters(q, match_criteria, self.db.PROJECT_TABLE, \
                         SA.project_field_mapping)
         rows = q.all()
-        session.close()
         projects = {}
         for row in rows:
             projects[row_to_project_urn(row)] = \
                 construct_result_row(row, columns, SA.project_field_mapping)
         result = self._successReturn(projects)
 
-        chapi_log_result(SA_LOG_PREFIX, method, result, {'user': user_email})
         return result
 
     # get the projects associated with a member
     def lookup_projects_for_member(self, client_cert, member_urn, \
-                                   credentials, options):
-
-        method = 'lookup_projects_for_member'
-        args = {'member_urn' : member_urn}
-        user_email = get_email_from_cert(client_cert)
-        chapi_log_invocation(SA_LOG_PREFIX, method, credentials, options, args, {'user': user_email})
+                                   credentials, options, session):
 
         client_uuid = get_uuid_from_cert(client_cert)
-        self.update_project_expirations(client_uuid)
+        self.update_project_expirations(client_uuid, session)
 
         rows = self.lookup_for_member(member_urn, self.db.PROJECT_TABLE, \
-                  self.db.PROJECT_MEMBER_TABLE, "project_name", "project_id")
+                                          self.db.PROJECT_MEMBER_TABLE, 
+                                      "project_name", "project_id", 
+                                      session)
         projects = [{"PROJECT_ROLE" : row.name, \
                          "PROJECT_UID" : row.project_id, \
                          "PROJECT_URN": row_to_project_urn(row), \
@@ -912,13 +812,11 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                         for row in rows]
         result = self._successReturn(projects)
 
-        chapi_log_result(SA_LOG_PREFIX, method, result, {'user': user_email})
         return result
 
     # shared code between projects and slices
     def lookup_for_member(self, member_urn, table, member_table, \
-                          name_field, id_field):
-        session = self.db.getSession()
+                          name_field, id_field, session):
         q = session.query(member_table, self.db.MEMBER_ATTRIBUTE_TABLE,
                           table.c[name_field], self.db.ROLE_TABLE.c.name, table.c['expired'])
         q = q.filter(self.db.MEMBER_ATTRIBUTE_TABLE.c.name == 'urn')
@@ -928,21 +826,15 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         q = q.filter(table.c[id_field] == member_table.c[id_field])
         q = q.filter(member_table.c.role == self.db.ROLE_TABLE.c.id)
         rows = q.all()
-        session.close()
         return rows
 
     # change the membership in a project
     def modify_project_membership(self, client_cert, project_urn, \
-                                  credentials, options):
-
-        method = 'modify_project_membership'
-        args = {'project_urn' : project_urn}
-        user_email = get_email_from_cert(client_cert)
-        chapi_log_invocation(SA_LOG_PREFIX, method, credentials, options, args, {'user': user_email})
+                                  credentials, options, session):
         client_uuid = get_uuid_from_cert(client_cert)
-        self.update_project_expirations(client_uuid)
+        user_email = get_email_from_cert(client_cert)
+        self.update_project_expirations(client_uuid, session)
 
-        session = self.db.getSession()
         name = from_project_urn(project_urn)
         project_id = self.get_project_id(session, "project_name", name)
         old_project_lead = self.get_project_lead(session, project_id)
@@ -960,9 +852,8 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                     lookup_result = self.lookup_project_members(client_cert, \
                                                         project_urn, \
                                                         credentials, \
-                                                        {})
+                                                        {}, session)
                     if lookup_result['code'] != NO_ERROR:
-                        session.close()
                         return lookup_result   # Shouldn't happen: Should raise an exception
                     new_lead_urn = None
                     for row in lookup_result['value']:
@@ -986,7 +877,6 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
 
                             break
                     if new_lead_urn==None:
-                        session.close()
                         raise CHAPIv1ArgumentError('New project lead not authorized')
                     
         if 'members_to_change' in options:
@@ -996,9 +886,8 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                     lookup_result = self.lookup_project_members(client_cert, \
                                                         project_urn, \
                                                         credentials, \
-                                                        {})
+                                                        {}, session)
                     if lookup_result['code'] != NO_ERROR:
-                        session.close()
                         return lookup_result   # Shouldn't happen: Should raise an exception
                     new_lead_urn = change['PROJECT_MEMBER']
                     for row in lookup_result['value']:
@@ -1009,7 +898,6 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                                 filter(self.db.MEMBER_ATTRIBUTE_TABLE.c.name == 'PROJECT_LEAD')
                             rows = q.all()
                             if len(rows) == 0 or rows[0][0] != 'true':
-                                session.close()
                                 raise CHAPIv1ArgumentError('New project lead not authorized')
                             new_project_lead = row['PROJECT_MEMBER_UID']
                             break
@@ -1053,7 +941,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         # make new project lead admin on slices
             opt = [{'SLICE_MEMBER': project_lead_urn, 'SLICE_ROLE': 'ADMIN'}]
             result3 = self.lookup_slices_for_member(client_cert, \
-                                 project_lead_urn, credentials, {})
+                                 project_lead_urn, credentials, {}, session)
 
             # change lead's role on slices he/she is member of
             for slice in result3['value']:
@@ -1078,7 +966,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         if 'members_to_remove' in options:
             for member in options['members_to_remove']:
                 result3 = self.lookup_slices_for_member(client_cert, member, \
-                                                        credentials, {})
+                                                        credentials, {}, session)
                 for slice in result3['value']:
                     # skip slices that are not part of the current project
                     if not slice['SLICE_UID'] in slice_uids:
@@ -1162,25 +1050,15 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                                                            'slice_id', 'SLICE_MEMBER', 'SLICE_ROLE', 'slice')
 
 
-        session.commit()
-        session.close()
-
-        chapi_log_result(SA_LOG_PREFIX, method, result, {'user': user_email})
         return result
 
     # change the membership in a project
     def modify_slice_membership(self, client_cert, slice_urn, \
-                                credentials, options):
-
-        method = 'modify_slice_membership'
-        args = {'slice_urn' : slice_urn}
-        user_email = get_email_from_cert(client_cert)
-        chapi_log_invocation(SA_LOG_PREFIX, method, credentials, options, args, {'user': user_email})
+                                credentials, options, session):
 
         client_uuid = get_uuid_from_cert(client_cert)
-        self.update_slice_expirations(client_uuid)
+        self.update_slice_expirations(client_uuid, session)
 
-        session = self.db.getSession()
         slice_id = self.get_slice_id(session, "slice_urn", slice_urn) # MIK: only non-expired slice
         old_slice_lead = self.get_slice_lead(session, slice_id)
 
@@ -1199,7 +1077,8 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         slice_row = q.one()
 
         rows = self.lookup_for_member(new_lead_urn, self.db.PROJECT_TABLE, \
-                  self.db.PROJECT_MEMBER_TABLE, "project_name", "project_id")
+                  self.db.PROJECT_MEMBER_TABLE, "project_name", "project_id", 
+                                      session)
         projects = [{"PROJECT_ROLE" : row.name, \
                          "PROJECT_UID" : row.project_id, \
                          "PROJECT_URN": row_to_project_urn(row), \
@@ -1220,10 +1099,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
             q = q.filter(Slice.slice_id == slice_id)
             q = q.update({"owner_id" : new_slice_lead})
             
-        session.commit()
-        session.close()
 
-        chapi_log_result(SA_LOG_PREFIX, method, result, {'user': user_email})
         return result
 
     # shared between modify_slice_membership and modify_project_membership
@@ -1231,6 +1107,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                           options, id_field,
                           member_str, role_str, text_str):
 
+        user_email = get_email_from_cert(client_cert)
         id_str = '%s.%s' % (member_class.__name__, id_field)
 
         # Grab the display names and IDs for all members whose membership we are changing
@@ -1256,7 +1133,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
             "filter" : ["_GENI_MEMBER_DISPLAYNAME", "MEMBER_FIRSTNAME", 
                         "MEMBER_LASTNAME", "MEMBER_EMAIL", "_GENI_IDENTIFYING_MEMBER_UID"]}
         ma_handler = pm.getService('mav1handler')
-        result = ma_handler._delegate.lookup_identifying_member_info(client_cert, credentials, lookup_identifying_options)
+        result = ma_handler._delegate.lookup_identifying_member_info(client_cert, credentials, lookup_identifying_options, session)
         urn_to_display_name = {}
         urn_to_id = {}
         # If we failed to get the display names, use the usernames
@@ -1285,7 +1162,6 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                 setattr(member_obj, id_field, id)
                 member_obj.member_id = urn_to_id[member[member_str]]
                 if not member_obj.member_id:
-                    session.close()
                     raise CHAPIv1ArgumentError('No such member ' + \
                         member[member_str])
                 member_obj.role = self.get_role_id(session, member[role_str])
@@ -1295,7 +1171,6 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                 q = q.filter(eval(id_str) == id)
                 q = q.filter(member_class.member_id == member_obj.member_id)
                 if len(q.all()) > 1:
-                    session.close()
                     raise CHAPIv1DuplicateError('Member ' + \
                         member[member_str] + ' already in ' + text_str)
 
@@ -1307,7 +1182,6 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                 q = q.filter(member_class.member_id == \
                     urn_to_id[member[member_str]])
                 if len(q.all()) == 0:
-                    session.close()
                     raise CHAPIv1ArgumentError('Cannot change member ' + \
                              member[member_str] + ' not in ' + text_str)
                 q.update({"role" : self.get_role_id(session, member[role_str])})
@@ -1318,7 +1192,6 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         q = q.filter(member_class.role == self.get_role_id(session, "LEAD"))
         num_leads = len(q.all())
         if num_leads != 1:
-            session.close()
             raise CHAPIv1ArgumentError('This would result in ' + \
                           str(num_leads) + ' leads for the ' + text_str)
 
@@ -1341,7 +1214,6 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
             label2 = label
 
         # Log all removals
-        user_email = get_email_from_cert(client_cert)
         if 'members_to_remove' in options:
             members_to_remove = options['members_to_remove']
             for member_to_remove in members_to_remove:
@@ -1444,20 +1316,18 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
 
     # Lookup attributes for project
     def lookup_project_attributes(self, client_cert, project_urn, \
-                                      credentials, options):
+                                      credentials, options, session):
         method = 'lookup_project_attributes'
         args = {'project_urn' : project_urn}
 
         client_uuid = get_uuid_from_cert(client_cert)
-        self.update_project_expirations(client_uuid)
+        self.update_project_expirations(client_uuid, session)
 
-        session = self.db.getSession()
         name = from_project_urn(project_urn)
         project_id = self.get_project_id(session, "project_name", name)
         q = session.query(self.db.PROJECT_ATTRIBUTE_TABLE )
         q = q.filter(self.db.PROJECT_ATTRIBUTE_TABLE.c.project_id==project_id)
         rows = q.all()
-        session.close()
         attribs = []
         for row in rows:
             attrib_name = row.name
@@ -1479,8 +1349,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
 
     # Sliver Info API
 
-    def create_sliver_info(self, client_cert, credentials, options):
-        session = self.db.getSession()
+    def create_sliver_info(self, client_cert, credentials, options, session):
         sliver = SliverInfo()
         for field, value in options['fields'].iteritems():
            setattr(sliver, SA.sliver_info_field_mapping[field], value)
@@ -1491,90 +1360,43 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         return self.finish_create(session, sliver, SA.sliver_info_field_mapping)
 
     def delete_sliver_info(self, client_cert, sliver_urn, \
-                               credentials, options):
-        session = self.db.getSession()
+                               credentials, options, session):
         q = session.query(SliverInfo)
         q = q.filter(SliverInfo.sliver_urn == sliver_urn)
         q.delete(synchronize_session='fetch')
-        session.commit()
-        session.close()
         return self._successReturn(True)
 
     def update_sliver_info(self, client_cert, sliver_urn, \
-                               credentials, options):
-        session = self.db.getSession()
+                               credentials, options, session):
         q = session.query(SliverInfo)
         q = q.filter(SliverInfo.sliver_urn == sliver_urn)
         vals = {}
         for field, value in options['fields'].iteritems():
            vals[SA.sliver_info_field_mapping[field]] = value
         q.update1(vals)
-        session.commit()
-        session.close()
         return self._successReturn(True)
 
-    def lookup_sliver_info(self, client_cert, credentials, options):
+    def lookup_sliver_info(self, client_cert, credentials, options, session):
         columns, match_criteria = \
             unpack_query_options(options, SA.sliver_info_field_mapping)
-        session = self.db.getSession()
         q = session.query(self.db.SLIVER_INFO_TABLE)
         q = add_filters(q, match_criteria, self.db.SLIVER_INFO_TABLE, \
                         SA.sliver_info_field_mapping)
         rows = q.all()
-        session.close()
         slivers = {}
         for row in rows:
             slivers[row.sliver_urn] = \
                 construct_result_row(row, columns, SA.sliver_info_field_mapping)
         return self._successReturn(slivers)
 
-#     def register_aggregate(self, client_cert, \
-#                                slice_urn, aggregate_url, credentials, options):
-#         session = self.db.getSession()
-#         agg = Aggregate()
-#         agg.slice_urn = slice_urn
-#         agg.aggregate_url = aggregate_url
-#         session.add(agg)
-#         session.commit()
-#         session.close()
-#         return self._successReturn(None)
-
-#     def remove_aggregate(self, client_cert, \
-#                              slice_urn, aggregate_url, credentials, options):
-#         session = self.db.getSession()
-#         q = session.query(Aggregate)
-#         q = q.filter(Aggregate.slice_urn == slice_urn)
-#         q = q.filter(Aggregate.aggregate_url == aggregate_url)
-#         q.delete()
-#         session.commit()
-#         session.close()
-#         return self._successReturn(None)
-
-#     def lookup_slice_aggregates(self, client_cert, \
-#                            slice_urn, credentials, options):
-#         session = self.db.getSession()
-#         q = session.query(Aggregate.aggregate_url)
-#         q = q.filter(Aggregate.slice_urn == slice_urn)
-#         rows = q.all()
-#         aggs = [row.aggregate_url for row in rows]
-#         session.close()
-#         return self._successReturn(aggs)
 
     # Methods for managing pending project requests
 
     def create_request(self, client_cert, context_type, \
                            context_id, request_type, request_text, \
-                           request_details, credentials, options):
-
-        method = 'create_request'
-        args = {'context_type' : context_type, 'context_id' : context_id,
-                'request_type' : request_type, 'request_text' : request_text,
-                'request_details' : request_details}
-        user_email = get_email_from_cert(client_cert)
-        chapi_log_invocation(SA_LOG_PREFIX, method, credentials, options, args, {'user': user_email})
+                           request_details, credentials, options, session):
 
         client_uuid = get_uuid_from_cert(client_cert)
-        session = self.db.getSession()
         ins = self.db.PROJECT_REQUEST_TABLE.insert().values(
             context_type = context_type, \
                 context_id = context_id, \
@@ -1588,27 +1410,24 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         
         query = "select max(id) from pa_project_member_request"
         request_id  = session.execute(query).fetchone().values()[0]
-        session.commit()
-        session.close()
         result = self._successReturn(request_id)
 
-        chapi_log_result(SA_LOG_PREFIX, method, result, {'user': user_email})
         return result
 
 
     def resolve_pending_request(self, client_cert, context_type, request_id, \
                                     resolution_status, resolution_description,  \
-                                    credentials, options):
-
-        method = 'resolve_pending_request'
-        args = {'context_type' : context_type, 'request_id' : request_id,
-                'resolution_status' : resolution_status, 'resolution_description' : resolution_description}
-        user_email = get_email_from_cert(client_cert)
-        chapi_log_invocation(SA_LOG_PREFIX, method, credentials, options, args, {'user': user_email})
+                                    credentials, options, session):
 
         client_uuid = get_uuid_from_cert(client_cert)
-        session = self.db.getSession()
 
+        # check that request is still pending
+        q = session.query(self.db.PROJECT_REQUEST_TABLE.c.status)
+        q = q.filter(self.db.PROJECT_REQUEST_TABLE.c.id == request_id)
+        status_info = q.one()
+        if not status_info.status == PENDING_STATUS:
+            raise CHAPIv1ArgumentError("Request is no longer pending")
+        
         update_values = {'status' : resolution_status, 
                          'resolver' : client_uuid, 
                          'resolution_description' : resolution_description,
@@ -1618,48 +1437,31 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         update = update.where(self.db.PROJECT_REQUEST_TABLE.c.id == request_id)
         update = update.where(self.db.PROJECT_REQUEST_TABLE.c.context_type == context_type)
         session.execute(update)
-        session.commit()
-        session.close()
         result = self._successReturn(True)
 
-        chapi_log_result(SA_LOG_PREFIX, method, result, {'user': user_email})
         return result
 
     def get_requests_for_context(self, client_cert, context_type, \
                                  context_id, status, \
-                                 credentials, options):
-        method = 'get_requests_for_context'
-        args = {'context_type' : context_type, 'context_id' : context_id,
-                'status' : status}
-        user_email = get_email_from_cert(client_cert)
-        chapi_log_invocation(SA_LOG_PREFIX, method, credentials, options, args, {'user': user_email})
+                                 credentials, options, session):
 
-        session = self.db.getSession()
         q = session.query(self.db.PROJECT_REQUEST_TABLE)
         q = q.filter(self.db.PROJECT_REQUEST_TABLE.c.context_type == context_type)
         q = q.filter(self.db.PROJECT_REQUEST_TABLE.c.context_id == context_id)
         if status:
             q = q.filter(self.db.PROJECT_REQUEST_TABLE.c.status == status)
         rows = q.all()
-        session.close()
         result = [construct_result_row(row, SA.project_request_columns, 
                                        SA.project_request_field_mapping) \
                       for row in rows]
         result = self._successReturn(result)
 
-        chapi_log_result(SA_LOG_PREFIX, method, result, {'user': user_email})
         return result
 
     def get_requests_by_user(self, client_cert, member_id, context_type, \
                                  context_id, status, \
-                                 credentials, options):
-        method = 'get_requests_by_user'
-        args = {'member_id' : member_id, 'context_type' : context_type,
-                'context_id' : context_id, 'status' : status}
-        user_email = get_email_from_cert(client_cert)
-        chapi_log_invocation(SA_LOG_PREFIX, method, credentials, options, args, {'user': user_email})
+                                 credentials, options, session):
 
-        session = self.db.getSession()
         q = session.query(self.db.PROJECT_REQUEST_TABLE)
         q = q.filter(self.db.PROJECT_REQUEST_TABLE.c.context_type == context_type)
         if context_id:
@@ -1669,24 +1471,17 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         q = q.filter(self.db.PROJECT_REQUEST_TABLE.c.requestor == member_id)
 
         rows = q.all()
-        session.close()
 #        print "ROWS = " + str(rows)
         result = [construct_result_row(row, SA.project_request_columns, \
                                            SA.project_request_field_mapping) \
                       for row in rows]
-        chapi_log_result(SA_LOG_PREFIX, method, result, {'user': user_email})
+
         return self._successReturn(result)
 
     def get_pending_requests_for_user(self, client_cert, member_id, \
                                           context_type, context_id, \
-                                          credentials, options):
-        method = 'get_pending_requests_for_user'
-        args = {'member_id' : member_id, 'context_type' : context_type, 
-                'context_id' : context_id}
-        user_email = get_email_from_cert(client_cert)
-        chapi_log_invocation(SA_LOG_PREFIX, method, credentials, options, args, {'user': user_email})
+                                          credentials, options, session):
 
-        session = self.db.getSession()
         # Filter those projects with pending requsts to those for which
         # Given member is lead or admin
         q = session.query(self.db.PROJECT_REQUEST_TABLE)
@@ -1698,49 +1493,37 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
             q = q.filter(self.db.PROJECT_REQUEST_TABLE.c.context_id == context_id)
         q = q.filter(self.db.PROJECT_REQUEST_TABLE.c.status == PENDING_STATUS)
         rows = q.all()
-        session.close()
 #        print "ROWS = " + str(rows)
         result = [construct_result_row(row, SA.project_request_columns, \
                                            SA.project_request_field_mapping) \
                       for row in rows]
         result = self._successReturn(result)
 
-        chapi_log_result(SA_LOG_PREFIX, method, result, {'user': user_email})
         return result
 
     def get_number_of_pending_requests_for_user(self, client_cert, member_id, \
                                                     context_type, context_id, \
-                                                    credentials, options):
-        method = 'get_number_of_pending_requests_for_user'
-        args = {'member_id' : member_id, 'context_type' : context_type, 
-                'context_id' : context_id}
-        user_email = get_email_from_cert(client_cert)
-        chapi_log_invocation(SA_LOG_PREFIX, method, credentials, options, args, {'user': user_email})
+                                                    credentials, options,
+                                                session):
 
         requests = self.get_pending_requests_for_user(client_cert, member_id, \
                                                           context_type, context_id,  \
-                                                          credentials, options)
+                                                          credentials, 
+                                                      options, session)
         if requests['code'] != NO_ERROR:
             return requests
         result = self._successReturn(len(requests['value']))
 
-        chapi_log_result(SA_LOG_PREFIX, method, result, {'user': user_email})
         return result
 
 
     def get_request_by_id(self, client_cert, request_id, context_type, \
-                              credentials, options):
-        method = 'get_request_by_id'
-        args = {'request_id' : request_id, 'context_type' : context_type}
-        user_email = get_email_from_cert(client_cert)
-        chapi_log_invocation(SA_LOG_PREFIX, method, credentials, options, args, {'user': user_email})
+                              credentials, options, session):
 
-        session = self.db.getSession()
         q = session.query(self.db.PROJECT_REQUEST_TABLE)
         q = q.filter(self.db.PROJECT_REQUEST_TABLE.c.id == request_id)
         q = q.filter(self.db.PROJECT_REQUEST_TABLE.c.context_type == context_type)
         rows = q.all()
-        session.close()
         if len(rows) == 0:
             return self._successReturn(None)
         result = \
@@ -1748,7 +1531,6 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                                                      SA.project_request_columns, 
                                                      SA.project_request_field_mapping))
 
-        chapi_log_result(SA_LOG_PREFIX, method, result, {'user': user_email})
         return result
 
     # Add an attribute to a given project
@@ -1756,19 +1538,12 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
     #     options {'attr_name' : attr_name, 'attr_value' : attr_value}
     def add_project_attribute(self, \
                                   client_cert, project_urn, \
-                                  credentials, options):
-        method = 'add_project_attribute'
-        args = {'project_urn' : project_urn}
-        user_email = get_email_from_cert(client_cert)
-        chapi_log_invocation(SA_LOG_PREFIX, method, credentials, options, args, {'user': user_email})
-
+                                  credentials, options, session):
         if not options or 'attr_name' not in options or 'attr_value' not in options:
             raise CHAPIv1ArgumentError("Missing attribute name/value for add_project_attribute")
 
         attr_name = options['attr_name']
         attr_value = options['attr_value']
-
-        session = self.db.getSession()
 
         project_name = from_project_urn(project_urn)
         project_id = self.get_project_id(session, 'project_name', project_name)
@@ -1780,10 +1555,6 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         session.execute(ins)
         result = True
 
-        session.commit()
-        session.close()
-        chapi_log_result(SA_LOG_PREFIX, method, result, {'user': user_email})
-
         return self._successReturn(result)
 
     # remove an attribute from a given project
@@ -1791,17 +1562,10 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
     #     options {'attr_name' : attr_name}
     def remove_project_attribute(self, \
                                      client_cert, project_urn, \
-                                     credentials, options):
-        method = 'remove_project_attribute'
-        args = {'project_urn' : project_urn}
-        user_email = get_email_from_cert(client_cert)
-        chapi_log_invocation(SA_LOG_PREFIX, method, credentials, options, args, {'user': user_email})
-
+                                     credentials, options, session):
         if not options or 'attr_name' not in options:
             raise CHAPIv1ArgumentError("Missing attribute name/value for remove_project_attribute")
         attr_name = options['attr_name']
-
-        session = self.db.getSession()
 
         project_name = from_project_urn(project_urn)
         project_id = self.get_project_id(session, 'project_name', project_name)
@@ -1813,28 +1577,18 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         q.delete(synchronize_session='fetch')
         result = True
 
-        session.commit()
-        session.close()
-        chapi_log_result(SA_LOG_PREFIX, method, result, {'user': user_email})
-
         return self._successReturn(result)
 
     # Invite a member to join a project in a given role
     def invite_member(self, client_cert, role, project_id, 
-                      credentials, options):
+                      credentials, options, session):
 
-        method = 'invite_member'
-        args = {'role' : role, 'project_id' : project_id}
-        user_email = get_email_from_cert(client_cert)
-        chapi_log_invocation(SA_LOG_PREFIX, method, credentials, options, args, {'user': user_email})
-        
         # Set expiration
         # insert into PA_PROJECT_MEMBER_INVITATION 
         #    (project_id, role, expiration) values 
         #    (project_id, role, expiration)
         # Extract and return invite_id
 
-        session = self.db.getSession()
         self._expire_project_invitations(session)
 
         invite_id = str(uuid.uuid4())
@@ -1842,23 +1596,15 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         ins = self.db.PROJECT_INVITATION_TABLE.insert().values(expiration=expiration, project_id=project_id, role=role, invite_id=invite_id)
         session.execute(ins)
 
-        session.commit()
-        session.close()
         result = {'expiration' : str(expiration), 'invite_id' : invite_id}
-        chapi_log_result(SA_LOG_PREFIX, method, result, {'user': user_email})
+
         return self._successReturn(result)
 
 
     # Accept an invitation to join a project
     def accept_invitation(self, client_cert, invite_id, member_id,
-                          credentials, options):
+                          credentials, options, session):
 
-        method = 'accept_invitation'
-        args = {'invite_id' : invite_id, 'member_id' : member_id}
-        user_email = get_email_from_cert(client_cert)
-        chapi_log_invocation(SA_LOG_PREFIX, method, credentials, options, args, {'user': user_email})
-
-        session = self.db.getSession()
         self._expire_project_invitations(session)
 
         # select project_id, role, expiration from 
@@ -1875,8 +1621,8 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         expiration = invite_info.expiration
         role = invite_info.role
 
-        project_urn = convert_project_uid_to_urn(project_id)
-        member_urn = convert_member_uid_to_urn(member_id)
+        project_urn = convert_project_uid_to_urn(project_id, session)
+        member_urn = convert_member_uid_to_urn(member_id, session)
         role_name = attribute_type_names[role]
 
         # Add the member to the project
@@ -1884,15 +1630,11 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                 {"PROJECT_MEMBER" : member_urn, 
                  "PROJECT_ROLE" : role_name}
                 ]}
-        result = self.modify_project_membership(client_cert, project_urn, credentials, options)
+        result = self.modify_project_membership(client_cert, project_urn, credentials, options, session)
 
         # Delete the invitation:
         session.delete(invite_info)
-        
-        session.commit()
-        session.close()
 
-        chapi_log_result(SA_LOG_PREFIX, method, result, {'user': user_email})
         return self._successReturn(result)
 
     # Remove all project invitations that whose expiration has passed

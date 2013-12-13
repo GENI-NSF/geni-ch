@@ -29,9 +29,11 @@ class GuardBase(object):
 
     # Return whether the given method may be called
     # with given options given the set of provided credentials
-    # Optional dictionary of additional call arguments provided (default={})
-    def validate_call(self, client_cert, method, credentials, options, args={}):
-        print "VALIDATING " + method + " " + str(options)
+    # Plus dictionary of additional call arguments provided)
+    # and session with which to perform database operations
+    def validate_call(self, client_cert, method, credentials, options, args,
+                      session):
+#        print "VALIDATING " + method + " " + str(options)
         return True
 
     # Adjust the client identity in case the credentials and options

@@ -161,7 +161,7 @@ private_fields = [
 
 match_fields = [
     "MEMBER_URN", "MEMBER_UID", "MEMBER_FIRSTNAME", "MEMBER_LASTNAME",
-    "MEMBER_USERNAME", "MEMBER_EMAIL"
+    "MEMBER_USERNAME", "MEMBER_EMAIL", "_GENI_MEMBER_EPPN"
 ]
 
 required_create_key_fields = ["KEY_PUBLIC", "KEY_MEMBER"]

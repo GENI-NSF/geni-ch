@@ -48,11 +48,6 @@ class LookupKeysInvocationCheck(SubjectInvocationCheck):
         return subjects
 
 
-def member_id_extractor(options, arguments):
-    member_id = arguments['member_id']
-    member_urn = convert_member_uid_to_urn(member_id)
-    return {"MEMBER_URN" : member_urn}
-
 # Specific guard for GPO MA
 # Provide a set of invocation checks and row checks per method
 class MAv1Guard(ABACGuardBase):
@@ -130,7 +125,9 @@ class MAv1Guard(ABACGuardBase):
                                                      'value' : 'STRING',
                                                      'self_asserted' : 'STRING'}),
         'remove_member_attribute': SimpleArgumentCheck({'member_urn' : 'URN',
-                                                     'name' : 'STRING'}),
+                                                        'name' : 'STRING',
+                                                        'value' : 'STRING'
+                                                        }),
         }
 
     # Set of invocation checks indexed by method name
@@ -138,7 +135,7 @@ class MAv1Guard(ABACGuardBase):
         {
         'lookup_public_member_info' : \
             SubjectInvocationCheck([
-                "ME.MAY_LOOKUP_PUBLIC_MEMBER_INFO<-ME.IS_OPERATOR"
+                "ME.MAY_LOOKUP_PUBLIC_MEMBER_INFO<-CALLER"
             ], None, standard_subject_extractor),
         'lookup_identifying_member_info' : \
             SubjectInvocationCheck([

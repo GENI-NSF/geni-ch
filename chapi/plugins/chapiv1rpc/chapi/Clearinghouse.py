@@ -29,6 +29,7 @@ from HandlerBase import HandlerBase
 from Exceptions import *
 from tools.cert_utils import *
 from tools.chapi_log import *
+from MethodContext import *
 
 ch_logger = amsoil.core.log.getLogger('chv1')
 xmlrpc = pm.getService('xmlrpc')
@@ -38,70 +39,80 @@ class CHv1Handler(HandlerBase):
     def __init__(self):
         super(CHv1Handler, self).__init__(ch_logger)
 
-    # Override error return to log exception
-    def _errorReturn(self, e):
-        user_email = get_email_from_cert(self.requestCertificate())
-        chapi_log_exception(SR_LOG_PREFIX, e, {'user': user_email})
-        return super(CHv1Handler, self)._errorReturn(e)
-    
     # This call is unprotected: no checking of credentials
     # Return version of CH API including object model
     def get_version(self):
-        try:
-            gv_return = self._delegate.get_version()
-#            print "GV_RETURN = " + str(gv_return)
-            return gv_return
-        except Exception as e:
-            return self._errorReturn(e)
+        with MethodContext(self, SR_LOG_PREFIX, 'get_version',
+                           {}, [], {}, read_only=True) as mc:
+            if not mc._error:
+                mc._result = \
+                    self._delegate.get_version(mc._session)
+        return mc._result
     
     # This call is unprotected: no checking of credentials
     # Return list of member authorities with matching and filter criteria
     # specified in options
     def lookup_member_authorities(self, options):
-        client_cert = self.requestCertificate()
-        try:
-            return self._delegate.lookup_member_authorities(client_cert, options)
-        except Exception as e:
-            return self._errorReturn(e)
+        with MethodContext(self, MA_LOG_PREFIX, 'lookup_member_authorities', 
+                           {}, [], options, read_only=True) as mc:
+            if not mc._error:
+                mc._result = \
+                    self._delegate.lookup_member_authorities( mc._client_cert,
+                                                              options,
+                                                              mc._session)
+        return mc._result
 
     # This call is unprotected: no checking of credentials
     # Return list of slice authorities with matching and filter criteria
     # specified in options
     def lookup_slice_authorities(self, options):
-        client_cert = self.requestCertificate()
-        try:
-            return self._delegate.lookup_slice_authorities(client_cert, options)
-        except Exception as e:
-            return self._errorReturn(e)
+        with MethodContext(self, MA_LOG_PREFIX, 'lookup_slice_authorities', 
+                           {}, [], options, read_only=True) as mc:
+            if not mc._error:
+                mc._result = \
+                    self._delegate.lookup_slice_authorities(mc._client_cert,
+                                                            options,
+                                                            mc._session)
+        return mc._result
 
     # This call is unprotected: no checking of credentials
     # Return list of aggregates with matching and filter criteria`
     # specified in options
     def lookup_aggregates(self, options):
-        client_cert = self.requestCertificate()
-        try:
-            return self._delegate.lookup_aggregates(client_cert, options)
-        except Exception as e:
-            return self._errorReturn(e)
+         with MethodContext(self, MA_LOG_PREFIX, 'lookup_aggregates', 
+                           {}, [], options, read_only=True) as mc:
+            if not mc._error:
+                mc._result = \
+                    self._delegate.lookup_aggregates(mc._client_cert,
+                                                     options,
+                                                     mc._session)
+         return mc._result
 
     # This call is unprotected: no checking of credentials
     # Return URL of authority (slice or member) for given URN
     def lookup_authorities_for_urns(self, urns):
-        client_cert = self.requestCertificate()
-        try:
-            return self._delegate.lookup_authorities_for_urns(client_cert, urns)
-        except Exception as e:
-            return self._errorReturn(e)
+         with MethodContext(self, MA_LOG_PREFIX, 
+                            'lookup_authorities_for_urns', 
+                           {'urns' : urns}, [], {}, read_only=True) as mc:
+            if not mc._error:
+                mc._result = \
+                    self._delegate.lookup_authorities__for_urns(mc._client_cert, 
+                                                                urns,
+                                                                mc._session)
+         return mc._result
 
     # This call is unprotected: no checking of credentials
     # Return list of trust roots trusted by authorities and aggregates of
     # the federation associated with this Clearinghouse
     def get_trust_roots(self):
-        client_cert = self.requestCertificate()
-        try:
-            return self._delegate.get_trust_roots(client_cert)
-        except Exception as e:
-            return self._errorReturn(e)
+         with MethodContext(self, MA_LOG_PREFIX, 
+                            'get_trust_roots',
+                           {}, [], {}, read_only=True) as mc:
+            if not mc._error:
+                mc._result = \
+                    self._delegate.get_trust_roots(mc._client_cert, 
+                                                   mc._session)
+         return mc._result
 
 # Base class for implementations of CH API
 # Must be  implemented in a derived class, and that derived class
@@ -111,22 +122,21 @@ class CHv1DelegateBase(DelegateBase):
     def __init__(self):
         super(CHv1DelegateBase, self).__init__(ch_logger)
     
-    def get_version(self):
+    def get_version(self, session):
         raise CHAPIv1NotImplementedError('')
 
-    def lookup_member_authorities(self, client_cert, options):
+    def lookup_member_authorities(self, client_cert, options, session):
         raise CHAPIv1NotImplementedError('')
 
-
-    def lookup_slice_authorities(self, client_cert, options):
+    def lookup_slice_authorities(self, client_cert, options, session):
         raise CHAPIv1NotImplementedError('')
 
-    def lookup_aggregates(self, client_cert, options):
+    def lookup_aggregates(self, client_cert, options, session):
         raise CHAPIv1NotImplementedError('')
 
-    def lookup_authorities_for_urns(self, client_cert, urns):
+    def lookup_authorities_for_urns(self, client_cert, urns, session):
         raise CHAPIv1NotImplementedError('')
 
-    def get_trust_roots(self, client_cert):
+    def get_trust_roots(self, client_cert, session):
         raise CHAPIv1NotImplementedError('')
 

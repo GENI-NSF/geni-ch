@@ -54,7 +54,8 @@ class InvocationCheck(object):
     # Raise an ARGUMENT_ERROR if there is something wrong about the 
     # arguments passed to method
     # Return dictionary of {subject_type : subjects}
-    def validate_arguments(self, client_cert, method, options, arguments):
+    def validate_arguments(self, client_cert, method, options, arguments, 
+                           session):
         # Method-specific logic
         return None
 
@@ -62,15 +63,16 @@ class InvocationCheck(object):
     # certs and credentials and options/arguments passed to the call
     # and subjects extracted from validate_arguments call
     def authorize_call(self, client_cert, method, credentials, options, \
-                           arguments, subjects ):
+                           arguments, subjects, session ):
         raise CHAPIv1NotImplementedError("Abstract Base class: InvocationCheck")
 
     # Validate arguments and check authorization
-    def validate(self, client_cert, method, credentials, options, arguments):
+    def validate(self, client_cert, method, credentials, options, 
+                 arguments, session):
         subjects = self.validate_arguments(client_cert, method, \
-                                               options, arguments)
+                                               options, arguments, session)
         self.authorize_call(client_cert, method, credentials, \
-                                options, arguments, subjects)
+                                options, arguments, subjects, session)
 
 # Class that determines if the caller has the right to invoke a given method on all
 # the subjects of a given method invocation
@@ -90,15 +92,22 @@ class SubjectInvocationCheck(InvocationCheck):
 
     # Check that there are subjects in the arguments if required
     # Store the list of subjects for later authorization
-    def validate_arguments(self, client_cert, method, options, arguments):
+    def validate_arguments(self, client_cert, method, options, arguments, 
+                           session):
         subjects = {}
         if self._subject_extractor:
-            subjects = self._subject_extractor(options, arguments)
+            subjects = self._subject_extractor(options, arguments, session)
 #            if not subjects or len(subjects) == 0:
 #                raise CHAPIv1ArgumentError("No subjects supplied to call %s" % method);
             if subjects and len(subjects) > 1:
                 raise CHAPIv1ArgumentError("Can't provide mixture of subject types for call %s: %s" % \
                                                (method, subjects.keys()))
+            if subjects and len(subjects) > 0:
+                subject_type = subjects.keys()[0]
+                subjects_of_type = subjects[subject_type]
+                ensure_valid_urns(subject_type, subjects_of_type, session)
+
+#        chapi_info('ABACGuard', 'SUBJECTS = %s' % subjects)
         return subjects
 
     def load_policies(self, abac_manager, subject_name):
@@ -116,7 +125,7 @@ class SubjectInvocationCheck(InvocationCheck):
     # If there are no subjects (and this is allowed by validate_arguments)
     #    Prove AUTHORITYMAY_$method<-CALLER
     def authorize_call(self, client_cert, method, credentials, options, \
-                           arguments, subjects):
+                           arguments, subjects, session):
         abac_manager =  ABACManager(certs_by_name = {"CALLER" : client_cert}, 
                                     cert_files_by_name = {"ME" : self.cert_file}, 
                                     key_files_by_name = {"ME" : self.key_file},
@@ -126,14 +135,15 @@ class SubjectInvocationCheck(InvocationCheck):
         client_urn = get_urn_from_cert(client_cert)
 
         # Gather context-free assertions for caller
-        if lookup_operator_privilege(client_urn):
+        if lookup_operator_privilege(client_urn, session):
             abac_manager.register_assertion("ME.IS_OPERATOR<-CALLER")
-        if lookup_pi_privilege(client_urn):
+        if lookup_pi_privilege(client_urn, session):
             abac_manager.register_assertion("ME.IS_PI<-CALLER")
         abac_manager.register_assertion("ME.IS_%s<-CALLER" % flatten_urn(client_urn))
-        if lookup_authority_privilege(client_urn):
+        if lookup_authority_privilege(client_urn, session):
             abac_manager.register_assertion("ME.IS_AUTHORITY<-CALLER")
 
+#        chapi_info("SUBJECTS", "%s" % subjects)
         if subjects:
 
             subject_type = subjects.keys()[0]
@@ -148,7 +158,8 @@ class SubjectInvocationCheck(InvocationCheck):
             if self._attribute_extractors:
                 for attribute_extractor in self._attribute_extractors:
                     attribute_extractor(client_urn, subjects_of_type, \
-                                        subject_type, options, abac_manager)
+                                        subject_type, options, arguments, abac_manager,
+                                        session)
 
             # Register policies relative to the subjects
             # And try to prove that the user may call the method, 
@@ -219,10 +230,11 @@ class ABACGuardBase(GuardBase):
         raise CHAPIv1NotImplementedError('Abstract Base class ABACGuard.get_row_check')
 
 
-    def validate_call(self, client_cert, method, credentials, options, arguments = {}):
+    def validate_call(self, client_cert, method, credentials, options, 
+                      arguments, session):
 #        print "ABACGuardBase.validate_call : " + method + " " + str(arguments) + " " + str(options)
 
-        self.user_check(client_cert)
+        self.user_check(client_cert, session)
 
         argument_check = self.get_argument_check(method)
         if argument_check:
@@ -230,21 +242,20 @@ class ABACGuardBase(GuardBase):
         
         invocation_check = self.get_invocation_check(method)
         if invocation_check:
-            invocation_check.validate(client_cert, method, \
-                                          credentials, options, arguments)
+            invocation_check.validate(client_cert, method, 
+                                      credentials, options, arguments,
+                                      session)
 
-    def user_check(self, client_cert):
+    def user_check(self, client_cert, session):
         client_urn = get_urn_from_cert(client_cert)
         client_uuid = get_uuid_from_cert(client_cert)
         client_name = get_name_from_urn(client_urn)
 
-        session = self.db.getSession()
         q = session.query(MemberAttribute.value).\
             filter(MemberAttribute.member_id == client_uuid).\
             filter(MemberAttribute.name == MA_constants.field_mapping['_GENI_MEMBER_ENABLED'])
         rows = q.all()
         is_enabled = (len(rows)==0 or rows[0][0] == 'y')
-        session.close()
 
         if is_enabled:
             #chapi_debug("ABAC", "UC: user '%s' (%s) enabled" % (client_name, client_urn))

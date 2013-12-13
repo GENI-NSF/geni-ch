@@ -180,7 +180,7 @@ class SAv1Guard(ABACGuardBase):
             SubjectInvocationCheck([
                 "ME.MAY_CREATE_PROJECT<-ME.IS_OPERATOR",
                 "ME.MAY_CREATE_PROJECT<-ME.IS_PI"
-                ], None, project_urn_extractor),
+                ], None, None),
 
         'lookup_projects' : \
             SubjectInvocationCheck([
