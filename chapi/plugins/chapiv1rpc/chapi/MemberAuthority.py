@@ -306,7 +306,8 @@ class MAv1Handler(HandlerBase):
         """
         with MethodContext(self, MA_LOG_PREFIX, 
                            'authorize_client', 
-                           {'member_id' : member_id,'client_urn' : client_urn},
+                           {'member_id' : member_id,'client_urn' : client_urn,
+                            'authorize_sense' : authorize_sense},
                            [], {}, read_only=False) as mc:
             if not mc._error:
                 mc._result = \
