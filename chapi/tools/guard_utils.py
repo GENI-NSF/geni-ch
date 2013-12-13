@@ -34,6 +34,7 @@ from geni_constants import *
 from chapi.Memoize import memoize
 from chapi.Exceptions import *
 import MA_constants as MA
+from datetime import datetime, timedelta
 from dbutils import add_filters
 from chapi_log import *
 
@@ -54,6 +55,21 @@ def cache_get(k):
 def cache_clear():
     if hasattr(_context, 'cache'):
         del _context.cache
+
+# Manage caches that timeout
+
+# Lookup the entry for a given urn (keys: timestamp and value) if not timed out
+def timed_cache_lookup(cache, urn, lifetime):
+    timeout = datetime.utcnow() - timedelta(seconds=lifetime)
+    if urn in cache and cache[urn]['timestamp'] > timeout:
+        return cache[urn]
+    return None
+
+# Register value with timestamp
+def timed_cache_register(cache, urn, value):
+    now = datetime.utcnow()
+    cache[urn] = {'timestamp' : now, 'value' : value}
+    
 
 # Some helper methods
 
@@ -301,13 +317,21 @@ def convert_member_email_to_uid(member_email, session):
     else:
         return validate_uid_list(member_emails, cache, 'member email')
 
+# How long do we keep cache entries for operator privileges
+OPERATOR_CACHE_LIFETIME_SECS = 60
+# How long do we keep cache entries for PI privileges
+PI_CACHE_LIFETIME_SECS = 60
+
+
+
 # Lookup whether given user (by urn) has 'operator' 
 # as an attribute in ma_member_attribute
 def lookup_operator_privilege(user_urn, session):
     db = pm.getService('chdbengine')
     cache = cache_get('operator_privilege')
-    if user_urn in cache:
-        return cache[user_urn]
+    entry = timed_cache_lookup(cache, user_urn, OPERATOR_CACHE_LIFETIME_SECS)
+    if entry:
+        return entry['value']
 
     ma1 = alias(db.MEMBER_ATTRIBUTE_TABLE)
     ma2 = alias(db.MEMBER_ATTRIBUTE_TABLE)
@@ -317,12 +341,10 @@ def lookup_operator_privilege(user_urn, session):
     q = q.filter(ma1.c.value == user_urn)
     q = q.filter(ma2.c.name == 'OPERATOR')
 
-#    print "Q = " + str(q)
-
     rows = q.all()
     is_operator = (len(rows)>0)
     chapi_debug('UTILS', 'lookup_operator_privilege: '+user_urn+" = "+str(is_operator))
-    cache[user_urn] = is_operator
+    timed_cache_register(cache, user_urn, is_operator)
     return is_operator
 
 # Is given user an authority?
@@ -334,8 +356,9 @@ def lookup_authority_privilege(user_urn, session):
 def lookup_pi_privilege(user_urn, session):
     db = pm.getService('chdbengine')
     cache = cache_get('pi_privilege')
-    if user_urn in cache:
-        return cache[user_urn]
+    entry = timed_cache_lookup(cache, user_urn, PI_CACHE_LIFETIME_SECS)
+    if entry:
+        return entry['value']
 
     ma1 = alias(db.MEMBER_ATTRIBUTE_TABLE)
     ma2 = alias(db.MEMBER_ATTRIBUTE_TABLE)
@@ -349,7 +372,7 @@ def lookup_pi_privilege(user_urn, session):
 
     rows = q.all()
     is_project_lead = (len(rows)>0)
-    cache[user_urn] = is_project_lead
+    timed_cache_register(cache, user_urn, is_project_lead)
     return is_project_lead
 
 

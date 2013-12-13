@@ -122,7 +122,7 @@ class MethodContext:
 
             try:
 
-                # If we're in maintenance mode, only operators can use CH
+                # If we're in maintenance mode, only operators and authorities can use CH
                 config = pm.getService('config')
                 maintenance_outage_location = \
                     config.get('geni.maintenance_outage_location')
@@ -133,8 +133,10 @@ class MethodContext:
                         is_operator = \
                             lookup_operator_privilege(user_urn, 
                                                       self._session)
-                        chapi_info("OUTAGE", "USER_URN = %s IS_OPERATOR = %s" % (user_urn, is_operator))
-                        if not is_operator:
+                        is_authority = lookup_authority_privilege(user_urn, self._session)
+#                        chapi_info("OUTAGE", "USER_URN = %s IS_OPERATOR = %s IS_AUTHORITY = %s" % 
+#                                   (user_urn, is_operator, is_authority))
+                        if not is_operator and not is_authority:
                             raise CHAPIv1AuthorizationError(
                                 "Cannot access GENI Clearinghouse " + 
                                 "during maintenance outage")
