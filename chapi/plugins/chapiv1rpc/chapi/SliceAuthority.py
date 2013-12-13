@@ -137,7 +137,7 @@ class SAv1Handler(HandlerBase):
 
     # Lookup members of given slice and their roles within that slice
     def lookup_slice_members(self, slice_urn, credentials, options):
-        with MethodContext(self, SA_LOG_PREFIX, 'lookupslice_members',
+        with MethodContext(self, SA_LOG_PREFIX, 'lookup_slice_members',
                            {'slice_urn' : slice_urn}, 
                            credentials, options, read_only=True) as mc:
             if not mc._error:
