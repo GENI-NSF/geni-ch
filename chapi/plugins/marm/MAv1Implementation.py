@@ -405,7 +405,7 @@ class MAv1Implementation(MAv1DelegateBase):
             q.update(keys)
         else:
             if "certificate" not in keys:
-                raise CHAPIv1ArgumentError('Cannot insert just private key')
+                raise CHAPIv1ArgumentError('Cannot insert just private key - missing certificate')
             obj = table()
             obj.member_id = uid
             for key, val in keys.iteritems():
@@ -520,7 +520,7 @@ class MAv1Implementation(MAv1DelegateBase):
 
         # check to make sure that there's an email address
         if 'email_address' not in atmap.keys():
-            raise CHAPIv1DatabaseError("No email_address attribute")
+            raise CHAPIv1DatabaseError("Missing required email_address attribute")
         else:
             email_address = atmap['email_address']['value']
 
@@ -567,7 +567,7 @@ class MAv1Implementation(MAv1DelegateBase):
 
        # Check that all the fields are allowed to be updated
         if 'fields' not in options:
-            raise CHAPIv1ArgumentError("No fields in create_key")
+            raise CHAPIv1ArgumentError("No 'fields' in create_key")
         fields = options['fields']
         validate_fields(fields, MA.required_create_key_fields, \
                             MA.allowed_create_key_fields)
@@ -614,7 +614,7 @@ class MAv1Implementation(MAv1DelegateBase):
         q = q.filter(SshKey.id == key_id)
         num_del = q.delete()
         if num_del == 0:
-            raise CHAPIv1DatabaseError("No key with id  %s" % key_id)
+            raise CHAPIv1DatabaseError("No key with id %s to delete" % key_id)
 
         # Log the deletion of the SSH key
         client_uuid = get_uuid_from_cert(client_cert)
@@ -631,7 +631,7 @@ class MAv1Implementation(MAv1DelegateBase):
 
         # Check that all the fields are allowed to be updated
         if 'fields' not in options:
-            raise CHAPIv1ArgumentError("No fields in update_key")
+            raise CHAPIv1ArgumentError("No 'fields' in update_key")
         fields = options['fields']
         validate_fields(fields, None, MA.updatable_key_fields)
         update_fields = \
@@ -642,7 +642,7 @@ class MAv1Implementation(MAv1DelegateBase):
         num_upd = q.update(update_fields)
 
         if num_upd == 0:
-            raise CHAPIv1DatabaseError("No key with id %s" % key_id)
+            raise CHAPIv1DatabaseError("No key with id %s to update" % key_id)
 
         result = self._successReturn(True)
 
@@ -661,7 +661,7 @@ class MAv1Implementation(MAv1DelegateBase):
         q = q.filter(self.db.SSH_KEY_TABLE.c.member_id == self.db.MEMBER_ATTRIBUTE_TABLE.c.member_id)
         q = q.filter(self.db.MEMBER_ATTRIBUTE_TABLE.c.name=='urn')
 
-        # Handle key_member specially : it is not part of the SSH key table
+        # Handle key_member specially: it is not part of the SSH key table
         if 'KEY_MEMBER' in match_criteria.keys():
             member_urn = match_criteria['KEY_MEMBER']
             if isinstance(member_urn, types.ListType):
@@ -1018,7 +1018,9 @@ class MAv1Implementation(MAv1DelegateBase):
                                     result = self._sa_handler._delegate.modify_project_membership(client_cert, project['PROJECT_URN'], credentials, options, session)
                                     break
                         if new_lead_urn == None:
-                            raise CHAPIv1ArgumentError('Cannot revoke lead privilege.  No authorized admin to take lead role on project %s' %project_urn)                            
+                            raise CHAPIv1ArgumentError('Cannot revoke lead privilege from %s. ' +
+                                                       'No authorized admin to take lead role on project %s' 
+                                                       % (member_urn, project_urn))
         if was_enabled:
             self.delete_attr(session, privilege, member_uid)
 

@@ -1,4 +1,3 @@
-
 #----------------------------------------------------------------------
 # Copyright (c) 2011-2013 Raytheon BBN Technologies
 #
@@ -437,7 +436,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         expired = project_info.expired
         project_expiration = project_info.expiration
         if project_info.expired:
-            raise CHAPIv1ArgumentError("May not create a slice on expired project");
+            raise CHAPIv1ArgumentError("May not create a slice on expired project %s" % project_urn);
         
         # Check that slice name is valid
         if ' ' in name:
@@ -456,7 +455,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
             same_project = self.get_slice_ids(session, "project_id",
                                               slice.project_id)
             if same_project and (set(same_name) & set(same_project)):
-                raise CHAPIv1DuplicateError('Already exists a slice named ' +
+                raise CHAPIv1DuplicateError('There already exists a slice named ' +
                                             name + ' in project ' + project_name)
 
         slice.creation = datetime.utcnow()
@@ -494,7 +493,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         admins_to_add = []
         members = self.lookup_project_members(client_cert,project_urn, credentials,{}, session)
         if members['code'] != NO_ERROR:
-            raise CHAPIv1ArgumentError('No members for project ' + project_urn)
+            raise CHAPIv1ArgumentError('No members found for project ' + project_urn)
         for member in members['value']:
             if member['PROJECT_ROLE'] == 'ADMIN' or member['PROJECT_ROLE'] == 'LEAD':
                 if member['PROJECT_MEMBER_UID'] != client_uuid:
@@ -540,13 +539,13 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         project_info = q.one()
         project_expiration = project_info.expiration
         if project_info.expired:
-            raise CHAPIv1ArgumentError('Cannot update a slice for an expired project')
+            raise CHAPIv1ArgumentError('Cannot update slice %s: project is expired' % slice_urn)
 
         q = session.query(Slice.expired, Slice.expiration, Slice.certificate, Slice.slice_email, Slice.slice_id, Slice.creation)
         q = q.filter(Slice.slice_id == slice_uuid)
         slice_info = q.one()
         if slice_info.expired:
-            raise CHAPIv1ArgumentError('Cannot update or renew an expired slice')
+            raise CHAPIv1ArgumentError('Cannot update or renew an expired slice (%s expired at %s)' % (slice_urn, slice_info.expiration.isoformat()))
         slice_expiration = slice_info.expiration
         max_exp = datetime.utcnow() + relativedelta(days=SA.SLICE_MAX_RENEWAL_DAYS)
 #        # If this is marked as a long lived slice, then
@@ -584,7 +583,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
 #                    chapi_debug(SA_LOG_PREFIX, "Slice %s Reset renew request %s to max exp %s" % (slice_name, new_exp, max_exp))
                 # don't shorten slice lifetime
                 if slice_expiration > new_exp:
-                    raise CHAPIv1ArgumentError('Cannot shorten slice lifetime')
+                    raise CHAPIv1ArgumentError('Cannot shorten slice lifetime (%s expires at %s)' % (slice_urn, slice_expiration.isoformat()))
 
                 # regenerate cert if necessary
                 cert = Certificate(string = slice_info.certificate)
@@ -646,7 +645,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         
         # check that project does not already exist
         if self.get_project_id(session, "project_name", name):
-            raise CHAPIv1DuplicateError('Already exists a project named ' + name)
+            raise CHAPIv1DuplicateError('There already exists a project named ' + name)
 
         # fill in the fields of the object
         project = Project()
@@ -715,7 +714,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         name = from_project_urn(project_urn)
         project_uuid = self.get_project_id(session, 'project_name', name)
         if not project_uuid:
-            raise CHAPIv1ArgumentError('No project with urn ' + project_urn)
+            raise CHAPIv1ArgumentError('No project found with urn ' + project_urn)
         q = session.query(Project)
         q = q.filter(getattr(Project, "project_name") == name)
         updates = {}
@@ -877,7 +876,9 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
 
                             break
                     if new_lead_urn==None:
-                        raise CHAPIv1ArgumentError('New project lead not authorized')
+                        raise CHAPIv1ArgumentError('Cannot remove %s lead %s: ' + 
+                                                   'No project admins are authorized to be a project lead' % 
+                                                   (project_urn, old_lead_urn))
                     
         if 'members_to_change' in options:
             # if project lead will change, make sure new project lead authorized
@@ -898,7 +899,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                                 filter(self.db.MEMBER_ATTRIBUTE_TABLE.c.name == 'PROJECT_LEAD')
                             rows = q.all()
                             if len(rows) == 0 or rows[0][0] != 'true':
-                                raise CHAPIv1ArgumentError('New project lead not authorized')
+                                raise CHAPIv1ArgumentError('New project lead %s not authorized to be a project lead' % (new_lead_urn))
                             new_project_lead = row['PROJECT_MEMBER_UID']
                             break
 
@@ -1052,7 +1053,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
 
         return result
 
-    # change the membership in a project
+    # change the membership in a slice
     def modify_slice_membership(self, client_cert, slice_urn, \
                                 credentials, options, session):
 
@@ -1091,7 +1092,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                 break
 
         if role == 'AUDITOR':
-            raise CHAPIv1ArgumentError('Cannot make project auditor a slice lead')
+            raise CHAPIv1ArgumentError('Cannot make a project auditor a slice lead')
         
         # if slice lead has changed, change in sa_slice table
         if new_slice_lead != old_slice_lead:
@@ -1182,7 +1183,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                 q = q.filter(member_class.member_id == \
                     urn_to_id[member[member_str]])
                 if len(q.all()) == 0:
-                    raise CHAPIv1ArgumentError('Cannot change member ' + \
+                    raise CHAPIv1ArgumentError('Cannot change role of member ' + \
                              member[member_str] + ' not in ' + text_str)
                 q.update({"role" : self.get_role_id(session, member[role_str])})
 
@@ -1192,7 +1193,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         q = q.filter(member_class.role == self.get_role_id(session, "LEAD"))
         num_leads = len(q.all())
         if num_leads != 1:
-            raise CHAPIv1ArgumentError('This would result in ' + \
+            raise CHAPIv1ArgumentError('Cannot modify membership: this would result in ' + \
                           str(num_leads) + ' leads for the ' + text_str)
 
 
@@ -1426,7 +1427,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         q = q.filter(self.db.PROJECT_REQUEST_TABLE.c.id == request_id)
         status_info = q.one()
         if not status_info.status == PENDING_STATUS:
-            raise CHAPIv1ArgumentError("Request is no longer pending")
+            raise CHAPIv1ArgumentError("Request %d is no longer pending" % request_id)
         
         update_values = {'status' : resolution_status, 
                          'resolver' : client_uuid, 
@@ -1613,12 +1614,11 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         q = q.filter(ProjectInvitation.invite_id == invite_id)
         rows = q.all()
 
-        # If no such invitation, return error
+        # If no such (unexpired) invitation, return error
         if len(rows) < 1:
-            raise CHAPIv1ArgumentError("No invitation with given invite_id %s" % invite_id)
+            raise CHAPIv1ArgumentError("No current invitation with given invite_id %s to accept" % invite_id)
         invite_info = rows[0]
         project_id = invite_info.project_id
-        expiration = invite_info.expiration
         role = invite_info.role
 
         project_urn = convert_project_uid_to_urn(project_id, session)
@@ -1646,7 +1646,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
 #        chapi_debug(SA_LOG_PREFIX, "expire_project_invitations Q = %s" % str(q))
         rows = q.all()
         for row in rows:
-            chapi_info('SA', 'Expiring project invitation ID %s Project %s role %s' % \
+            chapi_info(SA_LOG_PREFIX, 'Expiring project invitation ID %s Project %s role %s' % \
                            (row.invite_id, row.project_id, row.role))
             session.delete(row)
 
