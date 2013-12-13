@@ -1421,6 +1421,13 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
 
         client_uuid = get_uuid_from_cert(client_cert)
 
+        # check that request is still pending
+        q = session.query(self.db.PROJECT_REQUEST_TABLE.c.status)
+        q = q.filter(self.db.PROJECT_REQUEST_TABLE.c.id == request_id)
+        status_info = q.one()
+        if not status_info.status == PENDING_STATUS:
+            raise CHAPIv1ArgumentError("Request is no longer pending")
+        
         update_values = {'status' : resolution_status, 
                          'resolver' : client_uuid, 
                          'resolution_description' : resolution_description,
