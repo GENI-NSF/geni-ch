@@ -137,11 +137,11 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         if resurrect:
             old_flag = True
             new_flag = False
-            label = "Restored previously expired "
+            label = "Restored previously expired"
         else:
             old_flag = False
             new_flag = True
-            label = "Expired "
+            label = "Expired"
 
         q = self.get_expiration_query(session, type, old_flag, resurrect)
         rows = q.all()
