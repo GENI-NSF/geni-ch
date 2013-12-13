@@ -1032,11 +1032,16 @@ class MAv1Implementation(MAv1DelegateBase):
 
         return result
 
+    # Do not allow add/remove attribute to modify certain attribute names
     def valid_attr(self, attr):
-        if attr.isspace():
+        if attr is None or attr.isspace():
             return False
-        core_attrs = ['PROJECT_LEAD', 'OPERATOR', 'eppn', 'urn', 'username', 'first_name', 'last_name', 'affiliation', 'displayName', 'email_address', 'reference']
-        if attr in core_attrs:
+#        core_attrs = ['PROJECT_LEAD', 'OPERATOR', 'eppn', 'urn',
+#        'username', 'first_name', 'last_name', 'affiliation',
+#        'displayName', 'email_address', 'reference', 'member_enabled']
+        core_attrs = ['PROJECT_LEAD', 'OPERATOR', 'eppn', 'urn',
+                      'username', 'email_address', 'member_enabled']
+        if attr.strip() in core_attrs:
             return False
         return True
 
@@ -1050,6 +1055,7 @@ class MAv1Implementation(MAv1DelegateBase):
 
         if not self.valid_attr(attr_name):
             raise CHAPIv1ArgumentError('%s not a valid member attribute' % attr_name)
+        attr_name = attr_name.strip()
 
         # find the uid
         uids = self.get_uids_for_attribute(session, "MEMBER_URN", member_urn)
@@ -1104,6 +1110,7 @@ class MAv1Implementation(MAv1DelegateBase):
 
         if not self.valid_attr(attr_name):
             raise CHAPIv1ArgumentError('%s not a valid member attribute' % attr_name)
+        attr_name = attr_name.strip()
 
         # find the uid
         uids = self.get_uids_for_attribute(session, "MEMBER_URN", member_urn)
