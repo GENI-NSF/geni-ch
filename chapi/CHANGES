@@ -8,7 +8,11 @@
   * Return code 12 and a better error message when Resolve gets an authorization error doing lookup slices,
     to indicate that the slice possibly just doesn't exist. (#180,#184)
   * Fix error renewing non-existent slice in PGCH (#182)
-  * Check that project join request is still pending before processing (#164)    
+  * Check that project join request is still pending before processing (#164) 
+  * Ensure a single SQLalchemy session per request, with a rollback on error. (#95,#96,#117)
+  * Respect maintenance mode (#151,#188)
+  * Add guards on the logging service (#146)
+  * Only log stacktraces on bad errors (#119)
 
 == 1.1 ==
  * Use past tense in logging service log messages (#128)
@@ -25,7 +29,7 @@
  * Error looking up identifying member info (#143)
  * Check errors like bad username in PGCH (#150)
  * Send email on adding new project members (#33)
- * Fix guard on invite_members (#154)
+ * Fix guard on invite_members (#154,#153)
  * Updated project log message says what changed (#88)
  * Do not return empty user cred (#140)
  * Use constants for a couple numbers (#57)
