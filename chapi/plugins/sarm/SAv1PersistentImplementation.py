@@ -126,13 +126,19 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                                   Project.project_name)
         q = q.filter(table.expired == old_flag)
         if resurrect:
-            q = q.filter(or_(table.expiration > datetime.utcnow(),table.expiration == None))
+            q = q.filter(or_(table.expiration > text("now() at time zone 'utc'"),table.expiration == None))
         else:
-            q = q.filter(table.expiration < datetime.utcnow())
+            q = q.filter(table.expiration < text("now() at time zone 'utc'"))
 
         return q
 
-    def update_expirations(self, client_uuid, type, resurrect, session):
+    def update_expirations(self, client_uuid, type, resurrect, session=None):
+        # Allow a None session so read only functions can call this and still have the result committed
+        createdSession=False
+        if session is None:
+            session = self.db.getSession()
+            createdSession = True
+
         if resurrect:
             old_flag = True
             new_flag = False
@@ -146,9 +152,16 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         rows = q.all()
 
         if len(rows) > 0:
-            q = self.get_expiration_query(session, type, old_flag, resurrect)
             update_fields = {'expired' : new_flag}
-            q = q.update(update_fields)
+            # Force execute query in DB for time comparisons to happen there
+            # And so if in this session we just updated a project expiration, it is seen
+            try:
+                q = q.update(update_fields, 'fetch')
+            except Exception, e:
+                if createdSession:
+                    session.rollback()
+                    session.close()
+                raise e
 
         for row in rows:
             if type == 'slice':
@@ -157,9 +170,24 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
             else:
                 name = row.project_name
                 attrs = {"PROJECT" : row.project_id}
-            self.logging_service.log_event("%s %s %s" % (label, type, name), 
-                                           attrs, client_uuid)
+            # Do not log as this user, log as the None UID
+            logresult = None
+            try:
+                lmessage = "%s %s %s" % (label, type, name)
+                args = {'message' : lmessage, 'attributes' : attrs}
+                chapi_log_invocation(LOG_LOG_PREFIX, "log_event", [], {}, args)
+                logresult = self.logging_service._delegate.log_event(None, lmessage, attrs, None, session)
+            except Exception, e:
+                if not isinstance(e, CHAPIv1BaseError):
+                    e = CHAPIv1ServerError(str(e))
+                logresult = { 'code' : e.code , 'output' : str(e), 'value' : None }
+                chapi_warn(SA_LOG_PREFIX, "Failed to log_event in update_expirations: %s" % e)
+            finally:
+                chapi_log_result(LOG_LOG_PREFIX, 'log_event', logresult)
 
+        if createdSession:
+            session.commit()
+            session.close()
 
     # Check for
     #   Recently expired slices and set their expired flags to 't'
@@ -177,7 +205,10 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
     def lookup_slices(self, client_cert, credentials, options, session):
 
         client_uuid = get_uuid_from_cert(client_cert)
-        self.update_slice_expirations(client_uuid, session)
+        # None session cause this is a read-only method and we need a commitable session
+        # to have changes take effect
+        self.update_slice_expirations(client_uuid, None)
+        # FIXME: will slices whose expiration was just changed show old value here?
 
         selected_columns, match_criteria = \
             unpack_query_options(options, SA.slice_field_mapping)
@@ -253,7 +284,10 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                        id_value, session):
 
         client_uuid = get_uuid_from_cert(client_cert)
-        self.update_slice_expirations(client_uuid, session)
+        # None session cause this is a read-only method and we need a commitable session
+        # to have changes take effect
+        self.update_project_expirations(client_uuid, None)
+        # FIXME: will slices/projects whose expiration was just changed show old value here?
 
         q = session.query(member_table, table.c[name_field],
                           self.db.MEMBER_ATTRIBUTE_TABLE.c.value,
@@ -276,7 +310,10 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
     def lookup_slices_for_member(self, client_cert, member_urn, \
                                  credentials, options, session):
         client_uuid = get_uuid_from_cert(client_cert)
-        self.update_slice_expirations(client_uuid, session)
+        # None session cause this is a read-only method and we need a commitable session
+        # to have changes take effect
+        self.update_slice_expirations(client_uuid, None)
+        # FIXME: will slices whose expiration was just changed show old value here?
 
         rows = self.lookup_for_member(member_urn, self.db.SLICE_TABLE, \
                   self.db.SLICE_MEMBER_TABLE, "slice_urn", "slice_id", session)
@@ -294,7 +331,10 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                         session):
 
         client_uuid = get_uuid_from_cert(client_cert)
-        self.update_slice_expirations(client_uuid, session)
+        # None session cause this is a read-only method and we need a commitable session
+        # to have changes take effect
+        self.update_slice_expirations(client_uuid, None)
+        # FIXME: will slices whose expiration was just changed show old value here?
 
         q = session.query(self.db.SLICE_TABLE.c.expiration, \
                               self.db.SLICE_TABLE.c.certificate)
@@ -614,10 +654,10 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
             # FIXME: Format in RFC3339 format not iso
             self.logging_service.log_event("Renewed slice %s until %s" % \
                                                (slice_name, new_exp.isoformat()), \
-                                               attribs, client_uuid)
+                                               attribs, client_uuid,session=session)
         else:
             self.logging_service.log_event("Updated slice " + slice_name, 
-                                       attribs, client_uuid)
+                                       attribs, client_uuid,session=session)
 
         result = self._successReturn(True)
 
@@ -758,7 +798,11 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         attribs = {"PROJECT" : project_uuid}
 
         self.logging_service.log_event("Updated project " + name + change, 
-                                       attribs, client_uuid)
+                                       attribs, client_uuid,session=session)
+
+        # Force this project to be expired/unexpired and logged now
+        if options['fields'].has_key('PROJECT_EXPIRATION'):
+            self.update_project_expirations(client_uuid, session)
 
         result = self._successReturn(True)
 
@@ -768,7 +812,10 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
     def lookup_projects(self, client_cert, credentials, options, session):
 
         client_uuid = get_uuid_from_cert(client_cert)
-        self.update_project_expirations(client_uuid, session)
+        # None session cause this is a read-only method and we need a commitable session
+        # to have changes take effect
+        self.update_project_expirations(client_uuid, None)
+        # FIXME: will projects whose expiration was just changed show old value here?
 
         columns, match_criteria = \
             unpack_query_options(options, SA.project_field_mapping)
@@ -798,7 +845,10 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                                    credentials, options, session):
 
         client_uuid = get_uuid_from_cert(client_cert)
-        self.update_project_expirations(client_uuid, session)
+        # None session cause this is a read-only method and we need a commitable session
+        # to have changes take effect
+        self.update_project_expirations(client_uuid, None)
+        # FIXME: will projects whose expiration was just changed show old value here?
 
         rows = self.lookup_for_member(member_urn, self.db.PROJECT_TABLE, \
                                           self.db.PROJECT_MEMBER_TABLE, 
@@ -1223,7 +1273,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                 self.logging_service.log_event(
                     "Removed member %s from %s %s" % \
                         (member_name, text_str, label), \
-                        attribs, client_uuid)
+                        attribs, client_uuid,session=session)
                 chapi_info(SA_LOG_PREFIX, "Removed member %s from %s %s" % (member_name, text_str, label2), {'user': user_email})
 
         # Log all adds
@@ -1239,7 +1289,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                     self.logging_service.log_event(
                         "%s accepted an invitation to join %s %s in role %s" % \
                             (member_name, text_str, label, member_role), 
-                        attribs, client_uuid)
+                        attribs, client_uuid,session=session)
                     chapi_audit_and_log(SA_LOG_PREFIX, 
                                         "%s accepted an invitation to join %s %s in role %s" % \
                                             (member_name, text_str, label2, member_role), logging.INFO, {'user': user_email})
@@ -1247,7 +1297,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                     self.logging_service.log_event(
                         "%s Added member %s in role %s to %s %s" % \
                             (caller_name, member_name, member_role, text_str, label), 
-                        attribs, client_uuid)
+                        attribs, client_uuid,session=session)
                     chapi_audit_and_log(SA_LOG_PREFIX, 
                                         "%s Added member %s in role %s to %s %s" % \
                                             (caller_name, member_name, member_role, text_str, label2), logging.INFO, {'user': user_email})
@@ -1274,7 +1324,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                 self.logging_service.log_event(
                     "Changed member %s to role %s in %s %s" % \
                         (member_name, member_role, text_str, label), 
-                        attribs, client_uuid)
+                        attribs, client_uuid,session=session)
                 chapi_info(SA_LOG_PREFIX, "Changed member %s to role %s in %s %s" % (member_name, member_role, text_str, label2), {'user': user_email})
 
         return self._successReturn(None)
@@ -1322,7 +1372,9 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         args = {'project_urn' : project_urn}
 
         client_uuid = get_uuid_from_cert(client_cert)
-        self.update_project_expirations(client_uuid, session)
+        # None session cause this is a read-only method and we need a commitable session
+        # to have changes take effect
+        self.update_project_expirations(client_uuid, None)
 
         name = from_project_urn(project_urn)
         project_id = self.get_project_id(session, "project_name", name)

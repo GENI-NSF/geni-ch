@@ -144,7 +144,10 @@ class Loggingv1Delegate(DelegateBase):
         # Record the event
         # Insert into logging_entry (event_time, user_id, message) values
         # (now, user_id, message)
-        ins = self.db.LOGGING_ENTRY_TABLE.insert().values(event_time=str(now), user_id=str(user_id), message=message)
+        if user_id:
+            ins = self.db.LOGGING_ENTRY_TABLE.insert().values(event_time=str(now), user_id=str(user_id), message=message)
+        else:
+            ins = self.db.LOGGING_ENTRY_TABLE.insert().values(event_time=str(now), message=message)
         result = session.execute(ins)
         # Grab the event
         event_id = result.inserted_primary_key[0]
