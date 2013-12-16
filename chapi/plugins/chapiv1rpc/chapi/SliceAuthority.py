@@ -69,9 +69,10 @@ class SAv1Handler(HandlerBase):
     # This call is protected
     # Lookup slices with filters and match criterial given in options
     # Authorized by client cert and credentials
+    # Note the session is _not_ read_only because it may update_expirations
     def lookup_slices(self, credentials, options):
         with MethodContext(self, SA_LOG_PREFIX, 'lookup_slices',
-                           {}, credentials, options, read_only=True) as mc:
+                           {}, credentials, options, read_only=False) as mc:
             if not mc._error:
                 mc._result = \
                     self._delegate.lookup_slices(mc._client_cert, 
@@ -99,10 +100,11 @@ class SAv1Handler(HandlerBase):
     # This call is protected
     # Get credentials for given user with respect to given slice
     # Authorization based on client cert and givencredentiabls
+    # Note the session is _not_ read_only because it may update_expirations
     def get_credentials(self, slice_urn, credentials, options):
         with MethodContext(self, SA_LOG_PREFIX, 'get_credentials',
                            {'slice_urn' : slice_urn}, 
-                           credentials, options, read_only=True) as mc:
+                           credentials, options, read_only=False) as mc:
             if not mc._error:
                 mc._result = \
                     self._delegate.get_credentials(mc._client_cert, 
@@ -136,10 +138,11 @@ class SAv1Handler(HandlerBase):
         return mc._result
 
     # Lookup members of given slice and their roles within that slice
+    # Note the session is _not_ read_only because it may update_expirations
     def lookup_slice_members(self, slice_urn, credentials, options):
         with MethodContext(self, SA_LOG_PREFIX, 'lookup_slice_members',
                            {'slice_urn' : slice_urn}, 
-                           credentials, options, read_only=True) as mc:
+                           credentials, options, read_only=False) as mc:
             if not mc._error:
                 mc._result = \
                     self._delegate.lookup_slice_members(mc._client_cert, 
@@ -150,10 +153,11 @@ class SAv1Handler(HandlerBase):
         return mc._result
 
     # Lookup slices to which member belongs and their roles
+    # Note the session is _not_ read_only because it may update_expirations
     def lookup_slices_for_member(self, member_urn, credentials, options):
         with MethodContext(self, SA_LOG_PREFIX, 'lookup_slices_for_member',
                            {'member_urn' : member_urn}, 
-                           credentials, options, read_only=True) as mc:
+                           credentials, options, read_only=False) as mc:
             if not mc._error:
                 mc._result = \
                     self._delegate.lookup_slices_for_member(mc._client_cert, 
@@ -240,10 +244,11 @@ class SAv1Handler(HandlerBase):
 
     # Lookup project detail for porject matching 'match' option
     # returning fields in 'filter' option
+    # Note the session is _not_ read_only because it may update_expirations
     def lookup_projects(self, credentials, options):
         with MethodContext(self, SA_LOG_PREFIX, 'lookup_projects',
                            {}, 
-                           credentials, options, read_only=True) as mc:
+                           credentials, options, read_only=False) as mc:
             if not mc._error:
                 mc._result = \
                     self._delegate.lookup_projects(mc._client_cert, 
@@ -291,10 +296,11 @@ class SAv1Handler(HandlerBase):
         return mc._result
 
     # Lookup members of given project and their roles within that project
+    # Note the session is _not_ read_only because it may update_expirations
     def lookup_project_members(self, project_urn, credentials, options):
         with MethodContext(self, SA_LOG_PREFIX, 'lookup_project_members',
                            {'project_urn' : project_urn}, 
-                           credentials, options, read_only=True) as mc:
+                           credentials, options, read_only=False) as mc:
             if not mc._error:
                 mc._result = \
                     self._delegate.lookup_project_members(mc._client_cert, 
@@ -306,10 +312,11 @@ class SAv1Handler(HandlerBase):
 
 
     # Lookup projects to which member belongs and their roles
+    # Note the session is _not_ read_only because it may update_expirations
     def lookup_projects_for_member(self, member_urn, credentials, options):
         with MethodContext(self, SA_LOG_PREFIX, 'lookup_projects_for_member',
                            {'member_urn' : member_urn}, 
-                           credentials, options, read_only=True) as mc:
+                           credentials, options, read_only=False) as mc:
             if not mc._error:
                 mc._result = \
                     self._delegate.lookup_projects_for_member(mc._client_cert, 
@@ -327,11 +334,12 @@ class SAv1Handler(HandlerBase):
     #    are fields in the options directionary
     # 'attribute_to_add' : NAME,VALUE
     # 'attribute_to_remove' : NAME
+    # Note the session is _not_ read_only because it may update_expirations
     def lookup_project_attributes(self, project_urn, 
                                  credentials, options):
         with MethodContext(self, SA_LOG_PREFIX, 'lookup_project_attributes',
                            {'project_urn' : project_urn}, 
-                           credentials, options, read_only=True) as mc:
+                           credentials, options, read_only=False) as mc:
             if not mc._error:
                 mc._result = \
                     self._delegate.lookup_project_attributes(mc._client_cert, 

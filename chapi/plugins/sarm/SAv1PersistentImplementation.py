@@ -132,13 +132,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
 
         return q
 
-    def update_expirations(self, client_uuid, type, resurrect, session=None):
-        # Allow a None session so read only functions can call this and still have the result committed
-        createdSession=False
-        if session is None:
-            session = self.db.getSession()
-            createdSession = True
-
+    def update_expirations(self, client_uuid, type, resurrect, session):
         if resurrect:
             old_flag = True
             new_flag = False
@@ -155,13 +149,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
             update_fields = {'expired' : new_flag}
             # Force execute query in DB for time comparisons to happen there
             # And so if in this session we just updated a project expiration, it is seen
-            try:
-                q = q.update(update_fields, 'fetch')
-            except Exception, e:
-                if createdSession:
-                    session.rollback()
-                    session.close()
-                raise e
+            q = q.update(update_fields, 'fetch')
 
         for row in rows:
             if type == 'slice':
@@ -185,10 +173,6 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
             finally:
                 chapi_log_result(LOG_LOG_PREFIX, 'log_event', logresult)
 
-        if createdSession:
-            session.commit()
-            session.close()
-
     # Check for
     #   Recently expired slices and set their expired flags to 't'
     def update_slice_expirations(self, client_uuid, session):
@@ -205,10 +189,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
     def lookup_slices(self, client_cert, credentials, options, session):
 
         client_uuid = get_uuid_from_cert(client_cert)
-        # None session cause this is a read-only method and we need a commitable session
-        # to have changes take effect
-        self.update_slice_expirations(client_uuid, None)
-        # FIXME: will slices whose expiration was just changed show old value here?
+        self.update_slice_expirations(client_uuid, session)
 
         selected_columns, match_criteria = \
             unpack_query_options(options, SA.slice_field_mapping)
@@ -284,10 +265,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                        id_value, session):
 
         client_uuid = get_uuid_from_cert(client_cert)
-        # None session cause this is a read-only method and we need a commitable session
-        # to have changes take effect
-        self.update_project_expirations(client_uuid, None)
-        # FIXME: will slices/projects whose expiration was just changed show old value here?
+        self.update_project_expirations(client_uuid, session)
 
         q = session.query(member_table, table.c[name_field],
                           self.db.MEMBER_ATTRIBUTE_TABLE.c.value,
@@ -310,10 +288,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
     def lookup_slices_for_member(self, client_cert, member_urn, \
                                  credentials, options, session):
         client_uuid = get_uuid_from_cert(client_cert)
-        # None session cause this is a read-only method and we need a commitable session
-        # to have changes take effect
-        self.update_slice_expirations(client_uuid, None)
-        # FIXME: will slices whose expiration was just changed show old value here?
+        self.update_slice_expirations(client_uuid, session)
 
         rows = self.lookup_for_member(member_urn, self.db.SLICE_TABLE, \
                   self.db.SLICE_MEMBER_TABLE, "slice_urn", "slice_id", session)
@@ -331,10 +306,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                         session):
 
         client_uuid = get_uuid_from_cert(client_cert)
-        # None session cause this is a read-only method and we need a commitable session
-        # to have changes take effect
-        self.update_slice_expirations(client_uuid, None)
-        # FIXME: will slices whose expiration was just changed show old value here?
+        self.update_slice_expirations(client_uuid, session)
 
         q = session.query(self.db.SLICE_TABLE.c.expiration, \
                               self.db.SLICE_TABLE.c.certificate)
@@ -812,10 +784,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
     def lookup_projects(self, client_cert, credentials, options, session):
 
         client_uuid = get_uuid_from_cert(client_cert)
-        # None session cause this is a read-only method and we need a commitable session
-        # to have changes take effect
-        self.update_project_expirations(client_uuid, None)
-        # FIXME: will projects whose expiration was just changed show old value here?
+        self.update_project_expirations(client_uuid, session)
 
         columns, match_criteria = \
             unpack_query_options(options, SA.project_field_mapping)
@@ -845,10 +814,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                                    credentials, options, session):
 
         client_uuid = get_uuid_from_cert(client_cert)
-        # None session cause this is a read-only method and we need a commitable session
-        # to have changes take effect
-        self.update_project_expirations(client_uuid, None)
-        # FIXME: will projects whose expiration was just changed show old value here?
+        self.update_project_expirations(client_uuid, session)
 
         rows = self.lookup_for_member(member_urn, self.db.PROJECT_TABLE, \
                                           self.db.PROJECT_MEMBER_TABLE, 
@@ -1372,9 +1338,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         args = {'project_urn' : project_urn}
 
         client_uuid = get_uuid_from_cert(client_cert)
-        # None session cause this is a read-only method and we need a commitable session
-        # to have changes take effect
-        self.update_project_expirations(client_uuid, None)
+        self.update_project_expirations(client_uuid, session)
 
         name = from_project_urn(project_urn)
         project_id = self.get_project_id(session, "project_name", name)
