@@ -17,6 +17,7 @@
     re-use the DB session when calling log_event when possible, use a new DB
     session when updating expirations in read-only methods, and clean up
     the date comparison to compare within the DB in update_expirations. (#186)
+  * Use a string UUID for logging an activated user. (#192)
 
 == 1.1 ==
  * Use past tense in logging service log messages (#128)
