@@ -543,7 +543,7 @@ class MAv1Implementation(MAv1DelegateBase):
 
         # Log the successful creation of member
         msg = "Activated GENI user : %s (%s)" % (self._get_displayname_for_member_urn(user_urn, session), user_urn)
-        attrs = {"MEMBER" : member_id}
+        attrs = {"MEMBER" : str(member_id)}
         self.logging_service.log_event(msg, attrs, member_id,session=session)
         chapi_audit_and_log(MA_LOG_PREFIX, msg, logging.INFO, {'user': user_email})
         # Send email to portal admins
