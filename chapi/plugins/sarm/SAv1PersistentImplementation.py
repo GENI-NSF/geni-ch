@@ -126,9 +126,9 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                                   Project.project_name)
         q = q.filter(table.expired == old_flag)
         if resurrect:
-            q = q.filter(or_(table.expiration > datetime.utcnow(),table.expiration == None))
+            q = q.filter(or_(table.expiration > text("now() at time zone 'utc'"),table.expiration == None))
         else:
-            q = q.filter(table.expiration < datetime.utcnow())
+            q = q.filter(table.expiration < text("now() at time zone 'utc'"))
 
         return q
 
@@ -146,9 +146,10 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         rows = q.all()
 
         if len(rows) > 0:
-            q = self.get_expiration_query(session, type, old_flag, resurrect)
             update_fields = {'expired' : new_flag}
-            q = q.update(update_fields)
+            # Force execute query in DB for time comparisons to happen there
+            # And so if in this session we just updated a project expiration, it is seen
+            q = q.update(update_fields, 'fetch')
 
         for row in rows:
             if type == 'slice':
@@ -157,9 +158,20 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
             else:
                 name = row.project_name
                 attrs = {"PROJECT" : row.project_id}
-            self.logging_service.log_event("%s %s %s" % (label, type, name), 
-                                           attrs, client_uuid)
-
+            # Do not log as this user, log as the None UID
+            logresult = None
+            try:
+                lmessage = "%s %s %s" % (label, type, name)
+                args = {'message' : lmessage, 'attributes' : attrs}
+                chapi_log_invocation(LOG_LOG_PREFIX, "log_event", [], {}, args)
+                logresult = self.logging_service._delegate.log_event(None, lmessage, attrs, None, session)
+            except Exception, e:
+                if not isinstance(e, CHAPIv1BaseError):
+                    e = CHAPIv1ServerError(str(e))
+                logresult = { 'code' : e.code , 'output' : str(e), 'value' : None }
+                chapi_warn(SA_LOG_PREFIX, "Failed to log_event in update_expirations: %s" % e)
+            finally:
+                chapi_log_result(LOG_LOG_PREFIX, 'log_event', logresult)
 
     # Check for
     #   Recently expired slices and set their expired flags to 't'
@@ -253,7 +265,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                        id_value, session):
 
         client_uuid = get_uuid_from_cert(client_cert)
-        self.update_slice_expirations(client_uuid, session)
+        self.update_project_expirations(client_uuid, session)
 
         q = session.query(member_table, table.c[name_field],
                           self.db.MEMBER_ATTRIBUTE_TABLE.c.value,
@@ -614,10 +626,10 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
             # FIXME: Format in RFC3339 format not iso
             self.logging_service.log_event("Renewed slice %s until %s" % \
                                                (slice_name, new_exp.isoformat()), \
-                                               attribs, client_uuid)
+                                               attribs, client_uuid,session=session)
         else:
             self.logging_service.log_event("Updated slice " + slice_name, 
-                                       attribs, client_uuid)
+                                       attribs, client_uuid,session=session)
 
         result = self._successReturn(True)
 
@@ -758,7 +770,11 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         attribs = {"PROJECT" : project_uuid}
 
         self.logging_service.log_event("Updated project " + name + change, 
-                                       attribs, client_uuid)
+                                       attribs, client_uuid,session=session)
+
+        # Force this project to be expired/unexpired and logged now
+        if options['fields'].has_key('PROJECT_EXPIRATION'):
+            self.update_project_expirations(client_uuid, session)
 
         result = self._successReturn(True)
 
@@ -1223,7 +1239,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                 self.logging_service.log_event(
                     "Removed member %s from %s %s" % \
                         (member_name, text_str, label), \
-                        attribs, client_uuid)
+                        attribs, client_uuid,session=session)
                 chapi_info(SA_LOG_PREFIX, "Removed member %s from %s %s" % (member_name, text_str, label2), {'user': user_email})
 
         # Log all adds
@@ -1239,7 +1255,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                     self.logging_service.log_event(
                         "%s accepted an invitation to join %s %s in role %s" % \
                             (member_name, text_str, label, member_role), 
-                        attribs, client_uuid)
+                        attribs, client_uuid,session=session)
                     chapi_audit_and_log(SA_LOG_PREFIX, 
                                         "%s accepted an invitation to join %s %s in role %s" % \
                                             (member_name, text_str, label2, member_role), logging.INFO, {'user': user_email})
@@ -1247,7 +1263,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                     self.logging_service.log_event(
                         "%s Added member %s in role %s to %s %s" % \
                             (caller_name, member_name, member_role, text_str, label), 
-                        attribs, client_uuid)
+                        attribs, client_uuid,session=session)
                     chapi_audit_and_log(SA_LOG_PREFIX, 
                                         "%s Added member %s in role %s to %s %s" % \
                                             (caller_name, member_name, member_role, text_str, label2), logging.INFO, {'user': user_email})
@@ -1274,7 +1290,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                 self.logging_service.log_event(
                     "Changed member %s to role %s in %s %s" % \
                         (member_name, member_role, text_str, label), 
-                        attribs, client_uuid)
+                        attribs, client_uuid,session=session)
                 chapi_info(SA_LOG_PREFIX, "Changed member %s to role %s in %s %s" % (member_name, member_role, text_str, label2), {'user': user_email})
 
         return self._successReturn(None)

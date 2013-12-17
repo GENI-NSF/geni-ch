@@ -13,6 +13,10 @@
   * Respect maintenance mode (#151,#188)
   * Add guards on the logging service (#146)
   * Only log stacktraces on bad errors (#119)
+  * When expiring projects/slices, log it as a None UID not a member. Additionally,
+    re-use the DB session when calling log_event when possible, use a new DB
+    session when updating expirations in read-only methods, and clean up
+    the date comparison to compare within the DB in update_expirations. (#186)
 
 == 1.1 ==
  * Use past tense in logging service log messages (#128)

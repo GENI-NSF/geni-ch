@@ -161,7 +161,7 @@ class MethodContext:
         if not isinstance(e, CHAPIv1BaseError):
             e = CHAPIv1ServerError(str(e))
 
-        # Log the error, and log teh traceback for certain errors
+        # Log the error, and log the traceback for certain errors
         self._handler._log.error(e)
         if type(e) in (CHAPIv1ServerError,
                        CHAPIv1NotImplementedError,
