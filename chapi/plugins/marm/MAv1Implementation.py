@@ -298,7 +298,8 @@ class MAv1Implementation(MAv1DelegateBase):
             urn = row[0]
             values = {}
             for col in selected_columns:
-                if col in ["MEMBER_UID", "_GENI_IDENTIFYING_MEMBER_UID"]:
+                if col in ["MEMBER_UID", "_GENI_IDENTIFYING_MEMBER_UID", 
+                           "_GENI_PRIVATE_MEMBER_UID"]:
                     values[col] = uid
                 else:
                     vals = None
@@ -325,6 +326,15 @@ class MAv1Implementation(MAv1DelegateBase):
     def lookup_private_member_info(self, client_cert, credentials, 
                                    options, session):
         result = self.lookup_member_info(options, MA.private_fields, session)
+        return result
+
+    # This call is protected: Only authorities can call it
+    def lookup_public_identifying_member_info(self, client_cert,
+                                              credentials, options, session):
+        result = \
+            self.lookup_member_info(options, 
+                                    MA.public_fields + MA.identifying_fields, 
+                                    session)
         return result
 
     # This call is protected

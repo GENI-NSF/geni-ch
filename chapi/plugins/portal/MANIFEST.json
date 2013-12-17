@@ -1,0 +1,9 @@
+{
+  "name" : "GPO Portal query service",
+  "author" : "Marshall Brinn",
+  "author-email" : "mbrinn@bbn.com",
+  "version" : 1,
+  "implements" : ["portalv1handler"],
+  "loads-after" : ["chdbengine", "sav1handler", "chv1handler", "mav1handler", "csv1handler", "loggingv1handler"],
+  "requires" : []
+}

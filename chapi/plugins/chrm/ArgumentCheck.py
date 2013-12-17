@@ -181,6 +181,9 @@ class FieldsArgumentCheck(ArgumentCheck):
                     uuid.UUID(value)
             except Exception as e:
                 properly_formed = False
+        elif field_type == "UID_OR_NULL":
+            return value is None or \
+                self.validateTypedField(field, 'UID', value)
         elif field_type == "STRING":
             pass # Always true
         elif field_type == "INTEGER" or field_type == "POSITIVE":
