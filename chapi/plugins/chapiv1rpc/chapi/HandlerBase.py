@@ -60,12 +60,6 @@ class HandlerBase(xmlrpc.Dispatcher):
     # Standard format for error returns from API calls
     def _errorReturn(self, e):
         """Assembles a GENI compliant return result for faulty methods."""
-        if not isinstance(e, CHAPIv1BaseError): # convert common errors into CHAPIv1GeneralError
-            e = CHAPIv1ServerError(str(e))
-
-        # do some logging
-        self._log.error(e)
-        self._log.error(traceback.format_exc())
         return { 'code' : e.code , 'output' : str(e), 'value' : None }
         
     # Standard format for successful returns from API calls

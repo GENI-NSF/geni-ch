@@ -166,14 +166,12 @@ class FieldsArgumentCheck(ArgumentCheck):
         if field_type == "URN":
             if isinstance(value, list):
                 for v in value:
-                    if isinstance(v, unicode):
-                        v = v.encode('utf-8')
-                    if not is_valid_urn(str(v)):
+                    if isinstance(v, basestring): v = str(v) # Support UNICODE
+                    if not is_valid_urn(v):
                         properly_formed = False
                         break
             else:
-                if isinstance(value, unicode):
-                    value = value.encode('utf-8')
+                if isinstance(value, basestring): value = str(value) # Support UNICODE
                 properly_formed = is_valid_urn(value)
         elif field_type == "UID":
             try:
@@ -185,9 +183,11 @@ class FieldsArgumentCheck(ArgumentCheck):
                 properly_formed = False
         elif field_type == "STRING":
             pass # Always true
-        elif field_type == "INTEGER":
+        elif field_type == "INTEGER" or field_type == "POSITIVE":
             try:
-                int(value)
+                v = int(value)
+                if field_type == "POSITIVE":
+                    properly_formed = (v > 0) 
             except Exception as e:
                 properly_formed = False
         elif field_type == "DATETIME":
@@ -210,6 +210,26 @@ class FieldsArgumentCheck(ArgumentCheck):
                 cert.load_from_string(value)
             except Exception as e:
                 properly_formed = False
+        elif field_type == "CONTEXT_TYPE":
+            # Must be a number and one of the defined attributes
+            try:
+                index = int(value)
+                properly_formed = index in attribute_type_names
+            except Exception as e:
+                properly_formed = False
+        elif field_type == "ATTRIBUTE_SET":
+            if type(value) != dict:
+                propertly_formed = False
+            else:
+                # Must be 
+                # {"PROJECT" : project_uid}, or {"SLICE" : slice_uid} or {"MEMBER" : member_uid}
+                # or we tolerate any other tag/value
+                for attr_key, attr_value in value.items():
+                    if attr_key in ['PROJECT', 'SLICE', 'MEMBER']:
+                        try:
+                            uuid.UUID(attr_value)
+                        except Exception as e:
+                            properly_formed = False
         else:
             raise CHAPIv1ArgumentError("Unsupported field type : %s %s" % (field, field_type))
 

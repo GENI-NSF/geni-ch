@@ -1,6 +1,26 @@
 # Note: keep this file in wiki format for easy pasting to the proto-ch wiki
 
 = GENI Clearinghouse Release Notes =
+== 1.2 ==
+  * Fix role/project names in email for accepting an invitation (#183)
+  * Do not allow project auditor to become slice lead (#156)
+  * Do not allow adding/removing core member attributes or blank attribute (#157)
+  * Return code 12 and a better error message when Resolve gets an authorization error doing lookup slices,
+    to indicate that the slice possibly just doesn't exist. (#180,#184)
+  * Fix error renewing non-existent slice in PGCH (#182)
+  * Check that project join request is still pending before processing (#164) 
+  * Ensure a single SQLalchemy session per request, with a rollback on error. (#95,#96,#117)
+  * Respect maintenance mode (#151,#188)
+  * Add guards on the logging service (#146)
+  * Only log stacktraces on bad errors (#119)
+  * When expiring projects/slices, log it as a None UID not a member. Additionally,
+    re-use the DB session when calling log_event when possible, use a new DB
+    session when updating expirations in read-only methods, and clean up
+    the date comparison to compare within the DB in update_expirations. (#186)
+  * Use a string UUID for logging an activated user. (#192)
+  * Use a mapper for Project Attribute table, declare GENI_ENABLE_WIMAX mappable 
+    (so you can look up by that field), and declare it a UID (#194)
+  * Allow no cert to CH/SR calls (#193)
 
 == 1.1 ==
  * Use past tense in logging service log messages (#128)
@@ -17,7 +37,7 @@
  * Error looking up identifying member info (#143)
  * Check errors like bad username in PGCH (#150)
  * Send email on adding new project members (#33)
- * Fix guard on invite_members (#154)
+ * Fix guard on invite_members (#154,#153)
  * Updated project log message says what changed (#88)
  * Do not return empty user cred (#140)
  * Use constants for a couple numbers (#57)

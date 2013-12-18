@@ -30,6 +30,7 @@ nobase_dist_plugin_DATA = \
 	chapiv1rpc/chapi/GuardBase.py \
 	chapiv1rpc/chapi/HandlerBase.py \
 	chapiv1rpc/chapi/MemberAuthority.py \
+	chapiv1rpc/chapi/MethodContext.py \
 	chapiv1rpc/chapi/Memoize.py \
 	chapiv1rpc/chapi/Parameters.py \
 	chapiv1rpc/chapi/SliceAuthority.py \

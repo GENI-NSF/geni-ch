@@ -105,7 +105,7 @@ def parseOptions(args):
 
     return opts, args
 
-def main(args = sys.argv, do_print=False):
+def main(args = sys.argv, do_print=True):
 
     opts, args = parseOptions(args)
     client_options = json.loads(opts.options)

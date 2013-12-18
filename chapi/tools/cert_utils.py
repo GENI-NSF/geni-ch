@@ -24,6 +24,7 @@
 import sfa.trust.certificate
 import subprocess
 import os
+import os.path
 import tempfile
 from chapi_log import *
 
@@ -171,4 +172,32 @@ def make_cert(uuid, email, urn, \
     #chapi_debug("UTILS", "CERT_PEM = " + cert_pem)
 
     return cert_pem
+
+def get_cert_from_file(filename):
+    if filename is None:
+        return None
+
+    if not os.path.exists(filename):
+        chapi_warn("UTILS", "Cert file %s does not exist" % filename)
+        return None
+    cert = None
+    try:
+        with open(filename, 'r') as f:
+            cert = f.read()
+    except Exception, e:
+        chapi_warn("UTILS", "Cert file %s unreadable: %s" % (filename, e))
+        return None
+
+    if cert is None:
+        chapi_warn("UTILS", "Cert file %s empty (None)" % filename)
+        return None
+    cert = cert.strip()
+    if cert == "":
+        chapi_warn("UTILS", "Cert file %s empty" % filename)
+        return None
+
+    # If it's not in proper PEM format, wrap it
+    if cert.count('-----BEGIN CERTIFICATE') == 0:
+        cert = '-----BEGIN CERTIFICATE-----\n%s\n-----END CERTIFICATE-----' % cert
+    return cert
 
