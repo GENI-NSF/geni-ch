@@ -44,7 +44,7 @@ class PGCHv1Handler(HandlerBase):
     def GetVersion(self):
         with MethodContext(self, PGCH_LOG_PREFIX, 'GetVersion', 
                            {}, [], {}, read_only=True, 
-                           create_sesion=False) as mc:
+                           create_session=False) as mc:
             if not mc._error:
                 mc._result = \
                     self._delegate.GetVersion(mc._client_cert)
