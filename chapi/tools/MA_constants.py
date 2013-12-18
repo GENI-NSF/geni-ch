@@ -50,7 +50,7 @@ optional_fields = {
     "_GENI_MEMBER_INSIDE_PRIVATE_KEY": {"OBJECT": "MEMBER", "TYPE": "KEY", "PROTECT": "PRIVATE"},
     "_GENI_IDENTIFYING_MEMBER_UID": {"OBJECT": "MEMBER", "TYPE" : "UID", \
           "UPDATE" : False, "PROTECT" : "IDENTIFYING"},
-    "_GENI_ENABLE_WIMAX" : {"OBJECT" : "MEMBER", "TYPE" : "BOOLEAN", \
+    "_GENI_ENABLE_WIMAX" : {"OBJECT" : "MEMBER", "TYPE" : "UID", \
                                 "UPDATE" : False, "PROTECT" : "PUBLIC"},
     "_GENI_ENABLE_WIMAX_BUTTON" : {"OBJECT" : "MEMBER", "TYPE" : "BOOLEAN", \
                                        "UPDATE" : False, "PROTECT" : "PUBLIC"},
@@ -161,7 +161,7 @@ private_fields = [
 
 match_fields = [
     "MEMBER_URN", "MEMBER_UID", "MEMBER_FIRSTNAME", "MEMBER_LASTNAME",
-    "MEMBER_USERNAME", "MEMBER_EMAIL", "_GENI_MEMBER_EPPN"
+    "MEMBER_USERNAME", "MEMBER_EMAIL", "_GENI_MEMBER_EPPN", "_GENI_ENABLE_WIMAX"
 ]
 
 required_create_key_fields = ["KEY_PUBLIC", "KEY_MEMBER"]
