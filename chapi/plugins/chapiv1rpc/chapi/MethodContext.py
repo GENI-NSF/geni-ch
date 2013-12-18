@@ -88,9 +88,10 @@ class MethodContext:
         # Grab the request certificate and email at initialization
         self._client_cert = None
         self._email = None
-        self._client_cert = self._handler.requestCertificate()
-        if self._cert_required and not self._client_cert:
-            raise CHAPIv1ArgumentError("No request certificate")
+        if self._cert_required:
+            self._client_cert = self._handler.requestCertificate()
+            if not self._client_cert:
+                raise CHAPIv1ArgumentError("No request certificate")
 
         if self._client_cert:
             try:
