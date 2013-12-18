@@ -46,7 +46,7 @@ class SRv1Handler(CHv1Handler):
     # Return list of all services registered in SR
     def get_services(self):
         with MethodContext(self, SR_LOG_PREFIX, 'get_services',
-                           {}, [], {}, read_only=True) as mc:
+                           {}, [], {}, read_only=True, cert_required=False) as mc:
             if not mc._error:
                 mc._result = \
                     self._delegate.get_services(mc._session)
@@ -56,7 +56,7 @@ class SRv1Handler(CHv1Handler):
     def get_services_of_type(self, service_type):
         with MethodContext(self, SR_LOG_PREFIX, 'get_vservices_of_type',
                            {'service_type' : service_type}, 
-                           [], {}, read_only=True) as mc:
+                           [], {}, read_only=True, cert_required=False) as mc:
             if not mc._error:
                 mc._result = \
                     self._delegate.get_services_of_type(service_type, 
