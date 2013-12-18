@@ -20,6 +20,7 @@
   * Use a string UUID for logging an activated user. (#192)
   * Use a mapper for Project Attribute table, declare GENI_ENABLE_WIMAX mappable 
     (so you can look up by that field), and declare it a UID (#194)
+  * Allow no cert to CH/SR calls (#193)
 
 == 1.1 ==
  * Use past tense in logging service log messages (#128)
