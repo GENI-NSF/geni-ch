@@ -73,6 +73,7 @@ class MethodContext:
                  options,  # Options argument passed to method call
                  read_only, # Whether the method is read-only (and thus no need to commit)
                  session=None, # Optionally provide an existing session in which to perform method
+                 cert_required=True, # Whether the client_cert is required
                  create_session=True):  # Whether the method requires a DB session 
         self._handler = handler
         self._log_prefix = log_prefix
@@ -82,15 +83,21 @@ class MethodContext:
         self._options = options
         self._read_only = read_only
         self._provided_session = (session != None)
+        self._cert_required = cert_required
 
         # Grab the request certificate and email at initialization
         self._client_cert = None
         self._email = None
-        try:
+        if self._cert_required:
             self._client_cert = self._handler.requestCertificate()
-            self._email = get_email_from_cert(self._client_cert)
-        except Exception as e:
-            chapi_info("MethodContext", "No request certificate")
+            if not self._client_cert:
+                raise CHAPIv1ArgumentError("No request certificate")
+
+        if self._client_cert:
+            try:
+                self._email = get_email_from_cert(self._client_cert)
+            except Exception as e:
+                chapi_info("MethodContext", "Error extracting email from cert");
 
         self._error = False
 

@@ -72,6 +72,9 @@ class SliverInfo(object):
 class ProjectInvitation(object):
     pass
 
+class ProjectAttribute(object):
+    pass
+
 # Implementation of SA that speaks to GPO Slice and projects table schema
 class SAv1PersistentImplementation(SAv1DelegateBase):
 
@@ -104,6 +107,8 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         mapper(SliverInfo, self.db.SLIVER_INFO_TABLE)
         mapper(ProjectInvitation, self.db.PROJECT_INVITATION_TABLE, \
                    primary_key = self.db.PROJECT_INVITATION_TABLE.c.id)
+        mapper(ProjectAttribute, self.db.PROJECT_ATTRIBUTE_TABLE, \
+                   primary_key = self.db.PROJECT_ATTRIBUTE_TABLE.c.id)
 
     def get_version(self, session):
         version_info = {"VERSION" : chapi.Parameters.VERSION_NUMBER, 
@@ -1587,9 +1592,9 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         project_name = from_project_urn(project_urn)
         project_id = self.get_project_id(session, 'project_name', project_name)
 
-        q = session.query(self.db.PROJECT_ATTRIBUTE_TABLE)
-        q = q.filter(self.db.PROJECT_ATTRIBUTE_TABLE.c.project_id == project_id)
-        q = q.filter(self.db.PROJECT_ATTRIBUTE_TABLE.c.name == attr_name)
+        q = session.query(ProjectAttribute)
+        q = q.filter(ProjectAttribute.project_id == project_id)
+        q = q.filter(ProjectAttribute.name == attr_name)
 
         q.delete(synchronize_session='fetch')
         result = True

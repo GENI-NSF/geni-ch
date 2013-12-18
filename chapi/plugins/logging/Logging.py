@@ -248,12 +248,16 @@ class Loggingv1Guard(ABACGuardBase):
         {
         # user_id must be self
         # Must belong to slice or project of context (if any)
+        # Or is about self and only about self
         'log_event' : \
             SubjectInvocationCheck([
                 "ME.MAY_LOG_EVENT<-ME.IS_AUTHORITY",
                 "ME.MAY_LOG_EVENT<-ME.IS_OPERATOR",
-                "ME.MAY_LOG_EVENT_$SUBJECT<-ME.BELONGS_TO_$SUBJECT"
-                ], assert_user_belongs_to_slice_or_project, attribute_extractor),
+                "ME.MAY_LOG_EVENT_$SUBJECT<-ME.BELONGS_TO_$SUBJECT",
+                "ME.MAY_LOG_EVENT_$SUBJECT<-ME.INVOKING_ON_SELF_$SUBJECT",
+                ], [assert_user_acting_on_self, 
+                    assert_user_belongs_to_slice_or_project], 
+                                   attribute_extractor),
         # user_id must be self
         'get_log_entries_by_author' : \
             SubjectInvocationCheck([

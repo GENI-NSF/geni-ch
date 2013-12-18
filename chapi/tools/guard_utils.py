@@ -711,6 +711,18 @@ def assert_user_belongs_to_slice_or_project(caller_urn, subject_urns, \
         project_urn = convert_project_uid_to_urn(project_uid, session)
         assert_belongs_to_project(caller_urn, [project_urn], 'PROJECT_URN', options, arguments, 
                                   abac_manager, session)
+
+
+
+# Assert that the caller is invoking the call on self
+def assert_user_acting_on_self(caller_urn, subject_urns, \
+                                       label, options, arguments, \
+                                       abac_manager, session):
+    if label == 'MEMBER_URN' and caller_urn in subject_urns:
+        assertion = "ME.INVOKING_ON_SELF_%s<-CALLER" % flatten_urn(caller_urn)
+        abac_manager.register_assertion(assertion)
+        
+
                                 
 
 # Extractors to extract subject identifiers from request
@@ -921,4 +933,8 @@ def attribute_extractor(options, arguments, session):
         project_uid = attributes['PROJECT']
         project_urn = convert_project_uid_to_urn(project_uid, session)
         return {'PROEJCT_URN' : project_urn}
+    if "MEMBER" in attributes:
+        member_uid = attributes['MEMBER']
+        member_urn = convert_member_uid_to_urn(member_uid, session)
+        return {'MEMBER_URN' : member_urn}
 
