@@ -43,7 +43,7 @@ class CHv1Handler(HandlerBase):
     # Return version of CH API including object model
     def get_version(self):
         with MethodContext(self, SR_LOG_PREFIX, 'get_version',
-                           {}, [], {}, read_only=True) as mc:
+                           {}, [], {}, read_only=True, cert_required=False) as mc:
             if not mc._error:
                 mc._result = \
                     self._delegate.get_version(mc._session)
@@ -54,7 +54,7 @@ class CHv1Handler(HandlerBase):
     # specified in options
     def lookup_member_authorities(self, options):
         with MethodContext(self, MA_LOG_PREFIX, 'lookup_member_authorities', 
-                           {}, [], options, read_only=True) as mc:
+                           {}, [], options, read_only=True, cert_required=False) as mc:
             if not mc._error:
                 mc._result = \
                     self._delegate.lookup_member_authorities( mc._client_cert,
@@ -67,7 +67,7 @@ class CHv1Handler(HandlerBase):
     # specified in options
     def lookup_slice_authorities(self, options):
         with MethodContext(self, MA_LOG_PREFIX, 'lookup_slice_authorities', 
-                           {}, [], options, read_only=True) as mc:
+                           {}, [], options, read_only=True, cert_required=False) as mc:
             if not mc._error:
                 mc._result = \
                     self._delegate.lookup_slice_authorities(mc._client_cert,
@@ -80,7 +80,7 @@ class CHv1Handler(HandlerBase):
     # specified in options
     def lookup_aggregates(self, options):
          with MethodContext(self, MA_LOG_PREFIX, 'lookup_aggregates', 
-                           {}, [], options, read_only=True) as mc:
+                           {}, [], options, read_only=True, cert_required=False) as mc:
             if not mc._error:
                 mc._result = \
                     self._delegate.lookup_aggregates(mc._client_cert,
@@ -93,7 +93,7 @@ class CHv1Handler(HandlerBase):
     def lookup_authorities_for_urns(self, urns):
          with MethodContext(self, MA_LOG_PREFIX, 
                             'lookup_authorities_for_urns', 
-                           {'urns' : urns}, [], {}, read_only=True) as mc:
+                           {'urns' : urns}, [], {}, read_only=True, cert_required=False) as mc:
             if not mc._error:
                 mc._result = \
                     self._delegate.lookup_authorities__for_urns(mc._client_cert, 
@@ -107,7 +107,7 @@ class CHv1Handler(HandlerBase):
     def get_trust_roots(self):
          with MethodContext(self, MA_LOG_PREFIX, 
                             'get_trust_roots',
-                           {}, [], {}, read_only=True) as mc:
+                           {}, [], {}, read_only=True, cert_required=False) as mc:
             if not mc._error:
                 mc._result = \
                     self._delegate.get_trust_roots(mc._client_cert, 

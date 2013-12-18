@@ -375,7 +375,7 @@ class SAv1Handler(HandlerBase):
                                      credentials, options):
         with MethodContext(self, SA_LOG_PREFIX, 'remove_project_attribute',
                            {'project_urn' : project_urn}, 
-                           credentials, options, tions, read_only=False) as mc:
+                           credentials, options, read_only=False) as mc:
             if not mc._error:
                 mc._result = \
                     self._delegate.remove_project_attribute(mc._client_cert, 
