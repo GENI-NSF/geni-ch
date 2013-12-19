@@ -1,6 +1,9 @@
 # Note: keep this file in wiki format for easy pasting to the proto-ch wiki
 
 = GENI Clearinghouse Release Notes =
+
+== 1.3 ==
+
 == 1.2 ==
   * Fix role/project names in email for accepting an invitation (#183)
   * Do not allow project auditor to become slice lead (#156)
