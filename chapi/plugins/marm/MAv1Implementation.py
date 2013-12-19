@@ -342,6 +342,15 @@ class MAv1Implementation(MAv1DelegateBase):
         result = self.lookup_member_info(options, MA.identifying_fields, session)
         return result
 
+    # Called only by authorities
+    # Retieve requested private, public, identifying info by EPPN
+    def lookup_login_info(self, client_cert, jcredentials, options, session):
+        result = self.lookup_member_info(options,
+                                         MA.public_fields + MA.identifying_fields + MA.private_fields,
+                                         session)
+        return result
+
+
     # This call is protected
     def update_member_info(self, client_cert, member_urn, 
                            credentials, options, session):

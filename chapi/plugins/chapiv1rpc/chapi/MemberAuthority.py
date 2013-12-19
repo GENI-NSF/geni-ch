@@ -102,6 +102,41 @@ class MAv1Handler(HandlerBase):
                                                                   mc._session)
         return mc._result
 
+    def lookup_public_identifying_member_info(self, credentials, options):
+        """Return both public and identifying information about members specified in options
+        filter and query fields
+        
+        This call is protected
+        Authorized by client cert and credentials
+        """
+        with MethodContext(self, MA_LOG_PREFIX, 
+                           'lookup_public_identifying_member_info', 
+                           {}, credentials, options, read_only=True) as mc:
+            if not mc._error:
+                mc._result = \
+                    self._delegate.lookup_public_identifying_member_info(mc._client_cert, 
+                                                                  credentials, 
+                                                                  options,
+                                                                  mc._session)
+        return mc._result
+
+    def lookup_login_info(self, credentials, options):
+        """Return member public cert/key and private key for user by EPPN. 
+        For authorities only.
+        This call is protected
+        Authorized by client cert and credentials
+        """
+        with MethodContext(self, MA_LOG_PREFIX, 
+                           'lookup_login_info',
+                           {}, credentials, options, read_only=True) as mc:
+            if not mc._error:
+                mc._result = \
+                    self._delegate.lookup_login_info(mc._client_cert, 
+                                                     credentials, 
+                                                     options,
+                                                     mc._session)
+        return mc._result
+
     def get_credentials(self, member_urn, credentials, options):
         """Get credentials for given user
         
@@ -443,6 +478,14 @@ class MAv1DelegateBase(DelegateBase):
     # This call is protected
     def lookup_identifying_member_info(self, client_cert, 
                                        credentials, options, session):
+        raise CHAPIv1NotImplementedError('')
+
+    # This call is protected
+    def lookup_public_identifying_member_info(self, credentials, options):
+        raise CHAPIv1NotImplementedError('')
+
+    # This call is protected
+    def lookup_login_info(self, client_cert, credentials, options, session):
         raise CHAPIv1NotImplementedError('')
 
     # This call is protected
