@@ -678,8 +678,14 @@ class MAv1Implementation(MAv1DelegateBase):
         for row in rows:
             if row.value not in keys:
                 keys[row.value] = []
+            row_value = row.value
             keys[row.value].append(construct_result_row(row, \
                          selected_columns, MA.key_field_mapping))
+            # Per federation API, the KEY ID must be exported as a string
+            for key_data in keys[row.value]:
+                if 'KEY_ID' in key_data:
+                    key_id = key_data['KEY_ID']
+                    key_data['KEY_ID'] = str(key_id)
         result = self._successReturn(keys)
 
         return result
