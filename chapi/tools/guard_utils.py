@@ -909,14 +909,18 @@ def context_extractor(options, arguments, session):
     if 'context_type' in arguments and 'context_id' in arguments:
         context_type = arguments['context_type']
         context_uid = arguments['context_id']
-        if context_type == 'SLICE':
+        if context_type == SLICE_CONTEXT:
             slice_uid = context_uid
             slice_urn = convert_slice_uid_to_urn(slice_uid, session)
             return {'SLICE_URN' : slice_urn}
-        elif context_type == 'PROJECT':
+        elif context_type == PROJECT_CONTEXT:
             project_uid = context_uid
             project_urn = convert_project_uid_to_urn(project_uid, session)
             return {'PROJECT_URN' : project_urn}
+        elif context_type == MEMBER_CONTEXT:
+            member_uid = context_uid
+            member_urn = convert_member_uid_to_urn(member_uid, session)
+            return {'MEMBER_URN' : member_urn}
     else:
         return {}
         

@@ -263,18 +263,19 @@ class Loggingv1Guard(ABACGuardBase):
             SubjectInvocationCheck([
                 "ME.MAY_GET_LOG_ENTRIES_BY_AUTHOR<-ME.IS_AUTHORITY",
                 "ME.MAY_GET_LOG_ENTRIES_BY_AUTHOR<-ME.IS_OPERATOR",
+                "ME.MAY_GET_LOG_ENTRIES_BY_AUTHOR_$SUBJECT<-ME.INVOKING_ON_SELF_$SUBJECT",
                 "ME.MAY_GET_LOG_EVENT_$SUBJECT<-ME.IS_$SUBJECT"
-                ], None, user_id_extractor),
+                ], assert_user_acting_on_self, user_id_extractor),
         # Must be member of project or slice
         'get_log_entries_for_context' : \
             SubjectInvocationCheck([
                 "ME.MAY_GET_LOG_ENTRIES_FOR_CONTEXT<-ME.IS_AUTHORITY",
                 "ME.MAY_GET_LOG_ENTRIES_FOR_CONTEXT<-ME.IS_OPERATOR",
-                'ME.MAY_GET_LOG_ENTRIES_FOR_CONTEXT_$SUBJECT<_ME.IS_LEAD_$SUBJECT',
-                'ME.MAY_GET_LOG_ENTRIES_FOR_CONTEXT_$SUBJECT<_ME.IS_ADMIN_$SUBJECT',
-                'ME.MAY_GET_LOG_ENTRIES_FOR_CONTEXT_$SUBJECT<_ME.IS_MEMBER_$SUBJECT',
-                'ME.MAY_GET_LOG_ENTRIES_FOR_CONTEXT_$SUBJECT<_ME.IS_AUDITOR_$SUBJECT'
-                ], [assert_belongs_to_slice, assert_belongs_to_project], context_extractor),
+                "ME.MAY_GET_LOG_ENTRIES_FOR_CONTEXT_$SUBJECT<-ME.INVOKING_ON_SELF_$SUBJECT",
+                'ME.MAY_GET_LOG_ENTRIES_FOR_CONTEXT_$SUBJECT<-ME.BELONGS_TO_$SUBJECT'
+                ], [assert_user_acting_on_self, 
+                    assert_belongs_to_slice, assert_belongs_to_project], 
+                                   context_extractor),
         # For now, leave open (we don't think anyone uses this)
         'get_log_entries_by_attributes' : \
             SubjectInvocationCheck([
