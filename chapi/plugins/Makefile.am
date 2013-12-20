@@ -59,10 +59,6 @@ nobase_dist_plugin_DATA = \
 	pgch/PGCH.py \
 	pgch/__init__.py \
 	pgch/plugin.py \
-	portal/MANIFEST.json \
-	portal/Portal.py \
-	portal/__init__.py \
-	portal/plugin.py \
 	sarm/MANIFEST.json \
 	sarm/SAv1Guard.py \
 	sarm/SAv1PersistentImplementation.py \
