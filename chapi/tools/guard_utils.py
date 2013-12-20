@@ -305,17 +305,15 @@ def convert_member_email_to_uid(member_email, session):
         q = q.filter(db.MEMBER_ATTRIBUTE_TABLE.c.name == 'email_address')
         rows = q.all()
         for row in rows:
-            member_email = row.value
+            email_value = row.value
             member_id = row.member_id
-            cache[member_email] = member_id
-            
-    if not isinstance(member_email, list):
-        if member_email in cache:
-            return cache[member_email]
-        else:
-            raise CHAPIv1ArgumentError('Unknown member email: %s ' % member_email)
-    else:
-        return validate_uid_list(member_emails, cache, 'member email')
+            cache[email_value] = member_id
+
+    # Unlike most other 'convert' routines, we want to return 
+    # only the list of good uid's and not error on bad emails
+    # To support bulk email or asking about whether an email is valid
+    uids = [cache[em] for em in member_emails if em in cache]
+    return uids
 
 # How long do we keep cache entries for operator privileges
 OPERATOR_CACHE_LIFETIME_SECS = 60
