@@ -112,6 +112,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
 
     def get_version(self, session):
         version_info = {"VERSION" : chapi.Parameters.VERSION_NUMBER, 
+                        "ROLES" : attribute_type_names.values(),
                         "SERVICES" : SA.services,
                         "CREDENTIAL_TYPES" : SA.credential_types, 
                         "FIELDS": SA.supplemental_fields}
