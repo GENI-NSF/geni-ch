@@ -1,5 +1,5 @@
 #----------------------------------------------------------------------
-# Copyright (c) 2011-2013 Raytheon BBN Technologies
+# Copyright (c) 2011-2014 Raytheon BBN Technologies
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and/or hardware specification (the "Work") to
@@ -305,17 +305,15 @@ def convert_member_email_to_uid(member_email, session):
         q = q.filter(db.MEMBER_ATTRIBUTE_TABLE.c.name == 'email_address')
         rows = q.all()
         for row in rows:
-            member_email = row.value
+            email_value = row.value
             member_id = row.member_id
-            cache[member_email] = member_id
-            
-    if not isinstance(member_email, list):
-        if member_email in cache:
-            return cache[member_email]
-        else:
-            raise CHAPIv1ArgumentError('Unknown member email: %s ' % member_email)
-    else:
-        return validate_uid_list(member_emails, cache, 'member email')
+            cache[email_value] = member_id
+
+    # Unlike most other 'convert' routines, we want to return 
+    # only the list of good uid's and not error on bad emails
+    # To support bulk email or asking about whether an email is valid
+    uids = [cache[em] for em in member_emails if em in cache]
+    return uids
 
 # How long do we keep cache entries for operator privileges
 OPERATOR_CACHE_LIFETIME_SECS = 60
@@ -911,14 +909,18 @@ def context_extractor(options, arguments, session):
     if 'context_type' in arguments and 'context_id' in arguments:
         context_type = arguments['context_type']
         context_uid = arguments['context_id']
-        if context_type == 'SLICE':
+        if context_type == SLICE_CONTEXT:
             slice_uid = context_uid
             slice_urn = convert_slice_uid_to_urn(slice_uid, session)
             return {'SLICE_URN' : slice_urn}
-        elif context_type == 'PROJECT':
+        elif context_type == PROJECT_CONTEXT:
             project_uid = context_uid
             project_urn = convert_project_uid_to_urn(project_uid, session)
             return {'PROJECT_URN' : project_urn}
+        elif context_type == MEMBER_CONTEXT:
+            member_uid = context_uid
+            member_urn = convert_member_uid_to_urn(member_uid, session)
+            return {'MEMBER_URN' : member_urn}
     else:
         return {}
         

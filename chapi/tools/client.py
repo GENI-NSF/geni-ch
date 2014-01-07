@@ -1,5 +1,5 @@
 #----------------------------------------------------------------------
-# Copyright (c) 2011-2013 Raytheon BBN Technologies
+# Copyright (c) 2011-2014 Raytheon BBN Technologies
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and/or hardware specification (the "Work") to
@@ -200,10 +200,13 @@ def main(args = sys.argv, do_print=True):
                                     opts.uuid_arg, \
                                     opts.int_arg, context, \
                                     opts.credentials, client_options)
-    elif opts.method in ['delete_key', 'update_key'] \
-            and opts.int_arg and opts.urn:
+    elif opts.method in ['lookup_keys']:
         (result, msg) = _do_ssl(framework, suppress_errors, reason, fcn, \
-                                    opts.uuid_arg, opts.int_arg, opts.uuid2_arg,
+                                    opts.credentials, client_options)
+    elif opts.method in ['delete_key', 'update_key'] \
+            and opts.string_arg and opts.urn:
+        (result, msg) = _do_ssl(framework, suppress_errors, reason, fcn, \
+                                    opts.urn, opts.string_arg, \
                                     opts.credentials, client_options)
 
     # Client Authorization methods

@@ -1,5 +1,5 @@
 #----------------------------------------------------------------------
-# Copyright (c) 2011-2013 Raytheon BBN Technologies
+# Copyright (c) 2011-2014 Raytheon BBN Technologies
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and/or hardware specification (the "Work") to
@@ -112,6 +112,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
 
     def get_version(self, session):
         version_info = {"VERSION" : chapi.Parameters.VERSION_NUMBER, 
+                        "ROLES" : attribute_type_names.values(),
                         "SERVICES" : SA.services,
                         "CREDENTIAL_TYPES" : SA.credential_types, 
                         "FIELDS": SA.supplemental_fields}
@@ -538,6 +539,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                      session):
 
         client_uuid = get_uuid_from_cert(client_cert)
+        user_email = get_email_from_cert(client_cert)
         self.update_slice_expirations(client_uuid, session)
 
         slice_uuid = \
