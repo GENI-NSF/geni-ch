@@ -539,6 +539,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                      session):
 
         client_uuid = get_uuid_from_cert(client_cert)
+        user_email = get_email_from_cert(client_cert)
         self.update_slice_expirations(client_uuid, session)
 
         slice_uuid = \
