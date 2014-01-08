@@ -6,6 +6,7 @@
   * Update copyright notices to 2014 (#199)
   * Get caller email in update_slice (#201)
   * Filter out innocuous errors looking up unknown slice (#202)
+  * Avoid empty 'in' lists in SQL queries (#200)
 
 == 1.2 ==
   * Fix role/project names in email for accepting an invitation (#183)

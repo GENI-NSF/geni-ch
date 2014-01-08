@@ -127,10 +127,14 @@ def ensure_valid_urns(urn_type, urns, session):
         authority = pm.getService('config').get("chrm.authority")
         cache = cache_get('project_urns')
         not_found_urns = [urn for urn in urns if urn not in cache]
-        not_found_names = [not_found_urn.split('+')[3] for not_found_urn in not_found_urns]
-        q = session.query(db.PROJECT_TABLE.c.project_name)
-        q = q.filter(db.PROJECT_TABLE.c.project_name.in_(not_found_names))
-        rows = q.all()
+        if len(not_found_urns) == 0:
+#            chapi_debug('UTILS', "No cache misses for project URNs")
+            rows = []
+        else:
+            not_found_names = [not_found_urn.split('+')[3] for not_found_urn in not_found_urns]
+            q = session.query(db.PROJECT_TABLE.c.project_name)
+            q = q.filter(db.PROJECT_TABLE.c.project_name.in_(not_found_names))
+            rows = q.all()
         for row in rows:
             project_name = row.project_name
             project_urn = to_project_urn(authority, project_name)
@@ -141,9 +145,13 @@ def ensure_valid_urns(urn_type, urns, session):
     elif urn_type == 'SLICE_URN':
         cache = cache_get('slice_urns')
         not_found_urns = [urn for urn in urns if urn not in cache]
-        q = session.query(db.SLICE_TABLE.c.slice_urn)
-        q = q.filter(db.SLICE_TABLE.c.slice_urn.in_(not_found_urns))
-        rows = q.all()
+        if len(not_found_urns) == 0:
+#            chapi_debug('UTILS', "No cache misses for slice URNs")
+            rows = []
+        else:
+            q = session.query(db.SLICE_TABLE.c.slice_urn)
+            q = q.filter(db.SLICE_TABLE.c.slice_urn.in_(not_found_urns))
+            rows = q.all()
         for row in rows:
             cache[row.slice_urn] = True
         bad_urns = [urn for urn in not_found_urns if urn not in cache]
@@ -152,10 +160,14 @@ def ensure_valid_urns(urn_type, urns, session):
     elif urn_type == 'MEMBER_URN':
         cache = cache_get('member_urns')
         not_found_urns = [urn for urn in urns if urn not in cache]
-        q = session.query(db.MEMBER_ATTRIBUTE_TABLE.c.value)
-        q = q.filter(db.MEMBER_ATTRIBUTE_TABLE.c.name == 'urn')
-        q = q.filter(db.MEMBER_ATTRIBUTE_TABLE.c.value.in_(not_found_urns))
-        rows = q.all()
+        if len(not_found_urns) == 0:
+#            chapi_debug('UTILS', "No cache misses for member URNs")
+            rows = []
+        else:
+            q = session.query(db.MEMBER_ATTRIBUTE_TABLE.c.value)
+            q = q.filter(db.MEMBER_ATTRIBUTE_TABLE.c.name == 'urn')
+            q = q.filter(db.MEMBER_ATTRIBUTE_TABLE.c.value.in_(not_found_urns))
+            rows = q.all()
         for row in rows:
             cache[row.value] = True
         bad_urns = [urn for urn in not_found_urns if urn not in cache]
@@ -463,9 +475,10 @@ def assert_shares_project(caller_urn, member_urns, label, options, arguments,
             abac_manager.register_assertion(assertion)
 
     # If looking up a member by member_uid who is a 
-    # lead of an unexpired  project, allow it
+    # lead of an unexpired project, allow it
     if 'match' in options and len(options['match']) == 1 and \
-       'MEMBER_UID' in options['match']:
+       'MEMBER_UID' in options['match'] and \
+       len(options['match']['MEMBER_UID']) > 0:
         member_uids = options['match']['MEMBER_UID']
         q = session.query(ma1.c.value)
         q = q.filter(ma1.c.name == 'urn')
@@ -489,6 +502,10 @@ def assert_shares_slice(caller_urn, member_urns, label, options, arguments,
     db = pm.getService('chdbengine')
     if not isinstance(member_urns, list): 
         member_urns = list(member_urns)
+
+    if len(member_urns) == 0:
+#        chapi_debug('UTILS', "assert_shares_slice got empty list of member URNs")
+        return
 
     if label != "MEMBER_URN": return
 
@@ -546,6 +563,9 @@ def assert_slice_role(caller_urn, urns, label, options, arguments, abac_manager,
 def get_project_role_for_member(caller_urn, project_urns, session):
     db = pm.getService('chdbengine')
     if not isinstance(project_urns, list): project_urns = [project_urns]
+    if len(project_urns) == 0:
+#        chapi_debug('UTILS', "get_project_role_for_member got empty list of project urns")
+        return []
     project_names = \
         [get_name_from_urn(project_urn) for project_urn in project_urns]
 
@@ -599,6 +619,7 @@ def assert_project_role(caller_urn, project_urns, label, options, arguments,
 def assert_belongs_to_slice(caller_urn, slice_urns, label, options, arguments,
                             abac_manager, session):
 
+# ?Needed?    if not isinstance(slice_urns, list): slice_urns = [slice_urns]
     if len(slice_urns) == 0:
         return []
 
@@ -626,8 +647,12 @@ def assert_belongs_to_slice(caller_urn, slice_urns, label, options, arguments,
 def assert_belongs_to_project(caller_urn, project_urns, label, \
                               options, arguments, abac_manager, session):
     if label != "PROJECT_URN": return
+# ?Needed?    if not isinstance(project_urns, list): project_urns = [project_urns]
     project_names = \
         [get_name_from_urn(project_urn) for project_urn in project_urns]
+    if len(project_names) == 0:
+#        chapi_debug('UTILS', "assert_belongs_to_project got empty list of project names")
+        return
 
     db = pm.getService('chdbengine')
     q = session.query(db.PROJECT_MEMBER_TABLE.c.role, \
