@@ -170,6 +170,7 @@ class MAv1Implementation(MAv1DelegateBase):
             }
         self.cert = self.config.get('chapi.ma_cert')
         self.key = self.config.get('chapi.ma_key')
+        self.urn = get_urn_from_cert(open(self.cert).read())
 
         self.portal_admin_email = self.config.get('chapi.portal_admin_email')
         self.portal_help_email = self.config.get('chapi.portal_help_email')
@@ -194,9 +195,9 @@ class MAv1Implementation(MAv1DelegateBase):
         all_optional_fields = dict(MA.optional_fields.items() + \
                                    MA.optional_key_fields.items())
         version_info = {"VERSION": chapi.Parameters.VERSION_NUMBER,
-                        "CREDENTIAL_TYPES": MA.credential_types,
-                        "OBJECTS" : MA.objects,
+                        "URN " : self.urn,
                         "SERVICES" : MA.services,
+                        "CREDENTIAL_TYPES": MA.credential_types,
                         "FIELDS": all_optional_fields}
         result =  self._successReturn(version_info)
 

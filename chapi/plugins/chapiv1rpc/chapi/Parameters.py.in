@@ -41,7 +41,7 @@ MA_DIR = os.path.join(GENI_CH_DIR, 'ma')
 SA_DIR = os.path.join(GENI_CH_DIR, 'sa')
 GCF_ROOT = os.path.join(GENI_CH_DIR, 'portal', 'gcf.d')
 
-VERSION_NUMBER = '1.0'
+VERSION_NUMBER = '2.0'
 
 NAME_KEY = 'name'
 VALUE_KEY = 'val'

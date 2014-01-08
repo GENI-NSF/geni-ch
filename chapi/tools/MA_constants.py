@@ -21,7 +21,10 @@
 # IN THE WORK.                                                                  
 #----------------------------------------------------------------------
 
-credential_types = ["geni_sfa", "geni_abac"]
+credential_types = [
+    {"type" : "geni_sfa", "version" : 1},
+    {"type" : "geni_abac", "version" : 1}
+    ]
 
 standard_fields = {
     "MEMBER_URN" : {"TYPE" : "URN", "UPDATE" : False, "PROTECT" : "PUBLIC"},

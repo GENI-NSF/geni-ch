@@ -28,6 +28,7 @@ from tools.dbutils import *
 from tools.chapi_log import *
 from tools.cert_utils import *
 from CHv1Implementation import CHv1Implementation
+import tools.CH_constants as CH
 
 # Version of ClearingHouse that works with GPO CH Service Registry tables
 
@@ -58,14 +59,14 @@ class CHv1PersistentImplementation(CHv1Implementation):
     # Lookup all authorities for given service type
     # Add on a service type filter clause before adding any option clauses
     def lookup_authorities(self, client_cert, service_type, options, session):
-        selected_columns, match_criteria = unpack_query_options(options, self.field_mapping)
+        selected_columns, match_criteria = unpack_query_options(options, CH.field_mapping)
 
         q = session.query(self.db.SERVICES_TABLE)
         q = q.filter(self.db.SERVICES_TABLE.c.service_type == service_type)
-        q = add_filters(q,  match_criteria, self.db.SERVICES_TABLE, self.field_mapping)
+        q = add_filters(q,  match_criteria, self.db.SERVICES_TABLE, CH.field_mapping)
         rows = q.all()
 
-        authorities = [construct_result_row(row, selected_columns, self.field_mapping) for row in rows]
+        authorities = [construct_result_row(row, selected_columns, CH.field_mapping) for row in rows]
 
         result = self._successReturn(authorities)
 

@@ -84,6 +84,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         self.config = pm.getService('config')
         self.cert = self.config.get('chapi.sa_cert')
         self.key = self.config.get('chapi.sa_key')
+        self.urn = get_urn_from_cert(open(self.cert).read())
 
         self.logging_service = pm.getService('loggingv1handler')
         self._ma_handler = pm.getService('mav1handler')
@@ -112,9 +113,10 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
 
     def get_version(self, session):
         version_info = {"VERSION" : chapi.Parameters.VERSION_NUMBER, 
-                        "ROLES" : attribute_type_names.values(),
+                        "URN " : self.urn,
                         "SERVICES" : SA.services,
                         "CREDENTIAL_TYPES" : SA.credential_types, 
+                        "ROLES" : attribute_type_names.values(),
                         "FIELDS": SA.supplemental_fields}
         result = self._successReturn(version_info)
 

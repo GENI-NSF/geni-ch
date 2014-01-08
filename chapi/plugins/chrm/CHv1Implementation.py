@@ -26,6 +26,9 @@ from chapi.Clearinghouse import CHv1DelegateBase
 from chapi.Exceptions import *
 from geni.util.urn_util import URN
 from tools.dbutils import *
+from tools.cert_utils import *
+import chapi.Parameters
+import tools.CH_constants as CH
 
 # A simple fixed implemntation of the CH API. 
 # Only for testing. The real implementation is in CHv1PersistentImplementation
@@ -83,40 +86,12 @@ class CHv1Implementation(CHv1DelegateBase):
         },
         ]
 
-    # Mapping from external to internal data schema
-    field_mapping = {
-        "_GENI_SERVICE_ID" : "id",
-        "SERVICE_URN": 'service_urn',
-        "SERVICE_URL": 'service_url',
-        "_GENI_SERVICE_CERT_FILENAME": 'service_cert',
-        "SERVICE_CERT": 'service_cert',
-        "SERVICE_NAME": 'service_name',
-        "SERVICE_DESCRIPTION": 'service_description',
-        "SERVICE_TYPE": "service_type"
-        }
-
-    # The externally visible data schema for services
-    mandatory_fields = { 
-        "SERVICE_URN": {"TYPE": "URN"},
-        "SERVICE_URL": {"TYPE": "URL"},
-        "SERVICE_CERT": {"TYPE": "CERTIFICATE"},
-        "SERVICE_NAME" : {"TYPE" : "STRING"},
-        "SERVICE_DESCRIPTION": {"TYPE" : "STRING"}
-        }
-
-    supplemental_fields = { 
-        "_GENI_SERVICE_CERT_FILENAME": {"TYPE": "STRING", "OBJECT": "SERVICE"},
-        "_GENI_SERVICE_ID" : {"TYPE" : "INTEGER", "OBJECT": "SERVICE"}
-        }
-
-
-    version_number = "1.0"
 
     def get_version(self, session):
-        version_info = {"VERSION": self.version_number, 
-                        "SERVICES": ["SERVICE"],
-                        "OBJECTS": ["SERVICE"],
-                        "FIELDS": self.supplemental_fields}
+        version_info = {"VERSION": chapi.Parameters.VERSION_NUMBER,
+                        "SERVICES": CH.services,
+                        "SERVICE_TYPES" : CH.service_types.keys(),
+                        "FIELDS": CH.supplemental_fields}
         return self._successReturn(version_info)
 
     def lookup_member_authorities(self, client_cert, options, session):
@@ -185,7 +160,7 @@ class CHv1Implementation(CHv1DelegateBase):
 
         print "SELECTED_SERVICES = " + str(selected_services)
 
-        filter = self.field_mapping.keys() # By default, pick all fields
+        filter = CH.field_mapping.keys() # By default, pick all fields
         if options.has_key('filter'): filter = options['filter']
         filtered_selected_services = [self.filter_entry(service, filter) for service in selected_services]
 
@@ -202,7 +177,7 @@ class CHv1Implementation(CHv1DelegateBase):
         for clause in match:
 #            print "CLAUSE = " + str(clause)
             field_name = clause.keys()[0]
-            mapped_field_name = convert_internal(field_name, self.field_mapping)
+            mapped_field_name = convert_internal(field_name, CH.field_mapping)
 #            print "FN = " + field_name
 #            print "MFN = " + mapped_field_name
             if not entry.has_key(mapped_field_name):
@@ -225,7 +200,7 @@ class CHv1Implementation(CHv1DelegateBase):
             field_value = entry[field_name]
 #            print "FN = " + field_name
 #            print "FV = " + str(field_value)
-            external_field_name = convert_to_external(field_name, self.field_mapping)
+            external_field_name = convert_to_external(field_name, CH.field_mapping)
 #            print "EFN = " + external_field_name
             if external_field_name in filter: 
                 filtered.append({external_field_name: field_value})
