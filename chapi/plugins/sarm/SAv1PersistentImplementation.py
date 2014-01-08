@@ -599,6 +599,8 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                 if new_exp > max_exp:
                     new_exp = max_exp
                     value = max_exp # value just changed from string to datetime!
+                    if slice_expiration > max_exp:
+                        raise CHAPIv1ArgumentError('Cannot renew slice - it is already at or past the usual max of %d days past now (%s expires at %s)' % (SA.SLICE_MAX_RENEWAL_DAYS, slice_urn, slice_expiration.isoformat()))
 #                    chapi_debug(SA_LOG_PREFIX, "Slice %s Reset renew request %s to max exp %s" % (slice_name, new_exp, max_exp))
                 # don't shorten slice lifetime
                 if slice_expiration > new_exp:
