@@ -1172,12 +1172,13 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         chapi_debug('SA:MA', "URN_TO_DISPLAY_NAME = %s" % urn_to_display_name)
 
         # first, do the removes
-        if 'members_to_remove' in options:
+        if 'members_to_remove' in options and len(options['members_to_remove']) > 0:
             q = session.query(member_class)
             ids = [urn_to_id[m_urn] for m_urn in options['members_to_remove']]
-            q = q.filter(member_class.member_id.in_(ids))
-            q = q.filter(eval(id_str) == id)
-            q.delete(synchronize_session='fetch')
+            if len(ids) > 0:
+                q = q.filter(member_class.member_id.in_(ids))
+                q = q.filter(eval(id_str) == id)
+                q.delete(synchronize_session='fetch')
 
         # then, do the additions
         if 'members_to_add' in options:
