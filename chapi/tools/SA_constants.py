@@ -26,7 +26,7 @@ from tools.geni_utils import row_to_project_urn
 services = ["SLICE", "PROJECT", "SLICE_MEMBER", "PROJECT_MEMBER", "SLIVER_INFO"]
 
 credential_types = [
-    {"type" : "geni_sfa", "version" : 1},
+    {"type" : "geni_sfa", "version" : 3},
     {"type" : "geni_abac", "version" : 1}
     ]
 
