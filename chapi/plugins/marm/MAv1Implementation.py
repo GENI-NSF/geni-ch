@@ -679,6 +679,7 @@ class MAv1Implementation(MAv1DelegateBase):
                     # Do you mean any value? Or only a value of None? Or only rows with no entry for this value?
                     # Is this right?
                     q = q.filter(self.db.MEMBER_ATTRIBUTE_TABLE.c.value == None)
+#                    chapi_debug(MA_LOG_PREFIX, "lookup_keys had empty list of urns")
                 else:
                     q = q.filter(self.db.MEMBER_ATTRIBUTE_TABLE.c.value.in_(member_urn))
             else:

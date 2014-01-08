@@ -128,6 +128,7 @@ def ensure_valid_urns(urn_type, urns, session):
         cache = cache_get('project_urns')
         not_found_urns = [urn for urn in urns if urn not in cache]
         if len(not_found_urns) == 0:
+#            chapi_debug('UTILS', "No cache misses for project URNs")
             rows = []
         else:
             not_found_names = [not_found_urn.split('+')[3] for not_found_urn in not_found_urns]
@@ -145,6 +146,7 @@ def ensure_valid_urns(urn_type, urns, session):
         cache = cache_get('slice_urns')
         not_found_urns = [urn for urn in urns if urn not in cache]
         if len(not_found_urns) == 0:
+#            chapi_debug('UTILS', "No cache misses for slice URNs")
             rows = []
         else:
             q = session.query(db.SLICE_TABLE.c.slice_urn)
@@ -159,6 +161,7 @@ def ensure_valid_urns(urn_type, urns, session):
         cache = cache_get('member_urns')
         not_found_urns = [urn for urn in urns if urn not in cache]
         if len(not_found_urns) == 0:
+#            chapi_debug('UTILS', "No cache misses for member URNs")
             rows = []
         else:
             q = session.query(db.MEMBER_ATTRIBUTE_TABLE.c.value)
@@ -501,6 +504,7 @@ def assert_shares_slice(caller_urn, member_urns, label, options, arguments,
         member_urns = list(member_urns)
 
     if len(member_urns) == 0:
+#        chapi_debug('UTILS', "assert_shares_slice got empty list of member URNs")
         return
 
     if label != "MEMBER_URN": return
@@ -560,6 +564,7 @@ def get_project_role_for_member(caller_urn, project_urns, session):
     db = pm.getService('chdbengine')
     if not isinstance(project_urns, list): project_urns = [project_urns]
     if len(project_urns) == 0:
+#        chapi_debug('UTILS', "get_project_role_for_member got empty list of project urns")
         return []
     project_names = \
         [get_name_from_urn(project_urn) for project_urn in project_urns]
@@ -646,6 +651,7 @@ def assert_belongs_to_project(caller_urn, project_urns, label, \
     project_names = \
         [get_name_from_urn(project_urn) for project_urn in project_urns]
     if len(project_names) == 0:
+#        chapi_debug('UTILS', "assert_belongs_to_project got empty list of project names")
         return
 
     db = pm.getService('chdbengine')
