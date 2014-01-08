@@ -223,8 +223,8 @@ class MAv1Implementation(MAv1DelegateBase):
                 # Do you mean any value? Or only a value of None? Or only rows with no entry for this value?
                 # Is this right?
                 q = q.filter(MemberAttribute.value == None)
-                chapi_info(MA_LOG_PREFIX, "get_uids_for_attrs got empty list for VALUE: ATTR = %s, MAP = %s, VALUE = %s" % \
-                                (attr, MA.field_mapping[attr], value))
+#                chapi_debug(MA_LOG_PREFIX, "get_uids_for_attrs got empty list for VALUE: ATTR = %s, MAP = %s, VALUE = %s" % \
+#                                (attr, MA.field_mapping[attr], value))
             else:
                 q = q.filter(MemberAttribute.value.in_(value))
         else:
@@ -674,7 +674,13 @@ class MAv1Implementation(MAv1DelegateBase):
         if 'KEY_MEMBER' in match_criteria.keys():
             member_urn = match_criteria['KEY_MEMBER']
             if isinstance(member_urn, types.ListType):
-                q = q.filter(self.db.MEMBER_ATTRIBUTE_TABLE.c.value.in_(member_urn))
+                if len(member_urn) == 0:
+                    # FIXME: If you specify an empty list, what should the behavior be?
+                    # Do you mean any value? Or only a value of None? Or only rows with no entry for this value?
+                    # Is this right?
+                    q = q.filter(self.db.MEMBER_ATTRIBUTE_TABLE.c.value == None)
+                else:
+                    q = q.filter(self.db.MEMBER_ATTRIBUTE_TABLE.c.value.in_(member_urn))
             else:
                 q = q.filter(self.db.MEMBER_ATTRIBUTE_TABLE.c.value == member_urn)
             del match_criteria['KEY_MEMBER']
