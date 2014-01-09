@@ -84,6 +84,9 @@ def lookup_project_name_for_slice(slice_urn):
 
 # Return a string based on a URN but with all punctuation (+:-.) replaced with _
 def flatten_urn(urn):
+    if urn is None or not (isinstance(urn, str) or
+                             isinstance(urn, unicode)):
+        return str(urn)
     return urn.replace(':', '_').replace('+', '_').replace('-', '_').replace('.', '_')
 
 
