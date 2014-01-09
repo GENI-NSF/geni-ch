@@ -35,49 +35,45 @@ import tools.CH_constants as CH
 
 class CHv1Implementation(CHv1DelegateBase):
 
-    AGGREGATE_SERVICE_TYPE = 0
-    SA_SERVICE_TYPE = 1
-    MA_SERVICE_TYPE = 3
-
     # Internal (hard-coded) list of services in internal schema format
     # Meant to mimic a database query return
     services = [
-        {"service_type" : AGGREGATE_SERVICE_TYPE, 
+        {"service_type" : CH.SERVICE_AGGREGATE_MANAGER,
          'service_url' : 'https://server.com:12345', 
          'service_cert' : '<certificate>agg1</certificate', 
          'service_name' : 'AGG1',
          'service_description' : 'Agg 1',
          'service_urn' : 'urn:publicid:IDN+server.com+authority+am'
         },
-        {"service_type" : AGGREGATE_SERVICE_TYPE, 
+        {"service_type" : CH.SERVICE_AGGREGATE_MANAGER,
          'service_url' : 'https://backuup.com:12345', 
          'service_cert' : '<certificate>agg2</certificate', 
          'service_name' : 'AGG2',
          'service_description' : 'Agg 2',
          'service_urn' : 'urn:publicid:IDN+backup.com+authority+am'
         },
-        {"service_type" : SA_SERVICE_TYPE, 
+        {"service_type" : CH.SERVICE_SLICE_AUTHORITY,
          'service_url' : 'https://localhost:8001/SA', 
          'service_cert' : '<certificate>foo</certificate', 
          'service_name' : 'CHAPI-SA',
          'service_description' : 'CHAPI Service Authority',
          'service_urn' : 'urn:publicid:IDN+foo.com+authority+sa'
         },
-        {"service_type" : SA_SERVICE_TYPE, 
+        {"service_type" : CH.SERVICE_SLICE_AUTHORITY,
          'service_url' : 'https://localhost:8002/SA', 
          'service_cert' : '<certificate>bar</certificate', 
          'service_name' : 'CHAPI-SA2',
          'service_description' : 'CHAPI Service Authority (BACKUP)',
          'service_urn' : 'urn:publicid:IDN+bar.com+authority+sa'
         },
-        {"service_type" : MA_SERVICE_TYPE, 
+        {"service_type" : CH.SERVICE_MEMBER_AUTHORITY,
          'service_url' : 'https://localhost:8001/MA', 
          'service_cert' : '<certificate>foo</certificate', 
          'service_name' : 'CHAPI-MA',
          'service_description' : 'CHAPI Member Authority',
          'service_urn' : 'urn:publicid:IDN+foo.com+authority+ma'
         },
-        {"service_type" : MA_SERVICE_TYPE, 
+        {"service_type" : CH.SERVICE_MEMBER_AUTHORITY,
          'service_url' : 'https://localhost:8002/MA', 
          'service_cert' : '<certificate>bar</certificate', 
          'service_name' : 'CHAPI-MA2',

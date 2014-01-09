@@ -46,6 +46,7 @@ def parseOptions(args):
     gcf_home = os.path.join(home, '.gcf')
 
     parser.add_option("--url", help="Server URL", default=None)
+    parser.add_option("--type", help="Object Type for generic v2 calls", default=None)
     parser.add_option("--urn", help="URN for API arguments", default=None)
     parser.add_option("--key", help="Location of user key", \
                           default=os.path.join(gcf_home, 'alice-key.pem'))
@@ -286,6 +287,19 @@ def main(args = sys.argv, do_print=True):
             _do_ssl(framework, suppress_errors, reason, fcn, opts.uuid_arg, \
                         opts.string_arg, \
                         opts.credentials, options)
+
+    # Generic Federation v2 API methods
+    elif opts.method in ['lookup', 'create']:
+        (result, msg) = \
+            _do_ssl(framework, suppress_errors, reason, fcn, opts.type, \
+                       opts.credentials, client_options)
+
+    elif opts.method in ['update', 'delete', \
+                             'modify_membership', 'lookup_members', 'lookup_for_member']:
+        (result, msg) = \
+            _do_ssl(framework, suppress_errors, reason, fcn, opts.type, \
+                        opts.urn, opts.credentials, client_options)
+
 
 #    def add_member_privilege(self, cert, member_uid, privilege, credentials, options):
 

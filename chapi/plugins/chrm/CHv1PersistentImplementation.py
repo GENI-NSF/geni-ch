@@ -62,7 +62,8 @@ class CHv1PersistentImplementation(CHv1Implementation):
         selected_columns, match_criteria = unpack_query_options(options, CH.field_mapping)
 
         q = session.query(self.db.SERVICES_TABLE)
-        q = q.filter(self.db.SERVICES_TABLE.c.service_type == service_type)
+        if service_type:
+            q = q.filter(self.db.SERVICES_TABLE.c.service_type == service_type)
         q = add_filters(q,  match_criteria, self.db.SERVICES_TABLE, CH.field_mapping)
         rows = q.all()
 
@@ -71,6 +72,15 @@ class CHv1PersistentImplementation(CHv1Implementation):
         result = self._successReturn(authorities)
 
         return result
+
+    # Lookup all services matching given options specification (match and filter)
+    def lookup_services(self, client_cert, options, session):
+        service_type = None
+        if 'match' in options and 'SERVICE_TYPE' in options['match']:
+            service_type = options['match']['SERVICE_TYPE']
+        services = self.lookup_authorities(client_cert, service_type, options, session)
+        return services
+    
 
 
 
