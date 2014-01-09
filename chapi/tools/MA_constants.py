@@ -71,6 +71,7 @@ standard_plus_optional = dict(standard_fields.items() + optional_fields.items())
 standard_key_fields = { 
     "KEY_MEMBER" : {"TYPE" : "URN", "CREATE" : "REQUIRED"}, \
     "KEY_ID" : {"TYPE" : "STRING"}, \
+    "KEY_TYPE" : {"TYPE" : "STRING", "CREATE" : "ALLOWED"}, \
     "KEY_PUBLIC" : {"TYPE" : "KEY", "CREATE" : "REQUIRED"},  \
     "KEY_PRIVATE" : {"TYPE" : "KEY", "CREATE" : "ALLOWED"}, \
     "KEY_DESCRIPTION" : \
@@ -114,7 +115,7 @@ field_mapping = {
     "OPERATOR": "OPERATOR"
 }
 
-key_fields = ["KEY_MEMBER", "KEY_ID", "KEY_PUBLIC", "KEY_PRIVATE", 
+key_fields = ["KEY_MEMBER", "KEY_ID", "KEY_PUBLIC", "KEY_PRIVATE", "KEY_TYPE",
               "KEY_DESCRIPTION", "_GENI_KEY_MEMBER_UID", 
               "_GENI_KEY_FILENAME" ]
 
@@ -123,6 +124,7 @@ key_field_mapping = {
     "KEY_ID": 'id',
     "KEY_PUBLIC": "public_key",
     "KEY_PRIVATE": "private_key",
+    "KEY_TYPE" : "key_type",
     "KEY_DESCRIPTION":  "description",
     "_GENI_KEY_MEMBER_UID": "member_id",
     "_GENI_KEY_FILENAME": "filename"
@@ -135,7 +137,8 @@ attributes = [
     "MEMBER_URN", "MEMBER_UID", "MEMBER_FIRSTNAME", "MEMBER_LASTNAME",
     "MEMBER_USERNAME", "MEMBER_EMAIL", "_GENI_MEMBER_DISPLAYNAME",
     "_GENI_MEMBER_PHONE_NUMBER", "_GENI_MEMBER_AFFILIATION",
-    "_GENI_MEMBER_EPPN", "KEY_MEMBER", "KEY_ID", "KEY_PUBLIC", "KEY_PRIVATE",
+    "_GENI_MEMBER_EPPN", "KEY_MEMBER", "KEY_ID", 
+    "KEY_PUBLIC", "KEY_PRIVATE", "KEY_TYPE",
     "KEY_DESCRIPTION", "_GENI_KEY_MEMBER_UID", "_GENI_KEY_FILENAME",
     "_GENI_MEMBER_ENABLED", "_GENI_ENABLE_WIMAX", "_GENI_ENABLE_WIMAX_BUTTON", 
     "_GENI_ENABLE_IRODS", "_GENI_IRODS_USERNAME", "_GENI_WIMAX_USERNAME"

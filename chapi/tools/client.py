@@ -204,7 +204,7 @@ def main(args = sys.argv, do_print=True):
     elif opts.method in ['delete_key', 'update_key'] \
             and opts.string_arg and opts.urn:
         (result, msg) = _do_ssl(framework, suppress_errors, reason, fcn, \
-                                    opts.urn, opts.string_arg, \
+                                    opts.string_arg, \
                                     opts.credentials, client_options)
 
     # Client Authorization methods
