@@ -446,6 +446,7 @@ class MAv1Implementation(MAv1DelegateBase):
         invocation_check = ma_guard.get_invocation_check(method)
 #        chapi_info("DAM", "IC = %s" % invocation_check)
         subjects = invocation_check.validate_arguments(client_cert, method, \
+                                                           credentials, \
                                                            options, arguments, session)
 #        chapi_info("DAM", "SUBJECTS = %s" % subjects)
         subject_type = subjects.keys()[0]
@@ -835,6 +836,18 @@ class MAv1Implementation(MAv1DelegateBase):
                 if 'KEY_ID' in key_data:
                     key_id = key_data['KEY_ID']
                     key_data['KEY_ID'] = str(key_id)
+
+
+        # Strip out any KEY_PRIVATE fields from key returns not for the 
+        # calling user
+        member_urn = get_urn_from_cert(client_cert)
+        for urn, all_key_fields in keys.items():
+#            chapi_info("FOO", "URN = %s FIELDS = %s" % (urn, all_key_fields))
+            if urn != member_urn:
+                for key_fields in all_key_fields:
+                    if 'KEY_PRIVATE' in key_fields:
+                        del key_fields['KEY_PRIVATE']
+
         result = self._successReturn(keys)
 
         return result
