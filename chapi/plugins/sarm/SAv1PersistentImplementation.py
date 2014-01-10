@@ -599,6 +599,8 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                 if new_exp > max_exp:
                     new_exp = max_exp
                     value = max_exp # value just changed from string to datetime!
+                    if slice_expiration > max_exp:
+                        raise CHAPIv1ArgumentError('Cannot renew slice - it is already at or past the usual max of %d days past now (%s expires at %s)' % (SA.SLICE_MAX_RENEWAL_DAYS, slice_urn, slice_expiration.isoformat()))
 #                    chapi_debug(SA_LOG_PREFIX, "Slice %s Reset renew request %s to max exp %s" % (slice_name, new_exp, max_exp))
                 # don't shorten slice lifetime
                 if slice_expiration > new_exp:
@@ -1172,12 +1174,13 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         chapi_debug('SA:MA', "URN_TO_DISPLAY_NAME = %s" % urn_to_display_name)
 
         # first, do the removes
-        if 'members_to_remove' in options:
+        if 'members_to_remove' in options and len(options['members_to_remove']) > 0:
             q = session.query(member_class)
             ids = [urn_to_id[m_urn] for m_urn in options['members_to_remove']]
-            q = q.filter(member_class.member_id.in_(ids))
-            q = q.filter(eval(id_str) == id)
-            q.delete(synchronize_session='fetch')
+            if len(ids) > 0:
+                q = q.filter(member_class.member_id.in_(ids))
+                q = q.filter(eval(id_str) == id)
+                q.delete(synchronize_session='fetch')
 
         # then, do the additions
         if 'members_to_add' in options:

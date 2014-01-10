@@ -29,9 +29,9 @@ import tools.MA_constants as MA
 # other than for self
 class LookupKeysInvocationCheck(SubjectInvocationCheck):
         
-    def validate_arguments(self, client_cert, method, options, arguments):
+    def validate_arguments(self, client_cert, method, options, arguments, session):
         subjects = super(LookupKeysInvocationCheck, self).validate_arguments(
-            client_cert, method, options, arguments)
+            client_cert, method, options, arguments, session)
         # If they didn't specify a filter (all by default), 
         # or they explicitly asked for KEY_PRIVATE, there can only
         # be the caller in the list of requested users in 'match'

@@ -282,7 +282,7 @@ class MAv1Handler(HandlerBase):
         #     name/value pairs for all keys registered for that given user.
         """
         with MethodContext(self, MA_LOG_PREFIX, 
-                           'lookup_keys_keys', 
+                           'lookup_keys', 
                            {}, credentials, options, read_only=True) as mc:
             if not mc._error:
                 mc._result = \
