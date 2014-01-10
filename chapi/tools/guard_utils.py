@@ -311,23 +311,23 @@ def convert_member_email_to_uid(member_email, session):
     if not isinstance(member_email, list): member_emails = [member_email]
 
     cache = cache_get('member_email_to_uid')
-    uncached_emails = [em for em in member_emails if em not in cache]
+    uncached_emails = [em.lower() for em in member_emails if em.lower() not in cache]
 
     if len(uncached_emails) > 0:
         q = session.query(db.MEMBER_ATTRIBUTE_TABLE.c.value, \
                               db.MEMBER_ATTRIBUTE_TABLE.c.member_id)
-        q = q.filter(db.MEMBER_ATTRIBUTE_TABLE.c.value.in_(uncached_emails))
+        q = q.filter(func.lower(db.MEMBER_ATTRIBUTE_TABLE.c.value).in_(uncached_emails))
         q = q.filter(db.MEMBER_ATTRIBUTE_TABLE.c.name == 'email_address')
         rows = q.all()
         for row in rows:
-            email_value = row.value
+            email_value = row.value.lower()
             member_id = row.member_id
             cache[email_value] = member_id
 
     # Unlike most other 'convert' routines, we want to return 
     # only the list of good uid's and not error on bad emails
     # To support bulk email or asking about whether an email is valid
-    uids = [cache[em] for em in member_emails if em in cache]
+    uids = [cache[em.lower()] for em in member_emails if em.lower() in cache]
     return uids
 
 # How long do we keep cache entries for operator privileges

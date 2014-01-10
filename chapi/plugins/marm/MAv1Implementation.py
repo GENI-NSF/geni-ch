@@ -217,7 +217,13 @@ class MAv1Implementation(MAv1DelegateBase):
                 return [value]
         q = session.query(MemberAttribute.member_id)
         q = q.filter(MemberAttribute.name == MA.field_mapping[attr])
-        if isinstance(value, types.ListType):
+
+        if attr=="MEMBER_EMAIL":
+            if isinstance(value, types.ListType):
+                q = q.filter(func.lower(MemberAttribute.value).in_(value))
+            else:
+                q = q.filter(func.lower(MemberAttribute.value) == value)
+        elif isinstance(value, types.ListType):
             if len(value) == 0:
                 # FIXME: If you specify an empty list, what should the behavior be?
                 # Do you mean any value? Or only a value of None? Or only rows with no entry for this value?
