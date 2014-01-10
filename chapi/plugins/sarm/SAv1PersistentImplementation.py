@@ -698,7 +698,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                           LEAD_ATTRIBUTE, \
                           PROJECT_CONTEXT, project.project_id)
 
-        attribs = {"PROJECT" : project.project_id}
+        attribs = {"PROJECT" : project.project_id, "MEMBER" : project.lead_id}
 
         # do the database write
         result = self.finish_create(session, project,  SA.project_field_mapping, \
