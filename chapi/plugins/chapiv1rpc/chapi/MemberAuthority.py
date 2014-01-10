@@ -87,7 +87,7 @@ class MAv1Handler(HandlerBase):
     def lookup_identifying_member_info(self, credentials, options):
         """Return identifying information about members specified in options
         filter and query fields
-        
+
         This call is protected
         Authorized by client cert and credentials
         """
@@ -105,7 +105,7 @@ class MAv1Handler(HandlerBase):
     def lookup_public_identifying_member_info(self, credentials, options):
         """Return both public and identifying information about members specified in options
         filter and query fields
-        
+
         This call is protected
         Authorized by client cert and credentials
         """
