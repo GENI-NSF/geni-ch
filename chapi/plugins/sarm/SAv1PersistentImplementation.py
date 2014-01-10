@@ -1400,7 +1400,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         vals = {}
         for field, value in options['fields'].iteritems():
            vals[SA.sliver_info_field_mapping[field]] = value
-        q.update1(vals)
+        q.update(vals)
         return self._successReturn(True)
 
     def lookup_sliver_info(self, client_cert, credentials, options, session):
