@@ -8,6 +8,7 @@
   * Filter out innocuous errors looking up unknown slice (#202)
   * Avoid empty 'in' lists in SQL queries (#200)
   * Treat email addresses as case insensitive (#203)
+  * Handle non string subjects in `flatten_urn` (#206)
 
 == 1.2 ==
   * Fix role/project names in email for accepting an invitation (#183)

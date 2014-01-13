@@ -700,7 +700,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                           LEAD_ATTRIBUTE, \
                           PROJECT_CONTEXT, project.project_id)
 
-        attribs = {"PROJECT" : project.project_id}
+        attribs = {"PROJECT" : project.project_id, "MEMBER" : project.lead_id}
 
         # do the database write
         result = self.finish_create(session, project,  SA.project_field_mapping, \
@@ -1402,7 +1402,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         vals = {}
         for field, value in options['fields'].iteritems():
            vals[SA.sliver_info_field_mapping[field]] = value
-        q.update1(vals)
+        q.update(vals)
         return self._successReturn(True)
 
     def lookup_sliver_info(self, client_cert, credentials, options, session):

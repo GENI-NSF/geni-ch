@@ -1027,7 +1027,7 @@ class MAv1Implementation(MAv1DelegateBase):
             # log_event
             msg = "Set member %s status to %s" % \
                 (member_urn, 'enabled' if enable_sense else 'disabled')
-            attribs = {"MEMBER" : member_urn}
+            attribs = {"MEMBER" : member_id}
             self.logging_service.log_event(msg, attribs, member_id,session=session)
             chapi_audit_and_log(MA_LOG_PREFIX, msg, logging.INFO, {'user': user_email})
             self.mail_enable_user(user_email + " " + msg, ("Enabled CH user" if enable_sense else "Disabled CH user"))
