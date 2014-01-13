@@ -29,6 +29,7 @@ from tools.dbutils import *
 from tools.cert_utils import *
 import chapi.Parameters
 import tools.CH_constants as CH
+import amsoil.core.pluginmanager as pm
 
 # A simple fixed implemntation of the CH API. 
 # Only for testing. The real implementation is in CHv1PersistentImplementation
@@ -84,9 +85,13 @@ class CHv1Implementation(CHv1DelegateBase):
 
 
     def get_version(self, session):
+        import flask
+        api_versions = \
+            {chapi.Parameters.VERSION_NUMBER : flask.request.url_root}
         version_info = {"VERSION": chapi.Parameters.VERSION_NUMBER,
                         "SERVICES": CH.services,
                         "SERVICE_TYPES" : CH.service_types.keys(),
+                        "API_VERSIONS" : api_versions,
                         "FIELDS": CH.supplemental_fields}
         return self._successReturn(version_info)
 
@@ -98,7 +103,7 @@ class CHv1Implementation(CHv1DelegateBase):
         member_authorities = self.select_services_of_type(self.SA_SERVICE_TYPE)
         return self.select_entries_and_fields(member_authorities, options)
 
-    def lookup__aggregates(self, client_cert, options, session):
+    def lookup_aggregates(self, client_cert, options, session):
         member_authorities = self.select_services_of_type(self.AGGREGATE_SERVICE_TYPE)
         return self.select_entries_and_fields(member_authorities, options)
 

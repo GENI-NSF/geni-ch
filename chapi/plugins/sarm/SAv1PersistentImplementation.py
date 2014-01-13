@@ -112,11 +112,15 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                    primary_key = self.db.PROJECT_ATTRIBUTE_TABLE.c.id)
 
     def get_version(self, session):
+        import flask
+        api_versions = \
+            {chapi.Parameters.VERSION_NUMBER : flask.request.url_root}
         version_info = {"VERSION" : chapi.Parameters.VERSION_NUMBER, 
                         "URN " : self.urn,
                         "SERVICES" : SA.services,
                         "CREDENTIAL_TYPES" : SA.credential_types, 
                         "ROLES" : attribute_type_names.values(),
+                        "API_VERSIONS" : api_versions,
                         "FIELDS": SA.supplemental_fields}
         result = self._successReturn(version_info)
 

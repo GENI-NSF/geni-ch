@@ -194,10 +194,14 @@ class MAv1Implementation(MAv1DelegateBase):
 
         all_optional_fields = dict(MA.optional_fields.items() + \
                                    MA.optional_key_fields.items())
+        import flask
+        api_versions = \
+            {chapi.Parameters.VERSION_NUMBER : flask.request.url_root}
         version_info = {"VERSION": chapi.Parameters.VERSION_NUMBER,
                         "URN " : self.urn,
                         "SERVICES" : MA.services,
                         "CREDENTIAL_TYPES": MA.credential_types,
+                        "API_VERSIONS" : api_versions,
                         "FIELDS": all_optional_fields}
         result =  self._successReturn(version_info)
 
