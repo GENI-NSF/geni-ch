@@ -9,6 +9,9 @@
   * Avoid empty 'in' lists in SQL queries (#200)
   * Treat email addresses as case insensitive (#203)
   * Handle non string subjects in `flatten_urn` (#206)
+  * The author of a log message is taken from the client cert.
+    When a user asks to join a project, the author will be the Portal.
+    That will now properly display as None. (#205)
 
 == 1.2 ==
   * Fix role/project names in email for accepting an invitation (#183)

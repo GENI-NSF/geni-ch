@@ -712,17 +712,11 @@ def assert_request_id_requestor_and_project_role(caller_urn, request_id,
             assertion = "ME.IS_%s_%s<-CALLER" % (role_name, request_id)
             abac_manager.register_assertion(assertion)
 
-# If the 'user_id' argument matches the caller_urn, then we look at the 'attributes' message 
-# and determine if the callers is a member of the slice (if present) or project (if present)
+# Look at the 'attributes' message 
+# and determine if the caller is a member of the slice (if present) or project (if present)
 def assert_user_belongs_to_slice_or_project(caller_urn, subject_urns, \
                                             label, options, arguments, abac_manager, session):
-    # First, make sure the user_id argument matches the caller. Otherwise get out
-    if 'user_id' not in arguments: return
-    user_uid = arguments['user_id']
-    user_urn = convert_member_uid_to_urn(user_uid, session)
-    if user_urn != caller_urn: return
-
-    # Second, get the attributes. 
+    # Get the attributes. 
     # If there is one for slice, assert_belongs_to_slice
     # Otherwise, if there is one for project, assert_belogs_to_project
     if 'attributes' not in arguments: return
