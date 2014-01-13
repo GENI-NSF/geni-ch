@@ -12,6 +12,7 @@
   * The author of a log message is taken from the client cert.
     When a user asks to join a project, the author will be the Portal.
     That will now properly display as None. (#205)
+  * Optimize calls that the portal makes to handle bulk queries, etc. (#132)
 
 == 1.2 ==
   * Fix role/project names in email for accepting an invitation (#183)
