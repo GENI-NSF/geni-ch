@@ -145,7 +145,7 @@ class Loggingv1Delegate(DelegateBase):
         user_id = None
         if not none_user_id:
             user_id = get_uuid_from_cert(client_cert)
-            
+
         if user_id:
             ins = self.db.LOGGING_ENTRY_TABLE.insert().values(event_time=str(now), user_id=str(user_id), message=message)
         else:
