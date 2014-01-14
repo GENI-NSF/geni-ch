@@ -16,6 +16,7 @@
   etc. (#132)
    * New method to look up both public and identifying member info
    * New method to get login information by EPPN
+  * Fix log service guards (#191)
 
 == 1.2 ==
   * Fix role/project names in email for accepting an invitation (#183)
