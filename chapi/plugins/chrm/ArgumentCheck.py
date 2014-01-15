@@ -1,5 +1,5 @@
 #----------------------------------------------------------------------
-# Copyright (c) 2011-2013 Raytheon BBN Technologies
+# Copyright (c) 2011-2014 Raytheon BBN Technologies
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and/or hardware specification (the "Work") to
@@ -181,6 +181,9 @@ class FieldsArgumentCheck(ArgumentCheck):
                     uuid.UUID(value)
             except Exception as e:
                 properly_formed = False
+        elif field_type == "UID_OR_NULL":
+            return value is None or \
+                self.validateTypedField(field, 'UID', value)
         elif field_type == "STRING":
             pass # Always true
         elif field_type == "INTEGER" or field_type == "POSITIVE":

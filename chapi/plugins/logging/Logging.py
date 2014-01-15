@@ -1,5 +1,5 @@
 #----------------------------------------------------------------------
-# Copyright (c) 2011-2013 Raytheon BBN Technologies
+# Copyright (c) 2011-2014 Raytheon BBN Technologies
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and/or hardware specification (the "Work") to
@@ -52,16 +52,14 @@ class Loggingv1Handler(HandlerBase):
         super(Loggingv1Handler, self).__init__(logging_logger)
 
     # Enter new logging entry in database for given sets of attributes
-    # And logging user (author)
-    def log_event(self, message, attributes, user_id, session=None):
+    def log_event(self, message, attributes, session=None):
         with MethodContext(self, LOG_LOG_PREFIX, 'log_event',
-                           {'message' : message, 'attributes' : attributes, 
-                            'user_id' : user_id},
+                           {'message' : message, 'attributes' : attributes},
                            [], {}, read_only=False, session=session) as mc:
             if not mc._error:
                 mc._result = \
                     self._delegate.log_event(mc._client_cert,
-                                             message, attributes, user_id,
+                                             message, attributes,
                                              mc._session)
         return mc._result
 
@@ -138,12 +136,16 @@ class Loggingv1Delegate(DelegateBase):
         self.db = pm.getService('chdbengine')
 
     # The attributes argument is a dictionary of name/value pairs
-    def log_event(self, client_cert, message, attributes, user_id, session):
+    def log_event(self, client_cert, message, attributes, session, none_user_id=False):
 
         now = datetime.utcnow()
         # Record the event
         # Insert into logging_entry (event_time, user_id, message) values
         # (now, user_id, message)
+        user_id = None
+        if not none_user_id:
+            user_id = get_uuid_from_cert(client_cert)
+
         if user_id:
             ins = self.db.LOGGING_ENTRY_TABLE.insert().values(event_time=str(now), user_id=str(user_id), message=message)
         else:
@@ -228,8 +230,7 @@ class Loggingv1Guard(ABACGuardBase):
     ARGUMENT_CHECK_FOR_METHOD = \
         {
         'log_event' : \
-            SimpleArgumentCheck({'user_id': 'UID', 
-                                 'message' : 'STRING',
+            SimpleArgumentCheck({'message' : 'STRING',
                                  'attributes' : 'ATTRIBUTE_SET'}),
         'get_log_entries_by_author' : \
             SimpleArgumentCheck({'user_id' : 'UID', 
@@ -263,18 +264,19 @@ class Loggingv1Guard(ABACGuardBase):
             SubjectInvocationCheck([
                 "ME.MAY_GET_LOG_ENTRIES_BY_AUTHOR<-ME.IS_AUTHORITY",
                 "ME.MAY_GET_LOG_ENTRIES_BY_AUTHOR<-ME.IS_OPERATOR",
+                "ME.MAY_GET_LOG_ENTRIES_BY_AUTHOR_$SUBJECT<-ME.INVOKING_ON_SELF_$SUBJECT",
                 "ME.MAY_GET_LOG_EVENT_$SUBJECT<-ME.IS_$SUBJECT"
-                ], None, user_id_extractor),
+                ], assert_user_acting_on_self, user_id_extractor),
         # Must be member of project or slice
         'get_log_entries_for_context' : \
             SubjectInvocationCheck([
                 "ME.MAY_GET_LOG_ENTRIES_FOR_CONTEXT<-ME.IS_AUTHORITY",
                 "ME.MAY_GET_LOG_ENTRIES_FOR_CONTEXT<-ME.IS_OPERATOR",
-                'ME.MAY_GET_LOG_ENTRIES_FOR_CONTEXT_$SUBJECT<_ME.IS_LEAD_$SUBJECT',
-                'ME.MAY_GET_LOG_ENTRIES_FOR_CONTEXT_$SUBJECT<_ME.IS_ADMIN_$SUBJECT',
-                'ME.MAY_GET_LOG_ENTRIES_FOR_CONTEXT_$SUBJECT<_ME.IS_MEMBER_$SUBJECT',
-                'ME.MAY_GET_LOG_ENTRIES_FOR_CONTEXT_$SUBJECT<_ME.IS_AUDITOR_$SUBJECT'
-                ], [assert_belongs_to_slice, assert_belongs_to_project], context_extractor),
+                "ME.MAY_GET_LOG_ENTRIES_FOR_CONTEXT_$SUBJECT<-ME.INVOKING_ON_SELF_$SUBJECT",
+                'ME.MAY_GET_LOG_ENTRIES_FOR_CONTEXT_$SUBJECT<-ME.BELONGS_TO_$SUBJECT'
+                ], [assert_user_acting_on_self, 
+                    assert_belongs_to_slice, assert_belongs_to_project], 
+                                   context_extractor),
         # For now, leave open (we don't think anyone uses this)
         'get_log_entries_by_attributes' : \
             SubjectInvocationCheck([

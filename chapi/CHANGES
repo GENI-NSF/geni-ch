@@ -1,6 +1,23 @@
 # Note: keep this file in wiki format for easy pasting to the proto-ch wiki
 
 = GENI Clearinghouse Release Notes =
+
+== 1.3 ==
+  * Update copyright notices to 2014 (#199)
+  * Get caller email in update_slice (#201)
+  * Filter out innocuous errors looking up unknown slice (#202)
+  * Avoid empty 'in' lists in SQL queries (#200)
+  * Treat email addresses as case insensitive (#203)
+  * Handle non string subjects in `flatten_urn` (#206)
+  * The author of a log message is taken from the client cert.
+    When a user asks to join a project, the author will be the Portal.
+    That will now properly display as None. (#205)
+  * Optimize calls that the portal makes to handle bulk queries,
+  etc. (#132)
+   * New method to look up both public and identifying member info
+   * New method to get login information by EPPN
+  * Fix log service guards (#191)
+
 == 1.2 ==
   * Fix role/project names in email for accepting an invitation (#183)
   * Do not allow project auditor to become slice lead (#156)

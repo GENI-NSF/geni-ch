@@ -1,5 +1,5 @@
 #----------------------------------------------------------------------
-# Copyright (c) 2011-2013 Raytheon BBN Technologies
+# Copyright (c) 2011-2014 Raytheon BBN Technologies
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and/or hardware specification (the "Work") to
@@ -112,6 +112,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
 
     def get_version(self, session):
         version_info = {"VERSION" : chapi.Parameters.VERSION_NUMBER, 
+                        "ROLES" : attribute_type_names.values(),
                         "SERVICES" : SA.services,
                         "CREDENTIAL_TYPES" : SA.credential_types, 
                         "FIELDS": SA.supplemental_fields}
@@ -169,7 +170,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                 lmessage = "%s %s %s" % (label, type, name)
                 args = {'message' : lmessage, 'attributes' : attrs}
                 chapi_log_invocation(LOG_LOG_PREFIX, "log_event", [], {}, args)
-                logresult = self.logging_service._delegate.log_event(None, lmessage, attrs, None, session)
+                logresult = self.logging_service._delegate.log_event(None, lmessage, attrs, session, none_user_id=True)
             except Exception, e:
                 if not isinstance(e, CHAPIv1BaseError):
                     e = CHAPIv1ServerError(str(e))
@@ -528,7 +529,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         # Log the slice create event
         attribs = {"SLICE" : slice.slice_id, "PROJECT" : slice.project_id}
         self.logging_service.log_event("Created slice " + name, 
-                                       attribs, client_uuid, session=session)
+                                       attribs, session=session)
         chapi_audit_and_log(SA_LOG_PREFIX, "Created slice " + name + " in project " + slice.project_id, logging.INFO, {'user': user_email})
 
         return result
@@ -538,6 +539,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                      session):
 
         client_uuid = get_uuid_from_cert(client_cert)
+        user_email = get_email_from_cert(client_cert)
         self.update_slice_expirations(client_uuid, session)
 
         slice_uuid = \
@@ -597,6 +599,8 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                 if new_exp > max_exp:
                     new_exp = max_exp
                     value = max_exp # value just changed from string to datetime!
+                    if slice_expiration > max_exp:
+                        raise CHAPIv1ArgumentError('Cannot renew slice - it is already at or past the usual max of %d days past now (%s expires at %s)' % (SA.SLICE_MAX_RENEWAL_DAYS, slice_urn, slice_expiration.isoformat()))
 #                    chapi_debug(SA_LOG_PREFIX, "Slice %s Reset renew request %s to max exp %s" % (slice_name, new_exp, max_exp))
                 # don't shorten slice lifetime
                 if slice_expiration > new_exp:
@@ -631,10 +635,10 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
             # FIXME: Format in RFC3339 format not iso
             self.logging_service.log_event("Renewed slice %s until %s" % \
                                                (slice_name, new_exp.isoformat()), \
-                                               attribs, client_uuid,session=session)
+                                               attribs, session=session)
         else:
             self.logging_service.log_event("Updated slice " + slice_name, 
-                                       attribs, client_uuid,session=session)
+                                       attribs, session=session)
 
         result = self._successReturn(True)
 
@@ -694,7 +698,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                           LEAD_ATTRIBUTE, \
                           PROJECT_CONTEXT, project.project_id)
 
-        attribs = {"PROJECT" : project.project_id}
+        attribs = {"PROJECT" : project.project_id, "MEMBER" : project.lead_id}
 
         # do the database write
         result = self.finish_create(session, project,  SA.project_field_mapping, \
@@ -710,7 +714,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                 leadname = get_member_display_name(info[row],row)
 
         self.logging_service.log_event("Created project " + name + " with lead " + leadname, 
-                                       attribs, client_uuid, session=session)
+                                       attribs, session=session)
         chapi_audit_and_log(SA_LOG_PREFIX, "Created project " + name + " with lead " + leadname, logging.INFO, {'user': user_email})
 
         # Email the admins that the project was created
@@ -775,7 +779,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         attribs = {"PROJECT" : project_uuid}
 
         self.logging_service.log_event("Updated project " + name + change, 
-                                       attribs, client_uuid,session=session)
+                                       attribs, session=session)
 
         # Force this project to be expired/unexpired and logged now
         if options['fields'].has_key('PROJECT_EXPIRATION'):
@@ -1170,12 +1174,13 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         chapi_debug('SA:MA', "URN_TO_DISPLAY_NAME = %s" % urn_to_display_name)
 
         # first, do the removes
-        if 'members_to_remove' in options:
+        if 'members_to_remove' in options and len(options['members_to_remove']) > 0:
             q = session.query(member_class)
             ids = [urn_to_id[m_urn] for m_urn in options['members_to_remove']]
-            q = q.filter(member_class.member_id.in_(ids))
-            q = q.filter(eval(id_str) == id)
-            q.delete(synchronize_session='fetch')
+            if len(ids) > 0:
+                q = q.filter(member_class.member_id.in_(ids))
+                q = q.filter(eval(id_str) == id)
+                q.delete(synchronize_session='fetch')
 
         # then, do the additions
         if 'members_to_add' in options:
@@ -1244,7 +1249,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                 self.logging_service.log_event(
                     "Removed member %s from %s %s" % \
                         (member_name, text_str, label), \
-                        attribs, client_uuid,session=session)
+                        attribs, session=session)
                 chapi_info(SA_LOG_PREFIX, "Removed member %s from %s %s" % (member_name, text_str, label2), {'user': user_email})
 
         # Log all adds
@@ -1260,7 +1265,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                     self.logging_service.log_event(
                         "%s accepted an invitation to join %s %s in role %s" % \
                             (member_name, text_str, label, member_role), 
-                        attribs, client_uuid,session=session)
+                        attribs, session=session)
                     chapi_audit_and_log(SA_LOG_PREFIX, 
                                         "%s accepted an invitation to join %s %s in role %s" % \
                                             (member_name, text_str, label2, member_role), logging.INFO, {'user': user_email})
@@ -1268,7 +1273,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                     self.logging_service.log_event(
                         "%s Added member %s in role %s to %s %s" % \
                             (caller_name, member_name, member_role, text_str, label), 
-                        attribs, client_uuid,session=session)
+                        attribs, session=session)
                     chapi_audit_and_log(SA_LOG_PREFIX, 
                                         "%s Added member %s in role %s to %s %s" % \
                                             (caller_name, member_name, member_role, text_str, label2), logging.INFO, {'user': user_email})
@@ -1295,7 +1300,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                 self.logging_service.log_event(
                     "Changed member %s to role %s in %s %s" % \
                         (member_name, member_role, text_str, label), 
-                        attribs, client_uuid,session=session)
+                        attribs,session=session)
                 chapi_info(SA_LOG_PREFIX, "Changed member %s to role %s in %s %s" % (member_name, member_role, text_str, label2), {'user': user_email})
 
         return self._successReturn(None)
@@ -1395,7 +1400,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         vals = {}
         for field, value in options['fields'].iteritems():
            vals[SA.sliver_info_field_mapping[field]] = value
-        q.update1(vals)
+        q.update(vals)
         return self._successReturn(True)
 
     def lookup_sliver_info(self, client_cert, credentials, options, session):

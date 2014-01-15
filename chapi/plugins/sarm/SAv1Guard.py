@@ -1,5 +1,5 @@
 #----------------------------------------------------------------------
-# Copyright (c) 2011-2013 Raytheon BBN Technologies
+# Copyright (c) 2011-2014 Raytheon BBN Technologies
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and/or hardware specification (the "Work") to
@@ -246,7 +246,7 @@ class SAv1Guard(ABACGuardBase):
         # 
         'create_request' :  None, # Open: anyone can request
 
-        # Only if you are operator the lead/admin of the context
+        # Only if you are operator or the lead/admin of the context or the requestor
         'resolve_pending_request' :  \
             SubjectInvocationCheck([
                 "ME.MAY_RESOLVE_PENDING_REQUEST<-ME.IS_OPERATOR",

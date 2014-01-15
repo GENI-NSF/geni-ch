@@ -23,3 +23,8 @@ INFO    :chapi:MA: lookup_member_info: no member_urn row
 INFO    :chapi:SA: Returning empty list of slices
 INFO    :chapi:LOG:.*Result from 
 INFO    :chapi:SA:.*Result from get_requests_by_user
+INFO    :chapi:PGCH:.*: No slice found URN urn:publicid:IDN+ch
+INFO    :chapi:PGCH:.*: Result from Resolve: {'output': 'No slice found URN urn:publicid:IDN+ch.*'.*}
+ERROR   :amsoil:\[sav1\] \[ARGUMENT\] ARGUMENT_ERROR (Unknown slice urns: \[\['urn:publicid:IDN+ch.*'\]\])
+INFO    :chapi:SA:.*: Result from lookup_slices: {'output': "\[ARGUMENT\] ARGUMENT_ERROR (Unknown slice urns: \[\['urn:publicid:IDN+ch.*'\]\])".*}
+INFO    :chapi:PGCH:.*: Result from Resolve: {'output': "\[ARGUMENT\] ARGUMENT_ERROR (Unknown slice urns: \[\['urn:publicid:IDN+ch.*'\]\])".*}
