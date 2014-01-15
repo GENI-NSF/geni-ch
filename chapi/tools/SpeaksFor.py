@@ -30,12 +30,12 @@ from ABACManager import *
 
 # Determine if the given method context is 'speaks-for'
 # That is:
-#     1. There is a 'speaking_for' option with the value of the 
+#     1. There is a 'speaking-for' option with the value of the
 #          URN of the spoken-for user
 #     2. There is a speaks-for credential in the list of credentials 
 #         that is signed by the spoken-for user authorizing the 
 #         speaking entity to speak for it
-#     3. The URN of the 'speaking_for' option matches the URN 
+#     3. The URN of the 'speaking-for' option matches the URN
 #         in the speaks-for credential
 #     4. The certificate of the spoken-for user is in the 
 #         list of credentials [Note: This one is still open to debate...]
@@ -45,7 +45,7 @@ from ABACManager import *
 #   credentials: the list of credentials passed with the call, 
 #        possibly including user certs and speaks-for credentials
 #   options: the dictionary of options supplied with the call, 
-#        possibly including a 'speaking_for' option
+#        possibly including a 'speaking-for' option
 #
 # Return: 
 #   agent_cert: Cert of actual (spoken for) speaker if 'speaks for', 
@@ -65,10 +65,11 @@ def determine_speaks_for(client_cert, credentials, options):
             speaks_for_credential = credential['geni_value']
             break
 
-    # Pull out speaking_for option
+    # Pull out speaking-for option
+    OPTION_SPEAKING_FOR = 'speaking-for'
     speaking_for = None
-    if options.has_key('speaking_for'):
-        speaking_for = options['speaking_for']
+    if options.has_key(OPTION_SPEAKING_FOR):
+        speaking_for = options[OPTION_SPEAKING_FOR]
 
     # Check arguments:
 
@@ -93,7 +94,7 @@ def determine_speaks_for(client_cert, credentials, options):
     
     # The agent_urn must match the speaking_for option
     if agent_urn != speaking_for:
-        raise Exception("Mismatch: speaking_for %s and agent URN %s" % (speaking_for, agent_urn))
+        raise Exception("Mismatch: speaking-for %s and agent URN %s" % (speaking_for, agent_urn))
 
     # The speaks-for credential must assert the statement 
     # AGENT.speaks_for(AGENT)<-CLIENT
@@ -152,7 +153,7 @@ if __name__ == "__main__":
         agent_urn = get_urn_from_cert(agent_cert)
 
     if agent_urn:
-        options['speaking_for'] = agent_urn
+        options['speaking-for'] = agent_urn
 
     try:
         agent_cert, revised_options = \
