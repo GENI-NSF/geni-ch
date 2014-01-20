@@ -197,8 +197,11 @@ class MAv1Implementation(MAv1DelegateBase):
         import flask
         api_versions = \
             {chapi.Parameters.VERSION_NUMBER : flask.request.url_root}
+        code_tag = get_code_tag(MA_LOG_PREFIX)
+        implementation_info = {"code_version" : code_tag}
         version_info = {"VERSION": chapi.Parameters.VERSION_NUMBER,
                         "URN " : self.urn,
+                        "IMPLEMENTATION" : implementation_info,
                         "SERVICES" : MA.services,
                         "CREDENTIAL_TYPES": MA.credential_types,
                         "API_VERSIONS" : api_versions,

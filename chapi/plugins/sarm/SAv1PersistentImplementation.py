@@ -115,8 +115,11 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         import flask
         api_versions = \
             {chapi.Parameters.VERSION_NUMBER : flask.request.url_root}
+        code_tag = get_code_tag(SA_LOG_PREFIX)
+        implementation_info = {"code_version" : code_tag}
         version_info = {"VERSION" : chapi.Parameters.VERSION_NUMBER, 
                         "URN " : self.urn,
+                        "IMPLEMENTATION" : implementation_info,
                         "SERVICES" : SA.services,
                         "CREDENTIAL_TYPES" : SA.credential_types, 
                         "ROLES" : attribute_type_names.values(),

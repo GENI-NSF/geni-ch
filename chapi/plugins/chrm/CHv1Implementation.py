@@ -27,6 +27,8 @@ from chapi.Exceptions import *
 from geni.util.urn_util import URN
 from tools.dbutils import *
 from tools.cert_utils import *
+from tools.chapi_utils import *
+from tools.chapi_log import *
 import chapi.Parameters
 import tools.CH_constants as CH
 import amsoil.core.pluginmanager as pm
@@ -88,7 +90,10 @@ class CHv1Implementation(CHv1DelegateBase):
         import flask
         api_versions = \
             {chapi.Parameters.VERSION_NUMBER : flask.request.url_root}
+        code_tag = get_code_tag(SR_LOG_PREFIX)
+        implementation_info = {"code_version" : code_tag}
         version_info = {"VERSION": chapi.Parameters.VERSION_NUMBER,
+                        "IMPLEMENTATION" : implementation_info,
                         "SERVICES": CH.services,
                         "SERVICE_TYPES" : CH.service_types.keys(),
                         "API_VERSIONS" : api_versions,

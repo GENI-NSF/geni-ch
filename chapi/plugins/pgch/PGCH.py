@@ -31,6 +31,7 @@ from chapi.Exceptions import *
 from chapi.MethodContext import *
 from tools.cert_utils import get_uuid_from_cert, get_urn_from_cert, get_email_from_cert
 from tools.chapi_log import *
+from tools.chapi_utils import *
 import sfa.trust.gid as gid
 import geni.util.urn_util as urn_util
 
@@ -132,15 +133,7 @@ class PGCHv1Delegate(DelegateBase):
         CH_HOSTNAME = authority
 
         # Read code tag from a file
-        code_tag_file = '/etc/geni-chapi/geni-chapi-githash'
-        try:
-            with open(code_tag_file, 'r') as f:
-                code_tag = f.readline().strip()
-        except:
-            msg = 'GetVersion: Cannot read code tag file %r.'
-            msg = msg % (code_tag_file)
-            chapi_error(PGCH_LOG_PREFIX, msg, {'user': user_email})
-            code_tag = 'unknown'
+        code_tag = get_code_tag(PGCH_LOG_PREFIX)
 
         # Templated URN. Should we get this from
         # the authority certificate?
