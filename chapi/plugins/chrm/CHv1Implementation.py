@@ -90,8 +90,7 @@ class CHv1Implementation(CHv1DelegateBase):
         import flask
         api_versions = \
             {chapi.Parameters.VERSION_NUMBER : flask.request.url_root}
-        code_tag = get_code_tag(SR_LOG_PREFIX)
-        implementation_info = {"code_version" : code_tag}
+        implementation_info = get_implementation_info(SR_LOG_PREFIX)
         version_info = {"VERSION": chapi.Parameters.VERSION_NUMBER,
                         "IMPLEMENTATION" : implementation_info,
                         "SERVICES": CH.services,
