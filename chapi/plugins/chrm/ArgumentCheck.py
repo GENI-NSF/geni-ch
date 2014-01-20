@@ -181,6 +181,9 @@ class FieldsArgumentCheck(ArgumentCheck):
                     uuid.UUID(value)
             except Exception as e:
                 properly_formed = False
+        elif field_type == "UID_OR_NULL":
+            return value is None or \
+                self.validateTypedField(field, 'UID', value)
         elif field_type == "STRING":
             pass # Always true
         elif field_type == "INTEGER" or field_type == "POSITIVE":
@@ -256,7 +259,7 @@ class FieldsArgumentCheck(ArgumentCheck):
             # There must be an details entry for this field in the specs
             if not field_detail_key in field_details.keys():
                 raise CHAPIv1ArgumentError("Required field detail " + \
-                                               " key missing for %s: %s" % \
+                                               "key missing for %s: %s" % \
                                                (field, field_detail_key))
 
             # The field detail must be one of the allowed values

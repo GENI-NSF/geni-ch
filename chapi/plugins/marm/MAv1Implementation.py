@@ -320,7 +320,8 @@ class MAv1Implementation(MAv1DelegateBase):
             urn = row[0]
             values = {}
             for col in selected_columns:
-                if col in ["MEMBER_UID", "_GENI_IDENTIFYING_MEMBER_UID"]:
+                if col in ["MEMBER_UID", "_GENI_IDENTIFYING_MEMBER_UID", 
+                           "_GENI_PRIVATE_MEMBER_UID"]:
                     values[col] = uid
                 else:
                     vals = None
@@ -347,6 +348,15 @@ class MAv1Implementation(MAv1DelegateBase):
     def lookup_private_member_info(self, client_cert, credentials, 
                                    options, session):
         result = self.lookup_member_info(options, MA.private_fields, session)
+        return result
+
+    # This call is protected: Only authorities can call it
+    def lookup_public_identifying_member_info(self, client_cert,
+                                              credentials, options, session):
+        result = \
+            self.lookup_member_info(options, 
+                                    MA.public_fields + MA.identifying_fields, 
+                                    session)
         return result
 
     # This call is protected
@@ -479,6 +489,14 @@ class MAv1Implementation(MAv1DelegateBase):
         allowed_match =  {subject_type :  allowed_users}
  #       chapi_info("DAM", "ALLOWED_MATCH = %s" % allowed_match)
         return allowed_match
+
+    # Called only by authorities
+    # Retieve requested private, public, identifying info by EPPN
+    def lookup_login_info(self, client_cert, jcredentials, options, session):
+        result = self.lookup_member_info(options,
+                                         MA.public_fields + MA.identifying_fields + MA.private_fields,
+                                         session)
+        return result
 
 
     # This call is protected
@@ -693,7 +711,7 @@ class MAv1Implementation(MAv1DelegateBase):
         # Log the successful creation of member
         msg = "Activated GENI user : %s (%s)" % (self._get_displayname_for_member_urn(user_urn, session), user_urn)
         attrs = {"MEMBER" : str(member_id)}
-        self.logging_service.log_event(msg, attrs, str(member_id), session=session)
+        self.logging_service.log_event(msg, attrs, session=session)
         chapi_audit_and_log(MA_LOG_PREFIX, msg, logging.INFO, {'user': user_email})
         # Send email to portal admins
         msgbody = "There is a new account registered on %s:\n" % self.server
@@ -750,7 +768,7 @@ class MAv1Implementation(MAv1DelegateBase):
         client_uuid = get_uuid_from_cert(client_cert)
         attrs = {"MEMBER" : client_uuid}
         msg = "%s registering SSH key %s" % (self._get_displayname_for_member_urn(member_urn, session), key_id)
-        self.logging_service.log_event(msg, attrs, client_uuid,session=session)
+        self.logging_service.log_event(msg, attrs,session=session)
         chapi_audit_and_log(MA_LOG_PREFIX, msg, logging.INFO, {'user': user_email})
 
         result = self._successReturn(fields)
@@ -771,7 +789,7 @@ class MAv1Implementation(MAv1DelegateBase):
         member_urn = convert_member_uid_to_urn(client_uuid, session)
         attrs = {"MEMBER" : client_uuid}
         msg = "%s deleting SSH key %s" % (self._get_displayname_for_member_urn(member_urn, session), key_id)
-        self.logging_service.log_event(msg, attrs, client_uuid,session=session)
+        self.logging_service.log_event(msg, attrs,session=session)
 
         result = self._successReturn(True)
 
@@ -970,7 +988,7 @@ class MAv1Implementation(MAv1DelegateBase):
             # log_event
             msg = "Authorizing client %s for member %s" % (client_urn, self._get_displayname_for_member_urn(member_urn, session))
             attribs = {"MEMBER" : member_id}
-            self.logging_service.log_event(msg, attribs, member_id,session=session)
+            self.logging_service.log_event(msg, attribs,session=session)
             chapi_audit_and_log(MA_LOG_PREFIX, msg, logging.INFO, {'user': user_email})
 
         else:
@@ -984,7 +1002,7 @@ class MAv1Implementation(MAv1DelegateBase):
             # log_event
             msg = "Deauthorizing client %s for member %s" % (client_urn, self._get_displayname_for_member_urn(member_urn, session))
             attribs = {"MEMBER" : member_id}
-            self.logging_service.log_event(msg, attribs, member_id,session=session)
+            self.logging_service.log_event(msg, attribs,session=session)
             chapi_audit_and_log(MA_LOG_PREFIX, msg, logging.INFO, {'user': user_email})
 
         result = self._successReturn(True)
@@ -1035,7 +1053,7 @@ class MAv1Implementation(MAv1DelegateBase):
             msg = "Set member %s status to %s" % \
                 (member_urn, 'enabled' if enable_sense else 'disabled')
             attribs = {"MEMBER" : member_id}
-            self.logging_service.log_event(msg, attribs, member_id,session=session)
+            self.logging_service.log_event(msg, attribs,session=session)
             chapi_audit_and_log(MA_LOG_PREFIX, msg, logging.INFO, {'user': user_email})
             self.mail_enable_user(user_email + " " + msg, ("Enabled CH user" if enable_sense else "Disabled CH user"))
         else:
@@ -1128,7 +1146,7 @@ class MAv1Implementation(MAv1DelegateBase):
             # log_event
             msg = "Granted member %s privilege %s" %  (self._get_displayname_for_member_id(member_uid, session), privilege)
             attribs = {"MEMBER" : member_uid}
-            self.logging_service.log_event(msg, attribs, member_uid,session=session)
+            self.logging_service.log_event(msg, attribs,session=session)
             chapi_audit_and_log(MA_LOG_PREFIX, msg, logging.INFO, {'user': user_email})
 
             # Email admins, new project lead/operator
@@ -1203,7 +1221,7 @@ class MAv1Implementation(MAv1DelegateBase):
             # log_event
             msg = "Revoking member %s privilege %s" %  (self._get_displayname_for_member_id(member_uid, session), privilege)
             attribs = {"MEMBER" : member_uid}
-            self.logging_service.log_event(msg, attribs, member_uid,session=session)
+            self.logging_service.log_event(msg, attribs,session=session)
             chapi_audit_and_log(MA_LOG_PREFIX, msg, logging.INFO, {'user': user_email})
 
         result = self._successReturn(was_enabled)
@@ -1274,7 +1292,7 @@ class MAv1Implementation(MAv1DelegateBase):
             # log_event
             msg = "Set member %s attribute %s to %s" %  (self._get_displayname_for_member_urn(member_urn, session), attr_name, attr_value )
             attribs = {"MEMBER" : member_uid}
-            self.logging_service.log_event(msg, attribs, member_uid,session=session)
+            self.logging_service.log_event(msg, attribs,session=session)
             chapi_audit_and_log(MA_LOG_PREFIX, msg, logging.INFO, {'user': user_email})
         result = self._successReturn(old_value)
 
@@ -1335,7 +1353,7 @@ class MAv1Implementation(MAv1DelegateBase):
             if attr_value is not None:
                 msg = msg + "=%s" % attr_value
             attribs = {"MEMBER" : member_uid}
-            self.logging_service.log_event(msg, attribs, member_uid,session=session)
+            self.logging_service.log_event(msg, attribs,session=session)
             chapi_audit_and_log(MA_LOG_PREFIX, msg, logging.INFO, {'user': user_email})
 
         if do_remove:

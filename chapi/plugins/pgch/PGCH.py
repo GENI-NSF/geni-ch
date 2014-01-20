@@ -592,7 +592,7 @@ class PGCHv1Delegate(DelegateBase):
     def GetKeys(self, client_cert, args):
         # cred is user cred
         # return list( of dict(type='ssh', key=$key))
-        # args: credential
+        # args: credential, optional: member_urn
 
         self.logger.info("Called GetKeys")
 
@@ -603,7 +603,11 @@ class PGCHv1Delegate(DelegateBase):
             if isinstance(credential, str) or isinstance(credential, unicode):
                 creds = [{'geni_type': 'geni_sfa', 'geni_value': credential}] 
 
-        member_urn = get_urn_from_cert(client_cert)
+        if 'member_urn' in args and args['member_urn'] is not None and args['member_urn'].strip() != "":
+            member_urn = args['member_urn']
+            self.logger.debug("Got member_urn arg %s", member_urn)
+        else:
+            member_urn = get_urn_from_cert(client_cert)
 
         options = {'match' : {'KEY_MEMBER' : member_urn},
                    "filter" : ['KEY_PUBLIC']

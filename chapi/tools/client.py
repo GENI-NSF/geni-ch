@@ -26,6 +26,7 @@ import json
 import optparse
 from omnilib.util.dossl import _do_ssl
 import xmlrpclib
+import logging
 from omnilib.frameworks.framework_base import Framework_Base
 from portal_client import *
 
@@ -35,7 +36,7 @@ class MAClientFramework(Framework_Base):
     def __init__(self, config, opts):
         Framework_Base.__init__(self, config)
         self.config = config
-        self.logger = None
+        self.logger = logging.getLogger('client')
         self.fwtype = "MA Ciient"
         self.opts = opts
 
@@ -123,7 +124,9 @@ def main(args = sys.argv, do_print=True):
     config = {'cert' : opts.cert, 'key' : opts.key}
 
     framework = MAClientFramework(config, {})
-    client = framework.make_client(opts.url, opts.key, opts.cert, verbose=False)
+    client = framework.make_client(opts.url, opts.key, opts.cert, 
+                                   allow_none=True,
+                                   verbose=False)
     fcn = eval("client.%s" % opts.method)
     
     # Methods that take no arguments
@@ -300,6 +303,15 @@ def main(args = sys.argv, do_print=True):
             _do_ssl(framework, suppress_errors, reason, fcn, opts.type, \
                         opts.urn, opts.credentials, client_options)
 
+    # Portal query
+    elif opts.method in ['portal_query']:
+        options = {}
+        member_eppn = opts.string_arg
+        project_id = opts.uuid_arg
+        slice_id = opts.uuid2_arg
+        (result, msg) = \
+            _do_ssl(framework, suppress_errors, reason, fcn, \
+                        member_eppn, project_id, slice_id)
 
 #    def add_member_privilege(self, cert, member_uid, privilege, credentials, options):
 

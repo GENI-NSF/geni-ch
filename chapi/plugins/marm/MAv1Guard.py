@@ -66,6 +66,19 @@ class MAv1Guard(ABACGuardBase):
                                               MA.identifying_fields), \
                                 select_fields(MA.standard_plus_optional, \
                                               MA.match_fields)), 
+        'lookup_public_identifying_member_info' : \
+            LookupArgumentCheck(select_fields(MA.standard_fields, \
+                                              MA.public_fields+MA.identifying_fields), \
+                                select_fields(MA.optional_fields, \
+                                              MA.public_fields+MA.identifying_fields), \
+                                select_fields(MA.standard_plus_optional, \
+                                              MA.match_fields)), 
+        'lookup_login_info' : \
+            LookupArgumentCheck(select_fields(MA.standard_fields, \
+                                                  MA.public_fields+MA.identifying_fields+MA.private_fields),
+                                select_fields(MA.optional_fields, 
+                                                  MA.public_fields+MA.identifying_fields+MA.private_fields),
+                                ['_GENI_MEMBER_EPPN']),
         'get_credentials' : SimpleArgumentCheck({'member_urn' : 'URN'}),
         'update_member_info' :  \
             UpdateArgumentCheck({}, {}, {'member_urn' : "URN"}),
@@ -124,12 +137,27 @@ class MAv1Guard(ABACGuardBase):
                 "ME.MAY_LOOKUP_IDENTIFYING_MEMBER_INFO_$SUBJECT<-ME.SHARES_PROJECT_$SUBJECT",
                 "ME.MAY_LOOKUP_IDENTIFYING_MEMBER_INFO_$SUBJECT<-ME.HAS_PENDING_REQUEST_ON_SHARED_PROJECT_$SUBJECT"
                 ], assert_shares_project, standard_subject_extractor),
+        'lookup_public_identifying_member_info' : \
+            SubjectInvocationCheck([
+                "ME.MAY_LOOKUP_PUBLIC_IDENTIFYING_MEMBER_INFO<-ME.IS_AUTHORITY"
+                "ME.MAY_LOOKUP_PUBLIC_IDENTIFYING_MEMBER_INFO<-ME.IS_OPERATOR", 
+                "ME.MAY_LOOKUP_PUBLIC_IDENTIFYING_MEMBER_INFO_$SUBJECT<-ME.IS_$SUBJECT",
+                "ME.MAY_LOOKUP_PUBLIC_IDENTIFYING_MEMBER_INFO_$SUBJECT<-ME.IS_LEAD_AND_SEARCHING_UID_$SUBJECT",
+                "ME.MAY_LOOKUP_PUBLIC_IDENTIFYING_MEMBER_INFO<-ME.IS_LEAD_AND_SEARCHING_EMAIL", 
+                "ME.MAY_LOOKUP_PUBLIC_IDENTIFYING_MEMBER_INFO_$SUBJECT<-ME.SHARES_PROJECT_$SUBJECT",
+                "ME.MAY_LOOKUP_PUBLIC_IDENTIFYING_MEMBER_INFO_$SUBJECT<-ME.HAS_PENDING_REQUEST_ON_SHARED_PROJECT_$SUBJECT"
+                ], assert_shares_project, standard_subject_extractor),
         'lookup_private_member_info' : \
             SubjectInvocationCheck([
                 "ME.MAY_LOOKUP_PRIVATE_MEMBER_INFO<-ME.IS_AUTHORITY", 
                 "ME.MAY_LOOKUP_PRIVATE_MEMBER_INFO<-ME.IS_OPERATOR", 
                 "ME.MAY_LOOKUP_PRIVATE_MEMBER_INFO_$SUBJECT<-ME.IS_$SUBJECT"
                 ], None, standard_subject_extractor), 
+        'lookup_login_info' : \
+            SubjectInvocationCheck([
+                "ME.MAY_LOOKUP_LOGIN_INFO<-ME.IS_AUTHORITY", 
+                "ME.MAY_LOOKUP_LOGIN_INFO<-ME.IS_OPERATOR"
+                ], None, None), 
         'get_credentials' : \
             SubjectInvocationCheck([
                 "ME.MAY_GET_CREDENTIALS<-ME.IS_AUTHORITY", 

@@ -53,6 +53,8 @@ optional_fields = {
     "_GENI_MEMBER_INSIDE_PRIVATE_KEY": {"OBJECT": "MEMBER", "TYPE": "KEY", "PROTECT": "PRIVATE"},
     "_GENI_IDENTIFYING_MEMBER_UID": {"OBJECT": "MEMBER", "TYPE" : "UID", \
           "UPDATE" : False, "PROTECT" : "IDENTIFYING"},
+    "_GENI_PRIVATE_MEMBER_UID": {"OBJECT": "MEMBER", "TYPE" : "UID", \
+          "UPDATE" : False, "PROTECT" : "PRIVATE"},
     "_GENI_ENABLE_WIMAX" : {"OBJECT" : "MEMBER", "TYPE" : "UID", \
                                 "UPDATE" : False, "PROTECT" : "PUBLIC"},
     "_GENI_ENABLE_WIMAX_BUTTON" : {"OBJECT" : "MEMBER", "TYPE" : "BOOLEAN", \
@@ -103,6 +105,7 @@ field_mapping = {
     "_GENI_MEMBER_INSIDE_CERTIFICATE": "certificate",
     "_GENI_MEMBER_INSIDE_PRIVATE_KEY": "private_key",
     "_GENI_IDENTIFYING_MEMBER_UID": "member_id",
+    "_GENI_PRIVATE_MEMBER_UID": "member_id",
     "_GENI_ENABLE_WIMAX" : "enable_wimax",
     "_GENI_ENABLE_WIMAX_BUTTON" : "enable_wimax_button",
     "_GENI_ENABLE_IRODS" : "enable_irods",
@@ -162,7 +165,9 @@ identifying_fields = [
 ]
 
 private_fields = [
-    "_GENI_MEMBER_SSL_PRIVATE_KEY", "_GENI_MEMBER_INSIDE_PRIVATE_KEY"
+    "_GENI_MEMBER_SSL_PRIVATE_KEY", "_GENI_MEMBER_INSIDE_PRIVATE_KEY",
+    "_GENI_PRIVATE_MEMBER_UID",
+
 ]
 
 match_fields = [
