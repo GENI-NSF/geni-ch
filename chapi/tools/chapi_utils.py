@@ -65,3 +65,16 @@ def send_email(to_list,fromaddr,replyaddr,subject,msgbody,cc_list=None):
     s.sendmail(fromaddr,toaddrs,msg.as_string())
     s.quit()
 
+# Grab the githash (current code tag) of running CHAPI instance (for get_version)
+def get_code_tag(log_prefix):
+    code_tag_file = '/etc/geni-chapi/geni-chapi-githash'
+    try:
+        with open(code_tag_file, 'r') as f:
+            code_tag = f.readline().strip()
+    except:
+        msg = 'Cannot read code tag file %r.'
+        msg = msg % (code_tag_file)
+        chapi_error(log_prefix, msg)
+        code_tag = 'unknown'
+
+    return code_tag
