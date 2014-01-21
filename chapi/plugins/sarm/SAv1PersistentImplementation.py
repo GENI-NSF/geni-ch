@@ -21,7 +21,7 @@
 # IN THE WORK.
 #----------------------------------------------------------------------
 
-from datetime import datetime, timedelta
+import datetime as dt
 from dateutil.relativedelta import relativedelta
 import dateutil.parser
 import dateutil.tz
@@ -484,7 +484,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                 raise CHAPIv1DuplicateError('There already exists a slice named ' +
                                             name + ' in project ' + project_name)
 
-        slice.creation = datetime.utcnow()
+        slice.creation = dt.datetime.utcnow()
         # FIXME: Why check if slice.expiration is set. We are creating the slice here - how can it be set?
         if not slice.expiration:
             # FIXME: Externalize the #7 here
@@ -574,10 +574,10 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         if slice_info.expired:
             raise CHAPIv1ArgumentError('Cannot update or renew an expired slice (%s expired at %s)' % (slice_urn, slice_info.expiration.isoformat()))
         slice_expiration = slice_info.expiration
-        max_exp = datetime.utcnow() + relativedelta(days=SA.SLICE_MAX_RENEWAL_DAYS)
+        max_exp = dt.datetime.utcnow() + relativedelta(days=SA.SLICE_MAX_RENEWAL_DAYS)
 #        # If this is marked as a long lived slice, then
 #        if True or slice_info.long_lived:
-#            max_exp = datetime.max
+#            max_exp = dt.datetime.max
         new_exp = None # A dateutil for the new slice expiration
 
         for field, value in options['fields'].iteritems():
@@ -680,7 +680,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         project = Project()
         for key, value in options["fields"].iteritems():
             setattr(project, SA.project_field_mapping[key], value)
-        project.creation = datetime.utcnow()
+        project.creation = dt.datetime.utcnow()
         # FIXME: Must project expiration be in UTC?
         if project.expiration == "": project.expiration=None
         project.project_id = str(uuid.uuid4())
@@ -769,7 +769,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                     newtime = newtime.astimezone(tz_utc)
                     newtime = newtime.replace(tzinfo=None)
                 curtime = row.expiration
-                if newtime - curtime > timedelta.resolution:
+                if newtime - curtime > dt.timedelta.resolution:
                     change = " expiration"
         if options['fields'].has_key('PROJECT_DESCRIPTION') and \
                 options['fields']['PROJECT_DESCRIPTION'] != row.project_purpose:
@@ -1389,7 +1389,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         for field, value in options['fields'].iteritems():
            setattr(sliver, SA.sliver_info_field_mapping[field], value)
         if not sliver.creation:
-            sliver.creation = datetime.utcnow()
+            sliver.creation = dt.datetime.utcnow()
         if not sliver.expiration:
             sliver.expiration = sliver.creation + relativedelta(days=7)
         return self.finish_create(session, sliver, SA.sliver_info_field_mapping)
@@ -1438,7 +1438,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                 request_type = request_type, \
                 request_text = request_text, \
                 request_details = request_details, \
-                creation_timestamp = datetime.utcnow(), \
+                creation_timestamp = dt.datetime.utcnow(), \
                 status = PENDING_STATUS, \
                 requestor = client_uuid)
         result = session.execute(ins)
@@ -1466,7 +1466,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         update_values = {'status' : resolution_status, 
                          'resolver' : client_uuid, 
                          'resolution_description' : resolution_description,
-                         'resolution_timestamp' : datetime.utcnow() 
+                         'resolution_timestamp' : dt.datetime.utcnow() 
                          }
         update = self.db.PROJECT_REQUEST_TABLE.update(values=update_values)
         update = update.where(self.db.PROJECT_REQUEST_TABLE.c.id == request_id)
@@ -1627,7 +1627,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         self._expire_project_invitations(session)
 
         invite_id = str(uuid.uuid4())
-        expiration = datetime.utcnow() + relativedelta(hours=SA.PROJECT_DEFAULT_INVITATION_EXPIRATION_HOURS)
+        expiration = dt.datetime.utcnow() + relativedelta(hours=SA.PROJECT_DEFAULT_INVITATION_EXPIRATION_HOURS)
         ins = self.db.PROJECT_INVITATION_TABLE.insert().values(expiration=expiration, project_id=project_id, role=role, invite_id=invite_id)
         session.execute(ins)
 
@@ -1674,7 +1674,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
     # Remove all project invitations that whose expiration has passed
     def _expire_project_invitations(self, session):
 
-        now = datetime.utcnow()
+        now = dt.datetime.utcnow()
         q = session.query(ProjectInvitation)
         q = q.filter(ProjectInvitation.expiration < now)
 #        chapi_debug(SA_LOG_PREFIX, "expire_project_invitations Q = %s" % str(q))
