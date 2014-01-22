@@ -718,7 +718,7 @@ class MAv1Implementation(MAv1DelegateBase):
         for row in rows:
             if row.value not in keys:
                 keys[row.value] = []
-            row_value = row.value
+
             keys[row.value].append(construct_result_row(row, \
                          selected_columns, MA.key_field_mapping))
             # Per federation API, the KEY ID must be exported as a string
