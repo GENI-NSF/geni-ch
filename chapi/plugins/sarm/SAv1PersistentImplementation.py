@@ -240,8 +240,13 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
             q = session.query(self.db.SLICE_TABLE.c['slice_id'])
             q = q.filter(self.db.SLICE_TABLE.c['slice_urn']==slice_urn)
             q = q.order_by(desc(self.db.SLICE_TABLE.c['creation']))
+            # FIXME: Only non expired?
+#            q = q.filter(self.db.SLICE_TABLE.c.expired == 'f')
             rows = q.all()
-            slice_id = rows[0][0]
+            if len(rows) > 0:
+                slice_id = rows[0][0]
+            else:
+                raise CHAPIv1ArgumentError("Unknown slice %s - cannot lookup members" % slice_urn)
 
         result = self.lookup_members(client_cert, self.db.SLICE_TABLE, 
                                      self.db.SLICE_MEMBER_TABLE, slice_urn, "slice_urn", 
