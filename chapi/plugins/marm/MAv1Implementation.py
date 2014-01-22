@@ -866,6 +866,14 @@ class MAv1Implementation(MAv1DelegateBase):
         tolist = [self.portal_admin_email]
         send_email(tolist, self.ch_from_email,self.portal_admin_email,subject,msgbody)
 
+    def is_enabled(self, member_id, session):
+        q = session.query(MemberAttribute.value).\
+            filter(MemberAttribute.member_id == member_id).\
+            filter(MemberAttribute.name == MA.field_mapping['_GENI_MEMBER_ENABLED'])
+        rows = q.all()
+
+        return (len(rows)==0 or rows[0][0] == 'y')
+
     # enable/disable a user/member  (private)
     def enable_user(self, client_cert, member_urn, enable_sense, 
                     credentials, options, session):
@@ -883,15 +891,7 @@ class MAv1Implementation(MAv1DelegateBase):
         member_id = uids[0]
 
         # find the old value
-        q = session.query(MemberAttribute.value).\
-            filter(MemberAttribute.member_id == member_id).\
-            filter(MemberAttribute.name == MA.field_mapping['_GENI_MEMBER_ENABLED'])
-        rows = q.all()
-
-        if len(rows)==0:
-            was_enabled = True
-        else:
-            was_enabled = (rows[0][0] == 'y')
+        was_enabled = self.is_enabled(member_id, session)
 
         # set the new value
         enabled_str = 'y' if enable_sense else 'n'
@@ -923,11 +923,7 @@ class MAv1Implementation(MAv1DelegateBase):
         client_uuid = get_uuid_from_cert(client_cert)
         client_name = get_name_from_urn(client_urn)
 
-        q = session.query(MemberAttribute.value).\
-            filter(MemberAttribute.member_id == client_uuid).\
-            filter(MemberAttribute.name == MA.field_mapping['_GENI_MEMBER_ENABLED'])
-        rows = q.all()
-        is_enabled = (count(rows)==0 or rows[0][0] == 'y')
+        is_enabled = self.is_enabled(client_uuid, session)
 
         if is_enabled:
             chapi_debug(MA_LOG_PREFIX, "CUE: user '%s' (%s) enabled" % (client_name, client_urn))
