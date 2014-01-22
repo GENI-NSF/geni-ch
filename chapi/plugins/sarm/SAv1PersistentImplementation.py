@@ -1197,6 +1197,17 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                 if not member_obj.member_id:
                     raise CHAPIv1ArgumentError('No such member ' + \
                         member[member_str])
+
+                # If this is an addition to a slice, first validate
+                # that the member is a member of the relevant project
+                if member_str == 'SLICE_MEMBER':
+                    q = session.query(ProjectMember, Slice)
+                    q = q.filter(Slice.slice_id == id)
+                    q = q.filter(Slice.project_id == ProjectMember.project_id)
+                    q = q.filter(ProjectMember.member_id == member_obj.member_id)
+                    if len(q.all()) == 0:
+                        raise CHAPIv1ArgumentError("Cannot add member to slice when not in project. Member %s not in project for slice %s" % (urn_to_display_name[member[member_str]], urn))
+
                 member_obj.role = self.get_role_id(session, member[role_str])
                 session.add(member_obj)
                 # check that this is not a duplicate
