@@ -1086,6 +1086,9 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         self.update_slice_expirations(client_uuid, session)
 
         slice_id = self.get_slice_id(session, "slice_urn", slice_urn) # MIK: only non-expired slice
+        if slice_id is None:
+            # No unexpired slice by that URN, so cannot modify membership
+            raise CHAPIv1ArgumentError('Cannot modify membership of expired slice %s' % slice_urn)
         old_slice_lead = self.get_slice_lead(session, slice_id)
 
         result = self.modify_membership(client_cert, session, SliceMember, client_uuid, \
@@ -1187,6 +1190,9 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
             for member in options['members_to_add']:
                 member_obj = member_class()
                 setattr(member_obj, id_field, id)
+                if not urn_to_id.has_key(member[member_str]):
+                    raise CHAPIv1ArgumentError('No such member ' + \
+                        member[member_str])
                 member_obj.member_id = urn_to_id[member[member_str]]
                 if not member_obj.member_id:
                     raise CHAPIv1ArgumentError('No such member ' + \
@@ -1204,6 +1210,9 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         # then, the updates
         if 'members_to_change' in options:
             for member in options['members_to_change']:
+                if not urn_to_id.has_key(member[member_str]):
+                    raise CHAPIv1ArgumentError('No such member ' + \
+                        member[member_str])
                 q = session.query(member_class)
                 q = q.filter(eval(id_str) == id)
                 q = q.filter(member_class.member_id == \
