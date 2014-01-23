@@ -248,8 +248,13 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
             q = session.query(self.db.SLICE_TABLE.c['slice_id'])
             q = q.filter(self.db.SLICE_TABLE.c['slice_urn']==slice_urn)
             q = q.order_by(desc(self.db.SLICE_TABLE.c['creation']))
+            # FIXME: Only non expired?
+#            q = q.filter(self.db.SLICE_TABLE.c.expired == 'f')
             rows = q.all()
-            slice_id = rows[0][0]
+            if len(rows) > 0:
+                slice_id = rows[0][0]
+            else:
+                raise CHAPIv1ArgumentError("Unknown slice %s - cannot lookup members" % slice_urn)
 
         result = self.lookup_members(client_cert, self.db.SLICE_TABLE, 
                                      self.db.SLICE_MEMBER_TABLE, slice_urn, "slice_urn", 
@@ -1094,6 +1099,9 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         self.update_slice_expirations(client_uuid, session)
 
         slice_id = self.get_slice_id(session, "slice_urn", slice_urn) # MIK: only non-expired slice
+        if slice_id is None:
+            # No unexpired slice by that URN, so cannot modify membership
+            raise CHAPIv1ArgumentError('Cannot modify membership of expired slice %s' % slice_urn)
         old_slice_lead = self.get_slice_lead(session, slice_id)
 
         result = self.modify_membership(client_cert, session, SliceMember, client_uuid, \
@@ -1195,11 +1203,29 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
             for member in options['members_to_add']:
                 member_obj = member_class()
                 setattr(member_obj, id_field, id)
+                if not urn_to_id.has_key(member[member_str]):
+                    raise CHAPIv1ArgumentError('No such member ' + \
+                        member[member_str])
                 member_obj.member_id = urn_to_id[member[member_str]]
                 if not member_obj.member_id:
                     raise CHAPIv1ArgumentError('No such member ' + \
                         member[member_str])
+
+                # If this is an addition to a slice, first validate
+                # that the member is a member of the relevant project
+                if member_str == 'SLICE_MEMBER':
+                    q = session.query(ProjectMember, Slice)
+                    q = q.filter(Slice.slice_id == id)
+                    q = q.filter(Slice.project_id == ProjectMember.project_id)
+                    q = q.filter(ProjectMember.member_id == member_obj.member_id)
+                    if len(q.all()) == 0:
+                        raise CHAPIv1ArgumentError("Cannot add member to slice when not in project. Member %s not in project for slice %s" % (urn_to_display_name[member[member_str]], urn))
+
                 member_obj.role = self.get_role_id(session, member[role_str])
+                if member_obj.role is None:
+                    raise CHAPIv1ArgumentError("Unknown role %s. Cannot add member %s to %s" % (member[role_str],
+                                                                                                member[member_str],
+                                                                                                text_str))
                 session.add(member_obj)
                 # check that this is not a duplicate
                 q = session.query(member_class)
@@ -1212,6 +1238,9 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         # then, the updates
         if 'members_to_change' in options:
             for member in options['members_to_change']:
+                if not urn_to_id.has_key(member[member_str]):
+                    raise CHAPIv1ArgumentError('No such member ' + \
+                        member[member_str])
                 q = session.query(member_class)
                 q = q.filter(eval(id_str) == id)
                 q = q.filter(member_class.member_id == \
@@ -1219,7 +1248,11 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                 if len(q.all()) == 0:
                     raise CHAPIv1ArgumentError('Cannot change role of member ' + \
                              member[member_str] + ' not in ' + text_str)
-                q.update({"role" : self.get_role_id(session, member[role_str])})
+                role = self.get_role_id(session, member[role_str])
+                if role is None:
+                    raise CHAPIv1ArgumentError("Unknown role %s. Cannot change member %s role in %s" % (member[role_str],
+                                                                                                member[member_str], text_str))
+                q.update({"role" : role})
 
         # before committing, check that there is exactly one lead
         q = session.query(member_class)
@@ -1342,8 +1375,10 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         return None
 
     def get_role_id(self, session, role):
+        if role is None or str(role).strip() == "":
+            return None
         q = session.query(self.db.ROLE_TABLE.c.id)
-        q = q.filter(self.db.ROLE_TABLE.c.name == role)
+        q = q.filter(self.db.ROLE_TABLE.c.name == str(role).upper())
         rows = q.all()
         if len(rows) > 0:
            return rows[0].id

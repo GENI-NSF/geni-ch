@@ -24,18 +24,19 @@
 import optparse
 import os, sys
 import sfa.trust.certificate
+import chapi_log
 from cert_utils import *
 from ABACManager import *
 
 
 # Determine if the given method context is 'speaks-for'
 # That is:
-#     1. There is a 'speaking_for' option with the value of the 
+#     1. There is a 'speaking_for' option with the value of the
 #          URN of the spoken-for user
 #     2. There is a speaks-for credential in the list of credentials 
 #         that is signed by the spoken-for user authorizing the 
 #         speaking entity to speak for it
-#     3. The URN of the 'speaking_for' option matches the URN 
+#     3. The URN of the 'speaking_for' option matches the URN
 #         in the speaks-for credential
 #     4. The certificate of the spoken-for user is in the 
 #         list of credentials [Note: This one is still open to debate...]
@@ -67,9 +68,10 @@ def determine_speaks_for(client_cert, credentials, options):
             break
 
     # Pull out speaking_for option
+    OPTION_SPEAKING_FOR = 'speaking_for'
     speaking_for = None
-    if options.has_key('speaking_for'):
-        speaking_for = options['speaking_for']
+    if options.has_key(OPTION_SPEAKING_FOR):
+        speaking_for = options[OPTION_SPEAKING_FOR]
 
     # Check arguments:
 
@@ -108,10 +110,12 @@ def determine_speaks_for(client_cert, credentials, options):
 
     # Run the proof in a separate process to avoid memory issues
     ok, proof = execute_abac_query(query, certs_by_name, [speaks_for_credential])
-
     if not ok:
 #        chapi_info('SF', "PROOF = %s" % proof)
         raise Exception("Speaks-For credential does not assert that agent allows client to speak for agent")
+
+    msg = "%r is speaking for %r" % (client_urn, agent_urn)
+    chapi_info('SPEAKSFOR', msg)
 
     # Update options
     revised_options['speaking_as'] = client_urn

@@ -622,12 +622,13 @@ class PGCHv1Delegate(DelegateBase):
         if not ssh_keys_value or \
                 not ssh_keys_value.has_key(member_urn):
             user_email = get_email_from_cert(client_cert)
-            msg = "GetKeys: No entry for member %s from lookup_keys" % member_urn
+            msg = "GetKeys: No entry or keys found for member %s from lookup_keys" % member_urn
             chapi_warn(PGCH_LOG_PREFIX, msg, {'user': user_email})
-            raise CHAPIv1ServerError(msg)
-
-        keys = [{'type' : 'ssh' , 'key' : ssh_key['KEY_PUBLIC']} \
-                    for ssh_key in ssh_keys_value[member_urn]]
+            keys = []
+#            raise CHAPIv1ServerError(msg)
+        else:
+            keys = [{'type' : 'ssh' , 'key' : ssh_key['KEY_PUBLIC']} \
+                        for ssh_key in ssh_keys_value[member_urn]]
         
         return self._successReturn(keys)
 
