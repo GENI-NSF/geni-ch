@@ -22,8 +22,8 @@
 #----------------------------------------------------------------------
 
 credential_types = [
-    {"type" : "geni_sfa", "version" : 3},
-    {"type" : "geni_abac", "version" : 1}
+    {"type" : "geni_sfa", "version" : "3"},
+    {"type" : "geni_abac", "version" : "1"}
     ]
 
 standard_fields = {
