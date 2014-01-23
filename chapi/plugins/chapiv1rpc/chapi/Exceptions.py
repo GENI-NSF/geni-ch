@@ -37,7 +37,7 @@ class CHAPIv1BaseError(CoreException):
 
 # Standard error codes
 NO_ERROR = 0
-AUTENTICATION_ERROR = 1
+AUTHENTICATION_ERROR = 1
 AUTHORIZATION_ERROR = 2
 ARGUMENT_ERROR = 3
 DATABASE_ERROR = 4
@@ -73,10 +73,11 @@ class CHAPIv1DatabaseError(CHAPIv1BaseError):
                                                  'DATABASE', 'DATABASE_ERROR', \
                                                  comment)
 
-# Exception for a database error (should return the database details)
+# Exception for a duplicate entry error (like creating a slice where
+# the name is already in use)
 class CHAPIv1DuplicateError(CHAPIv1BaseError):
     def __init__(self, comment):
-        super(self.__class__, self).__init__(DATABASE_ERROR, \
+        super(self.__class__, self).__init__(DUPLICATE_ERROR, \
                                              'DUPLICATE', 'DUPLICATE_ERROR', \
                                              comment)
 

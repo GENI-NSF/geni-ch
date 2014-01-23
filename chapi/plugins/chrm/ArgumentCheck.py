@@ -259,7 +259,7 @@ class FieldsArgumentCheck(ArgumentCheck):
             # There must be an details entry for this field in the specs
             if not field_detail_key in field_details.keys():
                 raise CHAPIv1ArgumentError("Required field detail " + \
-                                               " key missing for %s: %s" % \
+                                               "key missing for %s: %s" % \
                                                (field, field_detail_key))
 
             # The field detail must be one of the allowed values
