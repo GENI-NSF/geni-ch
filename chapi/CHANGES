@@ -12,6 +12,7 @@
   * Quiet error logs when PGCH !GetKeys gets no keys (#212)
   * Check when adding member to a slice that they are a member of the
     project (#214)
+  * Validate roles supplied to modify project or slice membership (#216)
   * Log when handling a speaks-for credential (#217)
 
 == 1.3 ==
