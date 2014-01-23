@@ -356,7 +356,7 @@ def lookup_operator_privilege(user_urn, session):
 
     rows = q.all()
     is_operator = (len(rows)>0)
-    chapi_debug('UTILS', 'lookup_operator_privilege: '+user_urn+" = "+str(is_operator))
+#    chapi_debug('UTILS', 'lookup_operator_privilege: '+user_urn+" = "+str(is_operator))
     timed_cache_register(cache, user_urn, is_operator)
     return is_operator
 
@@ -517,8 +517,8 @@ def assert_shares_slice(caller_urn, member_urns, label, options, arguments,
     ma1 = aliased(db.MEMBER_ATTRIBUTE_TABLE)
     ma2 = aliased(db.MEMBER_ATTRIBUTE_TABLE)
 
-    chapi_debug('UTILS', "assert_shares_slice: %s %s %s %s" % \
-                   (caller_urn, member_urns, label, options))
+#    chapi_debug('UTILS', "assert_shares_slice: %s %s %s %s" % \
+#                   (caller_urn, member_urns, label, options))
 
     q = session.query(sm1.c.slice_id, sm2.c.slice_id, ma1.c.value, ma2.c.value)
     q = q.filter(sm1.c.slice_id == sm2.c.slice_id)
