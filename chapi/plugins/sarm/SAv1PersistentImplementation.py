@@ -1214,6 +1214,10 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                         raise CHAPIv1ArgumentError("Cannot add member to slice when not in project. Member %s not in project for slice %s" % (urn_to_display_name[member[member_str]], urn))
 
                 member_obj.role = self.get_role_id(session, member[role_str])
+                if member_obj.role is None:
+                    raise CHAPIv1ArgumentError("Unknown role %s. Cannot add member %s to %s" % (member[role_str],
+                                                                                                member[member_str],
+                                                                                                text_str))
                 session.add(member_obj)
                 # check that this is not a duplicate
                 q = session.query(member_class)
@@ -1236,7 +1240,11 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                 if len(q.all()) == 0:
                     raise CHAPIv1ArgumentError('Cannot change role of member ' + \
                              member[member_str] + ' not in ' + text_str)
-                q.update({"role" : self.get_role_id(session, member[role_str])})
+                role = self.get_role_id(session, member[role_str])
+                if role is None:
+                    raise CHAPIv1ArgumentError("Unknown role %s. Cannot change member %s role in %s" % (member[role_str],
+                                                                                                member[member_str], text_str))
+                q.update({"role" : role})
 
         # before committing, check that there is exactly one lead
         q = session.query(member_class)
@@ -1359,8 +1367,10 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         return None
 
     def get_role_id(self, session, role):
+        if role is None or str(role).strip() == "":
+            return None
         q = session.query(self.db.ROLE_TABLE.c.id)
-        q = q.filter(self.db.ROLE_TABLE.c.name == role)
+        q = q.filter(self.db.ROLE_TABLE.c.name == str(role).upper())
         rows = q.all()
         if len(rows) > 0:
            return rows[0].id
