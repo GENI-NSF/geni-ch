@@ -24,6 +24,7 @@
 import optparse
 import os, sys
 import sfa.trust.certificate
+import chapi_log
 from cert_utils import *
 from ABACManager import *
 
@@ -103,9 +104,11 @@ def determine_speaks_for(client_cert, credentials, options):
 
     # Run the proof in a separate process to avoid memory issues
     ok, proof = execute_abac_query(query, certs_by_name, [speaks_for_credential])
-
     if not ok:
         raise Exception("Speaks-For credential does not assert that agent allows client to speak for agent")
+
+    msg = "%r is speaking for %r" % (client_urn, agent_urn)
+    chapi_info('SPEAKSFOR', msg)
 
     # Update options
     revised_options['speaking_as'] = client_urn
