@@ -148,13 +148,12 @@ class SAv1Guard(ABACGuardBase):
 
         'get_credentials' : \
             SubjectInvocationCheck([
-                #"ME.MAY_GET_CREDENTIALS_$SUBJECT<-ME.IS_LEAD_$SUBJECT", 
-                #"ME.MAY_GET_CREDENTIALS_$SUBJECT<-ME.IS_ADMIN_$SUBJECT",
-                #"ME.MAY_GET_CREDENTIALS_$SUBJECT<-ME.IS_MEMBER_$SUBJECT",
-                #"ME.MAY_GET_CREDENTIALS_$SUBJECT<-ME.IS_OPERATOR_$SUBJECT",
+                "ME.MAY_GET_CREDENTIALS_$SUBJECT<-ME.IS_LEAD_$SUBJECT", 
+                "ME.MAY_GET_CREDENTIALS_$SUBJECT<-ME.IS_ADMIN_$SUBJECT",
+                "ME.MAY_GET_CREDENTIALS_$SUBJECT<-ME.IS_MEMBER_$SUBJECT",
                 "ME.MAY_GET_CREDENTIALS<-ME.IS_OPERATOR",
-                "ME.MAY_GET_CREDENTIALS_$SUBJECT<-ME.BELONGS_TO_$SUBJECT", 
-                ], assert_belongs_to_slice, slice_urn_extractor),
+                #"ME.MAY_GET_CREDENTIALS_$SUBJECT<-ME.BELONGS_TO_$SUBJECT", 
+                ], assert_slice_role, slice_urn_extractor),
 
         'modify_slice_membership' : 
             SubjectInvocationCheck([
