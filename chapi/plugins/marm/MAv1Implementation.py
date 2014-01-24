@@ -236,8 +236,8 @@ class MAv1Implementation(MAv1DelegateBase):
         else:
             q = q.filter(MemberAttribute.value == value)
 
-        chapi_debug(MA_LOG_PREFIX, "get_uids_for_attrs: ATTR = %s, MAP = %s, VALUE = %s" % \
-                       (attr, MA.field_mapping[attr], value))
+#        chapi_debug(MA_LOG_PREFIX, "get_uids_for_attrs: ATTR = %s, MAP = %s, VALUE = %s" % \
+#                       (attr, MA.field_mapping[attr], value))
 #        chapi_debug(MA_LOG_PREFIX, "get_uids_for_attrs: ATTR = %s, MAP = %s, VALUE = %s, Q = %s" % \
 #                       (attr, MA.field_mapping[attr], value, q))
         rows = q.all()
@@ -299,8 +299,8 @@ class MAv1Implementation(MAv1DelegateBase):
                 for attr, value in match_criteria.iteritems()]
         uids = set.intersection(*uids)
 
-        chapi_debug(MA_LOG_PREFIX, "UIDS = %s COLS = %s CRIT = %s" % \
-                        (uids, selected_columns, match_criteria))
+#        chapi_debug(MA_LOG_PREFIX, "UIDS = %s COLS = %s CRIT = %s" % \
+#                        (uids, selected_columns, match_criteria))
 
         # then, get the values
         members = {}
