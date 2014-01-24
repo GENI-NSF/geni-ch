@@ -860,6 +860,7 @@ def project_urn_extractor(options, arguments, session):
 
 # Extract slice urn from options or arguments
 def slice_urn_extractor(options, arguments, session):
+    slice_urn = None
     if 'slice_urn' in arguments:
         slice_urn = arguments['slice_urn']
     elif 'fields' in options and 'SLICE_URN' in options['fields']:
