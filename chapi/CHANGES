@@ -14,6 +14,7 @@
     project (#214)
   * Validate roles supplied to modify project or slice membership (#216)
   * Log when handling a speaks-for credential (#217)
+  * Slice auditors cannot call get_credential to get a slice cred (#219)
 
 == 1.3 ==
   * Update copyright notices to 2014 (#199)
