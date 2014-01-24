@@ -1418,7 +1418,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         if not sliver.creation:
             sliver.creation = datetime.utcnow()
         if not sliver.expiration:
-            sliver.expiration = sliver.creation + relativedelta(days=7)
+            sliver.expiration = sliver.creation + relativedelta(days=7) # FIXME: Externalize
         return self.finish_create(session, sliver, SA.sliver_info_field_mapping)
 
     def delete_sliver_info(self, client_cert, sliver_urn, \
@@ -1426,6 +1426,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         q = session.query(SliverInfo)
         q = q.filter(SliverInfo.sliver_urn == sliver_urn)
         q.delete(synchronize_session='fetch')
+        # API says return True if succeeded
         return self._successReturn(True)
 
     def update_sliver_info(self, client_cert, sliver_urn, \
@@ -1435,7 +1436,8 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         vals = {}
         for field, value in options['fields'].iteritems():
            vals[SA.sliver_info_field_mapping[field]] = value
-        q.update(vals)
+        updateCount = q.update(vals)
+        # API says return: None
         return self._successReturn(True)
 
     def lookup_sliver_info(self, client_cert, credentials, options, session):
