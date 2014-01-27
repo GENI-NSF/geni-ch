@@ -7,7 +7,7 @@
 == 1.4 ==
   * Ignore repeated requests to join a project (#187)
   * Support looking up others' public SSH keys in PGCH (#208)
-  * Do not allow modifying membership of an expired size (#210)
+  * Do not allow modifying membership of an expired slice (#210)
   * Check if member exists to give better error when modifying
     membership (#211)
   * Quiet error logs when PGCH !GetKeys gets no keys (#212)
