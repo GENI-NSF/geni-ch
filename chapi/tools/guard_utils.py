@@ -560,6 +560,7 @@ def assert_slice_role(caller_urn, urns, label, options, arguments, abac_manager,
         role_name = attribute_type_names[role]
         assertion = "ME.IS_%s_%s<-CALLER" % \
                     (role_name, flatten_urn(subject_urn))
+#        chapi_debug('UTILS', "assert_slice_role asserting %s" % assertion)
         abac_manager.register_assertion(assertion)
 
 # Get role of member on each of list of projects

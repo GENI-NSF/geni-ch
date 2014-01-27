@@ -220,7 +220,7 @@ class SAv1Guard(ABACGuardBase):
                     "ME.MAY_CREATE_SLIVER_INFO<-ME.IS_OPERATOR",
                     "ME.MAY_CREATE_SLIVER_INFO<-ME.IS_AUTHORITY",
                     "ME.MAY_CREATE_SLIVER_INFO_$SUBJECT<-ME.IS_LEAD_$SUBJECT", 
-                    "ME.MAY_CREATE_SLIVER_INFO_$SUBJECT<-ME.IS_ADMIN_$SUBJECT"
+                    "ME.MAY_CREATE_SLIVER_INFO_$SUBJECT<-ME.IS_ADMIN_$SUBJECT",
                     "ME.MAY_CREATE_SLIVER_INFO_$SUBJECT<-ME.IS_MEMBER_$SUBJECT"
                     ], assert_slice_role, slice_urn_extractor),
 
@@ -229,7 +229,7 @@ class SAv1Guard(ABACGuardBase):
                     "ME.MAY_DELETE_SLIVER_INFO<-ME.IS_OPERATOR",
                     "ME.MAY_DELETE_SLIVER_INFO<-ME.IS_AUTHORITY",
                     "ME.MAY_DELETE_SLIVER_INFO_$SUBJECT<-ME.IS_LEAD_$SUBJECT", 
-                    "ME.MAY_DELETE_SLIVER_INFO_$SUBJECT<-ME.IS_ADMIN_$SUBJECT"
+                    "ME.MAY_DELETE_SLIVER_INFO_$SUBJECT<-ME.IS_ADMIN_$SUBJECT",
                     "ME.MAY_DELETE_SLIVER_INFO_$SUBJECT<-ME.IS_MEMBER_$SUBJECT"
                     ], assert_slice_role, slice_urn_extractor),
         'update_sliver_info' : \
@@ -237,7 +237,7 @@ class SAv1Guard(ABACGuardBase):
                     "ME.MAY_UPDATE_SLIVER_INFO<-ME.IS_OPERATOR",
                     "ME.MAY_UPDATE_SLIVER_INFO<-ME.IS_AUTHORITY",
                     "ME.MAY_UPDATE_SLIVER_INFO_$SUBJECT<-ME.IS_LEAD_$SUBJECT", 
-                    "ME.MAY_UPDATE_SLIVER_INFO_$SUBJECT<-ME.IS_ADMIN_$SUBJECT"
+                    "ME.MAY_UPDATE_SLIVER_INFO_$SUBJECT<-ME.IS_ADMIN_$SUBJECT",
                     "ME.MAY_UPDATE_SLIVER_INFO_$SUBJECT<-ME.IS_MEMBER_$SUBJECT"
                     ], assert_slice_role, slice_urn_extractor),
         'lookup_sliver_info' : None,  # open - anyone can lookup
