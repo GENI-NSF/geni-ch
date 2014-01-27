@@ -5,6 +5,7 @@
 = GENI Clearinghouse Release Notes =
 
 == 1.4 ==
+  * Ignore repeated requests to join a project (#187)
   * Support looking up others' public SSH keys in PGCH (#208)
   * Do not allow modifying membership of an expired size (#210)
   * Check if member exists to give better error when modifying
