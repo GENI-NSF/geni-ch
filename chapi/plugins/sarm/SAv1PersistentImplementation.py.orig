@@ -1461,30 +1461,6 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                            request_details, credentials, options, session):
 
         client_uuid = get_uuid_from_cert(client_cert)
-
-        # Ticket 187: Check for an existing request in state pending
-        # with the same context_type, context_id, request_type,
-        # and requestor. Ignore this request if there is one.
-        q = session.query(self.db.PROJECT_REQUEST_TABLE.c.id)
-        q = q.filter(self.db.PROJECT_REQUEST_TABLE.c.context_type
-                     == context_type)
-        q = q.filter(self.db.PROJECT_REQUEST_TABLE.c.context_id == context_id)
-        q = q.filter(self.db.PROJECT_REQUEST_TABLE.c.request_type
-                     == request_type)
-        q = q.filter(self.db.PROJECT_REQUEST_TABLE.c.requestor == client_uuid)
-        q = q.filter(self.db.PROJECT_REQUEST_TABLE.c.status == PENDING_STATUS)
-        if q.count() > 0:
-            # log an error message
-            user_email = get_email_from_cert(client_cert)
-            msg = "Ignoring duplicate project join request to join %s."
-            msg = msg % (context_id)
-            chapi_info(SA_LOG_PREFIX, msg, {'user': user_email})
-            # return the ID of an existing request
-            # use 'all' instead of 'one' in case there are multiple
-            # existing requests.
-            rows = q.all()
-            return self._successReturn(rows[0].id)
-
         ins = self.db.PROJECT_REQUEST_TABLE.insert().values(
             context_type = context_type, \
                 context_id = context_id, \
