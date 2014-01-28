@@ -381,11 +381,11 @@ class MAv1Implementation(MAv1DelegateBase):
         public_result = \
             self.lookup_public_member_info(client_cert, credentials,\
                                                public_options, session)
-        chapi_info("MA", "PUB = %s" % public_result)
+        chapi_info(MA_LOG_PREFIX, "PUB = %s" % public_result)
 
         ma_handler = pm.getService('mav1handler')
         ma_guard = ma_handler.getGuard()
-#        chapi_info("MA", "MA_GUARD = %s" % ma_guard)
+#        chapi_info(MA_LOG_PREFIX, "MA_GUARD = %s" % ma_guard)
 
         # 2. If I am  asking for identifying fields (or no fields listed)
         #       accumulate a list of members for whom the guard says
@@ -402,7 +402,7 @@ class MAv1Implementation(MAv1DelegateBase):
         identifying_result = \
             self.lookup_identifying_member_info(client_cert, credentials,\
                                                     identifying_options, session)
-        chapi_info("MA", "ID = %s" % identifying_result)
+        chapi_info(MA_LOG_PREFIX, "ID = %s" % identifying_result)
 
 
         # 3. If I am asking for private fields (or no fields listed)
@@ -419,7 +419,7 @@ class MAv1Implementation(MAv1DelegateBase):
         private_result = \
             self.lookup_private_member_info(client_cert, credentials,\
                                                 private_options, session)
-        chapi_info("MA", "PRIV = %s" % private_result)
+        chapi_info(MA_LOG_PREFIX, "PRIV = %s" % private_result)
 
         # 4. Merge these three results together
         aggregate_result = {}

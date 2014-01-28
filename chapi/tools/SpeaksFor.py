@@ -105,13 +105,13 @@ def determine_speaks_for(client_cert, credentials, options):
     query = "AGENT.speaks_for(AGENT)<-CLIENT"
     certs_by_name = {"CLIENT" : client_cert, "AGENT" : agent_cert}
 
-#    chapi_info('SF', 'CBN = %s' % certs_by_name)
-#    chapi_info('SF', 'CBN = %s' % speaks_for_credential)
+    chapi_info('SF', 'CBN = %s' % certs_by_name)
+    chapi_info('SF', 'CBN = %s' % speaks_for_credential)
 
     # Run the proof in a separate process to avoid memory issues
     ok, proof = execute_abac_query(query, certs_by_name, [speaks_for_credential])
     if not ok:
-#        chapi_info('SF', "PROOF = %s" % proof)
+        chapi_info('SF', "PROOF = %s" % proof)
         raise Exception("Speaks-For credential does not assert that agent allows client to speak for agent")
 
     msg = "%r is speaking for %r" % (client_urn, agent_urn)
