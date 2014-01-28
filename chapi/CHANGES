@@ -15,6 +15,7 @@
     project (#214)
   * Validate roles supplied to modify project or slice membership (#216)
   * Log when handling a speaks-for credential (#217)
+  * Add guards to lookup_sliver_info (#218)
   * Slice auditors cannot call get_credential to get a slice cred (#219)
   * Allow slice admins, members to call sliver info methods (#220)
 
