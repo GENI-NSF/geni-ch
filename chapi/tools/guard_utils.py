@@ -330,6 +330,19 @@ def convert_member_email_to_uid(member_email, session):
     uids = [cache[em.lower()] for em in member_emails if em.lower() in cache]
     return uids
 
+def lookup_slice_urn_for_sliver_urn(sliver_urn, session):
+    db = pm.getService('chdbengine')
+    
+    q = session.query(db.SLIVER_INFO_TABLE.c.slice_urn)
+    q = q.filter(db.SLIVER_INFO_TABLE.c.sliver_urn == sliver_urn)
+    rows = q.all()
+    if len(rows) == 1:
+        return rows[0].slice_urn
+    else:
+        return None
+    
+
+
 # How long do we keep cache entries for operator privileges
 OPERATOR_CACHE_LIFETIME_SECS = 60
 # How long do we keep cache entries for PI privileges
@@ -964,3 +977,23 @@ def attribute_extractor(options, arguments, session):
         member_urn = convert_member_uid_to_urn(member_uid, session)
         return {'MEMBER_URN' : member_urn}
 
+# Support for lookup_sliver_info guards
+
+def sliver_info_extractor(options, arguments, session):
+    if 'match' in options:
+        match = options['match']
+        if 'SLIVER_INFO_CREATOR_URN' in match:
+            return {'MEMBER_URN' : match['SLIVER_INFO_CREATOR_URN']}
+        elif 'SLIVER_INFO_SLICE_URN' in match:
+            return {'SLICE_URN' : match['SLIVER_INFO_SLICE_URN']}
+        elif 'SLIVER_INFO_URN' in match:
+            sliver_urns = match['SLIVER_INFO_URN']
+            if not isinstance(sliver_urns, list): sliver_urns = [sliver_urns]
+            chapi_info("SIE", "SLIVER_URNS = %s" % sliver_urns)
+            slice_urns = [lookup_slice_urn_for_sliver_urn(sliver_urn, session)
+                          for sliver_urn in sliver_urns]
+            chapi_info("SIE", "SLICE_URNS = %s" % slice_urns)
+            return {'SLICE_URN' : slice_urns}
+    raise CHAPIv1ArgumentError("Illegal options for lookup_sliver_info: %s"%\
+                                   options)
+        
