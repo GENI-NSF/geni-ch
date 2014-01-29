@@ -5,6 +5,7 @@
 = GENI Clearinghouse Release Notes =
 
 == 1.5 ==
+ * Only honor speaking_for option to determine client intent (#222)
 
 == 1.4 ==
   * Ignore repeated requests to join a project (#187)
