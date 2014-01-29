@@ -54,12 +54,20 @@ from ABACManager import *
 #   revised_options : Original options with 
 #       {'speaking_as' : original_client_cert} added if 'speaks for'
 def determine_speaks_for(client_cert, credentials, options): 
+    # Pull out speaking_for option
+    OPTION_SPEAKING_FOR = 'speaking_for'
+    speaking_for = None
+    if options.has_key(OPTION_SPEAKING_FOR):
+        speaking_for = options[OPTION_SPEAKING_FOR]
 
-    revised_options = dict(options) # Make a copy of original options
-    agent_cert = client_cert
-    client_urn = get_urn_from_cert(client_cert)
+    # If no speaking_for option, this is not speaks-for. Return the
+    # cert and options as given
+    if not speaking_for:
+        return client_cert, options
 
     # Pull out speaks_for credential
+    # Caution -- what if more than one speaks_for credential? Continue
+    # to hunt until we find the right one?
     speaks_for_credential = None
     for credential in credentials:
         if credential['geni_type'] == 'geni_abac' and \
@@ -67,60 +75,49 @@ def determine_speaks_for(client_cert, credentials, options):
             speaks_for_credential = credential['geni_value']
             break
 
-    # Pull out speaking_for option
-    OPTION_SPEAKING_FOR = 'speaking_for'
-    speaking_for = None
-    if options.has_key(OPTION_SPEAKING_FOR):
-        speaking_for = options[OPTION_SPEAKING_FOR]
-
-    # Check arguments:
-
-    # If neither a speaks-for credential or a speaking_for option, this is not speaks-for.
-    # Return the cert and options as given
-    if not speaks_for_credential and not speaking_for:
-        return client_cert, options
-
-    # If there is either a  speaks-for credential or a speaking_for option, 
-    #    but not both, error
-#    chapi_info("SF", "SFC = %s SF = %s" % \
-#                   (speaks_for_credential, speaking_for))
-    if (speaks_for_credential and not speaking_for) or \
-            (not speaks_for_credential and speaking_for):
-        raise Exception("Must have both speaks-for-credential and speaking_for option")
+    client_urn = get_urn_from_cert(client_cert)
+    # If there is a speaking_for option but no speaks-for credential, error.
+    if speaking_for and not speaks_for_credential:
+        msg = "No speaks-for credential but %r passed option speaking_for = %r"
+        msg = msg % (client_urn, speaking_for)
+        chapi_error('SPEAKSFOR', msg)
+        raise Exception("Missing speaks-for credential.")
 
     # We are processing a speaks-for request
 
-    # Get the agent_cert
+    # Get the agent_cert (the actor being spoken for)
     agent_cert = get_cert_from_credential(speaks_for_credential)
 
-    # Get the agent_urn
+    # Get the agent_urn (of the actor being spoken for)
     agent_urn = get_urn_from_cert(agent_cert)
     
     # The agent_urn must match the speaking_for option
     if agent_urn != speaking_for:
-        raise Exception("Mismatch: speaking_for %s and agent URN %s" % (speaking_for, agent_urn))
+        raise Exception("Mismatch: speaking_for %s and agent URN %s"
+                        % (speaking_for, agent_urn))
 
     # The speaks-for credential must assert the statement 
     # AGENT.speaks_for(AGENT)<-CLIENT
     query = "AGENT.speaks_for(AGENT)<-CLIENT"
     certs_by_name = {"CLIENT" : client_cert, "AGENT" : agent_cert}
 
-#    chapi_info('SF', 'CBN = %s' % certs_by_name)
-#    chapi_info('SF', 'CBN = %s' % speaks_for_credential)
-
     # Run the proof in a separate process to avoid memory issues
-    ok, proof = execute_abac_query(query, certs_by_name, [speaks_for_credential])
+    ok, proof = execute_abac_query(query, certs_by_name,
+                                   [speaks_for_credential])
     if not ok:
-#        chapi_info('SF', "PROOF = %s" % proof)
-        raise Exception("Speaks-For credential does not assert that agent allows client to speak for agent")
+        raise Exception("Speaks-For credential does not assert that agent"
+                        + " allows client to speak for agent")
 
     msg = "%r is speaking for %r" % (client_urn, agent_urn)
     chapi_info('SPEAKSFOR', msg)
 
+    # Make a copy of original options
+    revised_options = dict(options)
     # Update options
     revised_options['speaking_as'] = client_urn
 
     return agent_cert, revised_options
+
 
 def parseOptions():
     parser = optparse.OptionParser()
