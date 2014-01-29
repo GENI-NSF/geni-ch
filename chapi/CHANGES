@@ -4,6 +4,8 @@
 
 = GENI Clearinghouse Release Notes =
 
+== 1.5 ==
+
 == 1.4 ==
   * Ignore repeated requests to join a project (#187)
   * Support looking up others' public SSH keys in PGCH (#208)
