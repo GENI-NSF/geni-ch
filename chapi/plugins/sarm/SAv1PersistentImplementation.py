@@ -1411,7 +1411,18 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
 
     # Sliver Info API
 
+    def expire_sliver_infos(self, session):
+        # Delete expired sliver_info entries
+        q = session.query(SliverInfo)
+        # Find all sliver info entries that expired x minutes ago 
+        gracemin = 6 # FIXME: Externalize this
+        q = q.filter(SliverInfo.expiration < text("now() at time zone 'utc' - INTERVAL '%d MINUTE'" % gracemin))
+        if q.count() > 0:
+            chapi_info(SA_LOG_PREFIX, "Deleting %d expired sliver_info records" % q.count())
+            q.delete(synchronize_session='fetch')
+
     def create_sliver_info(self, client_cert, credentials, options, session):
+        self.expire_sliver_infos(session)
         sliver = SliverInfo()
         for field, value in options['fields'].iteritems():
            setattr(sliver, SA.sliver_info_field_mapping[field], value)
@@ -1419,10 +1430,13 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
             sliver.creation = datetime.utcnow()
         if not sliver.expiration:
             sliver.expiration = sliver.creation + relativedelta(days=7) # FIXME: Externalize
+        if not sliver.creator_urn:
+            sliver.creator_urn = get_urn_from_cert(client_cert)
         return self.finish_create(session, sliver, SA.sliver_info_field_mapping)
 
     def delete_sliver_info(self, client_cert, sliver_urn, \
                                credentials, options, session):
+        self.expire_sliver_infos(session)
         q = session.query(SliverInfo)
         q = q.filter(SliverInfo.sliver_urn == sliver_urn)
         q.delete(synchronize_session='fetch')
@@ -1433,10 +1447,16 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                                credentials, options, session):
         q = session.query(SliverInfo)
         q = q.filter(SliverInfo.sliver_urn == sliver_urn)
+
+        if q.count() == 0:
+            # It isn't there yet. Do an insert
+            return self.create_sliver_info(clent_cert, credentials, options, session)
+
         vals = {}
         for field, value in options['fields'].iteritems():
            vals[SA.sliver_info_field_mapping[field]] = value
         updateCount = q.update(vals)
+        self.expire_sliver_infos(session)
         # API says return: None
         return self._successReturn(True)
 
@@ -1446,6 +1466,11 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         q = session.query(self.db.SLIVER_INFO_TABLE)
         q = add_filters(q, match_criteria, self.db.SLIVER_INFO_TABLE, \
                         SA.sliver_info_field_mapping)
+
+        # Hide any expired slivers (expired at least X minutes ago)
+        gracemin = 0 # FIXME: externalize this
+        q = q.filter(SliverInfo.expiration > text("now() at time zone 'utc' - INTERVAL '%d MINUTE'" % gracemin))
+
         rows = q.all()
         slivers = {}
         for row in rows:
