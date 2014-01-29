@@ -107,7 +107,7 @@ class SubjectInvocationCheck(InvocationCheck):
                 subjects_of_type = subjects[subject_type]
                 ensure_valid_urns(subject_type, subjects_of_type, session)
 
-#        chapi_info('ABACGuard', 'SUBJECTS = %s' % subjects)
+#        chapi_debug('ABACGuard', 'method %s SUBJECTS = %s' % (method,subjects))
         return subjects
 
     def load_policies(self, abac_manager, subject_name):
@@ -156,6 +156,7 @@ class SubjectInvocationCheck(InvocationCheck):
 
             # Register assertions for the user 
             if self._attribute_extractors:
+#                chapi_debug('ABACGuard', "Method %s Registering assertions for callers %s, subjects %s" % (method, client_urn, subjects_of_type))
                 for attribute_extractor in self._attribute_extractors:
                     attribute_extractor(client_urn, subjects_of_type, \
                                         subject_type, options, arguments, abac_manager,
@@ -164,7 +165,7 @@ class SubjectInvocationCheck(InvocationCheck):
             # Register policies relative to the subjects
             # And try to prove that the user may call the method, 
             # given the policies
-            # About who can call the method and the attibutes of the caller
+            # About who can call the method and the attributes of the caller
             for subject in subjects_of_type:
 #                print "SUBJECT = " + subject
                 subject_name = flatten_urn(subject)

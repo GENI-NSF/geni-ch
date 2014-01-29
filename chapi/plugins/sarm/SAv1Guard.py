@@ -148,13 +148,12 @@ class SAv1Guard(ABACGuardBase):
 
         'get_credentials' : \
             SubjectInvocationCheck([
-                #"ME.MAY_GET_CREDENTIALS_$SUBJECT<-ME.IS_LEAD_$SUBJECT", 
-                #"ME.MAY_GET_CREDENTIALS_$SUBJECT<-ME.IS_ADMIN_$SUBJECT",
-                #"ME.MAY_GET_CREDENTIALS_$SUBJECT<-ME.IS_MEMBER_$SUBJECT",
-                #"ME.MAY_GET_CREDENTIALS_$SUBJECT<-ME.IS_OPERATOR_$SUBJECT",
+                "ME.MAY_GET_CREDENTIALS_$SUBJECT<-ME.IS_LEAD_$SUBJECT", 
+                "ME.MAY_GET_CREDENTIALS_$SUBJECT<-ME.IS_ADMIN_$SUBJECT",
+                "ME.MAY_GET_CREDENTIALS_$SUBJECT<-ME.IS_MEMBER_$SUBJECT",
                 "ME.MAY_GET_CREDENTIALS<-ME.IS_OPERATOR",
-                "ME.MAY_GET_CREDENTIALS_$SUBJECT<-ME.BELONGS_TO_$SUBJECT", 
-                ], assert_belongs_to_slice, slice_urn_extractor),
+                #"ME.MAY_GET_CREDENTIALS_$SUBJECT<-ME.BELONGS_TO_$SUBJECT", 
+                ], assert_slice_role, slice_urn_extractor),
 
         'modify_slice_membership' : 
             SubjectInvocationCheck([
@@ -221,7 +220,7 @@ class SAv1Guard(ABACGuardBase):
                     "ME.MAY_CREATE_SLIVER_INFO<-ME.IS_OPERATOR",
                     "ME.MAY_CREATE_SLIVER_INFO<-ME.IS_AUTHORITY",
                     "ME.MAY_CREATE_SLIVER_INFO_$SUBJECT<-ME.IS_LEAD_$SUBJECT", 
-                    "ME.MAY_CREATE_SLIVER_INFO_$SUBJECT<-ME.IS_ADMIN_$SUBJECT"
+                    "ME.MAY_CREATE_SLIVER_INFO_$SUBJECT<-ME.IS_ADMIN_$SUBJECT",
                     "ME.MAY_CREATE_SLIVER_INFO_$SUBJECT<-ME.IS_MEMBER_$SUBJECT"
                     ], assert_slice_role, slice_urn_extractor),
 
@@ -230,7 +229,7 @@ class SAv1Guard(ABACGuardBase):
                     "ME.MAY_DELETE_SLIVER_INFO<-ME.IS_OPERATOR",
                     "ME.MAY_DELETE_SLIVER_INFO<-ME.IS_AUTHORITY",
                     "ME.MAY_DELETE_SLIVER_INFO_$SUBJECT<-ME.IS_LEAD_$SUBJECT", 
-                    "ME.MAY_DELETE_SLIVER_INFO_$SUBJECT<-ME.IS_ADMIN_$SUBJECT"
+                    "ME.MAY_DELETE_SLIVER_INFO_$SUBJECT<-ME.IS_ADMIN_$SUBJECT",
                     "ME.MAY_DELETE_SLIVER_INFO_$SUBJECT<-ME.IS_MEMBER_$SUBJECT"
                     ], assert_slice_role, slice_urn_extractor),
         'update_sliver_info' : \
@@ -238,10 +237,21 @@ class SAv1Guard(ABACGuardBase):
                     "ME.MAY_UPDATE_SLIVER_INFO<-ME.IS_OPERATOR",
                     "ME.MAY_UPDATE_SLIVER_INFO<-ME.IS_AUTHORITY",
                     "ME.MAY_UPDATE_SLIVER_INFO_$SUBJECT<-ME.IS_LEAD_$SUBJECT", 
-                    "ME.MAY_UPDATE_SLIVER_INFO_$SUBJECT<-ME.IS_ADMIN_$SUBJECT"
+                    "ME.MAY_UPDATE_SLIVER_INFO_$SUBJECT<-ME.IS_ADMIN_$SUBJECT",
                     "ME.MAY_UPDATE_SLIVER_INFO_$SUBJECT<-ME.IS_MEMBER_$SUBJECT"
                     ], assert_slice_role, slice_urn_extractor),
-        'lookup_sliver_info' : None,  # open - anyone can lookup
+        'lookup_sliver_info' : \
+            SubjectInvocationCheck([
+                "ME.MAY_LOOKUP_SLIVER_INFO<-ME.IS_OPERATOR",
+                "ME.MAY_LOOKUP_SLIVER_INFO<-ME.IS_AUTHORITY",
+                # Can ask for sliver info by SLIVER_INFO_SLICE_URN
+                # if you are a member of slice
+                # Or can ask for sliver of a slice to which you belong
+                "ME.MAY_LOOKUP_SLIVER_INFO_$SUBJECT<-ME.BELONGS_TO_$SUBJECT",
+                # Can ask for sliver info by SLIVER_INFO_SLIVER_CREATOR_URN
+                # if that creator is the caller
+                "ME.MAY_LOOKUP_SLIVER_INFO_$SUBJECT<-ME.IS_$SUBJECT"
+                ], assert_belongs_to_slice,  sliver_info_extractor),
 
         # 
         'create_request' :  None, # Open: anyone can request
