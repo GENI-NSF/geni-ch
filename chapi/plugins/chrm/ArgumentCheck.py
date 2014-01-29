@@ -109,7 +109,7 @@ class FieldsArgumentCheck(ArgumentCheck):
                 # Store all dates as 'naive UTC'
                 # If any date doesn't have a TZ, assume it is UTC
                 # If it does have a TZ, convert to UTC and strip TZ info
-                # Then  store converted value into the proper 'fields' slot
+                # Then store converted value into the proper 'fields' slot
                 parsed_datetime = dateutil.parser.parse(field_value)
                 if parsed_datetime.tzinfo:
                     parsed_datetime = parsed_datetime.astimezone(tzutc())
@@ -259,7 +259,7 @@ class FieldsArgumentCheck(ArgumentCheck):
             # There must be an details entry for this field in the specs
             if not field_detail_key in field_details.keys():
                 raise CHAPIv1ArgumentError("Required field detail " + \
-                                               " key missing for %s: %s" % \
+                                               "key missing for %s: %s" % \
                                                (field, field_detail_key))
 
             # The field detail must be one of the allowed values

@@ -599,7 +599,7 @@ class PGCHv1Delegate(DelegateBase):
     def GetKeys(self, client_cert, args):
         # cred is user cred
         # return list( of dict(type='ssh', key=$key))
-        # args: credential
+        # args: credential, optional: member_urn
 
         self.logger.info("Called GetKeys")
 
@@ -610,7 +610,11 @@ class PGCHv1Delegate(DelegateBase):
             if isinstance(credential, str) or isinstance(credential, unicode):
                 creds = [{'geni_type': 'geni_sfa', 'geni_value': credential}] 
 
-        member_urn = get_urn_from_cert(client_cert)
+        if 'member_urn' in args and args['member_urn'] is not None and args['member_urn'].strip() != "":
+            member_urn = args['member_urn']
+            self.logger.debug("Got member_urn arg %s", member_urn)
+        else:
+            member_urn = get_urn_from_cert(client_cert)
 
         options = {'match' : {'KEY_MEMBER' : member_urn},
                    "filter" : ['KEY_PUBLIC']
@@ -625,12 +629,13 @@ class PGCHv1Delegate(DelegateBase):
         if not ssh_keys_value or \
                 not ssh_keys_value.has_key(member_urn):
             user_email = get_email_from_cert(client_cert)
-            msg = "GetKeys: No entry for member %s from lookup_keys" % member_urn
+            msg = "GetKeys: No entry or keys found for member %s from lookup_keys" % member_urn
             chapi_warn(PGCH_LOG_PREFIX, msg, {'user': user_email})
-            raise CHAPIv1ServerError(msg)
-
-        keys = [{'type' : 'ssh' , 'key' : ssh_key['KEY_PUBLIC']} \
-                    for ssh_key in ssh_keys_value[member_urn]]
+            keys = []
+#            raise CHAPIv1ServerError(msg)
+        else:
+            keys = [{'type' : 'ssh' , 'key' : ssh_key['KEY_PUBLIC']} \
+                        for ssh_key in ssh_keys_value[member_urn]]
         
         return self._successReturn(keys)
 

@@ -37,6 +37,7 @@ def get_cert_from_credential(cred):
     start_index = cred.find(start_tag)
     end_index = cred.find(end_tag)
     raw_cert = cred[start_index+len(start_tag):end_index]
+    raw_cert = raw_cert.strip()
     cert_string = '-----BEGIN CERTIFICATE-----\n%s\n-----END CERTIFICATE-----' % raw_cert
     return cert_string
 

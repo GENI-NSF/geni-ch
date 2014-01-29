@@ -1,6 +1,23 @@
 # Note: keep this file in wiki format for easy pasting to the proto-ch wiki
+# Note: keep milestone bullets in ticket numerical order for easier
+#       reconciliation at release time
 
 = GENI Clearinghouse Release Notes =
+
+== 1.4 ==
+  * Ignore repeated requests to join a project (#187)
+  * Support looking up others' public SSH keys in PGCH (#208)
+  * Do not allow modifying membership of an expired slice (#210)
+  * Check if member exists to give better error when modifying
+    membership (#211)
+  * Quiet error logs when PGCH !GetKeys gets no keys (#212)
+  * Check when adding member to a slice that they are a member of the
+    project (#214)
+  * Validate roles supplied to modify project or slice membership (#216)
+  * Log when handling a speaks-for credential (#217)
+  * Add guards to lookup_sliver_info (#218)
+  * Slice auditors cannot call get_credential to get a slice cred (#219)
+  * Allow slice admins, members to call sliver info methods (#220)
 
 == 1.3 ==
   * Update copyright notices to 2014 (#199)

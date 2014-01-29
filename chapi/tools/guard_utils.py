@@ -330,6 +330,19 @@ def convert_member_email_to_uid(member_email, session):
     uids = [cache[em.lower()] for em in member_emails if em.lower() in cache]
     return uids
 
+def lookup_slice_urn_for_sliver_urn(sliver_urn, session):
+    db = pm.getService('chdbengine')
+    
+    q = session.query(db.SLIVER_INFO_TABLE.c.slice_urn)
+    q = q.filter(db.SLIVER_INFO_TABLE.c.sliver_urn == sliver_urn)
+    rows = q.all()
+    if len(rows) == 1:
+        return rows[0].slice_urn
+    else:
+        return None
+    
+
+
 # How long do we keep cache entries for operator privileges
 OPERATOR_CACHE_LIFETIME_SECS = 60
 # How long do we keep cache entries for PI privileges
@@ -356,7 +369,7 @@ def lookup_operator_privilege(user_urn, session):
 
     rows = q.all()
     is_operator = (len(rows)>0)
-    chapi_debug('UTILS', 'lookup_operator_privilege: '+user_urn+" = "+str(is_operator))
+#    chapi_debug('UTILS', 'lookup_operator_privilege: '+user_urn+" = "+str(is_operator))
     timed_cache_register(cache, user_urn, is_operator)
     return is_operator
 
@@ -517,8 +530,8 @@ def assert_shares_slice(caller_urn, member_urns, label, options, arguments,
     ma1 = aliased(db.MEMBER_ATTRIBUTE_TABLE)
     ma2 = aliased(db.MEMBER_ATTRIBUTE_TABLE)
 
-    chapi_debug('UTILS', "assert_shares_slice: %s %s %s %s" % \
-                   (caller_urn, member_urns, label, options))
+#    chapi_debug('UTILS', "assert_shares_slice: %s %s %s %s" % \
+#                   (caller_urn, member_urns, label, options))
 
     q = session.query(sm1.c.slice_id, sm2.c.slice_id, ma1.c.value, ma2.c.value)
     q = q.filter(sm1.c.slice_id == sm2.c.slice_id)
@@ -560,6 +573,7 @@ def assert_slice_role(caller_urn, urns, label, options, arguments, abac_manager,
         role_name = attribute_type_names[role]
         assertion = "ME.IS_%s_%s<-CALLER" % \
                     (role_name, flatten_urn(subject_urn))
+#        chapi_debug('UTILS', "assert_slice_role asserting %s" % assertion)
         abac_manager.register_assertion(assertion)
 
 # Get role of member on each of list of projects
@@ -860,6 +874,7 @@ def project_urn_extractor(options, arguments, session):
 
 # Extract slice urn from options or arguments
 def slice_urn_extractor(options, arguments, session):
+    slice_urn = None
     if 'slice_urn' in arguments:
         slice_urn = arguments['slice_urn']
     elif 'fields' in options and 'SLICE_URN' in options['fields']:
@@ -962,3 +977,23 @@ def attribute_extractor(options, arguments, session):
         member_urn = convert_member_uid_to_urn(member_uid, session)
         return {'MEMBER_URN' : member_urn}
 
+# Support for lookup_sliver_info guards
+
+def sliver_info_extractor(options, arguments, session):
+    if 'match' in options:
+        match = options['match']
+        if 'SLIVER_INFO_CREATOR_URN' in match:
+            return {'MEMBER_URN' : match['SLIVER_INFO_CREATOR_URN']}
+        elif 'SLIVER_INFO_SLICE_URN' in match:
+            return {'SLICE_URN' : match['SLIVER_INFO_SLICE_URN']}
+        elif 'SLIVER_INFO_URN' in match:
+            sliver_urns = match['SLIVER_INFO_URN']
+            if not isinstance(sliver_urns, list): sliver_urns = [sliver_urns]
+            chapi_info("SIE", "SLIVER_URNS = %s" % sliver_urns)
+            slice_urns = [lookup_slice_urn_for_sliver_urn(sliver_urn, session)
+                          for sliver_urn in sliver_urns]
+            chapi_info("SIE", "SLICE_URNS = %s" % slice_urns)
+            return {'SLICE_URN' : slice_urns}
+    raise CHAPIv1ArgumentError("Illegal options for lookup_sliver_info: %s"%\
+                                   options)
+        
