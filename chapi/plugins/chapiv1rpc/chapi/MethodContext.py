@@ -110,22 +110,31 @@ class MethodContext:
 
     # This method is called prior to the 'with MethodContext' block
     def __enter__(self):
-        # Log the invocation
-        chapi_log_invocation(self._log_prefix,
-                             self._method_name, 
-                             self._credentials, 
-                             self._options, 
-                             self._args_dict, 
-                             {'user': self._email})
-
         # If a guard is provided, perform speaks-for identity adjustment
         if self._handler._guard:
             new_client_cert, new_options = \
                 self._handler._guard.adjust_client_identity(self._client_cert, 
                                                               self._credentials, 
                                                               self._options)
-            self._client_cert = new_client_cert
-            self._options = new_options
+            if (self._client_cert != new_client_cert):
+                self._client_cert = new_client_cert
+                self._options = new_options
+                # Extract the email from the client cert because it may
+                # have changed (been adjusted)
+                if self._client_cert:
+                    try:
+                        self._email = get_email_from_cert(self._client_cert)
+                    except Exception as e:
+                        msg = "Error extracting email from new client cert"
+                        chapi_info("MethodContext", msg)
+
+            # Log the invocation with the adjusted email
+            chapi_log_invocation(self._log_prefix,
+                                 self._method_name,
+                                 self._credentials,
+                                 self._options,
+                                 self._args_dict,
+                                 {'user': self._email})
 
             try:
 
@@ -159,6 +168,14 @@ class MethodContext:
             except Exception as e:
                 exc_type, exc_value, exc_traceback = sys.exc_info()
                 self._handleError(e, exc_traceback)
+        else:
+            # No guard, just log the invocation
+            chapi_log_invocation(self._log_prefix,
+                                 self._method_name,
+                                 self._credentials,
+                                 self._options,
+                                 self._args_dict,
+                                 {'user': self._email})
         return self
 
     # Handle any error in MethodContext processing 
