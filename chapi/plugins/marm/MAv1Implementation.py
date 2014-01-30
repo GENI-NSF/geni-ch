@@ -825,24 +825,24 @@ class MAv1Implementation(MAv1DelegateBase):
         self.check_attributes(match_criteria)
 
         q = session.query(self.db.SSH_KEY_TABLE, \
+                              self.db.MEMBER_ATTRIBUTE_TABLE.c.member_id, \
                               self.db.MEMBER_ATTRIBUTE_TABLE.c.value)
         q = q.filter(self.db.SSH_KEY_TABLE.c.member_id == self.db.MEMBER_ATTRIBUTE_TABLE.c.member_id)
         q = q.filter(self.db.MEMBER_ATTRIBUTE_TABLE.c.name=='urn')
 
         # Handle key_member specially: it is not part of the SSH key table
         if 'KEY_MEMBER' in match_criteria.keys():
-            member_urn = match_criteria['KEY_MEMBER']
-            if isinstance(member_urn, types.ListType):
-                if len(member_urn) == 0:
-                    # FIXME: If you specify an empty list, what should the behavior be?
-                    # Do you mean any value? Or only a value of None? Or only rows with no entry for this value?
-                    # Is this right?
-                    q = q.filter(self.db.MEMBER_ATTRIBUTE_TABLE.c.value == None)
-#                    chapi_debug(MA_LOG_PREFIX, "lookup_keys had empty list of urns")
-                else:
-                    q = q.filter(self.db.MEMBER_ATTRIBUTE_TABLE.c.value.in_(member_urn))
+            member_urns = match_criteria['KEY_MEMBER']
+            if not isinstance(member_urns, types.ListType): 
+                    member_urns = [member_urns]
+            if len(member_urns) == 0:
+                # FIXME: If you specify an empty list, what should the behavior be?
+                # Do you mean any value? Or only a value of None? Or only rows with no entry for this value?
+                # Is this right?
+                q = q.filter(self.db.MEMBER_ATTRIBUTE_TABLE.c.value == None)
+                #  chapi_debug(MA_LOG_PREFIX, "lookup_keys had empty list of urns")
             else:
-                q = q.filter(self.db.MEMBER_ATTRIBUTE_TABLE.c.value == member_urn)
+                    q = q.filter(self.db.MEMBER_ATTRIBUTE_TABLE.c.value.in_(member_urns))
             del match_criteria['KEY_MEMBER']
 
         q = add_filters(q, match_criteria, self.db.SSH_KEY_TABLE, MA.key_field_mapping)
@@ -850,13 +850,19 @@ class MAv1Implementation(MAv1DelegateBase):
 
         keys = {}
         for row in rows:
-            if row.value not in keys:
-                keys[row.value] = []
+            member_urn = row.value
+            member_uid = row.member_id
+            if member_urn not in keys:
+                keys[member_urn] = []
 
-            keys[row.value].append(construct_result_row(row, \
+            # Do not return any SSH key info for disabled users
+            if not self.is_enabled(member_uid, session):
+                continue
+
+            keys[member_urn].append(construct_result_row(row, \
                          selected_columns, MA.key_field_mapping))
             # Per federation API, the KEY ID must be exported as a string
-            for key_data in keys[row.value]:
+            for key_data in keys[member_urn]:
                 if 'KEY_ID' in key_data:
                     key_id = key_data['KEY_ID']
                     key_data['KEY_ID'] = str(key_id)

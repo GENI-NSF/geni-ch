@@ -109,7 +109,7 @@ class FieldsArgumentCheck(ArgumentCheck):
                 # Store all dates as 'naive UTC'
                 # If any date doesn't have a TZ, assume it is UTC
                 # If it does have a TZ, convert to UTC and strip TZ info
-                # Then  store converted value into the proper 'fields' slot
+                # Then store converted value into the proper 'fields' slot
                 parsed_datetime = dateutil.parser.parse(field_value)
                 if parsed_datetime.tzinfo:
                     parsed_datetime = parsed_datetime.astimezone(tzutc())
