@@ -691,24 +691,24 @@ class MAv1Implementation(MAv1DelegateBase):
         self.check_attributes(match_criteria)
 
         q = session.query(self.db.SSH_KEY_TABLE, \
+                              self.db.MEMBER_ATTRIBUTE_TABLE.c.member_id, \
                               self.db.MEMBER_ATTRIBUTE_TABLE.c.value)
         q = q.filter(self.db.SSH_KEY_TABLE.c.member_id == self.db.MEMBER_ATTRIBUTE_TABLE.c.member_id)
         q = q.filter(self.db.MEMBER_ATTRIBUTE_TABLE.c.name=='urn')
 
         # Handle key_member specially: it is not part of the SSH key table
         if 'KEY_MEMBER' in match_criteria.keys():
-            member_urn = match_criteria['KEY_MEMBER']
-            if isinstance(member_urn, types.ListType):
-                if len(member_urn) == 0:
-                    # FIXME: If you specify an empty list, what should the behavior be?
-                    # Do you mean any value? Or only a value of None? Or only rows with no entry for this value?
-                    # Is this right?
-                    q = q.filter(self.db.MEMBER_ATTRIBUTE_TABLE.c.value == None)
-#                    chapi_debug(MA_LOG_PREFIX, "lookup_keys had empty list of urns")
-                else:
-                    q = q.filter(self.db.MEMBER_ATTRIBUTE_TABLE.c.value.in_(member_urn))
+            member_urns = match_criteria['KEY_MEMBER']
+            if not isinstance(member_urns, types.ListType): 
+                    member_urns = [member_urns]
+            if len(member_urns) == 0:
+                # FIXME: If you specify an empty list, what should the behavior be?
+                # Do you mean any value? Or only a value of None? Or only rows with no entry for this value?
+                # Is this right?
+                q = q.filter(self.db.MEMBER_ATTRIBUTE_TABLE.c.value == None)
+                #  chapi_debug(MA_LOG_PREFIX, "lookup_keys had empty list of urns")
             else:
-                q = q.filter(self.db.MEMBER_ATTRIBUTE_TABLE.c.value == member_urn)
+                    q = q.filter(self.db.MEMBER_ATTRIBUTE_TABLE.c.value.in_(member_urns))
             del match_criteria['KEY_MEMBER']
 
         q = add_filters(q, match_criteria, self.db.SSH_KEY_TABLE, MA.key_field_mapping)
@@ -716,13 +716,19 @@ class MAv1Implementation(MAv1DelegateBase):
 
         keys = {}
         for row in rows:
-            if row.value not in keys:
-                keys[row.value] = []
+            member_urn = row.value
+            member_uid = row.member_id
+            if member_urn not in keys:
+                keys[member_urn] = []
 
-            keys[row.value].append(construct_result_row(row, \
+            # Do not return any SSH key info for disabled users
+            if not self.is_enabled(member_uid, session):
+                continue
+
+            keys[member_urn].append(construct_result_row(row, \
                          selected_columns, MA.key_field_mapping))
             # Per federation API, the KEY ID must be exported as a string
-            for key_data in keys[row.value]:
+            for key_data in keys[member_urn]:
                 if 'KEY_ID' in key_data:
                     key_id = key_data['KEY_ID']
                     key_data['KEY_ID'] = str(key_id)
@@ -942,7 +948,7 @@ class MAv1Implementation(MAv1DelegateBase):
         if len(member_info) > 0:
             for row in member_info:
                 pretty_name = get_member_display_name(member_info[row],row)
-                member_email = "%s <%s>" % (pretty_name, member_info[row]['MEMBER_EMAIL'])
+                member_email = '"%s" <%s>' % (pretty_name, member_info[row]['MEMBER_EMAIL'])
         msgbody = "Dear " + pretty_name + ",\n\n"
         subject = ""
         if privilege == "PROJECT_LEAD":
@@ -1061,9 +1067,11 @@ class MAv1Implementation(MAv1DelegateBase):
                                     result = self._sa_handler._delegate.modify_project_membership(client_cert, project['PROJECT_URN'], credentials, options, session)
                                     break
                         if new_lead_urn == None:
-                            raise CHAPIv1ArgumentError('Cannot revoke lead privilege from %s. ' +
-                                                       'No authorized admin to take lead role on project %s' 
-                                                       % (member_urn, project_urn))
+                            msg = ('Cannot revoke lead privilege from %s.'
+                                   + ' No authorized admin to take lead role'
+                                   + ' on project %s')
+                            msg = msg % (member_urn, project_urn)
+                            raise CHAPIv1ArgumentError(msg)
         if was_enabled:
             self.delete_attr(session, privilege, member_uid)
 
