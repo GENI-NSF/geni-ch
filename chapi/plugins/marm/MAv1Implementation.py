@@ -948,7 +948,7 @@ class MAv1Implementation(MAv1DelegateBase):
         if len(member_info) > 0:
             for row in member_info:
                 pretty_name = get_member_display_name(member_info[row],row)
-                member_email = "%s <%s>" % (pretty_name, member_info[row]['MEMBER_EMAIL'])
+                member_email = '"%s" <%s>' % (pretty_name, member_info[row]['MEMBER_EMAIL'])
         msgbody = "Dear " + pretty_name + ",\n\n"
         subject = ""
         if privilege == "PROJECT_LEAD":
