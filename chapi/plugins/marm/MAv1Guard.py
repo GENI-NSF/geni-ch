@@ -95,7 +95,7 @@ class MAv1Guard(ABACGuardBase):
                                                   MA.updatable_key_fields), \
                                     select_fields(MA.optional_key_fields, \
                                                       MA.updatable_key_fields),
-                                {'member_urn' : 'URN', 'key_id' : 'STRING'}),
+                                {'key_id' : 'STRING'}),
         'lookup_keys' : \
             LookupArgumentCheck(MA.standard_key_fields, \
                                     MA.optional_key_fields),
@@ -178,12 +178,12 @@ class MAv1Guard(ABACGuardBase):
             SubjectInvocationCheck([
                 "ME.MAY_DELETE_KEY<-ME.IS_OPERATOR",
                 "ME.MAY_DELETE_KEY_$SUBJECT<-ME.IS_$SUBJECT",
-                ], None, member_urn_extractor), 
+                ], None, key_subject_extractor), 
         'update_key' : \
             SubjectInvocationCheck([
                 "ME.MAY_UPDATE_KEY<-ME.IS_OPERATOR",
                 "ME.MAY_UPDATE_KEY_$SUBJECT<-ME.IS_$SUBJECT",
-                ], None, member_urn_extractor), 
+                ], None, key_subject_extractor), 
         'lookup_keys' : \
             SubjectInvocationCheck([
                 "ME.MAY_LOOKUP_KEYS<-ME.IS_AUTHORITY", 
