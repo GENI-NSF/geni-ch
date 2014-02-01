@@ -91,7 +91,7 @@ def get_code_timestamp(log_prefix):
     return code_timestamp
 
 CHAPI_CODE_TAG_FILE = "/etc/geni-chapi/geni-chapi-githash"
-CHAPI_CODE_URL = "http://trac.gpolab.bbn.com/proto-ch/wiki/InstalledSoftware"
+CHAPI_CODE_URL = "http://trac.gpolab.bbn.com/chapi"
 
 def get_implementation_info(log_prefix):
     code_tag = get_code_tag(log_prefix)
