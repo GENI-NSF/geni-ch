@@ -265,8 +265,8 @@ class FieldsArgumentCheck(ArgumentCheck):
             # The field detail must be one of the allowed values
             field_detail = field_details[field_detail_key]
             if field_detail not in allowed_detail_values:
-                raise CHAPIv1ArgumentError("Detail Key not allowed: " + \
-                                               field_detail)
+                raise CHAPIv1ArgumentError("Detail Key not allowed: %s (field %s, value %s, field_detail_key %s)" % \
+                                               (str(field_detail), field, value, field_detail_key))
 
     # Check that all required fields are represented in field list
     def checkRequiredFields(self, field_values, field_specs, \
