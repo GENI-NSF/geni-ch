@@ -24,6 +24,7 @@
 from ABACGuard import *
 from ArgumentCheck import *
 from CHv1Implementation import CHv1Implementation
+import tools.CH_constants as CH
 
 # Specific guard for GPO CH
 # These are all open calls (no authN or authZ) , so all we do is argument
@@ -49,14 +50,14 @@ class CHv1Guard(ABACGuardBase):
     ARGUMENT_CHECK_FOR_METHOD = \
         {
         'lookup_member_authorities' : \
-            CHGetServicesCheck(CHv1Implementation.mandatory_fields, \
-                                   CHv1Implementation.supplemental_fields),
+            CHGetServicesCheck(CH.mandatory_fields, \
+                                   CH.supplemental_fields),
         'lookup_slice_authorities' : \
-            CHGetServicesCheck(CHv1Implementation.mandatory_fields, \
-                                   CHv1Implementation.supplemental_fields),
+            CHGetServicesCheck(CH.mandatory_fields, \
+                                   CH.supplemental_fields),
         'lookup_aggregates' : \
-            CHGetServicesCheck(CHv1Implementation.mandatory_fields, \
-                                   CHv1Implementation.supplemental_fields),
+            CHGetServicesCheck(CH.mandatory_fields, \
+                                   CH.supplemental_fields),
         'lookup_aggregates_for_urns' :
             ValidURNCheck('urns')
         }

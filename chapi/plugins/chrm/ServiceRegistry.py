@@ -23,6 +23,7 @@
 
 import amsoil.core.pluginmanager as pm
 from chapi.Clearinghouse import CHv1Handler
+import CH_constants as CH
 from CHv1PersistentImplementation import CHv1PersistentImplementation
 from geni.util.urn_util import URN
 from chapi.Exceptions import *
@@ -141,7 +142,7 @@ class SRv1Delegate(CHv1PersistentImplementation):
 
     def get_services_of_type(self, client_cert, service_type, session):
 
-        options = {'match' : {}, 'filter' : self.field_mapping.keys()}
+        options = {'match' : {}, 'filter' : CH.field_mapping.keys()}
 
         services = self.get_services(session)
         if services['code'] != NO_ERROR:
@@ -153,17 +154,17 @@ class SRv1Delegate(CHv1PersistentImplementation):
 
     def get_services(self, session):
 
-        options = {'match' : {}, 'filter' : self.field_mapping.keys()}
+        options = {'match' : {}, 'filter' : CH.field_mapping.keys()}
         selected_columns, match_criteria = \
-            unpack_query_options(options, self.field_mapping)
+            unpack_query_options(options, CH.field_mapping)
 
         q = session.query(self.db.SERVICES_TABLE)
         q = add_filters(q,  match_criteria, self.db.SERVICES_TABLE, \
-                            self.field_mapping)
+                            CH.field_mapping)
         rows = q.all()
 
         services = [construct_result_row(row, selected_columns, \
-                                             self.field_mapping) \
+                                             CH.field_mapping) \
                         for row in rows]
 
         # Fill in the service_cert_contents

@@ -26,55 +26,57 @@ from chapi.Clearinghouse import CHv1DelegateBase
 from chapi.Exceptions import *
 from geni.util.urn_util import URN
 from tools.dbutils import *
+from tools.cert_utils import *
+from tools.chapi_utils import *
+from tools.chapi_log import *
+import chapi.Parameters
+import tools.CH_constants as CH
+import amsoil.core.pluginmanager as pm
 
 # A simple fixed implemntation of the CH API. 
 # Only for testing. The real implementation is in CHv1PersistentImplementation
 
 class CHv1Implementation(CHv1DelegateBase):
 
-    AGGREGATE_SERVICE_TYPE = 0
-    SA_SERVICE_TYPE = 1
-    MA_SERVICE_TYPE = 3
-
     # Internal (hard-coded) list of services in internal schema format
     # Meant to mimic a database query return
     services = [
-        {"service_type" : AGGREGATE_SERVICE_TYPE, 
+        {"service_type" : CH.SERVICE_AGGREGATE_MANAGER,
          'service_url' : 'https://server.com:12345', 
          'service_cert' : '<certificate>agg1</certificate', 
          'service_name' : 'AGG1',
          'service_description' : 'Agg 1',
          'service_urn' : 'urn:publicid:IDN+server.com+authority+am'
         },
-        {"service_type" : AGGREGATE_SERVICE_TYPE, 
+        {"service_type" : CH.SERVICE_AGGREGATE_MANAGER,
          'service_url' : 'https://backuup.com:12345', 
          'service_cert' : '<certificate>agg2</certificate', 
          'service_name' : 'AGG2',
          'service_description' : 'Agg 2',
          'service_urn' : 'urn:publicid:IDN+backup.com+authority+am'
         },
-        {"service_type" : SA_SERVICE_TYPE, 
+        {"service_type" : CH.SERVICE_SLICE_AUTHORITY,
          'service_url' : 'https://localhost:8001/SA', 
          'service_cert' : '<certificate>foo</certificate', 
          'service_name' : 'CHAPI-SA',
          'service_description' : 'CHAPI Service Authority',
          'service_urn' : 'urn:publicid:IDN+foo.com+authority+sa'
         },
-        {"service_type" : SA_SERVICE_TYPE, 
+        {"service_type" : CH.SERVICE_SLICE_AUTHORITY,
          'service_url' : 'https://localhost:8002/SA', 
          'service_cert' : '<certificate>bar</certificate', 
          'service_name' : 'CHAPI-SA2',
          'service_description' : 'CHAPI Service Authority (BACKUP)',
          'service_urn' : 'urn:publicid:IDN+bar.com+authority+sa'
         },
-        {"service_type" : MA_SERVICE_TYPE, 
+        {"service_type" : CH.SERVICE_MEMBER_AUTHORITY,
          'service_url' : 'https://localhost:8001/MA', 
          'service_cert' : '<certificate>foo</certificate', 
          'service_name' : 'CHAPI-MA',
          'service_description' : 'CHAPI Member Authority',
          'service_urn' : 'urn:publicid:IDN+foo.com+authority+ma'
         },
-        {"service_type" : MA_SERVICE_TYPE, 
+        {"service_type" : CH.SERVICE_MEMBER_AUTHORITY,
          'service_url' : 'https://localhost:8002/MA', 
          'service_cert' : '<certificate>bar</certificate', 
          'service_name' : 'CHAPI-MA2',
@@ -83,40 +85,18 @@ class CHv1Implementation(CHv1DelegateBase):
         },
         ]
 
-    # Mapping from external to internal data schema
-    field_mapping = {
-        "_GENI_SERVICE_ID" : "id",
-        "SERVICE_URN": 'service_urn',
-        "SERVICE_URL": 'service_url',
-        "_GENI_SERVICE_CERT_FILENAME": 'service_cert',
-        "SERVICE_CERT": 'service_cert',
-        "SERVICE_NAME": 'service_name',
-        "SERVICE_DESCRIPTION": 'service_description',
-        "SERVICE_TYPE": "service_type"
-        }
-
-    # The externally visible data schema for services
-    mandatory_fields = { 
-        "SERVICE_URN": {"TYPE": "URN"},
-        "SERVICE_URL": {"TYPE": "URL"},
-        "SERVICE_CERT": {"TYPE": "CERTIFICATE"},
-        "SERVICE_NAME" : {"TYPE" : "STRING"},
-        "SERVICE_DESCRIPTION": {"TYPE" : "STRING"}
-        }
-
-    supplemental_fields = { 
-        "_GENI_SERVICE_CERT_FILENAME": {"TYPE": "STRING", "OBJECT": "SERVICE"},
-        "_GENI_SERVICE_ID" : {"TYPE" : "INTEGER", "OBJECT": "SERVICE"}
-        }
-
-
-    version_number = "1.0"
 
     def get_version(self, session):
-        version_info = {"VERSION": self.version_number, 
-                        "SERVICES": ["SERVICE"],
-                        "OBJECTS": ["SERVICE"],
-                        "FIELDS": self.supplemental_fields}
+        import flask
+        api_versions = \
+            {chapi.Parameters.VERSION_NUMBER : flask.request.url_root}
+        implementation_info = get_implementation_info(SR_LOG_PREFIX)
+        version_info = {"VERSION": chapi.Parameters.VERSION_NUMBER,
+                        "IMPLEMENTATION" : implementation_info,
+                        "SERVICES": CH.services,
+                        "SERVICE_TYPES" : CH.service_types.keys(),
+                        "API_VERSIONS" : api_versions,
+                        "FIELDS": CH.supplemental_fields}
         return self._successReturn(version_info)
 
     def lookup_member_authorities(self, client_cert, options, session):
@@ -127,7 +107,7 @@ class CHv1Implementation(CHv1DelegateBase):
         member_authorities = self.select_services_of_type(self.SA_SERVICE_TYPE)
         return self.select_entries_and_fields(member_authorities, options)
 
-    def lookup__aggregates(self, client_cert, options, session):
+    def lookup_aggregates(self, client_cert, options, session):
         member_authorities = self.select_services_of_type(self.AGGREGATE_SERVICE_TYPE)
         return self.select_entries_and_fields(member_authorities, options)
 
@@ -185,7 +165,7 @@ class CHv1Implementation(CHv1DelegateBase):
 
         print "SELECTED_SERVICES = " + str(selected_services)
 
-        filter = self.field_mapping.keys() # By default, pick all fields
+        filter = CH.field_mapping.keys() # By default, pick all fields
         if options.has_key('filter'): filter = options['filter']
         filtered_selected_services = [self.filter_entry(service, filter) for service in selected_services]
 
@@ -202,7 +182,7 @@ class CHv1Implementation(CHv1DelegateBase):
         for clause in match:
 #            print "CLAUSE = " + str(clause)
             field_name = clause.keys()[0]
-            mapped_field_name = convert_internal(field_name, self.field_mapping)
+            mapped_field_name = convert_internal(field_name, CH.field_mapping)
 #            print "FN = " + field_name
 #            print "MFN = " + mapped_field_name
             if not entry.has_key(mapped_field_name):
@@ -225,7 +205,7 @@ class CHv1Implementation(CHv1DelegateBase):
             field_value = entry[field_name]
 #            print "FN = " + field_name
 #            print "FV = " + str(field_value)
-            external_field_name = convert_to_external(field_name, self.field_mapping)
+            external_field_name = convert_to_external(field_name, CH.field_mapping)
 #            print "EFN = " + external_field_name
             if external_field_name in filter: 
                 filtered.append({external_field_name: field_value})

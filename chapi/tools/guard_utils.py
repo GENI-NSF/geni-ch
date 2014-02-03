@@ -180,7 +180,7 @@ def ensure_valid_urns(urn_type, urns, session):
         pass
 
 # Take a uid or list of uids, make sure they're all in the cache
-# and return a urn or list of urns
+ # and return a urn or list of urns
 def convert_slice_uid_to_urn(slice_uid, session):
     db = pm.getService('chdbengine')
     slice_uids = slice_uid
@@ -815,6 +815,8 @@ def key_subject_extractor(options, arguments, session):
         match_option = options['match']
     elif 'fields' in options:
         match_option = options['fields']
+    elif 'key_id' in arguments:
+        match_option = {}
     else:
         raise CHAPIv1ArgumentError("No match/fields option for query")
     if 'KEY_MEMBER' in match_option:
@@ -827,6 +829,16 @@ def key_subject_extractor(options, arguments, session):
         member_urns = [convert_member_uid_to_urn(member_uid, session) 
                        for member_uid in member_uids]
         extracted['MEMBER_URN'] = member_urns
+    elif 'key_id' in arguments:
+        key_id = arguments['key_id']
+        q = session.query(db.SSH_KEY_TABLE.c.member_id)
+        q = q.filter(db.SSH_KEY_TABLE.c.id == key_id)
+        rows = q.all()
+        if len(rows) != 1:
+            raise CHAPIv1ArgumentError("No key with given ID %s" % key_id)
+        member_id = rows[0].member_id
+        member_urn = convert_member_uid_to_urn(member_id, session)
+        extracted['MEMBER_URN'] = member_urn
     else:
         q = session.query(db.MEMBER_ATTRIBUTE_TABLE.c.value)
         q = q.filter(db.SSH_KEY_TABLE.c.member_id ==

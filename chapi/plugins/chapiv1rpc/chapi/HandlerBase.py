@@ -35,6 +35,7 @@ class HandlerBase(xmlrpc.Dispatcher):
 
     def __init__(self, logger):
         super(HandlerBase, self).__init__(logger)
+        self._logger = logger
         self._delegate = None
         self._guard = None
 
@@ -73,3 +74,14 @@ class HandlerBase(xmlrpc.Dispatcher):
         if not cert:
             raise CHAPIv1AuthorizationError('Client certificate required but not provided')
         return cert
+
+    def _errorReturn(self, e):
+        """Assembles a GENI compliant return result for faulty methods."""
+        if not isinstance(e, CHAPIv1BaseError): # convert common errors into CHAPIv1GeneralError
+            e = CHAPIv1ServerError(str(e))
+        # do some logging
+        self._logger.error(e)
+        self._logger.error(traceback.format_exc())
+        return {'code' :  e.code , 'value' : None, 'output' : str(e) }
+        
+

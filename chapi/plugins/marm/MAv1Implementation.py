@@ -170,6 +170,7 @@ class MAv1Implementation(MAv1DelegateBase):
             }
         self.cert = self.config.get('chapi.ma_cert')
         self.key = self.config.get('chapi.ma_key')
+        self.urn = get_urn_from_cert(open(self.cert).read())
 
         self.portal_admin_email = self.config.get('chapi.portal_admin_email')
         self.portal_help_email = self.config.get('chapi.portal_help_email')
@@ -193,10 +194,16 @@ class MAv1Implementation(MAv1DelegateBase):
 
         all_optional_fields = dict(MA.optional_fields.items() + \
                                    MA.optional_key_fields.items())
+        import flask
+        api_versions = \
+            {chapi.Parameters.VERSION_NUMBER : flask.request.url_root}
+        implementation_info = get_implementation_info(MA_LOG_PREFIX)
         version_info = {"VERSION": chapi.Parameters.VERSION_NUMBER,
-                        "CREDENTIAL_TYPES": MA.credential_types,
-                        "OBJECTS" : MA.objects,
+                        "URN " : self.urn,
+                        "IMPLEMENTATION" : implementation_info,
                         "SERVICES" : MA.services,
+                        "CREDENTIAL_TYPES": MA.credential_types,
+                        "API_VERSIONS" : api_versions,
                         "FIELDS": all_optional_fields}
         result =  self._successReturn(version_info)
 
@@ -356,6 +363,132 @@ class MAv1Implementation(MAv1DelegateBase):
         result = self.lookup_member_info(options, MA.identifying_fields, session)
         return result
 
+    # This is a generic lookup_member_info call
+    # You get all the info you are allowed to see
+    # All public (for anyone)
+    # Identifying (for those allowed by policy)
+    # Private (only for you)
+    def lookup_allowed_member_info(self, client_cert, credentials, options, session):
+
+        # 0. Segregate the fields into public, private and identifying fields
+        (public_fields, identifying_fields, private_fields) = \
+            self.segregate_member_fields(options)
+#        chapi_info("LAMI", "PUB = %s ID = %s PRIV = %s" % \
+#                       (public_fields, identifying_fields, private_fields))
+
+        # 1. Get Public for everyone with public fields
+        public_options = {'match' : options['match'], 'filter' : public_fields}
+        public_result = \
+            self.lookup_public_member_info(client_cert, credentials,\
+                                               public_options, session)
+        chapi_info(MA_LOG_PREFIX, "PUB = %s" % public_result)
+
+        ma_handler = pm.getService('mav1handler')
+        ma_guard = ma_handler.getGuard()
+#        chapi_info(MA_LOG_PREFIX, "MA_GUARD = %s" % ma_guard)
+
+        # 2. If I am  asking for identifying fields (or no fields listed)
+        #       accumulate a list of members for whom the guard says
+        #       I can call lookup_identifying_member_info
+        allowed_identifying_match = \
+            self.determine_allowed_match(client_cert, credentials, ma_guard, \
+                                             'lookup_identifying_member_info', \
+                                             options, {}, session)
+
+        # 2b. Call lookup_identifying_member_info with identifyable members 
+        #   with identifying fields
+        identifying_options = {'match' : allowed_identifying_match, \
+                                   'filter' : identifying_fields}
+        identifying_result = \
+            self.lookup_identifying_member_info(client_cert, credentials,\
+                                                    identifying_options, session)
+        chapi_info(MA_LOG_PREFIX, "ID = %s" % identifying_result)
+
+
+        # 3. If I am asking for private fields (or no fields listed)
+        #       accumulate a list of members for whom the guard says
+        #       I can call lookup_private_member_info
+        allowed_private_match = \
+            self.determine_allowed_match(client_cert, credentials, ma_guard, \
+                                             'lookup_private_member_info', \
+                                             options, {}, session)
+
+        # 3b. Make the call to lookup_private_member_info with private members
+        #    with private fields
+        private_options = {'match' : allowed_private_match, 'filter' : private_fields}
+        private_result = \
+            self.lookup_private_member_info(client_cert, credentials,\
+                                                private_options, session)
+        chapi_info(MA_LOG_PREFIX, "PRIV = %s" % private_result)
+
+        # 4. Merge these three results together
+        aggregate_result = {}
+        for urn in public_result['value'].keys():
+            aggregate_result[urn] = {}
+            for field, value in public_result['value'][urn].items():
+                aggregate_result[urn][field] = value
+            if urn in identifying_result['value']:
+                for field, value in identifying_result['value'][urn].items():
+                    aggregate_result[urn][field] = value
+            if urn in private_result['value']:
+                for field, value in private_result['value'][urn].items():
+                    aggregate_result[urn][field] = value
+        return aggregate_result
+
+    def segregate_member_fields(self, options):
+        public_fields = []
+        identifying_fields = []
+        private_fields = []
+        if 'filter' not in options:
+            public_fields = MA.public_fields
+            identifying_fields = MA.identifying_fields
+            private_fields = MA.private_fields
+        else:
+            fields = options['filter']
+            for field in fields:
+                if field in MA.public_fields:
+                    public_fields.append(field)
+                elif field in MA.identifying_fields:
+                    identifying_fields.append(field)
+                elif field in MA.private_fields:
+                    private_fields.append(field)
+                else:
+                    raise CHAPIv1ArgumentError("Unknown member field %s" % field)
+        return public_fields, identifying_fields, private_fields
+                
+    def determine_allowed_match(self, client_cert, credentials, \
+                                    ma_guard, method, options, \
+                                    arguments, session):
+        invocation_check = ma_guard.get_invocation_check(method)
+#        chapi_info("DAM", "IC = %s" % invocation_check)
+        subjects = invocation_check.validate_arguments(client_cert, method, \
+                                                           credentials, \
+                                                           options, arguments, session)
+#        chapi_info("DAM", "SUBJECTS = %s" % subjects)
+        subject_type = subjects.keys()[0]
+        subject_ids = subjects[subject_type]
+#        chapi_info("DAM", "SUBJECT_TYPE = %s" % subject_type)
+#        chapi_info("DAM", "SUBJECT_IDS = %s" % subject_ids)
+
+        allowed_users = []
+        for subject_id in subject_ids:
+            try:
+                individual_subject = {subject_type : [subject_id]}
+                invocation_check.authorize_call(client_cert, method, \
+                                                    credentials, options,\
+                                                    arguments, individual_subject, \
+                                                    session)
+                allowed_users.append(subject_id)
+#                chapi_info("DAM", "Allowing member %s for method %s" % (subject_id, method))
+            except Exception as e:
+#                chapi_info("DAM", "E = %s" % e)
+#                chapi_info("DAM", "Not allowing member %s for method %s" % (subject_id, method))
+                pass
+
+        allowed_match =  {subject_type :  allowed_users}
+ #       chapi_info("DAM", "ALLOWED_MATCH = %s" % allowed_match)
+        return allowed_match
+
     # Called only by authorities
     # Retieve requested private, public, identifying info by EPPN
     def lookup_login_info(self, client_cert, jcredentials, options, session):
@@ -514,7 +647,7 @@ class MAv1Implementation(MAv1DelegateBase):
         certs = self.get_val_for_uid(session, OutsideCert, "certificate", uid)
         for cert in certs:
             if cert.startswith(client_cert):
-                chapi_debug(MA_LOG_PREFIX, 'found client in outside certs', {'user': user_email})
+#                chapi_debug(MA_LOG_PREFIX, 'found client in outside certs', {'user': user_email})
                 cred_cert = cert
                 break
         if not cred_cert:
@@ -522,7 +655,7 @@ class MAv1Implementation(MAv1DelegateBase):
             if certs:
                 for cert in certs:
                     if cert.startswith(client_cert):
-                        chapi_debug(MA_LOG_PREFIX, 'found client in inside certs', {'user': user_email})
+#                        chapi_debug(MA_LOG_PREFIX, 'found client in inside certs', {'user': user_email})
                         cred_cert = cert
                         break
         if not cred_cert:
@@ -642,7 +775,7 @@ class MAv1Implementation(MAv1DelegateBase):
         result = self._successReturn(fields)
         return result
 
-    def delete_key(self, client_cert, member_urn, key_id, \
+    def delete_key(self, client_cert, key_id, \
                        credentials, options, session):
 
 
@@ -654,6 +787,7 @@ class MAv1Implementation(MAv1DelegateBase):
 
         # Log the deletion of the SSH key
         client_uuid = get_uuid_from_cert(client_cert)
+        member_urn = convert_member_uid_to_urn(client_uuid, session)
         attrs = {"MEMBER" : client_uuid}
         msg = "%s deleting SSH key %s" % (self._get_displayname_for_member_urn(member_urn, session), key_id)
         self.logging_service.log_event(msg, attrs, credentials, options,
@@ -663,7 +797,7 @@ class MAv1Implementation(MAv1DelegateBase):
 
         return result
 
-    def update_key(self, client_cert, member_urn, key_id, \
+    def update_key(self, client_cert, key_id, \
                        credentials, options, session):
 
         # Check that all the fields are allowed to be updated
@@ -735,6 +869,18 @@ class MAv1Implementation(MAv1DelegateBase):
                 if 'KEY_ID' in key_data:
                     key_id = key_data['KEY_ID']
                     key_data['KEY_ID'] = str(key_id)
+
+
+        # Strip out any KEY_PRIVATE fields from key returns not for the 
+        # calling user
+        member_urn = get_urn_from_cert(client_cert)
+        for urn, all_key_fields in keys.items():
+#            chapi_info("FOO", "URN = %s FIELDS = %s" % (urn, all_key_fields))
+            if urn != member_urn:
+                for key_fields in all_key_fields:
+                    if 'KEY_PRIVATE' in key_fields:
+                        del key_fields['KEY_PRIVATE']
+
         result = self._successReturn(keys)
 
         return result
@@ -938,7 +1084,7 @@ class MAv1Implementation(MAv1DelegateBase):
         is_enabled = self.is_enabled(client_uuid, session)
 
         if is_enabled:
-            chapi_debug(MA_LOG_PREFIX, "CUE: user '%s' (%s) enabled" % (client_name, client_urn))
+#            chapi_debug(MA_LOG_PREFIX, "CUE: user '%s' (%s) enabled" % (client_name, client_urn))
             pass
         else:
             chapi_audit_and_log(MA_LOG_PREFIX, "CUE: user '%s' (%s) disabled" % (client_name, client_urn), logging.INFO, {'user': user_email})
@@ -1190,7 +1336,7 @@ class MAv1Implementation(MAv1DelegateBase):
 
         was_defined = (len(rows)>0)
 
-        chapi_debug(MA_LOG_PREFIX, 'RMA.ROWS = %s' % rows, {'user': user_email})
+#        chapi_debug(MA_LOG_PREFIX, 'RMA.ROWS = %s' % rows, {'user': user_email})
 
         old_value = None
         do_remove = True
