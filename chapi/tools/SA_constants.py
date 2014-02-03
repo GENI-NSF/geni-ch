@@ -25,7 +25,10 @@ from tools.geni_utils import row_to_project_urn
 
 services = ["SLICE", "PROJECT", "SLICE_MEMBER", "PROJECT_MEMBER", "SLIVER_INFO"]
 
-credential_types = ["geni_sfa", "geni_abac"]
+credential_types = [
+    {"type" : "geni_sfa", "version" : "3"},
+    {"type" : "geni_abac", "version" : "1"}
+    ]
 
 SLICE_CERT_LIFETIME = 365*10 # days
 SLICE_MAX_RENEWAL_DAYS = 185

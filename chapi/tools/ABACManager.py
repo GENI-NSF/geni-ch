@@ -105,6 +105,7 @@ def execute_abac_query(query, id_certs, raw_assertions = []):
     args = ['python', os.path.join(chapi_tools, 'ABACManager.py'),
             '--config=%s' % config_filename,
             '--query=%s' % query]
+    chapi_info("ABAC", "ARGS = %s" % " ".join(args))
     result = grab_output_from_subprocess(args)
 
     result_parts = result.split('\n')
@@ -113,8 +114,8 @@ def execute_abac_query(query, id_certs, raw_assertions = []):
     proof = "\n".join(result_parts[1:])
     
     # Delete the tempfiles
-    for tfile in tempfiles:
-        os.unlink(tfile)
+#    for tfile in tempfiles:
+#        os.unlink(tfile)
 
     return ok, proof
 
@@ -613,6 +614,7 @@ def main(argv=sys.argv):
         sys.exit(-1)
 
     manager = ABACManager(options=options)
+    manager._verbose = True
     manager.run()
 
 if __name__ == "__main__":

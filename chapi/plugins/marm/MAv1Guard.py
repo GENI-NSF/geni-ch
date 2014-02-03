@@ -25,29 +25,6 @@ from ABACGuard import *
 from ArgumentCheck import *
 import tools.MA_constants as MA
 
-# Special class to make sure no one can ask for SSH private keys
-# other than for self
-class LookupKeysInvocationCheck(SubjectInvocationCheck):
-        
-    def validate_arguments(self, client_cert, method, options, arguments, session):
-        subjects = super(LookupKeysInvocationCheck, self).validate_arguments(
-            client_cert, method, options, arguments, session)
-        # If they didn't specify a filter (all by default), 
-        # or they explicitly asked for KEY_PRIVATE, there can only
-        # be the caller in the list of requested users in 'match'
-        if 'filter' not in options or 'KEY_PRIVATE' in options['filter']:
-            client_urn = get_urn_from_cert(client_cert)
-            if subjects and 'MEMBER_URN' in subjects:
-                for member_urn in subjects['MEMBER_URN']:
-                    if member_urn != client_urn:
-                        raise CHAPIv1AuthorizationError(
-                            "Can't request private SSH key for user other" + 
-                            " than self. Limit match criteria or set filter" + 
-                            " explicitly : " + member_urn)
-
-        return subjects
-
-
 # Specific guard for GPO MA
 # Provide a set of invocation checks and row checks per method
 class MAv1Guard(ABACGuardBase):
@@ -118,7 +95,7 @@ class MAv1Guard(ABACGuardBase):
                                                   MA.updatable_key_fields), \
                                     select_fields(MA.optional_key_fields, \
                                                       MA.updatable_key_fields),
-                                {'member_urn' : 'URN', 'key_id' : 'STRING'}),
+                                {'key_id' : 'STRING'}),
         'lookup_keys' : \
             LookupArgumentCheck(MA.standard_key_fields, \
                                     MA.optional_key_fields),
@@ -201,14 +178,14 @@ class MAv1Guard(ABACGuardBase):
             SubjectInvocationCheck([
                 "ME.MAY_DELETE_KEY<-ME.IS_OPERATOR",
                 "ME.MAY_DELETE_KEY_$SUBJECT<-ME.IS_$SUBJECT",
-                ], None, member_urn_extractor), 
+                ], None, key_subject_extractor), 
         'update_key' : \
             SubjectInvocationCheck([
                 "ME.MAY_UPDATE_KEY<-ME.IS_OPERATOR",
                 "ME.MAY_UPDATE_KEY_$SUBJECT<-ME.IS_$SUBJECT",
-                ], None, member_urn_extractor), 
+                ], None, key_subject_extractor), 
         'lookup_keys' : \
-            LookupKeysInvocationCheck([
+            SubjectInvocationCheck([
                 "ME.MAY_LOOKUP_KEYS<-ME.IS_AUTHORITY", 
                 "ME.MAY_LOOKUP_KEYS<-ME.IS_OPERATOR", 
                 "ME.MAY_LOOKUP_KEYS_$SUBJECT<-ME.IS_$SUBJECT",

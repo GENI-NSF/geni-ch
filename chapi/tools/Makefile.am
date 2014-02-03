@@ -13,6 +13,7 @@ exampledir = $(pkgdatadir)/../geni-ch/
 
 dist_tool_DATA = \
 	ABACManager.py \
+	CH_constants.py \
 	MA_constants.py \
 	SA_constants.py \
 	SpeaksFor.py \
