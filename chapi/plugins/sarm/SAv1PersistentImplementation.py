@@ -1416,7 +1416,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         q = session.query(SliverInfo)
         # Find all sliver info entries that expired x minutes ago 
         gracemin = 6 # FIXME: Externalize this
-        q = q.filter(SliverInfo.expiration < text("now() at time zone 'utc' - INTERVAL '%d MINUTE'" % gracemin))
+        q = q.filter(and_(SliverInfo.expiration != None, SliverInfo.expiration < text("now() at time zone 'utc' - INTERVAL '%d MINUTE'" % gracemin)))
         if q.count() > 0:
             chapi_info(SA_LOG_PREFIX, "Deleting %d expired sliver_info records" % q.count())
             q.delete(synchronize_session='fetch')
@@ -1426,12 +1426,39 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         sliver = SliverInfo()
         for field, value in options['fields'].iteritems():
            setattr(sliver, SA.sliver_info_field_mapping[field], value)
-        if not sliver.creation:
-            sliver.creation = datetime.utcnow()
-        if not sliver.expiration:
-            sliver.expiration = sliver.creation + relativedelta(days=7) # FIXME: Externalize
+
+        # API spec says this field is optional, and we do not know that it was just created
+#        if not sliver.creation:
+#            sliver.creation = datetime.utcnow()
+
+#        # Surprisingly, the API spec says this field is optional
+#        if not sliver.expiration:
+#            if sliver.creation:
+#                sliver.expiration = sliver.creation + relativedelta(days=7) # FIXME: Externalize
+#            else:
+#                sliver.expiration = datetime.utcnow() + relativedelta(days=7) # FIXME: Externalize
+
+        # API spec says this field is not optional
         if not sliver.creator_urn:
-            sliver.creator_urn = get_urn_from_cert(client_cert)
+            raise CHAPIv1ArgumentError("Missing creator_urn from sliver_info record")
+#            sliver.creator_urn = get_urn_from_cert(client_cert)
+
+        # If there is already a sliver_info record with the same sliver_urn,
+        # Then treat this as an update instead of a create. 
+        # This might happen if the last sliver was recorded with no expiration time,
+        # and the sliver_info was never explicitly deleted.
+        # Note that sliver urns are unique over time per the spec,
+        # so this shouldn't really happen.
+        q = session.query(SliverInfo)
+        q = q.filter(SliverInfo.sliver_urn == sliver.sliver_urn)
+        user_email = get_email_from_cert(client_cert)
+        if q.count() > 0:
+            # FIXME: If the existing row has a different slice urn or agg urn, then what?
+            # If the existing row has an expiration that we have not reached, then what?
+            chapi_debug(SA_LOG_PREFIX, "Create sliver info for %s found record exists - doing update" % sliver.sliver_urn, {'user': user_email})
+            return self.update_sliver_info(client_cert, sliver.sliver_urn, credentials, options, session)
+
+#        chapi_debug(SA_LOG_PREFIX, "Created sliver info for %s" % sliver.sliver_urn, {'user': user_email})
         return self.finish_create(session, sliver, SA.sliver_info_field_mapping)
 
     def delete_sliver_info(self, client_cert, sliver_urn, \
@@ -1439,7 +1466,12 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         self.expire_sliver_infos(session)
         q = session.query(SliverInfo)
         q = q.filter(SliverInfo.sliver_urn == sliver_urn)
+        delCount = q.count()
+        if delCount < 1:
+            raise CHAPIv1ArgumentError("Unknown sliver urn %s - cannot delete sliver info record" % sliver_urn)
         q.delete(synchronize_session='fetch')
+        user_email = get_email_from_cert(client_cert)
+        chapi_debug(SA_LOG_PREFIX, "Deleted %d sliver info records for sliver %s" % (delCount, sliver_urn), {'user': user_email})
         # API says return True if succeeded
         return self._successReturn(True)
 
@@ -1449,13 +1481,26 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         q = q.filter(SliverInfo.sliver_urn == sliver_urn)
 
         if q.count() == 0:
-            # It isn't there yet. Do an insert
-            return self.create_sliver_info(clent_cert, credentials, options, session)
+#            # The sliver is not recorded yet.
+#            # The API says this should be an ArgumentError
+
+#            # If the options include the AM URN and slice urn (which the spec says is not allowed), do the create anyhow?
+#            if options.has_key('fields') and options['fields'].has_key('SLIVER_INFO_SLICE_URN') and options['fields'].has_key('SLIVER_INFO_AGGREGATE_URN'):
+#                options['fields']['SLIVER_INFO_URN'] = sliver_urn
+
+#                # FIXME: This urn for the creator could be correct but no guarantees. But
+#                # Update doesn't take creator and create requires it.
+#                options['fields']['SLIVER_INFO_CREATOR_URN'] = get_urn_from_cert(client_cert)
+#                return self.create_sliver_info(client_cert, credentials, options, session)
+#            else:
+            raise CHAPIv1ArgumentError("Unknown sliver urn %s - cannot update sliver info record" % sliver_urn)
 
         vals = {}
         for field, value in options['fields'].iteritems():
            vals[SA.sliver_info_field_mapping[field]] = value
         updateCount = q.update(vals)
+        user_email = get_email_from_cert(client_cert)
+        chapi_debug(SA_LOG_PREFIX, "Updated %d sliver info records for sliver %s" % (updateCount, sliver_urn), {'user': user_email})
         self.expire_sliver_infos(session)
         # API says return: None
         return self._successReturn(True)
@@ -1469,7 +1514,9 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
 
         # Hide any expired slivers (expired at least X minutes ago)
         gracemin = 0 # FIXME: externalize this
-        q = q.filter(SliverInfo.expiration > text("now() at time zone 'utc' - INTERVAL '%d MINUTE'" % gracemin))
+        q = q.filter(or_(SliverInfo.expiration == None, SliverInfo.expiration > text("now() at time zone 'utc' - INTERVAL '%d MINUTE'" % gracemin)))
+
+        # Note we do not expire slivers cause the session for this method is read-only
 
         rows = q.all()
         slivers = {}
