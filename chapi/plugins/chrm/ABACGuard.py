@@ -54,8 +54,8 @@ class InvocationCheck(object):
     # Raise an ARGUMENT_ERROR if there is something wrong about the 
     # arguments passed to method
     # Return dictionary of {subject_type : subjects}
-    def validate_arguments(self, client_cert, method, options, arguments, 
-                           session):
+    def validate_arguments(self, client_cert, method, credentials, \
+                               options, arguments, session):
         # Method-specific logic
         return None
 
@@ -69,7 +69,7 @@ class InvocationCheck(object):
     # Validate arguments and check authorization
     def validate(self, client_cert, method, credentials, options, 
                  arguments, session):
-        subjects = self.validate_arguments(client_cert, method, \
+        subjects = self.validate_arguments(client_cert, method, credentials, \
                                                options, arguments, session)
         self.authorize_call(client_cert, method, credentials, \
                                 options, arguments, subjects, session)
@@ -92,8 +92,8 @@ class SubjectInvocationCheck(InvocationCheck):
 
     # Check that there are subjects in the arguments if required
     # Store the list of subjects for later authorization
-    def validate_arguments(self, client_cert, method, options, arguments, 
-                           session):
+    def validate_arguments(self, client_cert, method, credentials, \
+                               options, arguments, session):
         subjects = {}
         if self._subject_extractor:
             subjects = self._subject_extractor(options, arguments, session)
