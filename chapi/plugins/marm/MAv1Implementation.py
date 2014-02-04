@@ -666,7 +666,7 @@ class MAv1Implementation(MAv1DelegateBase):
 
         gid = sfa_gid.GID(string=cred_cert)
         #chapi_debug(MA_LOG_PREFIX, 'GUC: gid = '+str(gid))
-        expires = datetime.utcnow() + relativedelta(years=MA.USER_CRED_LIFE_YEARS)
+        expires = datetime.datetime.utcnow() + relativedelta(years=MA.USER_CRED_LIFE_YEARS)
         cred = cred_util.create_credential(gid, gid, expires, "user", \
                   self.key, self.cert, self.trusted_roots)
         #chapi_debug(MA_LOG_PREFIX, 'GUC: cred = '+cred.save_to_string())
