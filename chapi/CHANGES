@@ -5,15 +5,15 @@
 = GENI Clearinghouse Release Notes =
 
 == 1.5 ==
- * Only honor speaking_for option to determine client intent (#222)
- * Log the actor in MethodContext instead of the client (#224)
- * Fix a format error when revoking project leads (#225)
- * Fix To address in new project lead email (#226)
  * Fixes to sliver info methods: (#221)
   * Expire sliver info records that claim to have expired
   * Do not list expired slivers
   * Better argument checking in sliver info methods
   * A create that finds an exising record does an update
+ * Only honor speaking_for option to determine client intent (#222)
+ * Log the actor in MethodContext instead of the client (#224)
+ * Fix a format error when revoking project leads (#225)
+ * Fix To address in new project lead email (#226)
  * Fix `get_credentials` at MA (fix reference to datetime) (#227)
 
 == 1.4 ==
