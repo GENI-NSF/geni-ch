@@ -11,6 +11,7 @@
   * Better argument checking in sliver info methods
   * A create that finds an exising record does an update
  * Only honor speaking_for option to determine client intent (#222)
+ * Support speaks-for in logging API (#223)
  * Log the actor in MethodContext instead of the client (#224)
  * Fix a format error when revoking project leads (#225)
  * Fix To address in new project lead email (#226)
