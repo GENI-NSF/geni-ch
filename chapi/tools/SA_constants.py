@@ -59,8 +59,8 @@ slice_supplemental_fields = {
 # The externally visible data schema for slivers
 sliver_info_mandatory_fields  = {
     "SLIVER_INFO_URN": {"TYPE": "URN", "CREATE": "REQUIRED", "UPDATE": False},
-    "SLIVER_INFO_SLICE_URN": {"TYPE": "URN", "CREATE": "REQUIRED", "UPDATE": False},
-    "SLIVER_INFO_AGGREGATE_URN": {"TYPE": "URN", "CREATE": "REQUIRED", "UPDATE": False},
+    "SLIVER_INFO_SLICE_URN": {"TYPE": "URN", "CREATE": "REQUIRED", "UPDATE": False}, # True would mean allowed
+    "SLIVER_INFO_AGGREGATE_URN": {"TYPE": "URN", "CREATE": "REQUIRED", "UPDATE": False}, # True would mean allowed
     "SLIVER_INFO_CREATOR_URN": {"TYPE": "URN", "CREATE": "REQUIRED", "UPDATE": False},
     "SLIVER_INFO_EXPIRATION": {"TYPE": "DATETIME", "CREATE" : "ALLOWED", "UPDATE": True},
     "SLIVER_INFO_CREATION": {"TYPE": "DATETIME", "CREATE" : "ALLOWED", "UPDATE": False},
