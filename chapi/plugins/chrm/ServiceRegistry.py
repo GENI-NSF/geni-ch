@@ -23,7 +23,7 @@
 
 import amsoil.core.pluginmanager as pm
 from chapi.Clearinghouse import CHv1Handler
-import CH_constants as CH
+import tools.CH_constants as CH
 from CHv1PersistentImplementation import CHv1PersistentImplementation
 from geni.util.urn_util import URN
 from chapi.Exceptions import *
@@ -166,6 +166,8 @@ class SRv1Delegate(CHv1PersistentImplementation):
         services = [construct_result_row(row, selected_columns, \
                                              CH.field_mapping) \
                         for row in rows]
+
+        self.add_service_attributes(rows, services, session)
 
         # Fill in the service_cert_contents
         if 'SERVICE_CERT' in selected_columns:
