@@ -178,7 +178,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                 lmessage = "%s %s %s" % (label, type, name)
                 args = {'message' : lmessage, 'attributes' : attrs}
                 chapi_log_invocation(LOG_LOG_PREFIX, "log_event", [], {}, args)
-                logresult = self.logging_service._delegate.log_event(None, lmessage, attrs, session, none_user_id=True)
+                logresult = self.logging_service._delegate.log_event(None, lmessage, attrs, [], {}, session, none_user_id=True)
             except Exception, e:
                 if not isinstance(e, CHAPIv1BaseError):
                     e = CHAPIv1ServerError(str(e))
@@ -542,7 +542,8 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         # Log the slice create event
         attribs = {"SLICE" : slice.slice_id, "PROJECT" : slice.project_id}
         self.logging_service.log_event("Created slice " + name, 
-                                       attribs, session=session)
+                                       attribs, credentials, options,
+                                       session=session)
         chapi_audit_and_log(SA_LOG_PREFIX, "Created slice " + name + " in project " + slice.project_id, logging.INFO, {'user': user_email})
 
         return result
@@ -648,10 +649,12 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
             # FIXME: Format in RFC3339 format not iso
             self.logging_service.log_event("Renewed slice %s until %s" % \
                                                (slice_name, new_exp.isoformat()), \
-                                               attribs, session=session)
+                                               attribs, credentials, options,
+                                           session=session)
         else:
             self.logging_service.log_event("Updated slice " + slice_name, 
-                                       attribs, session=session)
+                                           attribs, credentials, options,
+                                           session=session)
 
         result = self._successReturn(True)
 
@@ -727,7 +730,8 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                 leadname = get_member_display_name(info[row],row)
 
         self.logging_service.log_event("Created project " + name + " with lead " + leadname, 
-                                       attribs, session=session)
+                                       attribs, credentials, options,
+                                       session=session)
         chapi_audit_and_log(SA_LOG_PREFIX, "Created project " + name + " with lead " + leadname, logging.INFO, {'user': user_email})
 
         # Email the admins that the project was created
@@ -792,7 +796,8 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         attribs = {"PROJECT" : project_uuid}
 
         self.logging_service.log_event("Updated project " + name + change, 
-                                       attribs, session=session)
+                                       attribs, credentials, options,
+                                       session=session)
 
         # Force this project to be expired/unexpired and logged now
         if options['fields'].has_key('PROJECT_EXPIRATION'):
@@ -877,7 +882,12 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         old_project_lead = self.get_project_lead(session, project_id)
         new_project_lead = old_project_lead;
         old_lead_urn = self.get_member_urn_for_id(session, old_project_lead)
-        client_uuid = get_uuid_from_cert(client_cert)
+
+        # Prepare a 'speaking_for' dict for updating options for
+        # individual calls below
+        speaking_for = dict()
+        if 'speaking_for' in options:
+            speaking_for['speaking_for'] = options['speaking_for']
 
         # If we are removing the lead, make sure there is an authorized admin on the project
         #   If yes, make the admin be the lead, and the current lead be a member
@@ -906,9 +916,10 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                             new_lead_urn = self.get_member_urn_for_id(session, new_project_lead)
                             
                             role_options = {'members_to_change': [{'PROJECT_MEMBER': old_lead_urn, 'PROJECT_ROLE': 'MEMBER'},{'PROJECT_MEMBER': new_lead_urn, 'PROJECT_ROLE': 'LEAD'}]}
+                            role_options.update(speaking_for)
                             result = self.modify_membership(client_cert, session, ProjectMember, client_uuid, \
                                                                 project_id, project_urn, \
-                                                                role_options, 'project_id', \
+                                                                credentials, role_options, 'project_id', \
                                                                 'PROJECT_MEMBER', 'PROJECT_ROLE', \
                                                                 'project')
 
@@ -951,7 +962,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
 
         result = self.modify_membership(client_cert, session, ProjectMember, client_uuid, \
                                           project_id, project_urn, \
-                                          options, 'project_id', \
+                                          credentials, options, 'project_id', \
                                           'PROJECT_MEMBER', 'PROJECT_ROLE', \
                                           'project')
 
@@ -990,15 +1001,17 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                 del(slice_urns[slice['SLICE_UID']])
                 if slice['SLICE_ROLE'] not in ['LEAD', 'ADMIN']:
                     lead_options = {'members_to_change': opt}
+                    lead_options.update(speaking_for)
                     self.modify_membership(client_cert, session, SliceMember, client_uuid, \
-                           slice['SLICE_UID'], slice['SLICE_URN'], lead_options, \
+                           slice['SLICE_UID'], slice['SLICE_URN'], credentials, lead_options, \
                            'slice_id', 'SLICE_MEMBER', 'SLICE_ROLE', 'slice')
                     
             # add lead to slices not yet a member of
             for slice_id, slice_urn in slice_urns.iteritems():
                  lead_options2 = {'members_to_add': opt}
+                 lead_options2.update(speaking_for)
                  self.modify_membership(client_cert, session, SliceMember, client_uuid, \
-                           slice_id, slice_urn, lead_options2, \
+                           slice_id, slice_urn, credentials, lead_options2, \
                            'slice_id', 'SLICE_MEMBER', 'SLICE_ROLE', 'slice')
 
         # now delete all removed members from slices
@@ -1011,6 +1024,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                     if not slice['SLICE_UID'] in slice_uids:
                         continue
                     del_options = {'members_to_remove': [member]}
+                    del_options.update(speaking_for)
 
                     # if member is lead on the slice, make a new lead
                     if slice['SLICE_ROLE'] == 'LEAD':
@@ -1030,7 +1044,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                         q = q.update({"owner_id" : project_lead})
 
                     self.modify_membership(client_cert, session, SliceMember, client_uuid, \
-                             slice['SLICE_UID'], slice['SLICE_URN'], del_options, \
+                             slice['SLICE_UID'], slice['SLICE_URN'], credentials, del_options, \
                              'slice_id', 'SLICE_MEMBER', 'SLICE_ROLE', 'slice')
 
         # All new project admins should be admins in all project slices
@@ -1047,8 +1061,9 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                         if q.count() <= 0:
                             nopt = [{'SLICE_MEMBER': member['PROJECT_MEMBER'], 'SLICE_ROLE': 'ADMIN'}]
                             noptions = {'members_to_add': nopt}
+                            noptions.update(speaking_for)
                             self.modify_membership(client_cert, session, SliceMember, client_uuid, \
-                                                       slice.slice_id, slice.slice_urn, noptions, \
+                                                       slice.slice_id, slice.slice_urn, credentials, noptions, \
                                                        'slice_id', 'SLICE_MEMBER', 'SLICE_ROLE', 'slice')
                         else:
                             # If the new admin is a member or auditor on the slice, make them an admin on the slice
@@ -1057,8 +1072,9 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                             if row[0] == self.get_role_id(session, 'MEMBER') or row[0] == self.get_role_id(session, 'AUDITOR'):
                                 nopt = [{'SLICE_MEMBER': member['PROJECT_MEMBER'], 'SLICE_ROLE': 'ADMIN'}]
                                 noptions = {'members_to_change': nopt}
+                                noptions.update(speaking_for)
                                 self.modify_membership(client_cert, session, SliceMember, client_uuid, \
-                                                           slice.slice_id, slice.slice_urn, noptions, \
+                                                           slice.slice_id, slice.slice_urn, credentials, noptions, \
                                                            'slice_id', 'SLICE_MEMBER', 'SLICE_ROLE', 'slice')
 
         if 'members_to_change' in options:
@@ -1074,8 +1090,9 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                         if q.count() <= 0:
                             nopt = [{'SLICE_MEMBER': member['PROJECT_MEMBER'], 'SLICE_ROLE': 'ADMIN'}]
                             noptions = {'members_to_add': nopt}
+                            noptions.update(speaking_for)
                             self.modify_membership(client_cert, session, SliceMember, client_uuid, \
-                                                       slice.slice_id, slice.slice_urn, noptions, \
+                                                       slice.slice_id, slice.slice_urn, credentials, noptions, \
                                                        'slice_id', 'SLICE_MEMBER', 'SLICE_ROLE', 'slice')
                         else:
                             # If the new admin is a member or auditor on the slice, make them an admin on the slice
@@ -1084,8 +1101,9 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                             if row[0] == self.get_role_id(session, 'MEMBER') or row[0] == self.get_role_id(session, 'AUDITOR'):
                                 nopt = [{'SLICE_MEMBER': member['PROJECT_MEMBER'], 'SLICE_ROLE': 'ADMIN'}]
                                 noptions = {'members_to_change': nopt}
+                                noptions.update(speaking_for)
                                 self.modify_membership(client_cert, session, SliceMember, client_uuid, \
-                                                           slice.slice_id, slice.slice_urn, noptions, \
+                                                           slice.slice_id, slice.slice_urn, credentials, noptions, \
                                                            'slice_id', 'SLICE_MEMBER', 'SLICE_ROLE', 'slice')
 
 
@@ -1106,7 +1124,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
 
         result = self.modify_membership(client_cert, session, SliceMember, client_uuid, \
                                           slice_id, slice_urn, \
-                                          options, 'slice_id', \
+                                          credentials, options, 'slice_id', \
                                           'SLICE_MEMBER', 'SLICE_ROLE', \
                                           'slice')
         
@@ -1146,7 +1164,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
 
     # shared between modify_slice_membership and modify_project_membership
     def modify_membership(self, client_cert, session, member_class, client_uuid, id, urn, 
-                          options, id_field,
+                          credentials, options, id_field,
                           member_str, role_str, text_str):
 
         user_email = get_email_from_cert(client_cert)
@@ -1169,7 +1187,6 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         caller_urn = get_urn_from_cert(client_cert)
         all_urns.append(caller_urn)
 
-        credentials = []
         lookup_identifying_options = {\
             "match" : {"MEMBER_URN" : all_urns}, 
             "filter" : ["_GENI_MEMBER_DISPLAYNAME", "MEMBER_FIRSTNAME", 
@@ -1290,7 +1307,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                 self.logging_service.log_event(
                     "Removed member %s from %s %s" % \
                         (member_name, text_str, label), \
-                        attribs, session=session)
+                        attribs, credentials, options, session=session)
                 chapi_info(SA_LOG_PREFIX, "Removed member %s from %s %s" % (member_name, text_str, label2), {'user': user_email})
 
         # Log all adds
@@ -1306,7 +1323,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                     self.logging_service.log_event(
                         "%s accepted an invitation to join %s %s in role %s" % \
                             (member_name, text_str, label, member_role), 
-                        attribs, session=session)
+                        attribs, credentials, options, session=session)
                     chapi_audit_and_log(SA_LOG_PREFIX, 
                                         "%s accepted an invitation to join %s %s in role %s" % \
                                             (member_name, text_str, label2, member_role), logging.INFO, {'user': user_email})
@@ -1314,7 +1331,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                     self.logging_service.log_event(
                         "%s Added member %s in role %s to %s %s" % \
                             (caller_name, member_name, member_role, text_str, label), 
-                        attribs, session=session)
+                        attribs, credentials, options, session=session)
                     chapi_audit_and_log(SA_LOG_PREFIX, 
                                         "%s Added member %s in role %s to %s %s" % \
                                             (caller_name, member_name, member_role, text_str, label2), logging.INFO, {'user': user_email})
@@ -1341,7 +1358,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                 self.logging_service.log_event(
                     "Changed member %s to role %s in %s %s" % \
                         (member_name, member_role, text_str, label), 
-                        attribs,session=session)
+                        attribs, credentials, options, session=session)
                 chapi_info(SA_LOG_PREFIX, "Changed member %s to role %s in %s %s" % (member_name, member_role, text_str, label2), {'user': user_email})
 
         return self._successReturn(None)

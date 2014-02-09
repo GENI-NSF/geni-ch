@@ -163,18 +163,21 @@ def main(args = sys.argv, do_print=True):
         attributes = {type1 : id1, type2 : id2}
         user_id = '8e405a75-3ff7-4288-bfa5-111552fa53ce'
         (result, msg) = _do_ssl(framework, suppress_errors, reason, fcn, \
-                                    message, attributes, user_id)
+                                    message, attributes, opts.credentials,
+                                client_options)
     elif opts.method in [ 'get_log_entries_by_author']:
         num_hours = 15*24
         user_id = '8e405a75-3ff7-4288-bfa5-111552fa53ce'
         (result, msg) = _do_ssl(framework, suppress_errors, reason, fcn, \
-                                    user_id, num_hours)
+                                    user_id, num_hours, opts.credentials,
+                                client_options)
     elif opts.method in ['get_log_entries_for_context']:
         context_type = 'SLICE'
         context_id = '848e4a11-55eb-45df-a0e8-b79109fb0a88'
         num_hours = 15*24
         (result, msg) = _do_ssl(framework, suppress_errors, reason, fcn, \
-                                    context_type, context_id, num_hours)
+                                    context_type, context_id, num_hours,
+                                opts.credentials, client_options)
     elif opts.method in ['get_log_entries_by_attributes']:
         type1 = 'SLICE'
         id1 = '848e4a11-55eb-45df-a0e8-b79109fb0a88'
@@ -183,12 +186,14 @@ def main(args = sys.argv, do_print=True):
         num_hours = 15*24
         attribute_sets = [{type1 : id1}, {type2 : id2}]
         (result, msg) = _do_ssl(framework, suppress_errors, reason, fcn, \
-                                    attribute_sets, num_hours)
+                                    attribute_sets, num_hours, opts.credentials,
+                                client_options)
 
     elif opts.method in ['get_attributes_for_log_entry']:
         event_id = '20360';
         (result, msg) = _do_ssl(framework, suppress_errors, reason, fcn, \
-                                    event_id)
+                                    event_id, opts.credentials,
+                                client_options)
     # Credential store methods
     elif opts.method in ['get_permissions']:
         (result, msg) = _do_ssl(framework, suppress_errors, reason, fcn, \
