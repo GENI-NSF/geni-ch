@@ -105,7 +105,7 @@ def execute_abac_query(query, id_certs, raw_assertions = []):
     args = ['python', os.path.join(chapi_tools, 'ABACManager.py'),
             '--config=%s' % config_filename,
             '--query=%s' % query]
-    chapi_info("ABAC", "ARGS = %s" % " ".join(args))
+    chapi_debug("ABAC", "Exec ABAC Query ARGS = %s" % " ".join(args))
     result = grab_output_from_subprocess(args)
 
     result_parts = result.split('\n')
