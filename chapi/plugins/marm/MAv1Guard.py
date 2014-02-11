@@ -156,8 +156,9 @@ class MAv1Guard(ABACGuardBase):
         'lookup_login_info' : \
             SubjectInvocationCheck([
                 "ME.MAY_LOOKUP_LOGIN_INFO<-ME.IS_AUTHORITY", 
-                "ME.MAY_LOOKUP_LOGIN_INFO<-ME.IS_OPERATOR"
-                ], None, None), 
+                "ME.MAY_LOOKUP_LOGIN_INFO<-ME.IS_OPERATOR",
+                "ME.MAY_LOOKUP_LOGIN_INFO_$SUBJECT<-ME.IS_$SUBJECT" 
+                ], None, standard_subject_extractor), 
         'get_credentials' : \
             SubjectInvocationCheck([
                 "ME.MAY_GET_CREDENTIALS<-ME.IS_AUTHORITY", 
