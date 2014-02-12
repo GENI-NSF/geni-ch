@@ -262,50 +262,7 @@ class Loggingv1Guard(ABACGuardBase):
             None
         }
 
-    INVOCATION_CHECK_FOR_METHOD = \
-        {
-        # user_id must be self
-        # Must belong to slice or project of context (if any)
-        # Or is about self and only about self
-        'log_event' : \
-            SubjectInvocationCheck([
-                "ME.MAY_LOG_EVENT<-ME.IS_AUTHORITY",
-                "ME.MAY_LOG_EVENT<-ME.IS_OPERATOR",
-                "ME.MAY_LOG_EVENT_$SUBJECT<-ME.BELONGS_TO_$SUBJECT",
-                "ME.MAY_LOG_EVENT_$SUBJECT<-ME.INVOKING_ON_SELF_$SUBJECT",
-                ], [assert_user_acting_on_self, 
-                    assert_user_belongs_to_slice_or_project], 
-                                   attribute_extractor),
-        # user_id must be self
-        'get_log_entries_by_author' : \
-            SubjectInvocationCheck([
-                "ME.MAY_GET_LOG_ENTRIES_BY_AUTHOR<-ME.IS_AUTHORITY",
-                "ME.MAY_GET_LOG_ENTRIES_BY_AUTHOR<-ME.IS_OPERATOR",
-                "ME.MAY_GET_LOG_ENTRIES_BY_AUTHOR_$SUBJECT<-ME.INVOKING_ON_SELF_$SUBJECT",
-                "ME.MAY_GET_LOG_EVENT_$SUBJECT<-ME.IS_$SUBJECT"
-                ], assert_user_acting_on_self, user_id_extractor),
-        # Must be member of project or slice
-        'get_log_entries_for_context' : \
-            SubjectInvocationCheck([
-                "ME.MAY_GET_LOG_ENTRIES_FOR_CONTEXT<-ME.IS_AUTHORITY",
-                "ME.MAY_GET_LOG_ENTRIES_FOR_CONTEXT<-ME.IS_OPERATOR",
-                "ME.MAY_GET_LOG_ENTRIES_FOR_CONTEXT_$SUBJECT<-ME.INVOKING_ON_SELF_$SUBJECT",
-                'ME.MAY_GET_LOG_ENTRIES_FOR_CONTEXT_$SUBJECT<-ME.BELONGS_TO_$SUBJECT'
-                ], [assert_user_acting_on_self, 
-                    assert_belongs_to_slice, assert_belongs_to_project], 
-                                   context_extractor),
-        # For now, leave open (we don't think anyone uses this)
-        'get_log_entries_by_attributes' : \
-            SubjectInvocationCheck([
-                "ME.MAY_GET_LOG_ENTRIES_BY_ATTRIBUTES<-CALLER",
-                ], None, None),
-        # For now, leave open
-        'get_attributes_for_log_entry' : \
-            SubjectInvocationCheck([
-                "ME.MAY_GET_ATTRIBUTES_FOR_LOG_ENTRY<-CALLER"
-                ], None, None)
-        }
-
+    INVOCATION_CHECK_FOR_METHOD = None
 
     # Lookup argument check per method (or None if none registered)
     def get_argument_check(self, method):
@@ -315,6 +272,11 @@ class Loggingv1Guard(ABACGuardBase):
 
     # Lookup invocation check per method (or None if none registered)
     def get_invocation_check(self, method):
+        if self.INVOCATION_CHECK_FOR_METHOD == None:
+            policies = \
+                parse_method_policies("/etc/geni-chapi/logging_policy.json")
+            self.INVOCATION_CHECK_FOR_METHOD = \
+                create_subject_invocation_checks(policies)
         if self.INVOCATION_CHECK_FOR_METHOD.has_key(method):
             return self.INVOCATION_CHECK_FOR_METHOD[method]
         return None

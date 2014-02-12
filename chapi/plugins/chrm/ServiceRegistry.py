@@ -23,7 +23,7 @@
 
 import amsoil.core.pluginmanager as pm
 from chapi.Clearinghouse import CHv1Handler
-import CH_constants as CH
+import tools.CH_constants as CH
 from CHv1PersistentImplementation import CHv1PersistentImplementation
 from geni.util.urn_util import URN
 from chapi.Exceptions import *

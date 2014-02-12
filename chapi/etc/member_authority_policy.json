@@ -1,0 +1,219 @@
+{
+  "__DOC__" : "ABAC policies for CHAPI MA service",
+
+   "lookup_public_member_info" : {
+     "__DOC__" : "Caller may call on anyone",
+     "policies" : [
+       "ME.MAY_$METHOD<-CALLER"
+     ],
+     "extractor" : "standard_subject_extractor"
+    },
+
+   "lookup_identifying_member_info" : {
+     "__DOC__" : [
+       "Authorities, Operators, self",
+       "Searching for lead by UID",
+       "Searching for lead by email",
+       "Shares project with caller",
+       "Has pending request on project"
+     ],
+     "policies" : [
+       "ME.MAY_$METHOD<-ME.IS_AUTHORITY",
+       "ME.MAY_$METHOD<-ME.IS_OPERATOR", 
+       "ME.MAY_$METHOD_$SUBJECT<-ME.IS_$SUBJECT",
+       "ME.MAY_$METHOD_$SUBJECT<-ME.IS_LEAD_AND_SEARCHING_UID_$SUBJECT",
+       "ME.MAY_$METHOD<-ME.IS_LEAD_AND_SEARCHING_EMAIL", 
+       "ME.MAY_$METHOD_$SUBJECT<-ME.SHARES_PROJECT_$SUBJECT",
+       "ME.MAY_$METHOD_$SUBJECT<-ME.HAS_PENDING_REQUEST_ON_SHARED_PROJECT_$SUBJECT"
+      ], 
+      "asserters" : ["assert_shares_project"], 
+      "extractor" : "standard_subject_extractor"
+  },
+
+  "lookup_public_identifying_member_info" : {
+    "__DOC__" : [
+      "Authorities, operator, self",
+      "searching for leady by UID",
+      "searching for leady by email",
+      "shares project with caller",
+      "has pending request on project"
+    ],
+    "policies" : [
+      "ME.MAY_$METHOD<-ME.IS_AUTHORITY",
+      "ME.MAY_$METHOD<-ME.IS_OPERATOR", 
+      "ME.MAY_$METHOD_$SUBJECT<-ME.IS_$SUBJECT",
+      "ME.MAY_$METHOD_$SUBJECT<-ME.IS_LEAD_AND_SEARCHING_UID_$SUBJECT",
+      "ME.MAY_$METHOD<-ME.IS_LEAD_AND_SEARCHING_EMAIL", 
+      "ME.MAY_$METHOD_$SUBJECT<-ME.SHARES_PROJECT_$SUBJECT",
+      "ME.MAY_$METHOD_$SUBJECT<-ME.HAS_PENDING_REQUEST_ON_SHARED_PROJECT_$SUBJECT"
+      ], 
+  "asserters" : ["assert_shares_project"], 
+  "extractor" : "standard_subject_extractor"
+  },
+
+  "lookup_private_member_info" : {
+    "__DOC__" : "Authority, operator, self",
+    "policies" : [
+      "ME.MAY_$METHOD<-ME.IS_AUTHORITY", 
+      "ME.MAY_$METHOD<-ME.IS_OPERATOR", 
+      "ME.MAY_$METHOD_$SUBJECT<-ME.IS_$SUBJECT"
+    ], 
+    "extractor" : "standard_subject_extractor"
+  },
+
+  "lookup_login_info" : {
+    "__DOC__" : "Authority, operator, self",
+    "policies" : [
+      "ME.MAY_$METHOD<-ME.IS_AUTHORITY", 
+      "ME.MAY_$METHOD<-ME.IS_OPERATOR", 
+      "ME.MAY_$METHOD_$SUBJECT<-ME.IS_$SUBJECT"
+    ], 
+    "extractor" : "standard_subject_extractor"
+  },
+
+   "get_credentials" : {
+    "__DOC__" : "Authority, operator, self",
+    "policies" : [
+      "ME.MAY_$METHOD<-ME.IS_AUTHORITY", 
+      "ME.MAY_$METHOD<-ME.IS_OPERATOR", 
+      "ME.MAY_$METHOD_$SUBJECT<-ME.IS_$SUBJECT"
+    ], 
+    "extractor" : "member_urn_extractor"
+  },
+
+  "update_member_info" : {
+    "__DOC__" : "Operator, self",
+    "policies" : [
+      "ME.MAY_$METHOD<-ME.IS_OPERATOR", 
+      "ME.MAY_$METHOD_$SUBJECT<-ME.IS_$SUBJECT"
+    ], 
+    "extractor" : "standard_subject_extractor"
+  },
+
+  "create_key" : {
+     "__DOC__" : "Operator, self",
+     "policies" : [
+        "ME.MAY_$METHOD<-ME.IS_OPERATOR",
+        "ME.MAY_$METHOD_$SUBJECT<-ME.IS_$SUBJECT"
+     ], 
+     "extractor" : "key_subject_extractor"
+   },
+
+  "delete_key" : {
+     "__DOC__" : "Operator, self",
+     "policies" : [
+        "ME.MAY_$METHOD<-ME.IS_OPERATOR",
+        "ME.MAY_$METHOD_$SUBJECT<-ME.IS_$SUBJECT"
+     ], 
+     "extractor" : "key_subject_extractor"
+   },
+
+  "update_key" : {
+     "__DOC__" : "Operator, self",
+     "policies" : [
+        "ME.MAY_$METHOD<-ME.IS_OPERATOR",
+        "ME.MAY_$METHOD_$SUBJECT<-ME.IS_$SUBJECT"
+     ], 
+     "extractor" : "key_subject_extractor"
+   },
+
+   "lookup_keys" : {
+     "__DOC__" : "Authority, operator, self, shares_slice",
+     "policies" : [
+       "ME.MAY_$METHOD<-ME.IS_AUTHORITY", 
+       "ME.MAY_$METHOD<-ME.IS_OPERATOR", 
+       "ME.MAY_$METHOD_$SUBJECT<-ME.IS_$SUBJECT",
+       "ME.MAY_$METHOD_$SUBJECT<-ME.SHARES_SLICE_$SUBJECT"
+     ],
+     "asserters" : ["assert_shares_slice"],
+     "extractor" : "key_subject_extractor",
+     "pass_empty_subject" : "True"
+   },
+
+   "create_certificate" : {
+     "__DOC__" : "Operator, authority, self",
+     "policies" : [
+       "ME.MAY_$METHOD<-ME.IS_OPERATOR",
+       "ME.MAY_$METHOD<-ME.IS_AUTHORITY",
+       "ME.MAY_$METHOD_$SUBJECT<-ME.IS_$SUBJECT"
+     ],
+     "extractor" : "standard_subject_extractor"
+   },
+
+   "create_member" : {
+     "__DOC__" : "Operator, authority",
+     "policies" : [
+       "ME.MAY_$METHOD<-ME.IS_OPERATOR",
+       "ME.MAY_$METHOD<-ME.IS_AUTHORITY"
+     ]
+   },
+
+   "list_clients" : {
+      "__DOC__" : "Open to all",
+      "policies" : [
+         "ME.MAY_$METHOD<-CALLER"
+       ]
+   },
+
+    "list_authorized_clients" : {
+       "__DOC__" : "Authority or self",
+       "policies" : [
+        "ME.MAY_$METHOD<-ME.IS_AUTHORITY",
+        "ME.MAY_$METHOD_$SUBJECT<-ME.IS_$SUBJECT"
+       ],
+       "extractor" : "member_id_extractor"
+    },
+
+    "authorize_client" : {
+       "__DOC__" : "Authority or self",
+       "policies" : [
+        "ME.MAY_$METHOD<-ME.IS_AUTHORITY",
+        "ME.MAY_$METHOD_$SUBJECT<-ME.IS_$SUBJECT"
+       ],
+       "extractor" : "member_id_extractor"
+    },
+
+    "enable_user" : {
+      "__DOC__" : "Only operators/autorities can enable/disable users",
+      "policies" : [
+        "ME.MAY_$METHOD<-ME.IS_AUTHORITY",
+        "ME.MAY_$METHOD<-ME.IS_OPERATOR"
+      ]
+    },
+
+    "add_member_privilege" : {
+      "__DOC__" : "Only operators/autorities can add member privilege",
+      "policies" : [
+        "ME.MAY_$METHOD<-ME.IS_AUTHORITY",
+        "ME.MAY_$METHOD<-ME.IS_OPERATOR"
+      ] 
+    },
+
+    "revoke_member_privilege" : {
+      "__DOC__" : "Only operators/autorities can revoke member privilege",
+      "policies" : [
+        "ME.MAY_$METHOD<-ME.IS_AUTHORITY",
+        "ME.MAY_$METHOD<-ME.IS_OPERATOR"
+      ] 
+    },
+
+    "add_member_attribute" : {
+      "__DOC__" : "Only operators/autorities/self can add member attribute",
+      "policies" : [
+        "ME.MAY_$METHOD<-ME.IS_AUTHORITY",
+        "ME.MAY_$METHOD<-ME.IS_OPERATOR",
+        "ME.MAY_$METHOD_$SUBJECT<-ME.IS_$SUBJECT"
+      ], 
+      "extractor" : "member_urn_extractor"
+    },
+
+    "revoke_member_privilege" : {
+      "__DOC__" : "Only operators/autorities/self can revoke member attribute",
+      "policies" : [
+        "ME.MAY_$METHOD<-ME.IS_AUTHORITY",
+        "ME.MAY_$METHOD<-ME.IS_OPERATOR",
+        "ME.MAY_$METHOD_$SUBJECT<-ME.IS_$SUBJECT"
+      ], 
+      "extractor" : "member_urn_extractor"
+    }
+}

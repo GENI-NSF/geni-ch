@@ -276,3 +276,19 @@ class ABACGuardBase(GuardBase):
 
     def protect_results(self, client_cert, method, credentials, results):
         return results
+
+
+# Method to convert
+# dictionary of method => arguments for creating SubjectInvocationChecks 
+#into a dictionary method => SubjectInvocationCheck
+def create_subject_invocation_checks(policies):
+    checks = {}
+    for method, args in policies.items():
+        policies = args['policies']
+        asserters = args['asserters']
+        extractor = args['extractor']
+        pass_empty_subject = args['pass_empty_subject']
+        checks[method] = \
+            SubjectInvocationCheck(policies, asserters, \
+                                       extractor, pass_empty_subject)
+    return checks

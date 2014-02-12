@@ -326,6 +326,11 @@ class SAv1Guard(ABACGuardBase):
 
     # Lookup invocation check per method (or None if none registered)
     def get_invocation_check(self, method):
+        if self.INVOCATION_CHECK_FOR_METHOD == None:
+            policies = \
+                parse_method_policies("/etc/geni-chapi/slice_authority_policy.json")
+            self.INVOCATION_CHECK_FOR_METHOD = \
+                create_subject_invocation_checks(policies)
         if self.INVOCATION_CHECK_FOR_METHOD.has_key(method):
             return self.INVOCATION_CHECK_FOR_METHOD[method]
         return None

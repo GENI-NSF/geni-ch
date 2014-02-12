@@ -1,0 +1,70 @@
+{
+  "__DOC__" : "ABAC policies for CHAPI Logging service",
+
+  "log_event" : {
+    "__DOC__" : [
+        "user_id must be self",
+	"must belong to slice or project of context (if any)",
+	"or is about self and only about self"
+    ],
+    "policies" : [
+        "ME.MAY_$METHOD<-ME.IS_AUTHORITY", 
+        "ME.MAY_$METHOD<-ME.IS_OPERATOR",
+        "ME.MAY_$METHOD_$SUBJECT<-ME.BELONGS_TO_$SUBJECT",
+        "ME.MAY_$METHOD_$SUBJECT<-ME.INVOKING_ON_SELF_$SUBJECT"
+        ],
+    "asserters" : [
+        "assert_user_acting_on_self", 
+        "assert_user_belongs_to_slice_or_project"
+        ],
+    "extractor" : "attribute_extractor"
+  },
+
+  "get_log_entries_by_author" : {
+    "__DOC__" : "user_id must be self",
+    "policies" : [
+        "ME.MAY_$METHOD<-ME.IS_AUTHORITY",
+        "ME.MAY_$METHOD<-ME.IS_OPERATOR",
+        "ME.MAY_$METHOD_$SUBJECT<-ME.INVOKING_ON_SELF_$SUBJECT",
+        "ME.MAY_GET_LOG_EVENT_$SUBJECT<-ME.IS_$SUBJECT"
+       ],
+    "asserters" : [
+       "assert_user_acting_on_self",
+       "assert_belongs_to_slice",
+       "assert_belongs_to_project"
+       ],
+    "extractor" : "context_extractor"
+  },
+
+  "get_log_entries_for_context" : {
+    "__DOC__" : "Must be member of project of slice",
+    "policies" : [      
+        "ME.MAY_$METHOD<-ME.IS_AUTHORITY",
+        "ME.MAY_$METHOD<-ME.IS_OPERATOR",
+        "ME.MAY_$METHOD_$SUBJECT<-ME.INVOKING_ON_SELF_$SUBJECT",
+        "ME.MAY_$METHOD_$SUBJECT<-ME.BELONGS_TO_$SUBJECT"
+       ],
+    "asserters" : [
+       "assert_belongs_to_slice",
+       "assert_belongs_to_project"
+    ],
+    "extractor" : "context_extractor"
+  },
+
+  "get_log_entries_by_attributes" : {
+    "__DOC__" : "For now, leave open. We do not think anyone uses this",
+    "policies" : [
+        "ME.MAY_$METHOD<-CALLER"
+    ]
+  },
+
+  "get_log_entries_by_log_entry" : {
+    "__DOC__" : "For now, leave open",
+    "policies" : [
+        "ME.MAY_GET_ATTRIBUTES_FOR_LOG_ENTRY<-CALLER"
+    ]
+  }
+
+
+
+}
