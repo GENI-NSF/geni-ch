@@ -4,6 +4,8 @@
 
 = GENI Clearinghouse Release Notes =
 
+== 1.6 ==
+
 == 1.5 ==
  * Implement Federation API v2 (#204)
  * Fixes to sliver info methods: (#221)
