@@ -52,6 +52,83 @@ class SAv1Handler(HandlerBase):
                     self._delegate.get_version(mc._session)
         return mc._result
 
+    # Generic V2 service methods
+    def create(self, type, credentials, options):
+        if type == "SLICE":
+            result = \
+                self.create_slice(credentials, options)
+        elif type == "SLIVER_INFO":
+            result = \
+                self.create_sliver_info(credentials, options)
+        elif type == "PROJECT":
+            result = \
+                self.create_project(credentials, options)
+        else:
+             result = self._errorReturn(CHAPIv1ArgumentError("Invalid type: %s" % type))
+        return result
+            
+    def update(self, urn, type, credentials, options):
+        if type == "SLICE":
+            result = self.update_slice(urn, credentials, options)
+        elif type == "SLIVER_INFO":
+            result = self.update_sliver_info(urn, credentials, options)
+        elif type == "PROJECT":
+            result = self.update_project(urn, credentials, options)
+        else:
+            return self._errorReturn(CHAPIv1ArgumentError("Invalid type: %s" % type))
+        return result
+            
+    def delete(self, urn, type, credentials, options):
+        if type == "SLICE":
+            return self._errorReturn(CHAPIv1ArgumentError("method delete not supported for SLICE"))
+        elif type == "SLICE_INFO":
+            result = self.delete_sliver_info(urn, credentials, options)
+        elif type == "PROJECT":
+            result = self._errorReturn(CHAPIv1ArgumentError("method delete not supported for PROJECT"))
+        else:
+             result = self._errorReturn(CHAPIv1ArgumentError("Invalid type: %s" % type))
+        return result
+            
+    def lookup(self, type, credentials, options):
+        if type == "SLICE":
+            result = self.lookup_slices(credentials, options)
+        elif type == "SLIVER_INFO":
+            result = self.lookup_sliver_info(credentials, options)
+        elif type == "PROJECT":
+            result = self.lookup_projects(credentials, options)
+        else:
+            result = self._errorReturn(CHAPIv1ArgumentError("Invalid type: %s" % type))
+        return result
+
+    # Generic v2 membership methods
+    def modify_membership(type, urn, credentials, options):
+        if type == "SLICE":
+            result = self.modify_slice_membership(urn, credentials, options)
+        elif type == "PROJECT":
+            result = self.modify_project_membership(urn, credentials, options)
+        else:
+            result = self._errorReturn(CHAPIv1ArgumentError("Invalid type: %s" % type))
+        return result
+
+    def lookup_members(type, urn, credentials, options):
+        if type == "SLICE":
+            result = self.lookup_slice_members(urn, credentials, options)
+        elif type == "PROJECT":
+            result = self.lookup_project_members(urn, credentials, options)
+        else:
+            result = self._errorReturn(CHAPIv1ArgumentError("Invalid type: %s" % type))
+        return result
+
+    def lookup_for_member(type, urn, credentials, options):
+        if type == "SLICE":
+            result = self.lookup_slices_for_member(urn, credentials, options)
+        elif type == "PROJECT":
+            result = self.lookup_projects_for_member(urn, credentials, options)
+        else:
+            result = self._errorReturn(CHAPIv1ArgumentError("Invalid type: %s" % type))
+        return result
+
+
     # This call is protected
     # Create a slice given provided options and authorized by client_cert
     # and given credentials

@@ -50,7 +50,63 @@ class MAv1Handler(HandlerBase):
                     self._delegate.get_version(mc._session)
         return mc._result
 
+    # Generic V2 service methods
+    def create(self, type, credentials, options):
+        if type == "MEMBER":
+            result = \
+                self._errorReturn(CHAPIv1ArgumentError("method create not supported for MEMBER"))
+        elif type == "KEY":
+            result = self.create_key(credentials, options)
+        else:
+            result = self._errorReturn(CHAPIv1ArgumentError("Invalid type: %s" % type))
+        return result
+            
+    def update(self, urn, type, credentials, options):
+        if type == "MEMBER":
+            result = \
+                self.update_member_info(urn, credentials, options)
+        elif type == "KEY":
+            result = \
+                self.update_key(urn, credentials, options)
+        else:
+            result = self._errorReturn(CHAPIv1ArgumentError("Invalid type: %s" % type))
+        return result
+            
+    def delete(self, urn, type, credentials, options):
+        if type == "MEMBER":
+            result = \
+                self._errorReturn(CHAPIv1ArgumentError("method delete not supported for MEMBER"))
+        elif type == "KEY":
+            result = \
+                self.delete_key( urn, credentials, options)
+        else:
+             result = self._errorReturn(CHAPIv1ArgumentError("Invalid type: %s" % type))
+        return result
+            
+    def lookup(self, type, credentials, options):
+        if type == "MEMBER":
+            result = \
+                self.lookup_allowed_member_info(credentials, options)
+        elif type == "KEY":
+            result = \
+                self.lookup_keys(credentials, options)
+        else:
+            result = self._errorReturn(CHAPIv1ArgumentError("Invalid type: %s" % type))
+        return result
+
+
     # MEMBER service methods
+
+    def lookup_allowed_member_info(self, credentials, options):
+        with MethodContext(self, MA_LOG_PREFIX, 'lookup_allowed_member_info',
+                           {}, credentials, options, read_only=True) as mc:
+            if not mc._error:
+                mc._result = self._delegate.lookup_allowed_member_info(mc._client_cert,
+                                                                       credentials, 
+                                                                       options,
+                                                                       mc._session)
+        return mc._result
+
     def lookup_public_member_info(self, credentials, options):
         """Return public information about members specified in options
         filter and query fields
@@ -220,11 +276,10 @@ class MAv1Handler(HandlerBase):
                                               mc._session)
         return mc._result
 
-    def delete_key(self, member_urn, key_id, credentials, options):
-        """Delete a key pair for given member
+    def delete_key(self, key_id, credentials, options):
+        """Delete a specific key pair for given member
         Arguments:
-            member_urn: urn of member for which to delete key pair
-            key_id: KEY_ID (fingerprint) of key pair to be deleted
+            key_id: KEY_ID (unique for member/key fingerprint) of key(s) to be deleted
         Return:
             True if succeeded
             
@@ -232,19 +287,18 @@ class MAv1Handler(HandlerBase):
         """
         with MethodContext(self, MA_LOG_PREFIX, 
                            'delete_key', 
-                           {'member_urn' : member_urn, 'key_id' : key_id}, 
+                           {'key_id' : key_id}, 
                            credentials, options, read_only=False) as mc:
             if not mc._error:
                 mc._result = \
                     self._delegate.delete_key(mc._client_cert, 
-                                              member_urn,
                                               key_id,
                                               credentials, 
                                               options,
                                               mc._session)
         return mc._result
 
-    def update_key(self, member_urn, key_id, credentials, options):
+    def update_key(self, key_id, credentials, options):
         """
         Update the details of a key pair for given member
         
@@ -259,12 +313,12 @@ class MAv1Handler(HandlerBase):
         """
         with MethodContext(self, MA_LOG_PREFIX, 
                            'update_key', 
-                           {'member_urn' : member_urn, 'key_id' : key_id}, 
+                           {'key_id' : key_id}, 
                            credentials, options, read_only=False) as mc:
             if not mc._error:
                 mc._result = \
                     self._delegate.update_key(mc._client_cert, 
-                                              member_urn, key_id,
+                                              key_id,
                                               credentials, 
                                               options,
                                               mc._session)
@@ -463,7 +517,16 @@ class MAv1DelegateBase(DelegateBase):
     def get_version(self):
         raise CHAPIv1NotImplementedError('')
 
+
     # MEMBER service methods
+
+    # This is a generic lookup_member_info call
+    # You get all the info you are allowed to see
+    # All public (for anyone)
+    # Identifying (for those allowed by policy)
+    # Private (only for you)
+    def lookup_allowed_member_info(self, client_cert, credentials, options, session):
+        raise CHAPIv1NotImplementedError('')
 
     # This call is unprotected: no checking of credentials
     def lookup_public_member_info(self, client_cert, 
@@ -508,11 +571,11 @@ class MAv1DelegateBase(DelegateBase):
     def create_key(self, client_cert, credentials, options, session):
         raise CHAPIv1NotImplementedError('')
 
-    def delete_key(self, client_cert, member_urn, key_id, 
+    def delete_key(self, client_cert, key_id, 
                    credentials, options, session):
         raise CHAPIv1NotImplementedError('')
 
-    def update_key(self, client_cert, member_urn, key_id, 
+    def update_key(self, client_cert, key_id, 
                    credentials, options, session):
         raise CHAPIv1NotImplementedError('')
 

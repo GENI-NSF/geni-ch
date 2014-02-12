@@ -28,6 +28,7 @@ from tools.dbutils import *
 from tools.chapi_log import *
 from tools.cert_utils import *
 from CHv1Implementation import CHv1Implementation
+import tools.CH_constants as CH
 
 # Version of ClearingHouse that works with GPO CH Service Registry tables
 
@@ -38,38 +39,50 @@ class CHv1PersistentImplementation(CHv1Implementation):
 
     # Get all MAs (authorities of type MA)
     def lookup_member_authorities(self, client_cert, options, session):
-        result = self.lookup_authorities(client_cert, self.MA_SERVICE_TYPE, 
+        result = self.lookup_authorities(client_cert, 
+                                         CH.SERVICE_MEMBER_AUTHORITY,
                                          options, session)
         return result
 
     # Get all SA's (authorities of type SA)
     def lookup_slice_authorities(self, client_cert, options, session):
-        result = self.lookup_authorities(client_cert, self.SA_SERVICE_TYPE, 
+        result = self.lookup_authorities(client_cert, 
+                                         CH.SERVICE_SLICE_AUTHORITY,
                                          options, session)
         return result
 
     # Get all aggregates (authorities of type aggregate)
     def lookup_aggregates(self, client_cert, options, session):
         result = self.lookup_authorities(client_cert, 
-                                         self.AGGREGATE_SERVICE_TYPE, 
+                                         CH.SERVICE_AGGREGATE_MANAGER,
                                          options, session)
         return result
 
     # Lookup all authorities for given service type
     # Add on a service type filter clause before adding any option clauses
     def lookup_authorities(self, client_cert, service_type, options, session):
-        selected_columns, match_criteria = unpack_query_options(options, self.field_mapping)
+        selected_columns, match_criteria = unpack_query_options(options, CH.field_mapping)
 
         q = session.query(self.db.SERVICES_TABLE)
-        q = q.filter(self.db.SERVICES_TABLE.c.service_type == service_type)
-        q = add_filters(q,  match_criteria, self.db.SERVICES_TABLE, self.field_mapping)
+        if service_type is not None:
+            q = q.filter(self.db.SERVICES_TABLE.c.service_type == service_type)
+        q = add_filters(q,  match_criteria, self.db.SERVICES_TABLE, CH.field_mapping)
         rows = q.all()
 
-        authorities = [construct_result_row(row, selected_columns, self.field_mapping) for row in rows]
+        authorities = [construct_result_row(row, selected_columns, CH.field_mapping) for row in rows]
 
         result = self._successReturn(authorities)
 
         return result
+
+    # Lookup all services matching given options specification (match and filter)
+    def lookup_services(self, client_cert, options, session):
+        service_type = None
+        if 'match' in options and 'SERVICE_TYPE' in options['match']:
+            service_type = options['match']['SERVICE_TYPE']
+        services = self.lookup_authorities(client_cert, service_type, options, session)
+        return services
+    
 
 
 

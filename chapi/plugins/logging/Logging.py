@@ -52,72 +52,86 @@ class Loggingv1Handler(HandlerBase):
         super(Loggingv1Handler, self).__init__(logging_logger)
 
     # Enter new logging entry in database for given sets of attributes
-    def log_event(self, message, attributes, session=None):
+    def log_event(self, message, attributes, credentials, options,
+                  session=None):
         with MethodContext(self, LOG_LOG_PREFIX, 'log_event',
                            {'message' : message, 'attributes' : attributes},
-                           [], {}, read_only=False, session=session) as mc:
+                           credentials, options, read_only=False,
+                           session=session) as mc:
             if not mc._error:
                 mc._result = \
                     self._delegate.log_event(mc._client_cert,
                                              message, attributes,
+                                             credentials, options,
                                              mc._session)
         return mc._result
 
     # Get all entries written by given author in most recent hours
-    def get_log_entries_by_author(self, user_id, num_hours):
+    def get_log_entries_by_author(self, user_id, num_hours, credentials,
+                                  options):
         with MethodContext(self, LOG_LOG_PREFIX, 'get_log_entries_by_author',
                            {'user_id' : user_id, 'num_hours' : num_hours},
-                           [], {}, read_only=True) as mc:
+                           credentials, options, read_only=True) as mc:
             if not mc._error:
                 mc._result = \
                     self._delegate.get_log_entries_by_author(mc._client_cert,
                                                              user_id, 
                                                              num_hours,
+                                                             credentials,
+                                                             options,
                                                              mc._session)
         return mc._result
 
 
     # Get all entries written for context type/id in most recent hours
-    def get_log_entries_for_context(self, context_type, context_id, num_hours):
+    def get_log_entries_for_context(self, context_type, context_id, num_hours,
+                                    credentials, options):
         with MethodContext(self, LOG_LOG_PREFIX, 'get_log_entries_for_context',
                            {'context_type' : context_type, 
                             'context_id' : context_id, 
                             'num_hours' : num_hours},
-                           [], {}, read_only=True) as mc:
+                           credentials, options, read_only=True) as mc:
             if not mc._error:
                 mc._result = \
                     self._delegate.get_log_entries_for_context(mc._client_cert,
                                                                context_type,
                                                                context_id,
                                                                num_hours,
+                                                               credentials,
+                                                               options,
                                                                mc._session)
         return mc._result
 
     # Get all log entries corresponding to the UNION of a set
     # of context/id pairs in most recent hours
-    def get_log_entries_by_attributes(self, attribute_sets, num_hours):
+    def get_log_entries_by_attributes(self, attribute_sets, num_hours,
+                                      credentials, options):
         with MethodContext(self, LOG_LOG_PREFIX, 'get_log_entries_by_attributes',
                            {'attribute_sets' : attribute_sets,
                             'num_hours' : num_hours},
-                           [], {}, read_only=True) as mc:
+                           credentials, options, read_only=True) as mc:
             if not mc._error:
                 mc._result = \
                     self._delegate.get_log_entries_by_attributes(mc._client_cert,
                                                                attribute_sets,
                                                                num_hours,
+                                                                 credentials,
+                                                                 options,
                                                                mc._session)
         return mc._result
 
     # Get set of attributes for given log entry
-    def get_attributes_for_log_entry(self, event_id):
+    def get_attributes_for_log_entry(self, event_id, credentials, options):
         with MethodContext(self, LOG_LOG_PREFIX, 
                            'get_attributes_for_log_entry',
                            {'event_id' : event_id},
-                           [], {}, read_only=True) as mc:
+                           credentials, options, read_only=True) as mc:
             if not mc._error:
                 mc._result = \
                     self._delegate.get_attributes_for_log_entry(mc._client_cert,
                                                                 event_id,
+                                                                credentials,
+                                                                options,
                                                                 mc._session)
         return mc._result
 
@@ -136,7 +150,8 @@ class Loggingv1Delegate(DelegateBase):
         self.db = pm.getService('chdbengine')
 
     # The attributes argument is a dictionary of name/value pairs
-    def log_event(self, client_cert, message, attributes, session, none_user_id=False):
+    def log_event(self, client_cert, message, attributes, credentials, options,
+                  session, none_user_id=False):
 
         now = datetime.utcnow()
         # Record the event
@@ -164,7 +179,7 @@ class Loggingv1Delegate(DelegateBase):
         return self._successReturn(True)
 
     def get_log_entries_by_author(self, client_cert, user_id, 
-                                  num_hours, session):
+                                  num_hours, credentials, options, session):
 
         q = session.query(self.db.LOGGING_ENTRY_TABLE)
         q = q.filter(self.db.LOGGING_ENTRY_TABLE.c.user_id == user_id)
@@ -176,7 +191,8 @@ class Loggingv1Delegate(DelegateBase):
         return self._successReturn(entries)
 
     def get_log_entries_for_context(self, client_cert, context_type, 
-                                    context_id, num_hours, session):
+                                    context_id, num_hours, credentials,
+                                    options, session):
 
         q = session.query(self.db.LOGGING_ENTRY_TABLE)
         q = q.filter(self.db.LOGGING_ENTRY_TABLE.c.id == self.db.LOGGING_ENTRY_ATTRIBUTE_TABLE.c.event_id)
@@ -190,7 +206,7 @@ class Loggingv1Delegate(DelegateBase):
         return self._successReturn(entries)
 
     def get_log_entries_by_attributes(self, client_cert, attribute_sets, 
-                                      num_hours, session):
+                                      num_hours, credentials, options, session):
 
         q = session.query(self.db.LOGGING_ENTRY_TABLE)
         q = q.filter(self.db.LOGGING_ENTRY_TABLE.c.id == self.db.LOGGING_ENTRY_ATTRIBUTE_TABLE.c.event_id)
@@ -211,7 +227,8 @@ class Loggingv1Delegate(DelegateBase):
         return self._successReturn(entries)
 
 
-    def get_attributes_for_log_entry(self, client_cert, event_id, session):
+    def get_attributes_for_log_entry(self, client_cert, event_id, credentials,
+                                     options, session):
 
         q = session.query(self.db.LOGGING_ENTRY_ATTRIBUTE_TABLE)
         q = q.filter(self.db.LOGGING_ENTRY_ATTRIBUTE_TABLE.c.event_id == event_id)

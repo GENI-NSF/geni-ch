@@ -4,6 +4,21 @@
 
 = GENI Clearinghouse Release Notes =
 
+== 1.5 ==
+ * Implement Federation API v2 (#204)
+ * Fixes to sliver info methods: (#221)
+  * Expire sliver info records that claim to have expired
+  * Do not list expired slivers
+  * Better argument checking in sliver info methods
+  * A create that finds an exising record does an update
+ * Only honor speaking_for option to determine client intent (#222)
+ * Support speaks-for in logging API (#223)
+ * Log the actor in MethodContext instead of the client (#224)
+ * Fix a format error when revoking project leads (#225)
+ * Fix To address in new project lead email (#226)
+ * Fix `get_credentials` at MA (fix reference to datetime) (#227)
+ * Raise authorization exceptions in speaks-for processing (#229)
+
 == 1.4 ==
   * Ignore repeated requests to join a project (#187)
   * Support looking up others' public SSH keys in PGCH (#208)

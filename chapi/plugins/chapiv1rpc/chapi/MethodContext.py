@@ -108,58 +108,83 @@ class MethodContext:
             self._session = self._db.getSession()
 
 
-    # This method is called prior to the 'with MethodContext' block
-    def __enter__(self):
-        # Log the invocation
-        chapi_log_invocation(self._log_prefix,
-                             self._method_name, 
-                             self._credentials, 
-                             self._options, 
-                             self._args_dict, 
-                             {'user': self._email})
-
-        # If a guard is provided, perform speaks-for identity adjustment
-        if self._handler._guard:
-            new_client_cert, new_options = \
-                self._handler._guard.adjust_client_identity(self._client_cert, 
-                                                              self._credentials, 
-                                                              self._options)
+    def _adjustIdentity(self):
+        """Adjust the identity of the caller when in the speaks-for case.
+        This allows the correct authorization checks further
+        downstream by appearing to other methods as if the agent (the
+        person being spoken for) is the client instead of the tool.
+        """
+        if not self._handler._guard:
+            # If there's no guard, skip adjusting identity
+            return
+        new_client_cert, new_options = \
+            self._handler._guard.adjust_client_identity(self._client_cert,
+                                                        self._credentials,
+                                                        self._options)
+        if (self._client_cert != new_client_cert):
             self._client_cert = new_client_cert
             self._options = new_options
+            # Extract the email from the client cert because it has changed
+            self._email = get_email_from_cert(self._client_cert)
 
-            try:
 
-                # If we're in maintenance mode, only operators and authorities can use CH
-                config = pm.getService('config')
-                maintenance_outage_location = \
-                    config.get('geni.maintenance_outage_location')
-                outage_mode = os.path.exists(maintenance_outage_location)
-                if outage_mode:
-                    if self._session and self._client_cert:
-                        user_urn = get_urn_from_cert(self._client_cert)
-                        is_operator = \
-                            lookup_operator_privilege(user_urn, 
-                                                      self._session)
-                        is_authority = lookup_authority_privilege(user_urn, self._session)
-#                        chapi_info("OUTAGE", "USER_URN = %s IS_OPERATOR = %s IS_AUTHORITY = %s" % 
-#                                   (user_urn, is_operator, is_authority))
-                        if not is_operator and not is_authority:
-                            raise CHAPIv1AuthorizationError(
-                                "Cannot access GENI Clearinghouse " + 
-                                "during maintenance outage")
-            
+    def _checkMaintenanceMode(self):
+        """Check wheter the clearinghouse is in a maintenance outage. If so,
+        raise an authorization error so calls are not made during the
+        outage. Only operators and authorities can use the
+        clearinghouse during a maintenance outage.
 
+        """
+        config = pm.getService('config')
+        maintenance_outage_location = \
+            config.get('geni.maintenance_outage_location')
+        outage_mode = os.path.exists(maintenance_outage_location)
+        if outage_mode:
+            if self._session and self._client_cert:
+                user_urn = get_urn_from_cert(self._client_cert)
+                is_operator = lookup_operator_privilege(user_urn,
+                                                        self._session)
+                is_authority = lookup_authority_privilege(user_urn,
+                                                          self._session)
+                msg = "USER_URN = %s IS_OPERATOR = %s IS_AUTHORITY = %s"
+                msg = msg % (user_urn, is_operator, is_authority)
+                chapi_info("OUTAGE", msg)
+                if not is_operator and not is_authority:
+                    msg = ("Cannot access GENI Clearinghouse during"
+                           + " maintenance outage.")
+                    raise CHAPIv1AuthorizationError(msg)
+
+    # This method is called prior to the 'with MethodContext' block
+    def __enter__(self):
+        try:
+            # Handle speaks-for authorization
+            self._adjustIdentity()
+            # Log the invocation - after identity has been adjusted
+            chapi_log_invocation(self._log_prefix,
+                                 self._method_name,
+                                 self._credentials,
+                                 self._options,
+                                 self._args_dict,
+                                 {'user': self._email})
+            # Check whether we're currenty in a maintenance outage.
+            # This will raise an exception if the call shouldn't go through.
+            self._checkMaintenanceMode()
+
+            # If a guard is provided validate the call
+            if self._handler._guard:
                 # Validate the call (arguments and authorization)
                 self._handler._guard.validate_call(self._client_cert, 
-                                                     self._method_name,
-                                                     self._credentials,
-                                                     self._options,
-                                                     self._args_dict,
-                                                     self._session)
-            except Exception as e:
-                exc_type, exc_value, exc_traceback = sys.exc_info()
-                self._handleError(e, exc_traceback)
-        return self
+                                                   self._method_name,
+                                                   self._credentials,
+                                                   self._options,
+                                                   self._args_dict,
+                                                   self._session)
+        except Exception as e:
+            # We could log a message here saying the call has failed
+            exc_type, exc_value, exc_traceback = sys.exc_info()
+            self._handleError(e, exc_traceback)
+        finally:
+            return self
 
     # Handle any error in MethodContext processing 
     # Set the error and result fields

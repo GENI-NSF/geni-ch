@@ -47,6 +47,7 @@ def parseOptions(args):
     gcf_home = os.path.join(home, '.gcf')
 
     parser.add_option("--url", help="Server URL", default=None)
+    parser.add_option("--type", help="Object Type for generic v2 calls", default=None)
     parser.add_option("--urn", help="URN for API arguments", default=None)
     parser.add_option("--key", help="Location of user key", \
                           default=os.path.join(gcf_home, 'alice-key.pem'))
@@ -162,18 +163,21 @@ def main(args = sys.argv, do_print=True):
         attributes = {type1 : id1, type2 : id2}
         user_id = '8e405a75-3ff7-4288-bfa5-111552fa53ce'
         (result, msg) = _do_ssl(framework, suppress_errors, reason, fcn, \
-                                    message, attributes, user_id)
+                                    message, attributes, opts.credentials,
+                                client_options)
     elif opts.method in [ 'get_log_entries_by_author']:
         num_hours = 15*24
         user_id = '8e405a75-3ff7-4288-bfa5-111552fa53ce'
         (result, msg) = _do_ssl(framework, suppress_errors, reason, fcn, \
-                                    user_id, num_hours)
+                                    user_id, num_hours, opts.credentials,
+                                client_options)
     elif opts.method in ['get_log_entries_for_context']:
         context_type = 'SLICE'
         context_id = '848e4a11-55eb-45df-a0e8-b79109fb0a88'
         num_hours = 15*24
         (result, msg) = _do_ssl(framework, suppress_errors, reason, fcn, \
-                                    context_type, context_id, num_hours)
+                                    context_type, context_id, num_hours,
+                                opts.credentials, client_options)
     elif opts.method in ['get_log_entries_by_attributes']:
         type1 = 'SLICE'
         id1 = '848e4a11-55eb-45df-a0e8-b79109fb0a88'
@@ -182,12 +186,14 @@ def main(args = sys.argv, do_print=True):
         num_hours = 15*24
         attribute_sets = [{type1 : id1}, {type2 : id2}]
         (result, msg) = _do_ssl(framework, suppress_errors, reason, fcn, \
-                                    attribute_sets, num_hours)
+                                    attribute_sets, num_hours, opts.credentials,
+                                client_options)
 
     elif opts.method in ['get_attributes_for_log_entry']:
         event_id = '20360';
         (result, msg) = _do_ssl(framework, suppress_errors, reason, fcn, \
-                                    event_id)
+                                    event_id, opts.credentials,
+                                client_options)
     # Credential store methods
     elif opts.method in ['get_permissions']:
         (result, msg) = _do_ssl(framework, suppress_errors, reason, fcn, \
@@ -206,7 +212,7 @@ def main(args = sys.argv, do_print=True):
     elif opts.method in ['delete_key', 'update_key'] \
             and opts.string_arg and opts.urn:
         (result, msg) = _do_ssl(framework, suppress_errors, reason, fcn, \
-                                    opts.urn, opts.string_arg, \
+                                    opts.string_arg, \
                                     opts.credentials, client_options)
 
     # Client Authorization methods
@@ -289,6 +295,18 @@ def main(args = sys.argv, do_print=True):
             _do_ssl(framework, suppress_errors, reason, fcn, opts.uuid_arg, \
                         opts.string_arg, \
                         opts.credentials, options)
+
+    # Generic Federation v2 API methods
+    elif opts.method in ['lookup', 'create']:
+        (result, msg) = \
+            _do_ssl(framework, suppress_errors, reason, fcn, opts.type, \
+                       opts.credentials, client_options)
+
+    elif opts.method in ['update', 'delete', \
+                             'modify_membership', 'lookup_members', 'lookup_for_member']:
+        (result, msg) = \
+            _do_ssl(framework, suppress_errors, reason, fcn, opts.type, \
+                        opts.urn, opts.credentials, client_options)
 
     # Portal query
     elif opts.method in ['portal_query']:

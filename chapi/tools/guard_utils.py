@@ -180,7 +180,7 @@ def ensure_valid_urns(urn_type, urns, session):
         pass
 
 # Take a uid or list of uids, make sure they're all in the cache
-# and return a urn or list of urns
+ # and return a urn or list of urns
 def convert_slice_uid_to_urn(slice_uid, session):
     db = pm.getService('chdbengine')
     slice_uids = slice_uid
@@ -329,6 +329,35 @@ def convert_member_email_to_uid(member_email, session):
     # To support bulk email or asking about whether an email is valid
     uids = [cache[em.lower()] for em in member_emails if em.lower() in cache]
     return uids
+
+# Take an EPPN or list of EPPNs, make sure they're all in the cache
+# and return a uid or list of uids
+def convert_member_eppn_to_uid(member_eppn, session):
+    db = pm.getService('chdbengine')
+    member_eppns = member_eppn
+    if not isinstance(member_eppn, list): member_eppns = [member_eppn]
+
+    cache = cache_get('member_eppn_to_uid')
+    uncached_eppns = [me.lower() for me in member_eppns if me.lower() not in cache]
+
+    if len(uncached_eppns) > 0:
+        q = session.query(db.MEMBER_ATTRIBUTE_TABLE.c.value, \
+                              db.MEMBER_ATTRIBUTE_TABLE.c.member_id)
+        q = q.filter(func.lower(db.MEMBER_ATTRIBUTE_TABLE.c.value).in_(uncached_eppns))
+        q = q.filter(db.MEMBER_ATTRIBUTE_TABLE.c.name == 'eppn')
+        rows = q.all()
+        for row in rows:
+            eppn_value = row.value.lower()
+            member_id = row.member_id
+            cache[eppn_value] = member_id
+
+    if not isinstance(member_eppn, list):
+        if member_eppn in cache:
+            return cache[member_eppn]
+        else:
+            raise CHAPIv1ArgumentError('Unknown EPPN: %s' % member_eppn)
+    else:
+        return validate_uid_list(member_eppns, cache, 'member_eppn_to_uid')
 
 def lookup_slice_urn_for_sliver_urn(sliver_urn, session):
     db = pm.getService('chdbengine')
@@ -805,6 +834,11 @@ def standard_subject_extractor(options, arguments, session):
         member_uids = convert_member_email_to_uid(member_emails, session)
         member_urns = convert_member_uid_to_urn(member_uids, session)
         extracted['MEMBER_URN'] = member_urns
+    if '_GENI_MEMBER_EPPN' in match_option:
+        member_eppns = match_option['_GENI_MEMBER_EPPN']
+        member_uids = convert_member_eppn_to_uid(member_eppns, session)
+        member_urns = convert_member_uid_to_urn(member_uids, session)
+        extracted['MEMBER_URN'] = member_urns
     return extracted
 
 # For key info methods, extract the subject from options or arguments
@@ -815,6 +849,8 @@ def key_subject_extractor(options, arguments, session):
         match_option = options['match']
     elif 'fields' in options:
         match_option = options['fields']
+    elif 'key_id' in arguments:
+        match_option = {}
     else:
         raise CHAPIv1ArgumentError("No match/fields option for query")
     if 'KEY_MEMBER' in match_option:
@@ -827,6 +863,16 @@ def key_subject_extractor(options, arguments, session):
         member_urns = [convert_member_uid_to_urn(member_uid, session) 
                        for member_uid in member_uids]
         extracted['MEMBER_URN'] = member_urns
+    elif 'key_id' in arguments:
+        key_id = arguments['key_id']
+        q = session.query(db.SSH_KEY_TABLE.c.member_id)
+        q = q.filter(db.SSH_KEY_TABLE.c.id == key_id)
+        rows = q.all()
+        if len(rows) != 1:
+            raise CHAPIv1ArgumentError("No key with given ID %s" % key_id)
+        member_id = rows[0].member_id
+        member_urn = convert_member_uid_to_urn(member_id, session)
+        extracted['MEMBER_URN'] = member_urn
     else:
         q = session.query(db.MEMBER_ATTRIBUTE_TABLE.c.value)
         q = q.filter(db.SSH_KEY_TABLE.c.member_id ==
@@ -989,10 +1035,10 @@ def sliver_info_extractor(options, arguments, session):
         elif 'SLIVER_INFO_URN' in match:
             sliver_urns = match['SLIVER_INFO_URN']
             if not isinstance(sliver_urns, list): sliver_urns = [sliver_urns]
-            chapi_info("SIE", "SLIVER_URNS = %s" % sliver_urns)
+#            chapi_info("SIE", "SLIVER_URNS = %s" % sliver_urns)
             slice_urns = [lookup_slice_urn_for_sliver_urn(sliver_urn, session)
                           for sliver_urn in sliver_urns]
-            chapi_info("SIE", "SLICE_URNS = %s" % slice_urns)
+#            chapi_info("SIE", "SLICE_URNS = %s" % slice_urns)
             return {'SLICE_URN' : slice_urns}
     raise CHAPIv1ArgumentError("Illegal options for lookup_sliver_info: %s"%\
                                    options)
