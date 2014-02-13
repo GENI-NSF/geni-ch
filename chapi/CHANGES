@@ -4,6 +4,9 @@
 
 = GENI Clearinghouse Release Notes =
 
+== 1.5.1 ==
+ * Fix a guard that prevents new users from registering (#233)
+
 == 1.5 ==
  * Implement Federation API v2 (#204)
  * Fixes to sliver info methods: (#221)
