@@ -146,10 +146,10 @@ class MethodContext:
                                                         self._session)
                 is_authority = lookup_authority_privilege(user_urn,
                                                           self._session)
-                msg = "USER_URN = %s IS_OPERATOR = %s IS_AUTHORITY = %s"
-                msg = msg % (user_urn, is_operator, is_authority)
-                chapi_info("OUTAGE", msg)
                 if not is_operator and not is_authority:
+                    msg = "User %s denied access during maintenance outage"
+                    msg = msg % (user_urn)
+                    chapi_info("OUTAGE", msg)
                     msg = ("Cannot access GENI Clearinghouse during"
                            + " maintenance outage.")
                     raise CHAPIv1AuthorizationError(msg)
