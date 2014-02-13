@@ -355,7 +355,8 @@ def convert_member_eppn_to_uid(member_eppn, session):
         if member_eppn in cache:
             return cache[member_eppn]
         else:
-            raise CHAPIv1ArgumentError('Unknown EPPN: %s' % member_eppn)
+            # Return an empty list if we can't find the eppn.
+            return list()
     else:
         return validate_uid_list(member_eppns, cache, 'member_eppn_to_uid')
 
