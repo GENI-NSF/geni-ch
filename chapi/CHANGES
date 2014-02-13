@@ -5,6 +5,7 @@
 = GENI Clearinghouse Release Notes =
 
 == 1.5.1 ==
+ * Fix a guard that prevents new users from registering (#233)
  * Fix error handling to only log a traceback on bad errors,
    only log the error once, and avoid re-defining the errorReturn
    method. (#234)
