@@ -7,15 +7,17 @@
 	"must belong to slice or project of context (if any)",
 	"or is about self and only about self"
     ],
+    "assertions" : [
+        "ME.IS_$ROLE_$PROJECT<-CALLER",
+        "ME.IS_$ROLE_$SLICE<-CALLER",
+	"ME.INVOKING_ON_$MEMBER<-CALLER"
+    ],
     "policies" : [
         "ME.MAY_$METHOD<-ME.IS_AUTHORITY", 
         "ME.MAY_$METHOD<-ME.IS_OPERATOR",
-        "ME.MAY_$METHOD_$SUBJECT<-ME.BELONGS_TO_$SUBJECT",
-        "ME.MAY_$METHOD_$SUBJECT<-ME.INVOKING_ON_SELF_$SUBJECT"
-        ],
-    "asserters" : [
-        "assert_user_acting_on_self", 
-        "assert_user_belongs_to_slice_or_project"
+        "ME.MAY_$METHOD_$SLICE<-ME.BELONGS_TO_$SLICE",
+        "ME.MAY_$METHOD_$PROJECT<-ME.BELONGS_TO_$PROJECT",
+        "ME.MAY_$METHOD<-ME.INVOKING_ON_$SELF"
         ],
     "extractor" : "attribute_extractor"
   },
@@ -25,30 +27,23 @@
     "policies" : [
         "ME.MAY_$METHOD<-ME.IS_AUTHORITY",
         "ME.MAY_$METHOD<-ME.IS_OPERATOR",
-        "ME.MAY_$METHOD_$SUBJECT<-ME.INVOKING_ON_SELF_$SUBJECT",
-        "ME.MAY_GET_LOG_EVENT_$SUBJECT<-ME.IS_$SUBJECT"
-       ],
-    "asserters" : [
-       "assert_user_acting_on_self",
-       "assert_belongs_to_slice",
-       "assert_belongs_to_project"
-       ],
-    "extractor" : "context_extractor"
+        "ME.MAY_$METHOD<-ME.IS_$SUBJECT"
+       ]
   },
 
   "get_log_entries_for_context" : {
     "__DOC__" : "Must be member of project of slice",
+    "assertions": [
+        "ME.IS_$ROLE_$SUBJECT<-CALLER",
+	"ME.INVOKING_ON_$MEMBER<-CALLER"
+    ],
     "policies" : [      
         "ME.MAY_$METHOD<-ME.IS_AUTHORITY",
         "ME.MAY_$METHOD<-ME.IS_OPERATOR",
-        "ME.MAY_$METHOD_$SUBJECT<-ME.INVOKING_ON_SELF_$SUBJECT",
-        "ME.MAY_$METHOD_$SUBJECT<-ME.BELONGS_TO_$SUBJECT"
-       ],
-    "asserters" : [
-       "assert_belongs_to_slice",
-       "assert_belongs_to_project"
-    ],
-    "extractor" : "context_extractor"
+        "ME.MAY_$METHOD<-ME.INVOKING_ON_$SELF",
+        "ME.MAY_$METHOD_$SLICE<-ME.BELONGS_TO_$SLICE",
+        "ME.MAY_$METHOD_$PROJECT<-ME.BELONGS_TO_$PROJECT"
+       ]
   },
 
   "get_log_entries_by_attributes" : {
@@ -61,7 +56,7 @@
   "get_log_entries_by_log_entry" : {
     "__DOC__" : "For now, leave open",
     "policies" : [
-        "ME.MAY_GET_ATTRIBUTES_FOR_LOG_ENTRY<-CALLER"
+        "ME.MAY_$METHOD<-CALLER"
     ]
   }
 

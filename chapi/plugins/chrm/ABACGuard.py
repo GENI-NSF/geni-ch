@@ -76,7 +76,7 @@ class InvocationCheck(object):
 
 # Class that determines if the caller has the right to invoke a given method on all
 # the subjects of a given method invocation
-class SubjectInvocationCheck(InvocationCheck):
+class SubjectInvocationCheckOrig(InvocationCheck):
 
     def __init__(self, policies, attribute_extractors,
                  subject_extractor, pass_empty_subject = False):
@@ -195,6 +195,7 @@ class SubjectInvocationCheck(InvocationCheck):
         else:
             self.load_policies(abac_manager, None)
 
+
             query ="ME.MAY_%s<-CALLER" % method.upper()
             ok, proof = abac_manager.query(query)
             if abac_manager._verbose:
@@ -204,6 +205,285 @@ class SubjectInvocationCheck(InvocationCheck):
                     "with options %s arguments %s query %s"
                 raise CHAPIv1AuthorizationError(template % \
                         (method, options, arguments, query));
+
+# Class that determines if the caller has the right to invoke a given method on all
+# the subjects of a given method invocation
+class SubjectInvocationCheck(InvocationCheck):
+
+    def __init__(self, policies, assertions, pass_empty_subject = False):
+        self._policies = policies
+        if not policies: self._policies = []
+        if policies and not isinstance(policies, list):
+            self._policies = [policies]
+
+        self._assertions = assertions
+        if not assertions: self._assertions = []
+        if assertions and not isinstance(assertions, list):
+            self._assertions = [assertions]
+
+        self._pass_empty_subject = pass_empty_subject
+        self.config = pm.getService('config')
+        self.key_file = self.config.get("chapiv1rpc.ch_key")
+        self.cert_file = self.config.get("chapiv1rpc.ch_cert")
+        self._bindings = {}
+
+        # Gather all required bindings
+        for assertion in self._assertions:
+            self._gather_bindings(assertion)
+        for policy in self._policies:
+            self._gather_bindings(policy)
+
+        chapi_info("SIC", "POLICIES = %s" % self._policies)
+        chapi_info("SIC", "ASSERTIONS = %s" % self._assertions)
+        chapi_info("SIC", "BINDINGS = %s" % (self._bindings))
+
+    RECOGNIZED_BINDINGS = ["$ROLE", "$SLICE", "$PROJECT", \
+                               "$MEMBER", "$SELF"]
+    def _gather_bindings(self, template):
+        for recognized_binding in SubjectInvocationCheck.RECOGNIZED_BINDINGS:
+            if template.find(recognized_binding) > 0:
+                if recognized_binding not in self._binding:
+                    self._bindings[recognized_binding] = None
+
+    def _compute_subjects(self, options, arguments, session):
+        urns, label = self._compute_slice_subjects(options, arguments, session)
+        if not urns:
+            urns, label = \
+                self._compute_project_subjects(options, arguments, session)
+        if not urns:
+            urns, label = \
+                self._compute_member_subjects(options, arguments, session)
+        if not urns:
+            urns, label = \
+                self._compute_request_subjects(options, arguments, session)
+        if urns and not isinstance(urns, list): urns = [urns]
+        return {label : urns}
+
+    def _compute_slice_subjects(self, options, arguments, sessions):
+        urns = None
+        if 'match' in options:
+            match_option = options['match']
+            # Pulling slice out of match
+            if 'SLICE_URN' in match_option:
+                urns = match_option['SLICE_URN']
+            elif 'SLICE_UID' in match_option:
+                slice_uids = match_option['SLICE_UID']
+                if not isinstance(slice_uids, list): slice_uids = [slice_uids]
+                urns = convert_slice_uid_to_urn(slice_uids, session)
+            elif 'SLIVER_INFO_SLICE_URN' in match_option:
+                urns = match_option['SLIVER_INFO_SLICE_URN']
+            elif 'SLIVER_INFO_URN' in match_option:
+                sliver_urns = match['SLIVER_INFO_URN']
+                if not isinstance(sliver_urns, list): 
+                    sliver_urns = [sliver_urns]
+                    urns = \
+                        [lookup_slice_urn_for_sliver_urn(sliver_urn, session)\
+                             for sliver_urn in sliver_urns]
+            elif 'slice_urn' in arguments:
+                urns = arguments['slice_urn']
+            elif 'fields' in options and 'SLICE_URN' in options['fields']:
+                urns = options['fields']['SLICE_URN']
+            elif 'fields' in options and \
+                    'SLIVER_INFO_SLICE_URN' in options['fields']:
+                urns = options['fields']['SLIVER_INFO_SLICE_URN']
+            elif 'sliver_urn' in arguments:
+                db = pm.getService('chdbengine')
+                q = session.query(db.SLIVER_INFO_TABLE.c.slice_urn)
+                q = q.filter(db.SLIVER_INFO_TABLE.c.sliver_urn == \
+                                 arguments['sliver_urn'])
+                rows = q.all()
+                if len(rows) > 0:
+                    urns = rows[0].slice_urn
+        elif 'context_type' in arguments and 'context_id' in arguments and \
+                arguments['context_type'] == SLICE_CONTEXT:
+            slice_uid = arguments['context_id']
+            urns = convert_project_uid_to_urn(slice_uid, session)
+        elif 'attributes' in arguments and \
+                'SLICE' in arguments['attributes']:
+            slice_uid = attributes['SLICE']
+            urns = convert_slice_uid_to_urn(slice_uid, session)
+
+        return urns, "SLICE_URN"
+
+    def _compute_project_subjects(self, options, arguments, session):
+        urns = None
+        if 'match' in options:
+            match_option = options['match']
+            # Pulling project out of match
+            if "PROJECT_URN" in match_option:
+                urns = match_option['PROJECT_URN']
+            elif "PROJECT_UID" in match_option:
+                project_uids = match_option['PROJECT_UID']
+                if not isinstance(project_uids, list): 
+                    project_uids = [project_uids]
+                urns = convert_project_uid_to_urn(project_uids, session)
+            elif "_GENI_PROJECT_UID" in match_option:
+                project_uids = match_option['_GENI_PROJECT_UID']
+                if not isinstance(project_uids, list): 
+                    project_uids = [project_uids]
+                urns = convert_project_uid_to_urn(project_uids, session)
+            elif 'fields' in options and 'PROJECT_NAME' in options['fields']:
+                project_name = options['fields']['PROJECT_NAME']
+                config = pm.getService('config')
+                authority = config.get('chrm.authority')
+                urns = to_project_urn(authority, project_name)
+            elif 'project_urn' in arguments:
+                urns = arguments['project_urn']
+            elif 'fields' in options and \
+                    'SLICE_PROJECT_URN' in options['fields']:
+                urns = options['fields']['SLICE_PROJECT_URN']
+            elif 'project_id' in arguments:
+                project_id = arguments['project_id']
+                urns = convert_project_uid_to_urn(project_id, session)
+        elif 'context_type' in arguments and 'context_id' in arguments and \
+                arguments['context_type'] == PROJECT_CONTEXT:
+            project_uid = arguments['context_id']
+            urns = convert_project_uid_to_urn(project_uid, session)
+        elif 'attributes' in arguments and \
+                'PROJECT' in arguments['attributes']:
+            project_uid = attributes['SLICE']
+            urns = convert_project_uid_to_urn(project_uid, session)
+
+        return urns, "PROJECT_URN"
+
+    def _compute_member_subjects(self, options, arguments, session):
+        urns = None
+        if 'match' in options:
+            # Pulling member out of match
+            if "MEMBER_URN" in match_option:
+                urns = match_option['MEMBER_URN']
+            elif "MEMBER_UID" in match_option:
+                member_uids = match_option['MEMBER_UID']
+                if not isinstance(member_uids, list): 
+                    member_uids = [member_uids]
+                urns = convert_member_uid_to_urn(member_uids, session)
+            elif '_GENI_KEY_MEMBER_UID' in match_option:
+                member_uids = match_option['_GENI_KEY_MEMBER_UID']
+                if not isinstance(member_uids, list): 
+                    member_uids =[member_uids]
+                urns = convert_pmember_uid_to_urn(member_uids, session)
+            elif 'MEMBER_EMAIL' in match_option:
+                member_emails = match_option['MEMBER_EMAIL']
+                member_uids = \
+                    convert_member_email_to_uid(member_emails, session)
+                urns = \
+                    convert_member_uid_to_urn(member_uids, session)
+            elif '_GENI_MEMBER_EPPN' in match_option:
+                member_eppns = match_option['_GENI_MEMBER_EPPN']
+                member_uids = convert_member_eppn_to_uid(member_eppns, session)
+                urns = convert_member_uid_to_urn(member_uids, session)
+                extracted['MEMBER_URN'] = member_urns
+            elif 'KEY_MEMBER' in match_option:
+                urns = match_option['KEY_MEMBER']
+            elif '_GENI_KEY_MEMBER_UID' in match_option:
+                key_id = arguments['key_id']
+                q = session.query(db.SSH_KEY_TABLE.c.member_id)
+                q = q.filter(db.SSH_KEY_TABLE.c.id == key_id)
+                rows = q.all()
+                if len(rows) != 1:
+                    raise CHAPIv1ArgumentError("No key with given ID %s" % \
+                                                   key_id)
+                member_id = rows[0].member_id
+                urns = convert_member_uid_to_urn(member_id, session)
+            elif 'SLIVER_INFO_CREATOR_URN' in match_option:
+                urns = match_option['SLIVER_INFO_CREATOR_URN']
+        elif 'fields' in options:
+            fields_option = options['field']
+
+        elif 'member_urn' in arguments:
+            urns = arguments['member_urn']
+        elif 'member_id' in arguments:
+            member_id = arguments['member_id']
+            urns = convert_member_uid_to_urn(member_id, session)
+        elif 'key_id' in arguments:
+            key_id = arguments['key_id']
+            q = session.query(db.SSH_KEY_TABLE.c.member_id)
+            q = q.filter(db.SSH_KEY_TABLE.c.id == key_id)
+            rows = q.all()
+            if len(rows) != 1:
+                raise CHAPIv1ArgumentError("No key with given ID %s" % key_id)
+            member_id = rows[0].member_id
+            label = 'MEMBER_URN'
+            urns = convert_member_uid_to_urn(member_id, session)
+        elif 'principal' in arguments:
+            principal_uid = arguments['principal']
+            urns = convert_member_uid_to_urn(principal_uid, session)
+        elif 'user_id' in arguments:
+            user_uid = arguments['user_id']
+            urns = convert_member_uid_to_urn(user_uid, session)
+        elif 'context_type' in arguments and 'context_id' in arguments and \
+                arguments['context_type'] == MEMBER_CONTEXT:
+            member_uid = arguments['context_id']
+            urns = convert_member_uid_to_urn(member_uid, session)
+        elif 'attributes' in arguments and \
+                'MEMBER' in arguments['attributes']:
+            member_uid = attributes['MEMBER']
+            urns = convert_member_uid_to_urn(member_uid, session)
+        
+        return urns, "MEMBER_URN"
+
+    def _compute_request_subjects(self, options, arguments, session):
+        if 'request_id' in arguments:
+            request_id = arguments['request_id']
+            return 'REQUEST_ID', request_id
+        return None, None
+        
+
+    # Check that there are subjects in the arguments if required
+    # Return the list of subjects for later authorization
+    def validate_arguments(self, client_cert, method, credentials, \
+                               options, arguments, session):
+
+        # Compute subjects
+        subjects = self._compute_subjects(options, arguments, session)
+        chapi_info("SIC",  "Subjects = %s" % subjects)
+        return subjects
+
+    # If there are subjects
+    #    For each subject prove AUTHORITY.MAY_$method(SUBJECT)<-CALLER
+    # If there are no subjects (and this is allowed by validate_arguments)
+    #    Prove AUTHORITYMAY_$method<-CALLER
+    def authorize_call(self, client_cert, method, credentials, options, \
+                           arguments, subjects, session):
+        abac_manager =  ABACManager(certs_by_name = {"CALLER" : client_cert}, 
+                                    cert_files_by_name = {"ME" : self.cert_file}, 
+                                    key_files_by_name = {"ME" : self.key_file},
+                                    manage_context = False)
+        #abac_manager._verbose = True
+
+        client_urn = get_urn_from_cert(client_cert)
+
+        # Generate context-free assertions for caller
+        if lookup_operator_privilege(client_urn, session):
+            abac_manager.register_assertion("ME.IS_OPERATOR<-CALLER")
+        if lookup_pi_privilege(client_urn, session):
+            abac_manager.register_assertion("ME.IS_PI<-CALLER")
+        if lookup_authority_privilege(client_urn, session):
+            abac_manager.register_assertion("ME.IS_AUTHORITY<-CALLER")
+        abac_manager.register_assertion("ME.IS_%s<-CALLER" % flatten_urn(client_urn))
+        # if there are subjects:
+        # For each subject
+        # Bind context assertions (BELONGS_TO <+ Each role)
+        #   Bind required variables for all assertions (optional) 
+        #      and policies (required)
+        #   Compute and assert assertions for which all variables are bound
+        #   Compute and assert policies (error if any not bound)
+        #   try to prove EITHER:
+        #      ME.MAY_$METHOD<-CALLER
+        #   or ME.MAY_$METHOD_$SUBJECT<-CALLER
+        # Give exception on any failure, success if all pass
+        
+        # If not subjects,
+        # try to prove ME.MAY_$METHOD<-CALLER
+        # Give exception on failure, success if pass
+        
+
+
+        # Assert all assertions for which the varaibles are computed
+        pass
+
+        # Assert all policies
+        
 
 
 class RowCheck(object):
@@ -281,7 +561,7 @@ class ABACGuardBase(GuardBase):
 # Method to convert
 # dictionary of method => arguments for creating SubjectInvocationChecks 
 #into a dictionary method => SubjectInvocationCheck
-def create_subject_invocation_checks(policies):
+def create_subject_invocation_checks_orig(policies):
     checks = {}
     for method, args in policies.items():
         policies = args['policies']
@@ -289,6 +569,19 @@ def create_subject_invocation_checks(policies):
         extractor = args['extractor']
         pass_empty_subject = args['pass_empty_subject']
         checks[method] = \
-            SubjectInvocationCheck(policies, asserters, \
-                                       extractor, pass_empty_subject)
+            SubjectInvocationCheckOrig(policies, asserters, \
+                                           extractor, pass_empty_subject)
+    return checks
+
+# Method to convert
+# dictionary of method => arguments for creating SubjectInvocationChecks 
+#into a dictionary method => SubjectInvocationCheck
+def create_subject_invocation_checks(policies):
+    checks = {}
+    for method, args in policies.items():
+        policies = args['policies']
+        assertions = args['assertions']
+        pass_empty_subject = args['pass_empty_subject']
+        checks[method] = \
+            SubjectInvocationCheck(policies, assertions, pass_empty_subject)
     return checks

@@ -121,133 +121,7 @@ class MAv1Guard(ABACGuardBase):
         }
 
     # Set of invocation checks indexed by method name
-    INVOCATION_CHECK_FOR_METHOD = \
-        {
-        'lookup_public_member_info' : \
-            SubjectInvocationCheck([
-                "ME.MAY_LOOKUP_PUBLIC_MEMBER_INFO<-CALLER"
-            ], None, standard_subject_extractor),
-        'lookup_identifying_member_info' : \
-            SubjectInvocationCheck([
-                "ME.MAY_LOOKUP_IDENTIFYING_MEMBER_INFO<-ME.IS_AUTHORITY",
-                "ME.MAY_LOOKUP_IDENTIFYING_MEMBER_INFO<-ME.IS_OPERATOR", 
-                "ME.MAY_LOOKUP_IDENTIFYING_MEMBER_INFO_$SUBJECT<-ME.IS_$SUBJECT",
-                "ME.MAY_LOOKUP_IDENTIFYING_MEMBER_INFO_$SUBJECT<-ME.IS_LEAD_AND_SEARCHING_UID_$SUBJECT",
-                "ME.MAY_LOOKUP_IDENTIFYING_MEMBER_INFO<-ME.IS_LEAD_AND_SEARCHING_EMAIL", 
-                "ME.MAY_LOOKUP_IDENTIFYING_MEMBER_INFO_$SUBJECT<-ME.SHARES_PROJECT_$SUBJECT",
-                "ME.MAY_LOOKUP_IDENTIFYING_MEMBER_INFO_$SUBJECT<-ME.HAS_PENDING_REQUEST_ON_SHARED_PROJECT_$SUBJECT"
-                ], assert_shares_project, standard_subject_extractor),
-        'lookup_public_identifying_member_info' : \
-            SubjectInvocationCheck([
-                "ME.MAY_LOOKUP_PUBLIC_IDENTIFYING_MEMBER_INFO<-ME.IS_AUTHORITY"
-                "ME.MAY_LOOKUP_PUBLIC_IDENTIFYING_MEMBER_INFO<-ME.IS_OPERATOR", 
-                "ME.MAY_LOOKUP_PUBLIC_IDENTIFYING_MEMBER_INFO_$SUBJECT<-ME.IS_$SUBJECT",
-                "ME.MAY_LOOKUP_PUBLIC_IDENTIFYING_MEMBER_INFO_$SUBJECT<-ME.IS_LEAD_AND_SEARCHING_UID_$SUBJECT",
-                "ME.MAY_LOOKUP_PUBLIC_IDENTIFYING_MEMBER_INFO<-ME.IS_LEAD_AND_SEARCHING_EMAIL", 
-                "ME.MAY_LOOKUP_PUBLIC_IDENTIFYING_MEMBER_INFO_$SUBJECT<-ME.SHARES_PROJECT_$SUBJECT",
-                "ME.MAY_LOOKUP_PUBLIC_IDENTIFYING_MEMBER_INFO_$SUBJECT<-ME.HAS_PENDING_REQUEST_ON_SHARED_PROJECT_$SUBJECT"
-                ], assert_shares_project, standard_subject_extractor),
-        'lookup_private_member_info' : \
-            SubjectInvocationCheck([
-                "ME.MAY_LOOKUP_PRIVATE_MEMBER_INFO<-ME.IS_AUTHORITY", 
-                "ME.MAY_LOOKUP_PRIVATE_MEMBER_INFO<-ME.IS_OPERATOR", 
-                "ME.MAY_LOOKUP_PRIVATE_MEMBER_INFO_$SUBJECT<-ME.IS_$SUBJECT"
-                ], None, standard_subject_extractor), 
-        'lookup_login_info' : \
-            SubjectInvocationCheck([
-                "ME.MAY_LOOKUP_LOGIN_INFO<-ME.IS_AUTHORITY", 
-                "ME.MAY_LOOKUP_LOGIN_INFO<-ME.IS_OPERATOR",
-                "ME.MAY_LOOKUP_LOGIN_INFO_$SUBJECT<-ME.IS_$SUBJECT" 
-                ], None, standard_subject_extractor), 
-        'get_credentials' : \
-            SubjectInvocationCheck([
-                "ME.MAY_GET_CREDENTIALS<-ME.IS_AUTHORITY", 
-                "ME.MAY_GET_CREDENTIALS<-ME.IS_OPERATOR",
-                "ME.MAY_GET_CREDENTIALS_$SUBJECT<-ME.IS_$SUBJECT" 
-                ], None, member_urn_extractor),
-        'update_member_info' : \
-            SubjectInvocationCheck([
-            "ME.MAY_UPDATE_MEMBER_INFO<-ME.IS_OPERATOR", 
-            "ME.MAY_UPDATE_MEMBER_INFO_$SUBJECT<-ME.IS_$SUBJECT"
-                ], None, standard_subject_extractor), 
-        'create_key' : \
-            SubjectInvocationCheck([
-                "ME.MAY_CREATE_KEY<-ME.IS_OPERATOR",
-                "ME.MAY_CREATE_KEY_$SUBJECT<-ME.IS_$SUBJECT",
-                ], None, key_subject_extractor), 
-        'delete_key' : \
-            SubjectInvocationCheck([
-                "ME.MAY_DELETE_KEY<-ME.IS_OPERATOR",
-                "ME.MAY_DELETE_KEY_$SUBJECT<-ME.IS_$SUBJECT",
-                ], None, key_subject_extractor), 
-        'update_key' : \
-            SubjectInvocationCheck([
-                "ME.MAY_UPDATE_KEY<-ME.IS_OPERATOR",
-                "ME.MAY_UPDATE_KEY_$SUBJECT<-ME.IS_$SUBJECT",
-                ], None, key_subject_extractor), 
-        'lookup_keys' : \
-            SubjectInvocationCheck([
-                "ME.MAY_LOOKUP_KEYS<-ME.IS_AUTHORITY", 
-                "ME.MAY_LOOKUP_KEYS<-ME.IS_OPERATOR", 
-                "ME.MAY_LOOKUP_KEYS_$SUBJECT<-ME.IS_$SUBJECT",
-                "ME.MAY_LOOKUP_KEYS_$SUBJECT<-ME.SHARES_SLICE_$SUBJECT", 
-                ], assert_shares_slice, key_subject_extractor, True), 
-        'create_certificate' : 
-            SubjectInvocationCheck([
-                "ME.MAY_CREATE_CERTIFICATE<-ME.IS_OPERATOR",
-                "ME.MAY_CREATE_CERTIFICATE<-ME.IS_AUTHORITY",
-                "ME.MAY_CREATE_CERTIFICATE_$SUBJECT<-ME.IS_$SUBJECT"
-                ], None, standard_subject_extractor),
-        'create_member' : 
-            SubjectInvocationCheck([
-                "ME.MAY_CREATE_MEMBER<-ME.IS_OPERATOR",
-                "ME.MAY_CREATE_MEMBER<-ME.IS_AUTHORITY"
-                ], None, None),
-
-        'list_clients' : None,
-
-        'list_authorized_clients' : \
-            SubjectInvocationCheck([
-                "ME.MAY_LIST_AUTHORIZED_CLIENTS<-ME.IS_AUTHORITY",
-                "ME.MAY_LIST_AUTHORIZED_CLIENTS_$SUBJECT<-ME.IS_$SUBJECT"
-                ], None, member_id_extractor),
-        'authorize_client' : \
-            SubjectInvocationCheck([
-                "ME.MAY_AUTHORIZE_CLIENT<-ME.IS_AUTHORITY",
-                "ME.MAY_AUTHORIZE_CLIENT_$SUBJECT<-ME.IS_$SUBJECT"
-                ], None, member_id_extractor),
-
-        # only operator may enable/disable users
-        'enable_user' :
-            SubjectInvocationCheck([
-                    "ME.MAY_ENABLE_USER<-ME.IS_AUTHORITY",
-                    "ME.MAY_ENABLE_USER<-ME.IS_OPERATOR", 
-                    ], None, None), 
-        'add_member_privilege' :
-            SubjectInvocationCheck([
-                    "ME.MAY_ADD_MEMBER_PRIVILEGE<-ME.IS_AUTHORITY",
-                    "ME.MAY_ADD_MEMBER_PRIVILEGE<-ME.IS_OPERATOR", 
-                    ], None, None), 
-        'revoke_member_privilege' :
-            SubjectInvocationCheck([
-                    "ME.MAY_REVOKE_MEMBER_PRIVILEGE<-ME.IS_AUTHORITY", 
-                    "ME.MAY_REVOKE_MEMBER_PRIVILEGE<-ME.IS_OPERATOR"
-                    ], None, None), 
-
-        'add_member_attribute' :
-            SubjectInvocationCheck([
-                    "ME.MAY_ADD_MEMBER_ATTRIBUTE<-ME.IS_AUTHORITY",
-                    "ME.MAY_ADD_MEMBER_ATTRIBUTE<-ME.IS_OPERATOR", 
-                    "ME.MAY_ADD_MEMBER_ATTRIBUTE_$SUBJECT<-ME.IS_$SUBJECT"
-                    ], None, member_urn_extractor), 
-        'remove_member_attribute' :
-            SubjectInvocationCheck([
-                    "ME.MAY_REMOVE_MEMBER_ATTRIBUTE<-ME.IS_AUTHORITY",
-                    "ME.MAY_REMOVE_MEMBER_ATTRIBUTE<-ME.IS_OPERATOR", 
-                    "ME.MAY_REMOVE_MEMBER_ATTRIBUTE_$SUBJECT<-ME.IS_$SUBJECT"
-                    ], None, member_urn_extractor), 
-        }
-
+    INVOCATION_CHECK_FOR_METHOD = None
 
     # Lookup argument check per method (or None if none registered)
     def get_argument_check(self, method):
@@ -259,9 +133,9 @@ class MAv1Guard(ABACGuardBase):
     def get_invocation_check(self, method):
         if self.INVOCATION_CHECK_FOR_METHOD == None:
             policies = \
-                parse_method_policies("/etc/geni-chapi/member_authority_policy.json")
+                parse_method_policies_orig("/etc/geni-chapi/member_authority_policy.json")
             self.INVOCATION_CHECK_FOR_METHOD = \
-                create_subject_invocation_checks(policies)
+                create_subject_invocation_checks_orig(policies)
         if self.INVOCATION_CHECK_FOR_METHOD.has_key(method):
             return self.INVOCATION_CHECK_FOR_METHOD[method]
         return None
