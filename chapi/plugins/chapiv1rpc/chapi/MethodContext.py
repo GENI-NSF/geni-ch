@@ -146,10 +146,10 @@ class MethodContext:
                                                         self._session)
                 is_authority = lookup_authority_privilege(user_urn,
                                                           self._session)
-                msg = "USER_URN = %s IS_OPERATOR = %s IS_AUTHORITY = %s"
-                msg = msg % (user_urn, is_operator, is_authority)
-                chapi_info("OUTAGE", msg)
                 if not is_operator and not is_authority:
+                    msg = "User %s denied access during maintenance outage"
+                    msg = msg % (user_urn)
+                    chapi_info("OUTAGE", msg)
                     msg = ("Cannot access GENI Clearinghouse during"
                            + " maintenance outage.")
                     raise CHAPIv1AuthorizationError(msg)
@@ -190,20 +190,9 @@ class MethodContext:
     # Set the error and result fields
     # log traceback for certain errors
     def _handleError(self, e, tb=None):
-        if not isinstance(e, CHAPIv1BaseError):
-            e = CHAPIv1ServerError(str(e))
-
-        # Log the error, and log the traceback for certain errors
-        self._handler._log.error(e)
-        if type(e) in (CHAPIv1ServerError,
-                       CHAPIv1NotImplementedError,
-                       CHAPIv1DatabaseError):
-            if tb:
-                self._handler._log.error("\n".join(traceback.format_tb(tb)))
-
-        # Set the error and result
+        # Set the error, log the error, and set the result
         self._error = True
-        self._result = self._handler._errorReturn(e)
+        self._result = self._handler._errorReturn(e, tb)
 
 
     # This is called after the "with MethodContext" block

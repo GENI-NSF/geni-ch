@@ -58,11 +58,6 @@ class HandlerBase(xmlrpc.Dispatcher):
     def getGuard(self):
         return self._guard
 
-    # Standard format for error returns from API calls
-    def _errorReturn(self, e):
-        """Assembles a GENI compliant return result for faulty methods."""
-        return { 'code' : e.code , 'output' : str(e), 'value' : None }
-        
     # Standard format for successful returns from API calls
     def _successReturn(self, result):
         """Assembles a GENI compliant return result for successful methods."""
@@ -75,13 +70,19 @@ class HandlerBase(xmlrpc.Dispatcher):
             raise CHAPIv1AuthorizationError('Client certificate required but not provided')
         return cert
 
-    def _errorReturn(self, e):
+    def _errorReturn(self, e, tb=None):
         """Assembles a GENI compliant return result for faulty methods."""
         if not isinstance(e, CHAPIv1BaseError): # convert common errors into CHAPIv1GeneralError
             e = CHAPIv1ServerError(str(e))
         # do some logging
         self._logger.error(e)
-        self._logger.error(traceback.format_exc())
+        if type(e) in (CHAPIv1ServerError,
+                       CHAPIv1NotImplementedError,
+                       CHAPIv1DatabaseError):
+            if tb:
+                self._logger.error("\n".join(traceback.format_tb(tb)))
+            else:
+                self._logger.error(traceback.format_exc())
         return {'code' :  e.code , 'value' : None, 'output' : str(e) }
         
 
