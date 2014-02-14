@@ -1088,6 +1088,8 @@ def parse_method_policies_orig(filename):
                                      "pass_empty_subject" : pass_empty_subject}
     except Exception, e:
         chapi_info("Error", "%s" % e)
+        import traceback
+        chapi_info("Error", traceback.format_exc())
         raise Exception("Error parsing policy file: %s" % filename)
 
     return policies
@@ -1111,7 +1113,7 @@ def parse_method_policies(filename):
                     isinstance(method_attrs, basestring): 
                 continue
 #            chapi_info("PMP", "MN = %s MA = %s" % (method_name, method_attrs))
-            asserters = None
+            assertions = None
             extractor = None
             policy_statements = []
             pass_empty_subject = False

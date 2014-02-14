@@ -27,14 +27,15 @@
     "policies" : [
         "ME.MAY_$METHOD<-ME.IS_AUTHORITY",
         "ME.MAY_$METHOD<-ME.IS_OPERATOR",
-        "ME.MAY_$METHOD<-ME.IS_$SUBJECT"
+        "ME.MAY_$METHOD_$MEMBER<-ME.IS_$SELF"
        ]
   },
 
   "get_log_entries_for_context" : {
     "__DOC__" : "Must be member of project of slice",
     "assertions": [
-        "ME.IS_$ROLE_$SUBJECT<-CALLER",
+        "ME.IS_$ROLE_$PROJECT<-CALLER",
+        "ME.IS_$ROLE_$SLICE<-CALLER",
 	"ME.INVOKING_ON_$MEMBER<-CALLER"
     ],
     "policies" : [      

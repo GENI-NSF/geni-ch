@@ -227,9 +227,9 @@ class CSv1Guard(ABACGuardBase):
     def get_invocation_check(self, method):
         if self.INVOCATION_CHECK_FOR_METHOD == None:
             policies = \
-                parse_method_policies_orig("/etc/geni-chapi/credential_store_policy.json")
+                parse_method_policies("/etc/geni-chapi/credential_store_policy.json")
             self.INVOCATION_CHECK_FOR_METHOD = \
-                create_subject_invocation_checks_orig(policies)
+                create_subject_invocation_checks(policies)
         if self.INVOCATION_CHECK_FOR_METHOD.has_key(method):
             return self.INVOCATION_CHECK_FOR_METHOD[method]
         return None
