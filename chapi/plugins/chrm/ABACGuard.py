@@ -424,7 +424,8 @@ class SubjectInvocationCheck(InvocationCheck):
             return 'REQUEST_ID', request_id
         return None, None
 
-    def _generate_bindings(self, caller_urn, subject_type, subject, session):
+    def _generate_bindings(self, caller_urn, subject_type, subject, \
+                               options, arguments, session):
         chapi_info("GB","BINDINGS = %s SUBJECT = %s" % (self._bindings, subject))
         for binding in self._bindings:
             value = None
@@ -452,6 +453,38 @@ class SubjectInvocationCheck(InvocationCheck):
                     value = subject
             elif binding == "$SELF":
                 value = caller_urn
+            elif binding == "$SHARES_SLICE":
+                if subject_type == "MEMBER_URN" and \
+                        shares_slice(caller_urn, subject, session):
+                    value = "SHARES_SLICE"
+            elif binding == "$SHARES_PROJECT":
+                if subject_type == "MEMBER_URN" and \
+                        shares_project(caller_urn, subject, session):
+                    value = "SHARES_PROJECT"
+            elif binding == "$PROJECT_LEAD":
+                if subject_type == "MEMBER_URN" and \
+                        has_role_on_some_project(subject, LEAD_ATTRIBUTE,\
+                                                     session):
+                    value = "PROJECT_LEAD"
+            elif binding == "$PROJECT_ADMIN":
+                if subject_type == "MEMBER_URN" and \
+                        has_role_on_some_project(subject, ADMIN_ATTRIBUTE,\
+                                                     session):
+                    value = "PROJECT_ADMIN"
+            elif binding == "$SEARCHING_BY_EMAIL":
+                if 'match' in options and 'MEMBER_EMAIL' in options['match']:
+                    value = "SEARCHING_BY_EMAIL"
+            elif binding == "$SEARCHING_FOR_PROJECT_LEAD_BY_UID":
+                if 'match' in options and 'MEMBER_UID' in options['match'] \
+                        and has_role_on_some_project(subject, LEAD_ATTRIBUTE,\
+                                                         session):
+                    value = "SEARCHING_FOR_PROJECT_LEAD_BY_UID"
+            elif binding == "$PENDING_REQUEST_TO_MEMBER":
+                if subject_type == "MEMBER_URN" and \
+                        has_pending_request_on_project_lead_by(subject, \
+                                                                   caller_urn,\
+                                                                   session):
+                    value = "PENDING_REQUEST_TO_MEMBER"
 
             if value:
                 self._bindings[binding]=value
@@ -528,7 +561,8 @@ class SubjectInvocationCheck(InvocationCheck):
             for subject in subjects_of_type:
 
                 self._generate_bindings(client_urn, subject_type, \
-                                            subject, session)
+                                            subject, options, arguments, \
+                                            session)
                 self._assert_bound_statements(abac_manager, self._assertions)
                 self._assert_bound_statements(abac_manager, self._policies)
 

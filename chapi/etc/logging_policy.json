@@ -18,8 +18,7 @@
         "ME.MAY_$METHOD_$SLICE<-ME.BELONGS_TO_$SLICE",
         "ME.MAY_$METHOD_$PROJECT<-ME.BELONGS_TO_$PROJECT",
         "ME.MAY_$METHOD<-ME.INVOKING_ON_$SELF"
-        ],
-    "extractor" : "attribute_extractor"
+        ]
   },
 
   "get_log_entries_by_author" : {
