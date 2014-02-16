@@ -3,82 +3,90 @@
 
   "create_slice" : {
       "__DOC__" : "Operators, project Leads, members, admins may create slice",
+      "assertions" : [
+        "ME.IS_$ROLE_$PROJECT<-CALLER"
+	],
       "policies" : [
         "ME.MAY_$METHOD<-ME.IS_OPERATOR",
-        "ME.MAY_$METHOD_$SUBJECT<-ME.IS_LEAD_$SUBJECT", 
-        "ME.MAY_$METHOD_$SUBJECT<-ME.IS_ADMIN_$SUBJECT", 
-        "ME.MAY_$METHOD_$SUBJECT<-ME.IS_MEMBER_$SUBJECT"
-      ], 
-      "asserters" : ["assert_project_role"],
-      "extractor" : "project_urn_extractor"
+        "ME.MAY_$METHOD_$PROJECT<-ME.IS_LEAD_$PROJECT", 
+        "ME.MAY_$METHOD_$PROJECT<-ME.IS_ADMIN_$PROJECT", 
+        "ME.MAY_$METHOD_$PROJECT<-ME.IS_MEMBER_$PROJECT"
+      ]
    },
 
    "lookup_slices" : {
      "__DOC__" : "Operators, leads/admins, members, auditors may lookup slice",
+      "assertions" : [
+        "ME.IS_$ROLE_$SLICE<-CALLER"
+	],
      "policies" : [
        "ME.MAY_$METHOD<-ME.IS_OPERATOR",
-       "ME.MAY_$METHOD_$SUBJECT<-ME.IS_LEAD_$SUBJECT", 
-       "ME.MAY_$METHOD_$SUBJECT<-ME.IS_ADMIN_$SUBJECT",
-       "ME.MAY_$METHOD_$SUBJECT<-ME.IS_MEMBER_$SUBJECT",
-       "ME.MAY_$METHOD_$SUBJECT<-ME.IS_AUDITOR_$SUBJECT"
-     ],
-     "asserters" : ["assert_slice_role"],
-     "extractor" : "standard_subject_extractor"
+       "ME.MAY_$METHOD_$SLICE<-ME.IS_LEAD_$SLICE", 
+       "ME.MAY_$METHOD_$SLICE<-ME.IS_ADMIN_$SLICE",
+       "ME.MAY_$METHOD_$SLICE<-ME.IS_MEMBER_$SLICE",
+       "ME.MAY_$METHOD_$SLICE<-ME.IS_AUDITOR_$SLICE"
+     ]
    },
 
   "update_slice" : {
       "__DOC__" : "Operators and slice leads/admins can update slice",
+      "assertions" : [
+        "ME.IS_$ROLE_$SLICE<-CALLER"
+	],
       "policies" : [
          "ME.MAY_$METHOD<-ME.IS_OPERATOR",
-         "ME.MAY_$METHOD_$SUBJECT<-ME.IS_LEAD_$SUBJECT", 
-         "ME.MAY_$METHOD_$SUBJECT<-ME.IS_ADMIN_$SUBJECT"
-      ], 
-      "asserters" : ["assert_slice_role"],
-      "extractor" : "slice_urn_extractor"
+         "ME.MAY_$METHOD_$SLICE<-ME.IS_LEAD_$SLICE", 
+         "ME.MAY_$METHOD_$SLICE<-ME.IS_ADMIN_$SLICE"
+      ]
    },
 
   "get_credentials" :  {
      "__DOC__" : "Slice lead/admin/member or operators can get slice cred",
+      "assertions" : [
+        "ME.IS_$ROLE_$SLICE<-CALLER"
+	],
      "policies" : [
-        "ME.MAY_$METHOD_$SUBJECT<-ME.IS_LEAD_$SUBJECT", 
-        "ME.MAY_$METHOD_$SUBJECT<-ME.IS_ADMIN_$SUBJECT",
-        "ME.MAY_$METHOD_$SUBJECT<-ME.IS_MEMBER_$SUBJECT",
-        "ME.MAY_$METHOD<-ME.IS_OPERATOR"
-     ], 
-     "asserters" : ["assert_slice_role"],
-     "extractor" : "slice_urn_extractor"
+        "ME.MAY_$METHOD<-ME.IS_OPERATOR",
+        "ME.MAY_$METHOD_$SLICE<-ME.IS_LEAD_$SLICE", 
+        "ME.MAY_$METHOD_$SLICE<-ME.IS_ADMIN_$SLICE",
+        "ME.MAY_$METHOD_$SLICE<-ME.IS_MEMBER_$SLICE"
+     ]
     },
 
   "modify_slice_membership" : {
       "__DOC__" : "Operators and slice Lead/Admin can modify slice membership",
+      "assertions" : [
+        "ME.IS_$ROLE_$SLICE<-CALLER"
+	],
       "policies" : [
         "ME.MAY_$METHOD<-ME.IS_OPERATOR",
-        "ME.MAY_$METHOD_$SUBJECT<-ME.IS_LEAD_$SUBJECT",
-        "ME.MAY_$METHOD_$SUBJECT<-ME.IS_ADMIN_$SUBJECT"
-     ],
-     "asserters" : ["assert_slice_role"],
-     "extractor" : "slice_urn_extractor"
+        "ME.MAY_$METHOD_$SLICE<-ME.IS_LEAD_$SLICE",
+        "ME.MAY_$METHOD_$SLICE<-ME.IS_ADMIN_$SLICE"
+     ]
     },
 
   "lookup_slice_members" : {
        "__DOC__" : "Operators and slice members can lookup slice members",
+      "assertions" : [
+        "ME.IS_$ROLE_$SLICE<-CALLER"
+	],
        "policies" : [
           "ME.MAY_$METHOD<-ME.IS_OPERATOR",
-          "ME.MAY_$METHOD_$SUBJECT<-ME.BELONGS_TO_$SUBJECT"
-       ], 
-       "asserters" : ["assert_belongs_to_slice"],
-       "extractor" : "slice_urn_extractor"
+          "ME.MAY_$METHOD_$SLICE<-ME.BELONGS_TO_$SLICE"
+       ]
      },
 
   "lookup_slices_for_member" : {
        "__DOC__" : "Operators, self and members sharing a slice",
+      "assertions" : [
+        "ME.INVOKING_ON_$MEMBER<-CALLER",
+        "ME.$SHARES_SLICE_$MEMBER<-CALLER"
+	],
        "policies" : [
          "ME.MAY_$METHOD<-ME.IS_OPERATOR",
-         "ME.MAY_$METHOD_$SUBJECT<-ME.IS_$SUBJECT",
-         "ME.MAY_$METHOD_$SUBJECT<-ME.SHARES_SLICE_$SUBJECT"
-       ],
-       "asserters" : ["assert_shares_slice"],
-       "extractor" : "member_urn_extractor"
+         "ME.MAY_$METHOD<-ME.INVOKING_ON_$SELF",
+         "ME.MAY_$METHOD_$MEMBER<-ME.SHARES_SLICE_$MEMBER"
+       ]
      },
 
   "create_project" : {
@@ -93,92 +101,99 @@
        "__DOC__" : "Anyone with legitimate cert can call lookup projects",
        "policies" : [
          "ME.MAY_$METHOD<-CALLER" 
-       ], 
-       "extractor" : "standard_subject_extractor"
+       ]
      },
 
    "update_project" : {
      "__DOC__" : "Operators and project leads/admins can update project",
+      "assertions" : [
+        "ME.IS_$ROLE_$PROJECT<-CALLER"
+	],
      "policies" : [
        "ME.MAY_$METHOD<-ME.IS_OPERATOR",
-       "ME.MAY_$METHOD_$SUBJECT<-ME.IS_LEAD_$SUBJECT", 
-       "ME.MAY_$METHOD_$SUBJECT<-ME.IS_ADMIN_$SUBJECT"
-      ], 
-      "asserters" : ["assert_project_role"],
-      "extractor" : "project_urn_extractor"
+       "ME.MAY_$METHOD_$PROJECT<-ME.IS_LEAD_$PROJECT", 
+       "ME.MAY_$METHOD_$PROJECT<-ME.IS_ADMIN_$PROJECT"
+      ]
    },
 
    "modify_project_membership" : {
      "__DOC__" : "Operators, authorities and project leads/admins can modify project membership",
+      "assertions" : [
+        "ME.IS_$ROLE_$PROJECT<-CALLER"
+	],
      "policies" : [
        "ME.MAY_$METHOD<-ME.IS_OPERATOR",
        "ME.MAY_$METHOD<-ME.IS_AUTHORITY",
-       "ME.MAY_$METHOD_$SUBJECT<-ME.IS_LEAD_$SUBJECT",
-       "ME.MAY_$METHOD_$SUBJECT<-ME.IS_ADMIN_$SUBJECT"
-      ], 
-      "asserters" : ["assert_project_role"],
-      "extractor" : "project_urn_extractor"
+       "ME.MAY_$METHOD_$PROJECT<-ME.IS_LEAD_$PROJECT",
+       "ME.MAY_$METHOD_$PROJECT<-ME.IS_ADMIN_$PROJECT"
+      ]
    },
 
 
  "lookup_project_members" : {
    "__DOC__" : "Operators and project members can lookup project members",
+    "assertions" : [
+      "ME.IS_$ROLE_$PROJECT<-CALLER"
+   ],
    "policies" : [
-     "ME.MAY_$METHOD_$SUBJECT<-ME.IS_OPERATOR",
-     "ME.MAY_$METHOD_$SUBJECT<-ME.BELONGS_TO_$SUBJECT"
-    ], 
-    "asserters" : ["assert_belongs_to_project"],
-    "extractor" : "project_urn_extractor"
+     "ME.MAY_$METHOD<-ME.IS_OPERATOR",
+     "ME.MAY_$METHOD_$PROJECT<-ME.BELONGS_TO_$PROJECT"
+    ]
   },
 
   "lookup_projects_for_member" : {
     "__DOC__" : "Operators, self, and people sharing a project",
+    "assertions" : [
+      "ME.INVOKING_ON_$MEMBER<-CALLER",
+      "ME.$SHARES_PROJECT_$MEMBER<-CALLER"
+    ],
     "policies" : [
      "ME.MAY_$METHOD<-ME.IS_OPERATOR",
-     "ME.MAY_$METHOD_$SUBJECT<-ME.IS_$SUBJECT",
-     "ME.MAY_$METHOD_$SUBJECT<-ME.SHARES_PROJECT_$SUBJECT"
-    ], 
-    "asserters" : ["assert_shares_project"], 
-    "extractor" : "member_urn_extractor"
+     "ME.MAY_$METHOD<-ME.INVOKING_ON_$SELF",
+     "ME.MAY_$METHOD_$MEMBER<-ME.SHARES_PROJECT_$MEMBER"
+    ]
    },
 
   "create_sliver_info" : {
     "__DOC__" : "Operators, authorities and slice lead/admin/member",
+    "assertions" : [
+      "ME.IS_$ROLE_$SLICE<-CALLER"
+    ],
     "policies" : [
       "ME.MAY_$METHOD<-ME.IS_OPERATOR",
       "ME.MAY_$METHOD<-ME.IS_AUTHORITY",
-      "ME.MAY_$METHOD_$SUBJECT<-ME.IS_LEAD_$SUBJECT", 
-      "ME.MAY_$METHOD_$SUBJECT<-ME.IS_ADMIN_$SUBJECT",
-      "ME.MAY_$METHOD_$SUBJECT<-ME.IS_MEMBER_$SUBJECT"
-     ], 
-     "asserters" : ["assert_slice_role"], 
-     "extractor" : "slice_urn_extractor"
+      "ME.MAY_$METHOD_$SLICE<-ME.IS_LEAD_$SLICE", 
+      "ME.MAY_$METHOD_$SLICE<-ME.IS_ADMIN_$SLICE",
+      "ME.MAY_$METHOD_$SLICE<-ME.IS_MEMBER_$SLICE"
+     ]
    },
 
    "delete_sliver_info" : {
      "__DOC__" : "Operators, authorities and slcie lead/admin/member",
+    "assertions" : [
+      "ME.IS_$ROLE_$SLICE<-CALLER"
+    ],
      "policies" : [
        "ME.MAY_$METHOD<-ME.IS_OPERATOR",
        "ME.MAY_$METHOD<-ME.IS_AUTHORITY",
-       "ME.MAY_$METHOD_$SUBJECT<-ME.IS_LEAD_$SUBJECT", 
-       "ME.MAY_$METHOD_$SUBJECT<-ME.IS_ADMIN_$SUBJECT",
-       "ME.MAY_$METHOD_$SUBJECT<-ME.IS_MEMBER_$SUBJECT"
-     ], 
-     "asserters" : ["assert_slice_role"], 
-     "extractor" : "slice_urn_extractor"
+       "ME.MAY_$METHOD_$SLICE<-ME.IS_LEAD_$SLICE",
+       "ME.MAY_$METHOD_$SLICE<-ME.IS_ADMIN_$SLICE",
+       "ME.MAY_$METHOD_$SLICE<-ME.IS_MEMBER_$SLICE"
+     ]
    },
 
   "update_sliver_info" : {
      "__DOC__" : "Operators, authorities and slcie lead/admin/member",
+    "assertions" : [
+      "ME.IS_$ROLE_$SLICE<-CALLER"
+    ],
      "policies" : [
        "ME.MAY_$METHOD<-ME.IS_OPERATOR",
        "ME.MAY_$METHOD<-ME.IS_AUTHORITY",
-       "ME.MAY_$METHOD_$SUBJECT<-ME.IS_LEAD_$SUBJECT", 
-       "ME.MAY_$METHOD_$SUBJECT<-ME.IS_ADMIN_$SUBJECT",
-       "ME.MAY_$METHOD_$SUBJECT<-ME.IS_MEMBER_$SUBJECT"
-     ], 
-     "asserters" : ["assert_slice_role"], 
-     "extractor" : "slice_urn_extractor"
+       "ME.MAY_$METHOD_$SLICE<-ME.IS_LEAD_$SLICE", 
+       "ME.MAY_$METHOD_$SLICE<-ME.IS_ADMIN_$SLICE",
+       "ME.MAY_$METHOD_$SLICE<-ME.IS_MEMBER_$SLICE"
+     ]
    },
 
   "lookup_sliver_info" : {
@@ -187,14 +202,16 @@
        "Can ask for sliver info by SLIVER_INFO_SLICE_URN if slice member",
        "Can ask for slier info by CREATOR_URN if creator is caller"
      ],
+    "assertions" : [
+      "ME.IS_$ROLE_$SLICE<-CALLER",
+      "ME.INVOKING_ON_$MEMBER<-CALLER"
+    ],
      "policies" : [
        "ME.MAY_$METHOD<-ME.IS_OPERATOR",
        "ME.MAY_$METHOD<-ME.IS_AUTHORITY",
-       "ME.MAY_$METHOD_$SUBJECT<-ME.BELONGS_TO_$SUBJECT",
-       "ME.MAY_$METHOD_$SUBJECT<-ME.IS_$SUBJECT"
-     ],
-     "asserters" : ["assert_belongs_to_slice"],
-     "extractor" : "sliver_info_extractor"
+       "ME.MAY_$METHOD_$SLICE<-ME.BELONGS_TO_$SLICE",
+       "ME.MAY_$METHOD_$MEMBER<-ME.INVOKING_ON_$SELF"
+     ]
    },
 
    "create_request" : {
@@ -205,86 +222,107 @@
    },
 
    "resolve_pending_request" :  {
-     "__DOC__" : "Only if you are operator or the lead/admin of the context or the requestor",
+     "__DOC__" : [
+        "Only if you are operator or the lead/admin of the project context",
+	"or the requestor"
+     ],
+    "assertions" : [
+      "ME.IS_$REQUEST_ROLE_$REQUEST_ID<-CALLER",
+      "ME.IS_$REQUESTOR_$REQUEST_ID<-CALLER"
+    ],
      "policies" : [
        "ME.MAY_$METHOD<-ME.IS_OPERATOR",
-       "ME.MAY_$METHOD_$SUBJECT<-ME.IS_LEAD_$SUBJECT",
-       "ME.MAY_$METHOD_$SUBJECT<-ME.IS_ADMIN_$SUBJECT",
-       "ME.MAY_$METHOD<-ME.IS_REQUESTOR"
-     ], 
-      "asserters" : ["assert_request_id_requestor_and_project_role"],
-      "extractor" : "request_id_extractor"
+       "ME.MAY_$METHOD<-ME.IS_LEAD_$REQUEST_ID",
+       "ME.MAY_$METHOD<-ME.IS_ADMIN_$REQUEST_ID",
+       "ME.MAY_$METHOD<-ME.IS_REQUESTOR_$REQUEST_ID"
+     ]
    },
 
   "get_requests_for_context" :  {
-	"__DOC__" : "Only if you are operator or lead/admin of the context",
-	"policies" : [
-          "ME.MAY_$METHOD<-ME.IS_OPERATOR",
-          "ME.MAY_$METHOD_$SUBJECT<-ME.IS_LEAD_$SUBJECT",
-          "ME.MAY_$METHOD_$SUBJECT<-ME.IS_ADMIN_$SUBJECT"
-         ], 
-         "asserters" : ["assert_project_role"], 
-	 "extractor" : "request_context_extractor"
+    "__DOC__" : "Only if you are operator or lead/admin of the context",
+    "assertions" : [
+      "ME.IS_$REQUEST_ROLE_$REQUEST_ID<-CALLER"
+    ],
+    "policies" : [
+      "ME.MAY_$METHOD<-ME.IS_OPERATOR",
+      "ME.MAY_$METHOD<-ME.IS_LEAD_$REQUEST_ID",
+      "ME.MAY_$METHOD<-ME.IS_ADMIN_$REQUEST_ID"
+    ] 
    },
 
    "get_requests_by_user" :  {
       "__DOC__" : "member_id argument == caller",
+      "assertions" : [
+        "ME.INVOKING_ON_$MEMBER<-CALLER"
+      ],
       "policies" : [
         "ME.MAY_$METHOD<-ME.IS_OPERATOR",
-        "ME.MAY_$METHOD_$SUBJECT<-ME.IS_$SUBJECT"
-      ], 
-      "extractor" : "request_member_extractor"
+        "ME.MAY_$METHOD<-ME.INVOKING_ON_$SELF"
+      ]
     },
 
   "get_pending_requests_for_user" :  {
     "__DOC__" : "Operator and for self",
+    "assertions" : [
+      "ME.INVOKING_ON_$MEMBER<-CALLER"
+    ],
     "policies" : [
       "ME.MAY_$METHOD<-ME.IS_OPERATOR",
-      "ME.MAY_$METHOD_$SUBJECT<-ME.IS_$SUBJECT"
-    ], 
-    "extractor" : "request_member_extractor"
+      "ME.MAY_$METHOD<-ME.INVOKING_ON_$SELF"
+    ]
   },
 
 
   "get_number_of_pending_requests_for_user" :  {
     "__DOC__" : "Operator and Self",
+    "assertions" : [
+      "ME.INVOKING_ON_$MEMBER<-CALLER"
+    ],
     "policies" : [
       "ME.MAY_$METHOD<-ME.IS_OPERATOR",
-      "ME.MAY_$METHOD_$SUBJECT<-ME.IS_$SUBJECT"
-    ], 
-    "extractor" : "request_member_extractor"
+      "ME.MAY_$METHOD<-ME.INVOKING_ON_$SELF"
+    ]
   },
 
   "get_request_by_id" : {
-    "__DOC__" : "Only if you are an operator, you are the requestor or the lead/admin of the context",
+    "__DOC__" : [
+      "Only if you are an operator", 
+      "You are the requestor", 
+      "or the lead/admin of the context"
+    ],
+    "assertions" : [
+      "ME.IS_$REQUEST_ROLE_$REQUEST_ID<-CALLER",
+      "ME.IS_$REQUESTOR_$REQUEST_ID<-CALLER"
+    ],
     "policies" : [
       "ME.MAY_$METHOD<-ME.IS_OPERATOR",
-      "ME.MAY_$METHOD_$SUBJECT<-ME.IS_LEAD_$SUBJECT",
-      "ME.MAY_$METHOD_$SUBJECT<-ME.IS_ADMIN_$SUBJECT",
+      "ME.MAY_$METHOD<-ME.IS_LEAD_$REQUEST_ID",
+      "ME.MAY_$METHOD<-ME.IS_ADMIN_$REQUEST_ID",
       "ME.MAY_$METHOD<-ME.IS_REQUESTOR"
-     ], 
-     "asserters" : ["assert_request_id_requestor_and_project_role"],
-     "extractor" : "request_id_extractor"
+     ]
    },
 
   "invite_member" : {
     "__DOC__" : "Only if you are an operator or a project lead/admin",
+    "assertions" : [
+      "ME.IS_$ROLE_$PROJECT<-CALLER"
+    ],
     "policies" : [
       "ME.MAY_$METHOD<-ME.IS_OPERATOR",
-      "ME.MAY_$METHOD_$SUBJECT<-ME.IS_LEAD_$SUBJECT", 
-      "ME.MAY_$METHOD_$SUBJECT<-ME.IS_ADMIN_$SUBJECT"
-     ], 
-     "asserters" : ["assert_project_role"], 
-     "extractor" : "project_uid_extractor"
+      "ME.MAY_$METHOD_$PROJECT<-ME.IS_LEAD_$PROJECT", 
+      "ME.MAY_$METHOD_$PROJECT<-ME.IS_ADMIN_$PROJECT"
+     ]
    },
 
    "accept_invitation" : {
      "__DOC__" : "No options required (invite_id, member_id)",
+     "assertions" : [
+       "ME.INVOKING_ON_$MEMBER<-CALLER"
+     ],
      "policies" : [
        "ME.MAY_$METHOD<-ME.IS_OPERATOR",
-       "ME.MAY_$METHOD_$SUBJECT<-ME.IS_$SUBJECT"
-     ],
-     "extractor" : "request_member_extractor"
+       "ME.MAY_$METHOD<-ME.INVOKING_ON_$SELF"
+     ]
   }     
 
 }

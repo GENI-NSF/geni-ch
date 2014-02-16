@@ -1225,3 +1225,32 @@ def has_pending_request_on_project_lead_by(lead_urn, requestor_urn, session):
     return len(rows) > 0
 
 
+# Return the requestor URN of the request ID, or None if none exists
+def get_project_request_requestor_urn(request_id, session):
+    db = pm.getService("chdbengine")
+    q = session.query(db.PROJECT_REQUEST_TABLE.c.requestor, \
+                          db.MA_MEMBER_ATTRIBUTE.c.value)
+    q = q.filter(db.PROJECT_REQUEST_TABLE.c.request_id == request_id)
+    q = q.filter(db.PROJECT_REQUEST_TABLE.c.requestor == \
+                     db.MA_MEMBER_ATTRIBUTE.c.member_id)
+    q = q.filter(db.MA_MEMBER_ATTRIBUTE.c.name == 'urn')
+    rows = q.all()
+    if len(rows) > 0:
+        requestor_urn = rows[0].value
+        return requestor_urn
+    else:
+        return None
+
+# Return the project URN of the request ID, or None if none exists
+def get_project_request_project_urn(request_id, session):
+    db = pm.getService("chdbengine")
+    q = session.query(db.PROJECT_REQUEST_TABLE.c.context_id)
+    q = q.filter(db.PROJECT_REQUEST_TABLE.c.request_id == request_id)
+    rows = q.all()
+    
+    if len(rows) > 0:
+        project_uid = row.context_id
+        project_urn = convert_project_uid_to_urn(project_uid, session)
+        return project_urn
+    else:
+        return None

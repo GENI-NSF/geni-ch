@@ -253,9 +253,12 @@ class SubjectInvocationCheck(InvocationCheck):
             urns, label = \
                 self._compute_request_subjects(options, arguments, session)
         if urns and not isinstance(urns, list): urns = [urns]
-        return {label : urns}
+        if urns:
+            return {label : urns}
+        else:
+            return Nonen
 
-    def _compute_slice_subjects(self, options, arguments, sessions):
+    def _compute_slice_subjects(self, options, arguments, session):
         urns = None
         if 'match' in options:
             match_option = options['match']
@@ -275,25 +278,26 @@ class SubjectInvocationCheck(InvocationCheck):
                     urns = \
                         [lookup_slice_urn_for_sliver_urn(sliver_urn, session)\
                              for sliver_urn in sliver_urns]
-            elif 'slice_urn' in arguments:
-                urns = arguments['slice_urn']
-            elif 'fields' in options and 'SLICE_URN' in options['fields']:
-                urns = options['fields']['SLICE_URN']
-            elif 'fields' in options and \
-                    'SLIVER_INFO_SLICE_URN' in options['fields']:
-                urns = options['fields']['SLIVER_INFO_SLICE_URN']
-            elif 'sliver_urn' in arguments:
-                db = pm.getService('chdbengine')
-                q = session.query(db.SLIVER_INFO_TABLE.c.slice_urn)
-                q = q.filter(db.SLIVER_INFO_TABLE.c.sliver_urn == \
-                                 arguments['sliver_urn'])
-                rows = q.all()
-                if len(rows) > 0:
-                    urns = rows[0].slice_urn
+        elif 'slice_urn' in arguments:
+            urns = arguments['slice_urn']
+        elif 'fields' in options and 'SLICE_URN' in options['fields']:
+            urns = options['fields']['SLICE_URN']
+        elif 'fields' in options and \
+                'SLIVER_INFO_SLICE_URN' in options['fields']:
+            urns = options['fields']['SLIVER_INFO_SLICE_URN']
+        elif 'sliver_urn' in arguments:
+            db = pm.getService('chdbengine')
+            q = session.query(db.SLIVER_INFO_TABLE.c.slice_urn)
+            q = q.filter(db.SLIVER_INFO_TABLE.c.sliver_urn == \
+                             arguments['sliver_urn'])
+            rows = q.all()
+            if len(rows) > 0:
+                urns = rows[0].slice_urn
         elif 'context_type' in arguments and 'context_id' in arguments and \
                 arguments['context_type'] == SLICE_CONTEXT:
-            slice_uid = arguments['context_id']
-            urns = convert_project_uid_to_urn(slice_uid, session)
+            if arguments['context_id'] != '':
+                slice_uid = arguments['context_id']
+                urns = convert_slice_uid_to_urn(slice_uid, session)
         elif 'attributes' in arguments and \
                 'SLICE' in arguments['attributes']:
             slice_uid = attributes['SLICE']
@@ -318,23 +322,24 @@ class SubjectInvocationCheck(InvocationCheck):
                 if not isinstance(project_uids, list): 
                     project_uids = [project_uids]
                 urns = convert_project_uid_to_urn(project_uids, session)
-            elif 'fields' in options and 'PROJECT_NAME' in options['fields']:
-                project_name = options['fields']['PROJECT_NAME']
-                config = pm.getService('config')
-                authority = config.get('chrm.authority')
-                urns = to_project_urn(authority, project_name)
-            elif 'project_urn' in arguments:
-                urns = arguments['project_urn']
-            elif 'fields' in options and \
-                    'SLICE_PROJECT_URN' in options['fields']:
-                urns = options['fields']['SLICE_PROJECT_URN']
-            elif 'project_id' in arguments:
-                project_id = arguments['project_id']
-                urns = convert_project_uid_to_urn(project_id, session)
+        elif 'fields' in options and 'PROJECT_NAME' in options['fields']:
+            project_name = options['fields']['PROJECT_NAME']
+            config = pm.getService('config')
+            authority = config.get('chrm.authority')
+            urns = to_project_urn(authority, project_name)
+        elif 'project_urn' in arguments:
+            urns = arguments['project_urn']
+        elif 'fields' in options and \
+                'SLICE_PROJECT_URN' in options['fields']:
+            urns = options['fields']['SLICE_PROJECT_URN']
+        elif 'project_id' in arguments:
+            project_id = arguments['project_id']
+            urns = convert_project_uid_to_urn(project_id, session)
         elif 'context_type' in arguments and 'context_id' in arguments and \
-                arguments['context_type'] == PROJECT_CONTEXT:
-            project_uid = arguments['context_id']
-            urns = convert_project_uid_to_urn(project_uid, session)
+            arguments['context_type'] == PROJECT_CONTEXT:
+            if arguments['context_id'] != '':
+                project_uid = arguments['context_id']
+                urns = convert_project_uid_to_urn(project_uid, session)
         elif 'attributes' in arguments and \
                 'PROJECT' in arguments['attributes']:
             project_uid = attributes['SLICE']
@@ -345,6 +350,7 @@ class SubjectInvocationCheck(InvocationCheck):
     def _compute_member_subjects(self, options, arguments, session):
         urns = None
         if 'match' in options:
+            match_option = options['match']
             # Pulling member out of match
             if "MEMBER_URN" in match_option:
                 urns = match_option['MEMBER_URN']
@@ -357,7 +363,7 @@ class SubjectInvocationCheck(InvocationCheck):
                 member_uids = match_option['_GENI_KEY_MEMBER_UID']
                 if not isinstance(member_uids, list): 
                     member_uids =[member_uids]
-                urns = convert_pmember_uid_to_urn(member_uids, session)
+                urns = convert_member_uid_to_urn(member_uids, session)
             elif 'MEMBER_EMAIL' in match_option:
                 member_emails = match_option['MEMBER_EMAIL']
                 member_uids = \
@@ -368,7 +374,6 @@ class SubjectInvocationCheck(InvocationCheck):
                 member_eppns = match_option['_GENI_MEMBER_EPPN']
                 member_uids = convert_member_eppn_to_uid(member_eppns, session)
                 urns = convert_member_uid_to_urn(member_uids, session)
-                extracted['MEMBER_URN'] = member_urns
             elif 'KEY_MEMBER' in match_option:
                 urns = match_option['KEY_MEMBER']
             elif '_GENI_KEY_MEMBER_UID' in match_option:
@@ -383,9 +388,6 @@ class SubjectInvocationCheck(InvocationCheck):
                 urns = convert_member_uid_to_urn(member_id, session)
             elif 'SLIVER_INFO_CREATOR_URN' in match_option:
                 urns = match_option['SLIVER_INFO_CREATOR_URN']
-        elif 'fields' in options:
-            fields_option = options['field']
-
         elif 'member_urn' in arguments:
             urns = arguments['member_urn']
         elif 'member_id' in arguments:
@@ -434,7 +436,7 @@ class SubjectInvocationCheck(InvocationCheck):
                     rows = get_slice_role_for_member(caller_urn, \
                                                          subject, session)
                 elif subject_type == "PROJECT_URN":
-                    rows = get_project__role_for_member(caller_urn, \
+                    rows = get_project_role_for_member(caller_urn, \
                                                             subject, session)
                 else:
                     rows = [] # Can't compute role for other than slice/project
@@ -485,6 +487,23 @@ class SubjectInvocationCheck(InvocationCheck):
                                                                    caller_urn,\
                                                                    session):
                     value = "PENDING_REQUEST_TO_MEMBER"
+            elif binding == "$REQUEST_ROLE":
+                if subject_type == "REQUEST_ID":
+                    project_urn = \
+                        get_project_request_project_urn(subject, session)
+                    if project_urn is not None:
+                        rows = get_project_role_for_member(caller_urn, \
+                                                               project_urn, \
+                                                               session)
+                        if len(rows) > 0:
+                            role = rows[0].role
+                            value = attribute_type_names[role]
+            elif binding == "$REQUESTOR":
+                if subject_type == "REQUEST_ID":
+                    requestor_urn = \
+                        get_project_request_requestor_urn(subject, session)
+                    if caller_urn == requestor_urn:
+                        value = "REQUESTOR"
 
             if value:
                 self._bindings[binding]=value
@@ -555,7 +574,7 @@ class SubjectInvocationCheck(InvocationCheck):
         #      ME.MAY_$METHOD<-CALLER
         #   or ME.MAY_$METHOD_$SUBJECT<-CALLER
         # Give exception on any failure, success if all pass
-        if subjects:
+        if subjects and len(subjects) > 0:
             subject_type = subjects.keys()[0]
             subjects_of_type = subjects[subject_type]
             for subject in subjects_of_type:
