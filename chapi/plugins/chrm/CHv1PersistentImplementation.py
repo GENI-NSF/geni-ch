@@ -66,10 +66,13 @@ class CHv1PersistentImplementation(CHv1Implementation):
         q = session.query(self.db.SERVICES_TABLE)
         if service_type is not None:
             q = q.filter(self.db.SERVICES_TABLE.c.service_type == service_type)
-        q = add_filters(q,  match_criteria, self.db.SERVICES_TABLE, CH.field_mapping)
+        q = add_filters(q,  match_criteria, self.db.SERVICES_TABLE, 
+                        CH.field_mapping, session)
         rows = q.all()
 
-        authorities = [construct_result_row(row, selected_columns, CH.field_mapping) for row in rows]
+        authorities = [construct_result_row(row, selected_columns, \
+                                                CH.field_mapping, session) \
+                           for row in rows]
 
         result = self._successReturn(authorities)
 

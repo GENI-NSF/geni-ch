@@ -246,6 +246,54 @@ def convert_project_uid_to_urn(project_uid, session):
     else:
         return validate_uid_list(project_uids, cache, 'project')
 
+# Take a project urn or list of urns, make sure they're all in the cache
+# and return a uid or list of uid
+def convert_project_urn_to_uid(project_urn, session):
+    db = pm.getService('chdbengine')
+    config = pm.getService('config')
+    authority = config.get("chrm.authority")
+
+    project_urns = project_urn
+    if not isinstance(project_urn, list): project_urns = [project_urn]
+
+    if len(project_urns) == 0:
+        return []
+
+
+    cache = cache_get('project_urn_to_uid')
+    uncached_urns = [id for id in project_urns if id not in cache]
+
+    if len(uncached_urns) > 0:
+        uncached_names = [from_project_urn(urn) for urn in uncached_urns]
+        q = session.query(db.PROJECT_TABLE.c.project_name, \
+                              db.PROJECT_TABLE.c.project_id)
+        q = q.filter(db.PROJECT_TABLE.c.project_name.in_(uncached_names))
+        rows = q.all()
+        for row in rows:
+            project_id = row.project_id
+            project_name = row.project_name
+            project_urn = to_project_urn(authority, project_name)
+            cache[project_urn] = project_id
+
+    if not isinstance(project_urn, list):
+        if project_urn in cache:
+            return cache[project_urn]
+        else:
+            raise CHAPIv1ArgumentError("Unknown project urn: %s " % \
+                                           project_urn)
+    else:
+        return validate_uid_list(project_urns, cache, 'project')
+
+# Convert a project URN to project name
+def convert_project_urn_to_name(urn, session):
+    return from_project_urn(urn)
+
+# Convert a project name to project urn
+def convert_project_name_to_urn(name, session):
+    config = pm.getService('config')
+    authority = config.get("chrm.authority")
+    return to_project_urn(authority, name)
+
 # Take a uid or list of uids, make sure they're all in the cache
 # and return a urn or list of urns
 def convert_member_uid_to_urn(member_uid, session):
@@ -880,7 +928,8 @@ def key_subject_extractor(options, arguments, session):
         q = q.filter(db.SSH_KEY_TABLE.c.member_id ==
                      db.MEMBER_ATTRIBUTE_TABLE.c.member_id)
         q = q.filter(db.MEMBER_ATTRIBUTE_TABLE.c.name=='urn')
-        q = add_filters(q, match_option, db.SSH_KEY_TABLE, MA.key_field_mapping)
+        q = add_filters(q, match_option, db.SSH_KEY_TABLE, 
+                        MA.key_field_mapping, session)
         rows = q.all()
         extracted['MEMBER_URN'] = [row.value for row in rows]
 

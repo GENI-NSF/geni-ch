@@ -223,14 +223,15 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
 
         q = q.filter(self.db.SLICE_TABLE.c.project_id == self.db.PROJECT_TABLE.c.project_id)
 
-        q = add_filters(q, match_criteria, self.db.SLICE_TABLE, SA.slice_field_mapping)
+        q = add_filters(q, match_criteria, self.db.SLICE_TABLE, SA.slice_field_mapping, session)
+
         rows = q.all()
 
         # in python 2.7, could do dictionary comprehension !!!!!!!!
         slices = {}
         for row in rows:
             slices[row.slice_urn] = construct_result_row(row, \
-                selected_columns, SA.slice_field_mapping)
+                selected_columns, SA.slice_field_mapping, session)
 
         result = self._successReturn(slices)
 
@@ -826,12 +827,13 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
 
         q = session.query(self.db.PROJECT_TABLE)
         q = add_filters(q, match_criteria, self.db.PROJECT_TABLE, \
-                        SA.project_field_mapping)
+                        SA.project_field_mapping, session)
         rows = q.all()
         projects = {}
         for row in rows:
             projects[row_to_project_urn(row)] = \
-                construct_result_row(row, columns, SA.project_field_mapping)
+                construct_result_row(row, columns, \
+                                         SA.project_field_mapping, session)
         result = self._successReturn(projects)
 
         return result
@@ -1535,7 +1537,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
             unpack_query_options(options, SA.sliver_info_field_mapping)
         q = session.query(self.db.SLIVER_INFO_TABLE)
         q = add_filters(q, match_criteria, self.db.SLIVER_INFO_TABLE, \
-                        SA.sliver_info_field_mapping)
+                        SA.sliver_info_field_mapping, session)
 
         # Hide any expired slivers (expired at least X minutes ago)
         gracemin = 0 # FIXME: externalize this
@@ -1547,7 +1549,8 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         slivers = {}
         for row in rows:
             slivers[row.sliver_urn] = \
-                construct_result_row(row, columns, SA.sliver_info_field_mapping)
+                construct_result_row(row, columns, \
+                                         SA.sliver_info_field_mapping, session)
         return self._successReturn(slivers)
 
 
@@ -1637,7 +1640,8 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
             q = q.filter(self.db.PROJECT_REQUEST_TABLE.c.status == status)
         rows = q.all()
         result = [construct_result_row(row, SA.project_request_columns, 
-                                       SA.project_request_field_mapping) \
+                                       SA.project_request_field_mapping, 
+                                       session) \
                       for row in rows]
         result = self._successReturn(result)
 
@@ -1657,8 +1661,9 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
 
         rows = q.all()
 #        print "ROWS = " + str(rows)
-        result = [construct_result_row(row, SA.project_request_columns, \
-                                           SA.project_request_field_mapping) \
+        result = [construct_result_row(row, SA.project_request_columns, 
+                                       SA.project_request_field_mapping,
+                                       session) \
                       for row in rows]
 
         return self._successReturn(result)
@@ -1679,8 +1684,9 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         q = q.filter(self.db.PROJECT_REQUEST_TABLE.c.status == PENDING_STATUS)
         rows = q.all()
 #        print "ROWS = " + str(rows)
-        result = [construct_result_row(row, SA.project_request_columns, \
-                                           SA.project_request_field_mapping) \
+        result = [construct_result_row(row, SA.project_request_columns, 
+                                       SA.project_request_field_mapping,
+                                       session) \
                       for row in rows]
         result = self._successReturn(result)
 
@@ -1714,7 +1720,8 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         result = \
             self._successReturn(construct_result_row(rows[0], 
                                                      SA.project_request_columns, 
-                                                     SA.project_request_field_mapping))
+                                                     SA.project_request_field_mapping,
+                                                     session))
 
         return result
 

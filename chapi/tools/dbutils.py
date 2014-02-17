@@ -21,6 +21,7 @@
 # IN THE WORK.
 #----------------------------------------------------------------------
 
+from chapi_log import *
 from chapi.Exceptions import *
 import types
 from datetime import *
@@ -85,12 +86,22 @@ def convert_to_external(internal_field, mapping):
 
 # Add filter clauses to a query based on given match criteria
 # Return updated query
-def add_filters(query, match_criteria, table, mapping):
+def add_filters(query, match_criteria, table, mapping, session):
     if match_criteria:
         for external_match_field in match_criteria.keys():
             internal_match_field = convert_to_internal(external_match_field, mapping)
             match_value = match_criteria[external_match_field]
-            column = table.c[internal_match_field]
+            if isinstance(internal_match_field, types.DictionaryType):
+                base_field = internal_match_field['base_field']
+                column = table.c[base_field]
+                to_internal = internal_match_field['to_internal']
+                if isinstance(match_value, types.ListType):
+                    match_value = \
+                        [to_internal(mv, session) for mv in match_value]
+                else:
+                    match_value = to_internal(match_value, session)
+            else:
+                column = table.c[internal_match_field]
             if isinstance(match_value, types.ListType):
                 query = query.filter(column.in_(match_value))
             else:
@@ -99,12 +110,17 @@ def add_filters(query, match_criteria, table, mapping):
 
 # Construct a result row {external_field : value, external_field : value} 
 # from row which is a set of values indexed by internal fields
-def construct_result_row(row, columns, mapping):
+def construct_result_row(row, columns, mapping, session):
     result_row = {}
     for column in columns:
         internal_name = convert_to_internal(column, mapping)
 #        print "IN = " + str(internal_name) + " " + str(type(internal_name))
-        if isinstance(internal_name, types.FunctionType):
+        if isinstance(internal_name, types.DictionaryType):
+            base_field = internal_name['base_field']
+            internal_value = eval("row.%s" % base_field)
+            to_external = internal_name['to_external']
+            column_value = to_external(internal_value, session)
+        elif isinstance(internal_name, types.FunctionType):
             column_value = internal_name(row)
         else:
             column_value = eval("row.%s" % internal_name)

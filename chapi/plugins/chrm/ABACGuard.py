@@ -256,7 +256,7 @@ class SubjectInvocationCheck(InvocationCheck):
         if urns:
             return {label : urns}
         else:
-            return Nonen
+            return None
 
     def _compute_slice_subjects(self, options, arguments, session):
         urns = None
@@ -428,7 +428,7 @@ class SubjectInvocationCheck(InvocationCheck):
 
     def _generate_bindings(self, caller_urn, subject_type, subject, \
                                options, arguments, session):
-        chapi_info("GB","BINDINGS = %s SUBJECT = %s" % (self._bindings, subject))
+#        chapi_info("GB","BINDINGS = %s SUBJECT = %s" % (self._bindings, subject))
         for binding in self._bindings:
             value = None
             if binding == "$ROLE":
@@ -517,8 +517,9 @@ class SubjectInvocationCheck(InvocationCheck):
             if stmt.find('$')<0:
                 abac_manager.register_assertion(stmt)
             else:
-                chapi_info("ABACGuard", 
-                           "Cannot assert statement due to unbound variables: %s => %s" % (orig_stmt, stmt))
+#                chapi_info("ABACGuard", 
+#                           "Cannot assert statement due to unbound variables: %s => %s" % (orig_stmt, stmt))
+                pass
         
 
     # Check that there are subjects in the arguments if required

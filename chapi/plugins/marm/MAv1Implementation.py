@@ -848,7 +848,8 @@ class MAv1Implementation(MAv1DelegateBase):
                     q = q.filter(self.db.MEMBER_ATTRIBUTE_TABLE.c.value.in_(member_urns))
             del match_criteria['KEY_MEMBER']
 
-        q = add_filters(q, match_criteria, self.db.SSH_KEY_TABLE, MA.key_field_mapping)
+        q = add_filters(q, match_criteria, self.db.SSH_KEY_TABLE, 
+                        MA.key_field_mapping, session)
         rows = q.all()
 
         keys = {}
@@ -863,7 +864,7 @@ class MAv1Implementation(MAv1DelegateBase):
                 continue
 
             keys[member_urn].append(construct_result_row(row, \
-                         selected_columns, MA.key_field_mapping))
+                         selected_columns, MA.key_field_mapping, session))
             # Per federation API, the KEY ID must be exported as a string
             for key_data in keys[member_urn]:
                 if 'KEY_ID' in key_data:

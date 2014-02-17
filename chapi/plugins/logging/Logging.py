@@ -187,7 +187,8 @@ class Loggingv1Delegate(DelegateBase):
         q = q.filter(self.db.LOGGING_ENTRY_TABLE.c.event_time >= min_event_time)
         rows = q.all()
         entries = [construct_result_row(row, self.columns, 
-                                        self.field_mapping) for row in rows]
+                                        self.field_mapping, session) \
+                       for row in rows]
         return self._successReturn(entries)
 
     def get_log_entries_for_context(self, client_cert, context_type, 
@@ -201,8 +202,9 @@ class Loggingv1Delegate(DelegateBase):
         q = q.filter(self.db.LOGGING_ENTRY_ATTRIBUTE_TABLE.c.attribute_name == context_type_names[context_type])
         q = q.filter(self.db.LOGGING_ENTRY_ATTRIBUTE_TABLE.c.attribute_value == context_id)
         rows = q.all()
-        entries = [construct_result_row(row, self.columns, 
-                                        self.field_mapping) for row in rows]
+        entries = [construct_result_row(row, self.columns, \
+                                            self.field_mapping, session) \
+                       for row in rows]
         return self._successReturn(entries)
 
     def get_log_entries_by_attributes(self, client_cert, attribute_sets, 
@@ -223,7 +225,8 @@ class Loggingv1Delegate(DelegateBase):
         q = q.distinct()
         rows = q.all()
         entries = [construct_result_row(row, self.columns, 
-                                        self.field_mapping) for row in rows]
+                                        self.field_mapping, session) \
+                       for row in rows]
         return self._successReturn(entries)
 
 
@@ -233,8 +236,10 @@ class Loggingv1Delegate(DelegateBase):
         q = session.query(self.db.LOGGING_ENTRY_ATTRIBUTE_TABLE)
         q = q.filter(self.db.LOGGING_ENTRY_ATTRIBUTE_TABLE.c.event_id == event_id)
         rows = q.all()
-        entries = [construct_result_row(row, self.attribute_columns, 
-                                        self.attribute_field_mapping) for row in rows]
+        entries = [construct_result_row(row, self.attribute_columns, \
+                                            self.attribute_field_mapping, \
+                                            session) \
+                       for row in rows]
         return self._successReturn(entries)
 
 
