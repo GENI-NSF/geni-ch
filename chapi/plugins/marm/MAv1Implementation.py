@@ -433,7 +433,8 @@ class MAv1Implementation(MAv1DelegateBase):
             if urn in private_result['value']:
                 for field, value in private_result['value'][urn].items():
                     aggregate_result[urn][field] = value
-        return aggregate_result
+        result = self._successReturn(aggregate_result)
+        return result
 
     def segregate_member_fields(self, options):
         public_fields = []
