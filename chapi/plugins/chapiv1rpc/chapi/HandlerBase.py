@@ -61,7 +61,7 @@ class HandlerBase(xmlrpc.Dispatcher):
     # Standard format for successful returns from API calls
     def _successReturn(self, result):
         """Assembles a GENI compliant return result for successful methods."""
-        return { 'code' : 0, 'output' : None, 'value' : result  }
+        return { 'code' : 0, 'output' : '', 'value' : result  }
 
     @serviceinterface
     def requestCertificate(self):
