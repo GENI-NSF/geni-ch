@@ -7,6 +7,7 @@
 == 1.6 ==
  * Quiet down log messages during maintenance outage (#235)
  * Wrap MA.lookup result in standard code/value/output triple (#236)
+ * Use "2" as API v2 version in get_version instead of "2.0" (#241)
 
 == 1.5.1 ==
  * Fix a guard that prevents new users from registering (#233)
