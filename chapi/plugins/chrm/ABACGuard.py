@@ -227,19 +227,19 @@ class SubjectInvocationCheck(InvocationCheck):
         self.cert_file = self.config.get("chapiv1rpc.ch_cert")
         self._bindings = {}
 
-        # Gather all required bindings
-        for assertion in self._assertions:
-            self._gather_bindings(assertion)
-        for policy in self._policies:
-            self._gather_bindings(policy)
+#         # Gather all required bindings
+#         for assertion in self._assertions:
+#             self._gather_bindings(assertion)
+#         for policy in self._policies:
+#             self._gather_bindings(policy)
 
-    RECOGNIZED_BINDINGS = ["$ROLE", "$SLICE", "$PROJECT", \
-                               "$MEMBER", "$SELF"]
-    def _gather_bindings(self, template):
-        for recognized_binding in SubjectInvocationCheck.RECOGNIZED_BINDINGS:
-            if template.find(recognized_binding) > 0:
-                if recognized_binding not in self._bindings:
-                    self._bindings[recognized_binding] = None
+#     RECOGNIZED_BINDINGS = ["$ROLE", "$SLICE", "$PROJECT", \
+#                                "$MEMBER", "$SELF"]
+#     def _gather_bindings(self, template):
+#         for recognized_binding in SubjectInvocationCheck.RECOGNIZED_BINDINGS:
+#             if template.find(recognized_binding) > 0:
+#                 if recognized_binding not in self._bindings:
+#                     self._bindings[recognized_binding] = None
 
     def _compute_subjects(self, options, arguments, session):
         urns, label = self._compute_slice_subjects(options, arguments, session)
