@@ -61,7 +61,7 @@ class MAv1Handler(HandlerBase):
             result = self._errorReturn(CHAPIv1ArgumentError("Invalid type: %s" % type))
         return result
             
-    def update(self, urn, type, credentials, options):
+    def update(self, type, urn, credentials, options):
         if type == "MEMBER":
             result = \
                 self.update_member_info(urn, credentials, options)
@@ -72,7 +72,7 @@ class MAv1Handler(HandlerBase):
             result = self._errorReturn(CHAPIv1ArgumentError("Invalid type: %s" % type))
         return result
             
-    def delete(self, urn, type, credentials, options):
+    def delete(self, type, urn, credentials, options):
         if type == "MEMBER":
             result = \
                 self._errorReturn(CHAPIv1ArgumentError("method delete not supported for MEMBER"))
