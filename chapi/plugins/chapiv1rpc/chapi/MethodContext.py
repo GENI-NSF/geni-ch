@@ -117,10 +117,12 @@ class MethodContext:
         if not self._handler._guard:
             # If there's no guard, skip adjusting identity
             return
+        trusted_roots = self._handler.getTrustedRoots()
         new_client_cert, new_options = \
             self._handler._guard.adjust_client_identity(self._client_cert,
                                                         self._credentials,
-                                                        self._options)
+                                                        self._options,
+                                                        trusted_roots)
         if (self._client_cert != new_client_cert):
             self._client_cert = new_client_cert
             self._options = new_options
