@@ -123,6 +123,7 @@ class MethodContext:
                                                         self._credentials,
                                                         self._options,
                                                         trusted_roots)
+
         if (self._client_cert != new_client_cert):
             self._client_cert = new_client_cert
             self._options = new_options
