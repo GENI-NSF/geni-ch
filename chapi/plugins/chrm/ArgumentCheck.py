@@ -97,7 +97,7 @@ class FieldsArgumentCheck(ArgumentCheck):
                 raise CHAPIv1ArgumentError("Unrecognized field : " + field)
 
     # Format for parsing/formatting datetime with timezone
-    FORMAT_DATETIME_TZ = "%Y-%m-%d %H:%M:%S.%f"
+    FORMAT_DATETIME_TZ = "%Y-%m-%dT%H:%M:%SZ"
 
     # Modify the 'fields' option to normalize inputs (e.g. turn all dates into UTC TZ)
     def normalizeFields(self, options):
@@ -110,12 +110,15 @@ class FieldsArgumentCheck(ArgumentCheck):
                 # If any date doesn't have a TZ, assume it is UTC
                 # If it does have a TZ, convert to UTC and strip TZ info
                 # Then store converted value into the proper 'fields' slot
-                parsed_datetime = dateutil.parser.parse(field_value)
-                if parsed_datetime.tzinfo:
-                    parsed_datetime = parsed_datetime.astimezone(tzutc())
-                    utc_field_value = parsed_datetime.strftime(FieldsArgumentCheck.FORMAT_DATETIME_TZ)
-                    options['fields'][field_name] = utc_field_value
-                    chapi_debug('ArgCheck', 'DATETIME convert: %s %s' % (field_value, utc_field_value))
+                try:
+                    parsed_datetime = dateutil.parser.parse(field_value)
+                    if parsed_datetime.tzinfo:
+                        parsed_datetime = parsed_datetime.astimezone(tzutc())
+                        utc_field_value = parsed_datetime.strftime(FieldsArgumentCheck.FORMAT_DATETIME_TZ)
+                        options['fields'][field_name] = utc_field_value
+                        chapi_debug('ArgCheck', 'DATETIME convert: %s %s' % (field_value, utc_field_value))
+                except Exception:
+                    pass # Can't normalize, will fail when we try to check valid format
                            
     # Take a list of {field : value} dictionaries
     # Make sure all field name/value pairs are recognized and of proper type
@@ -194,8 +197,13 @@ class FieldsArgumentCheck(ArgumentCheck):
             except Exception as e:
                 properly_formed = False
         elif field_type == "DATETIME":
-            if value and not dateutil.parser.parse(value):
-                properly_formed = False
+            properly_formed = False
+            if value:
+                try:
+                    parsed_value = dateutil.parser.parse(value)
+                    properly_formed = True
+                except Exception, e:
+                    pass
         elif field_type == "EMAIL":
             properly_formed = value.find('@')>= 0 and value.find('.') >= 0
         elif field_type == "KEY":
