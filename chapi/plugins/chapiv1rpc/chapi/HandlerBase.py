@@ -23,7 +23,9 @@
 
 import amsoil.core.log
 import amsoil.core.pluginmanager as pm
+from sfa.trust.certificate import Certificate
 from amsoil.core import serviceinterface
+import os
 import traceback
 from Exceptions import *
 
@@ -38,6 +40,21 @@ class HandlerBase(xmlrpc.Dispatcher):
         self._logger = logger
         self._delegate = None
         self._guard = None
+        self._trusted_roots = None
+        self._trusted_roots = self.getTrustedRoots()
+
+    # Get list of trusted roots for handler
+    # If not set, initialize from chapiv1rpc.ch_cert_root directory
+    def getTrustedRoots(self):
+        if self._trusted_roots == None:
+            config = pm.getService('config')
+            trust_roots = config.get('chapiv1rpc.ch_cert_root')
+            pem_files = os.listdir(trust_roots)
+            pems = [open(os.path.join(trust_roots, pem_file)).read() \
+                        for pem_file in pem_files \
+                        if pem_file != 'CATedCACerts.pem']
+            self._trusted_roots = [Certificate(string=pem) for pem in pems]
+        return self._trusted_roots
 
     # Interfaces for setting/getting the delegate (for implementing API calls)
     @serviceinterface
@@ -58,15 +75,10 @@ class HandlerBase(xmlrpc.Dispatcher):
     def getGuard(self):
         return self._guard
 
-    # Standard format for error returns from API calls
-    def _errorReturn(self, e):
-        """Assembles a GENI compliant return result for faulty methods."""
-        return { 'code' : e.code , 'output' : str(e), 'value' : None }
-        
     # Standard format for successful returns from API calls
     def _successReturn(self, result):
         """Assembles a GENI compliant return result for successful methods."""
-        return { 'code' : 0, 'output' : None, 'value' : result  }
+        return { 'code' : 0, 'output' : '', 'value' : result  }
 
     @serviceinterface
     def requestCertificate(self):
@@ -75,13 +87,19 @@ class HandlerBase(xmlrpc.Dispatcher):
             raise CHAPIv1AuthorizationError('Client certificate required but not provided')
         return cert
 
-    def _errorReturn(self, e):
+    def _errorReturn(self, e, tb=None):
         """Assembles a GENI compliant return result for faulty methods."""
         if not isinstance(e, CHAPIv1BaseError): # convert common errors into CHAPIv1GeneralError
             e = CHAPIv1ServerError(str(e))
         # do some logging
         self._logger.error(e)
-        self._logger.error(traceback.format_exc())
+        if type(e) in (CHAPIv1ServerError,
+                       CHAPIv1NotImplementedError,
+                       CHAPIv1DatabaseError):
+            if tb:
+                self._logger.error("\n".join(traceback.format_tb(tb)))
+            else:
+                self._logger.error(traceback.format_exc())
         return {'code' :  e.code , 'value' : None, 'output' : str(e) }
         
 

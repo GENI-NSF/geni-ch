@@ -85,5 +85,5 @@ class DelegateBase(object):
         
     def _successReturn(self, result):
         """Assembles a GENI compliant return result for successful methods."""
-        return { 'code' :  0 , 'value' : result, 'output' : None }
+        return { 'code' :  0 , 'value' : result, 'output' : '' }
 

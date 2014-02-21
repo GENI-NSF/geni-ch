@@ -64,7 +64,7 @@ class CHv1PersistentImplementation(CHv1Implementation):
         selected_columns, match_criteria = unpack_query_options(options, CH.field_mapping)
 
         q = session.query(self.db.SERVICES_TABLE)
-        if service_type:
+        if service_type is not None:
             q = q.filter(self.db.SERVICES_TABLE.c.service_type == service_type)
         q = add_filters(q,  match_criteria, self.db.SERVICES_TABLE, CH.field_mapping)
         rows = q.all()

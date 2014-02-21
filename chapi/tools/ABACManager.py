@@ -114,8 +114,8 @@ def execute_abac_query(query, id_certs, raw_assertions = []):
     proof = "\n".join(result_parts[1:])
     
     # Delete the tempfiles
-#    for tfile in tempfiles:
-#        os.unlink(tfile)
+    for tfile in tempfiles:
+        os.unlink(tfile)
 
     return ok, proof
 

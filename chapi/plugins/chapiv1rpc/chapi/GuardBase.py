@@ -46,7 +46,8 @@ class GuardBase(object):
     #   revised_options - Any changes to optiosn to reflect the change in 
     #         identity (e.g. placing the original client_cert in as an 
     #         option for later accountability)
-    def adjust_client_identity(self, client_cert, credentials, options):
+    def adjust_client_identity(self, client_cert, credentials, options,
+                               trusted_roots):
         # Default implementation returns the given client_cert and options
         return client_cert, options
         
