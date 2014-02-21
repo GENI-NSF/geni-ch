@@ -77,6 +77,8 @@ class CHDatabaseEngine:
                                          autoload=True)
         self.SERVICES_TABLE = \
             Table('service_registry', self.metadata, autoload=True)
+        self.SERVICE_ATTRIBUTE_TABLE = \
+            Table('service_registry_attribute', self.metadata, autoload=True)
         self.ROLE_TABLE = Table('cs_attribute', self.metadata, autoload=True)
         self.LOGGING_ENTRY_TABLE = Table('logging_entry', \
                                              self.metadata, autoload=True)

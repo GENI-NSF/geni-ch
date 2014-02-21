@@ -71,6 +71,8 @@ class CHv1PersistentImplementation(CHv1Implementation):
 
         authorities = [construct_result_row(row, selected_columns, CH.field_mapping) for row in rows]
 
+        self.add_service_attributes(rows, authorities, session)
+
         result = self._successReturn(authorities)
 
         return result
@@ -82,6 +84,40 @@ class CHv1PersistentImplementation(CHv1Implementation):
             service_type = options['match']['SERVICE_TYPE']
         services = self.lookup_authorities(client_cert, service_type, options, session)
         return services
+
+    # Add attributes to given services based on associated rows
+    def add_service_attributes(self, rows, services, session):
+
+
+        # Grab the ID's of the services from rows
+        # Set up table looking up services by ID
+        service_ids = []
+        services_by_id = {}
+        for i in range(len(rows)):
+            row = rows[i]
+            service = services[i]
+            service_id = row.id
+            service_ids.append(service_id)
+            services_by_id[service_id] = service
+
+        # Query for all attributes of services in given ID list
+        q = session.query(self.db.SERVICE_ATTRIBUTE_TABLE)
+        q = \
+            q.filter(self.db.SERVICE_ATTRIBUTE_TABLE.c.service_id.in_(service_ids))
+        attrib_rows = q.all()
+
+        # Add each attribute to proper service
+        for attrib_row in attrib_rows:
+            service_id = attrib_row.service_id
+            if service_id in services_by_id:
+                service = services_by_id[service_id]
+                if "_GENI_SERVICE_ATTRIBUTES" not in service:
+                    service['_GENI_SERVICE_ATTRIBUTES'] = {}
+                service['_GENI_SERVICE_ATTRIBUTES'][attrib_row.name]=attrib_row.value
+
+
+
+        
     
 
 
