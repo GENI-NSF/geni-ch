@@ -32,6 +32,7 @@
 
   "get_log_entries_for_context" : {
     "__DOC__" : "Must be member of project of slice",
+    "subject_keys" : ["PROJECT_URN", "SLICE_URN"],
     "assertions": [
         "ME.IS_$ROLE_$PROJECT<-CALLER",
         "ME.IS_$ROLE_$SLICE<-CALLER",

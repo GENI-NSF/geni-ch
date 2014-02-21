@@ -418,9 +418,16 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
 
     # shared by create_slice() and create_project()
     def finish_create(self, session, object, field_mapping, extra = {}):
+        chapi_info("FC", "%s %s %s" % (object, field_mapping, extra))
         ret = extra.copy()
         for k, v in field_mapping.iteritems():
-            if not isinstance(v, types.FunctionType) and getattr(object, v):
+            if isinstance(v, types.DictionaryType):
+                base_field = v['base_field']
+                to_external = v['to_external']
+                internal_value = getattr(object, base_field)
+                external_value = to_external(internal_value, session)
+                ret[k] = external_value
+            elif isinstance(v, types.StringType):
                 ret[k] = getattr(object, v)
         session.add(object)
         return self._successReturn(ret)

@@ -94,12 +94,6 @@ class SubjectInvocationCheck(InvocationCheck):
         self.cert_file = self.config.get("chapiv1rpc.ch_cert")
         self._bindings = {}
 
-        # Gather all required bindings
-        for assertion in self._assertions:
-            self._gather_bindings(assertion)
-        for policy in self._policies:
-            self._gather_bindings(policy)
-
     # All recognized binding types (variables that can be
     # substituted in assertions and policies)
     RECOGNIZED_BINDINGS = ["$ROLE", "$SLICE", "$PROJECT", \
@@ -109,6 +103,7 @@ class SubjectInvocationCheck(InvocationCheck):
                                "$SEARCHING_BY_EMAIL", \
                                "$SEARCHING_FOR_PROJECT_LEAD_BY_UID", \
                                "$PENDING_REQUEST_TO_MEMBER", \
+                               "$REQUEST_ID", \
                                "$REQUEST_ROLE", \
                                "$REQUESTOR" ]
 
@@ -119,21 +114,23 @@ class SubjectInvocationCheck(InvocationCheck):
                     self._bindings[recognized_binding] = None
 
     def _compute_subjects(self, options, arguments, session):
+        subjects = {}
         urns, label = self._compute_slice_subjects(options, arguments, session)
-        if not urns:
-            urns, label = \
-                self._compute_project_subjects(options, arguments, session)
-        if not urns:
-            urns, label = \
-                self._compute_member_subjects(options, arguments, session)
-        if not urns:
-            urns, label = \
-                self._compute_request_subjects(options, arguments, session)
-        if urns and not isinstance(urns, list): urns = [urns]
-        if urns:
-            return {label : urns}
-        else:
-            return None
+        if urns is not None:
+            subjects[label] = urns
+        urns, label = self._compute_project_subjects(options, arguments, session)
+        if urns is not None:
+            subjects[label] = urns
+        urns, label = self._compute_member_subjects(options, arguments, session)
+        if urns is not None:
+            subjects[label] = urns
+        urns, label = self._compute_request_subjects(options, arguments, session)
+        if urns is not None:
+            subjects[label] = urns
+        for label, urns in subjects.items():
+            if not isinstance(urns, list): subjects[label] = [urns]
+#        chapi_info("_compute_subjects", "SUBJECTS = %s" % subjects)
+        return subjects
 
     def _compute_slice_subjects(self, options, arguments, session):
         urns = None
@@ -175,10 +172,13 @@ class SubjectInvocationCheck(InvocationCheck):
             if arguments['context_id'] != '':
                 slice_uid = arguments['context_id']
                 urns = convert_slice_uid_to_urn(slice_uid, session)
-        elif 'attributes' in arguments and \
-                'SLICE' in arguments['attributes']:
-            slice_uid = attributes['SLICE']
-            urns = convert_slice_uid_to_urn(slice_uid, session)
+        elif 'attributes' in arguments:
+            attributes = arguments['attributes']
+            if 'SLICE' in attributes:
+                slice_uid = attributes['SLICE']
+                urns = convert_slice_uid_to_urn(slice_uid, session)
+
+#        chapi_info("C_S_S", "%s" % urns)
 
         return urns, "SLICE_URN"
 
@@ -200,11 +200,6 @@ class SubjectInvocationCheck(InvocationCheck):
                 if not isinstance(project_uids, list): 
                     project_uids = [project_uids]
                 urns = convert_project_uid_to_urn(project_uids, session)
-        elif 'fields' in options and 'PROJECT_NAME' in options['fields']:
-            project_name = options['fields']['PROJECT_NAME']
-            config = pm.getService('config')
-            authority = config.get('chrm.authority')
-            urns = to_project_urn(authority, project_name)
         elif 'project_urn' in arguments:
             urns = arguments['project_urn']
         elif 'fields' in options and \
@@ -218,10 +213,13 @@ class SubjectInvocationCheck(InvocationCheck):
             if arguments['context_id'] != '':
                 project_uid = arguments['context_id']
                 urns = convert_project_uid_to_urn(project_uid, session)
-        elif 'attributes' in arguments and \
-                'PROJECT' in arguments['attributes']:
-            project_uid = attributes['SLICE']
-            urns = convert_project_uid_to_urn(project_uid, session)
+        elif 'attributes' in arguments:
+            attributes = arguments['attributes']
+            if 'PROJECT' in attributes:
+                project_uid = attributes['PROJECT']
+                urns = convert_project_uid_to_urn(project_uid, session)
+
+#        chapi_info("C_P_S", "%s" % urns)
 
         return urns, "PROJECT_URN"
 
@@ -299,14 +297,14 @@ class SubjectInvocationCheck(InvocationCheck):
                 member_uid = attributes['MEMBER']
                 urns = convert_member_uid_to_urn(member_uid, session)
 
-        chapi_info("C_M_S", "%s" % urns)
+#        chapi_info("C_M_S", "%s" % urns)
 
         return urns, "MEMBER_URN"
 
     def _compute_request_subjects(self, options, arguments, session):
         if 'request_id' in arguments:
             request_id = arguments['request_id']
-            return 'REQUEST_ID', request_id
+            return request_id, 'REQUEST_ID'
         return None, None
 
     # Generate groups of assertions into a single label
@@ -379,14 +377,20 @@ class SubjectInvocationCheck(InvocationCheck):
                                                                    caller_urn,\
                                                                    session):
                     value = "PENDING_REQUEST_TO_MEMBER"
+            if binding == "$REQUEST_ID":
+                if subject_type == "REQUEST_ID":
+                    value = subject
             if binding == "$REQUEST_ROLE":
+                chapi_info("ABAC", "Request_role... %s" % subject_type);
                 if subject_type == "REQUEST_ID":
                     project_urn = \
                         get_project_request_project_urn(subject, session)
+                    chapi_info("ABAC", "Request_role PROJECT_URN %s..." % project_urn);
                     if project_urn is not None:
                         rows = get_project_role_for_member(caller_urn, \
                                                                project_urn, \
                                                                session)
+                        chapi_info("ABAC", "Request_role rows %s..." % rows)
                         if len(rows) > 0:
                             role = rows[0].role
                             value = attribute_type_names[role]
@@ -401,6 +405,7 @@ class SubjectInvocationCheck(InvocationCheck):
                 self._bindings[binding]=value
 
 #        chapi_info("GB","BINDINGS = %s SUBJECT = %s" % (self._bindings, subject))
+
     def _assert_bound_statements(self, abac_manager, statements):
         for stmt in statements:
             orig_stmt = stmt
@@ -424,12 +429,7 @@ class SubjectInvocationCheck(InvocationCheck):
         subjects = self._compute_subjects(options, arguments, session)
 #        chapi_info("SIC",  "Subjects = %s" % subjects)
 
-        if subjects:
-            if len(subjects) > 1:
-                raise CHAPIv1ArgumentException("Can't have more " + \
-                                                   "than one subject type")
-            subject_type = subjects.keys()[0]
-            subjects_of_type = subjects[subject_type]
+        for subject_type, subjects_of_type in subjects.items():
             ensure_valid_urns(subject_type, subjects_of_type, session)
 
         return subjects
@@ -440,11 +440,19 @@ class SubjectInvocationCheck(InvocationCheck):
     #    Prove AUTHORITYMAY_$method<-CALLER
     def authorize_call(self, client_cert, method, credentials, options, \
                            arguments, subjects, session):
+
+        self._bindings = {}
+        # Gather all required bindings
+        for assertion in self._assertions:
+            self._gather_bindings(assertion)
+        for policy in self._policies:
+            self._gather_bindings(policy)
+
         abac_manager =  ABACManager(certs_by_name = {"CALLER" : client_cert}, 
                                     cert_files_by_name = {"ME" : self.cert_file}, 
                                     key_files_by_name = {"ME" : self.key_file},
                                     manage_context = False)
-        abac_manager._verbose = True
+        #abac_manager._verbose = True
 
         client_urn = get_urn_from_cert(client_cert)
 
@@ -469,38 +477,36 @@ class SubjectInvocationCheck(InvocationCheck):
         #   or ME.MAY_$METHOD_$SUBJECT<-CALLER
         # Give exception on any failure, success if all pass
         if subjects and len(subjects) > 0:
-            subject_type = subjects.keys()[0]
-            subjects_of_type = subjects[subject_type]
-            for subject in subjects_of_type:
+            for subject_type, subjects_of_type in subjects.items():
+                for subject in subjects_of_type:
+                    self._generate_assertion_groups(subject_type, subject, \
+                                                        abac_manager)
+                    self._generate_bindings(client_urn, subject_type, \
+                                                subject, options, arguments, \
+                                                session)
+                    self._assert_bound_statements(abac_manager, self._assertions)
+                    self._assert_bound_statements(abac_manager, self._policies)
 
-                self._generate_assertion_groups(subject_type, subject, \
-                                                    abac_manager)
-                self._generate_bindings(client_urn, subject_type, \
-                                            subject, options, arguments, \
-                                            session)
-                self._assert_bound_statements(abac_manager, self._assertions)
-                self._assert_bound_statements(abac_manager, self._policies)
-
-                queries = [
-                    "ME.MAY_%s_%s<-CALLER" % (method.upper(), \
-                                                  flatten_urn(subject)), 
-                    "ME.MAY_%s<-CALLER" % method.upper()
-                    ]
-                one_succeeded = False
-                for query in queries:
-                    ok, proof = abac_manager.query(query)
-                    if abac_manager._verbose:
-                        chapi_audit_and_log("ABAC", 
-                                            "Testing ABAC query %s OK = %s" % \
-                                                (query, ok), logging.DEBUG)
-                    if ok:
-                        one_succeeded = True
-                        break
-                if not one_succeeded:
-                    template = "Caller not authorized to call method %s " + \
-                        "with options %s arguments %s queries %s"
-                    raise CHAPIv1AuthorizationError(template % \
-                            (method, options, arguments, queries));
+                    queries = [
+                        "ME.MAY_%s_%s<-CALLER" % (method.upper(), \
+                                                      flatten_urn(subject)), 
+                        "ME.MAY_%s<-CALLER" % method.upper()
+                        ]
+                    one_succeeded = False
+                    for query in queries:
+                        ok, proof = abac_manager.query(query)
+                        if abac_manager._verbose:
+                            chapi_audit_and_log("ABAC", 
+                                                "Testing ABAC query %s OK = %s" % \
+                                                    (query, ok), logging.DEBUG)
+                        if ok:
+                            one_succeeded = True
+                            break
+                    if not one_succeeded:
+                        template = "Caller not authorized to call method %s " + \
+                            "with options %s arguments %s queries %s"
+                        raise CHAPIv1AuthorizationError(template % \
+                                                            (method, options, arguments, queries));
 
         else:
             self._assert_bound_statements(abac_manager, self._assertions)
@@ -595,9 +601,9 @@ class ABACGuardBase(GuardBase):
 # Method to convert
 # dictionary of method => arguments for creating SubjectInvocationChecks 
 #into a dictionary method => SubjectInvocationCheck
-def create_subject_invocation_checks(policies):
+def create_subject_invocation_checks(check_specs):
     checks = {}
-    for method, args in policies.items():
+    for method, args in check_specs.items():
         policies = args['policies']
         assertions = args['assertions']
         checks[method] = SubjectInvocationCheck(policies, assertions)

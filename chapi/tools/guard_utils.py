@@ -1099,7 +1099,7 @@ def sliver_info_extractor(options, arguments, session):
         
 # Support for parsing CHAPI policies from JSON files
 # Take a JSON file and return a dictionary of 
-# method => {"policy" : ..., "assertions" :  ..., }
+# method => {"policy" : ..., "assertions" :  ... }
 def parse_method_policies(filename):
     policies = {}
     try:
@@ -1225,11 +1225,11 @@ def has_pending_request_on_project_lead_by(lead_urn, requestor_urn, session):
 def get_project_request_requestor_urn(request_id, session):
     db = pm.getService("chdbengine")
     q = session.query(db.PROJECT_REQUEST_TABLE.c.requestor, \
-                          db.MA_MEMBER_ATTRIBUTE.c.value)
-    q = q.filter(db.PROJECT_REQUEST_TABLE.c.request_id == request_id)
+                          db.MEMBER_ATTRIBUTE_TABLE.c.value)
+    q = q.filter(db.PROJECT_REQUEST_TABLE.c.id == request_id)
     q = q.filter(db.PROJECT_REQUEST_TABLE.c.requestor == \
-                     db.MA_MEMBER_ATTRIBUTE.c.member_id)
-    q = q.filter(db.MA_MEMBER_ATTRIBUTE.c.name == 'urn')
+                     db.MEMBER_ATTRIBUTE_TABLE.c.member_id)
+    q = q.filter(db.MEMBER_ATTRIBUTE_TABLE.c.name == 'urn')
     rows = q.all()
     if len(rows) > 0:
         requestor_urn = rows[0].value
@@ -1241,11 +1241,11 @@ def get_project_request_requestor_urn(request_id, session):
 def get_project_request_project_urn(request_id, session):
     db = pm.getService("chdbengine")
     q = session.query(db.PROJECT_REQUEST_TABLE.c.context_id)
-    q = q.filter(db.PROJECT_REQUEST_TABLE.c.request_id == request_id)
+    q = q.filter(db.PROJECT_REQUEST_TABLE.c.id == request_id)
     rows = q.all()
     
     if len(rows) > 0:
-        project_uid = row.context_id
+        project_uid = rows[0].context_id
         project_urn = convert_project_uid_to_urn(project_uid, session)
         return project_urn
     else:

@@ -29,6 +29,7 @@ import xmlrpclib
 import logging
 from omnilib.frameworks.framework_base import Framework_Base
 from portal_client import *
+from geni_constants import *
 
 # Generic client to speak XMLRPC/SSL SA/CH/MA API calls to 
 
@@ -64,11 +65,11 @@ def parseOptions(args):
     parser.add_option("--string2_arg", help="second string argument for some calls",
                       default = None)
     parser.add_option("--int_arg", help="Integer argument for some calls",
-                      default = None)
+                      type='int', default = None)
     parser.add_option("--int2_arg", help="second integer argument for some calls",
-                      default = None)
+                      type='int', default = None)
     parser.add_option("--int3_arg", help="third integer argument for some calls",
-                      default = None)
+                      type='int', default = None)
     parser.add_option("--uuid_arg", help="UUID argument for some calls",
                       default = None)
     parser.add_option("--uuid2_arg", help="second UUID argument for some calls",
@@ -107,6 +108,12 @@ def parseOptions(args):
 
     return opts, args
 
+def add_attribute(attributes, int_arg, uuid_arg):
+    if int_arg == PROJECT_CONTEXT and uuid_arg:
+        attributes['PROJECT'] = uuid_arg
+    elif int_arg == SLICE_CONTEXT and uuid_arg:
+        attributes['SLICE'] = uuid_arg
+        
 def main(args = sys.argv, do_print=True):
 
     opts, args = parseOptions(args)
@@ -155,13 +162,10 @@ def main(args = sys.argv, do_print=True):
         (result, msg) = _do_ssl(framework, suppress_errors, reason, fcn)
     # Logging methods (test)
     elif opts.method in ['log_event']:
-        message = "Now is the time"
-        type1 = 'SLICE'
-        id1 = '848e4a11-55eb-45df-a0e8-b79109fb0a88'
-        type2 = 'PROJECT'
-        id2 = '8c042cf0-8389-48e0-aca1-782fd7a20794'
-        attributes = {type1 : id1, type2 : id2}
-        user_id = '8e405a75-3ff7-4288-bfa5-111552fa53ce'
+        message = opts.string_arg
+        attributes = {}
+        add_attribute(attributes, opts.int_arg, opts.uuid_arg)
+        add_attribute(attributes, opts.int2_arg, opts.uuid2_arg)
         (result, msg) = _do_ssl(framework, suppress_errors, reason, fcn, \
                                     message, attributes, opts.credentials,
                                 client_options)
