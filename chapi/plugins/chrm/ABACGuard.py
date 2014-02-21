@@ -130,7 +130,7 @@ class SubjectInvocationCheckOrig(InvocationCheck):
                                     cert_files_by_name = {"ME" : self.cert_file}, 
                                     key_files_by_name = {"ME" : self.key_file},
                                     manage_context = False)
-        #abac_manager._verbose = True
+        abac_manager._verbose = True
 
         client_urn = get_urn_from_cert(client_cert)
 
@@ -227,19 +227,29 @@ class SubjectInvocationCheck(InvocationCheck):
         self.cert_file = self.config.get("chapiv1rpc.ch_cert")
         self._bindings = {}
 
-#         # Gather all required bindings
-#         for assertion in self._assertions:
-#             self._gather_bindings(assertion)
-#         for policy in self._policies:
-#             self._gather_bindings(policy)
+        # Gather all required bindings
+        for assertion in self._assertions:
+            self._gather_bindings(assertion)
+        for policy in self._policies:
+            self._gather_bindings(policy)
 
-#     RECOGNIZED_BINDINGS = ["$ROLE", "$SLICE", "$PROJECT", \
-#                                "$MEMBER", "$SELF"]
-#     def _gather_bindings(self, template):
-#         for recognized_binding in SubjectInvocationCheck.RECOGNIZED_BINDINGS:
-#             if template.find(recognized_binding) > 0:
-#                 if recognized_binding not in self._bindings:
-#                     self._bindings[recognized_binding] = None
+    # All recognized binding types (variables that can be
+    # substituted in assertions and policies)
+    RECOGNIZED_BINDINGS = ["$ROLE", "$SLICE", "$PROJECT", \
+                               "$MEMBER", "$SELF", \
+                               "$SHARES_SLICE", "$SHARES_PROJECT", \
+                               "$PROJECT_LEAD", "$PROJECT_ADMIN", \
+                               "$SEARCHING_BY_EMAIL", \
+                               "$SEARCHING_FOR_PROJECT_LEAD_BY_UID", \
+                               "$PENDING_REQUEST_TO_MEMBER", \
+                               "$REQUEST_ROLE", \
+                               "$REQUESTOR" ]
+
+    def _gather_bindings(self, template):
+        for recognized_binding in SubjectInvocationCheck.RECOGNIZED_BINDINGS:
+            if template.find(recognized_binding) > 0:
+                if recognized_binding not in self._bindings:
+                    self._bindings[recognized_binding] = None
 
     def _compute_subjects(self, options, arguments, session):
         urns, label = self._compute_slice_subjects(options, arguments, session)
@@ -303,6 +313,7 @@ class SubjectInvocationCheck(InvocationCheck):
             slice_uid = attributes['SLICE']
             urns = convert_slice_uid_to_urn(slice_uid, session)
 
+        chapi_info("C_S_S", "%s %s %s" % (options, arguments, urns))
         return urns, "SLICE_URN"
 
     def _compute_project_subjects(self, options, arguments, session):
@@ -401,7 +412,6 @@ class SubjectInvocationCheck(InvocationCheck):
             if len(rows) != 1:
                 raise CHAPIv1ArgumentError("No key with given ID %s" % key_id)
             member_id = rows[0].member_id
-            label = 'MEMBER_URN'
             urns = convert_member_uid_to_urn(member_id, session)
         elif 'principal' in arguments:
             principal_uid = arguments['principal']
@@ -417,7 +427,7 @@ class SubjectInvocationCheck(InvocationCheck):
                 'MEMBER' in arguments['attributes']:
             member_uid = attributes['MEMBER']
             urns = convert_member_uid_to_urn(member_uid, session)
-        
+
         return urns, "MEMBER_URN"
 
     def _compute_request_subjects(self, options, arguments, session):
@@ -428,7 +438,7 @@ class SubjectInvocationCheck(InvocationCheck):
 
     def _generate_bindings(self, caller_urn, subject_type, subject, \
                                options, arguments, session):
-#        chapi_info("GB","BINDINGS = %s SUBJECT = %s" % (self._bindings, subject))
+        chapi_info("GB","BINDINGS = %s SUBJECT = %s" % (self._bindings, subject))
         for binding in self._bindings:
             value = None
             if binding == "$ROLE":
@@ -444,50 +454,50 @@ class SubjectInvocationCheck(InvocationCheck):
                     role = row.role
                     value = attribute_type_names[role]
                     break
-            elif binding == "$SLICE":
-                if subject_type == "SUBJECT_URN":
+            if binding == "$SLICE":
+                if subject_type == "SLICE_URN":
                     value = subject
-            elif binding == "$PROJECT":
+            if binding == "$PROJECT":
                 if subject_type == "PROJECT_URN":
                     value = subject
-            elif binding == "$MEMBER":
+            if binding == "$MEMBER":
                 if subject_type == "MEMBER_URN":
                     value = subject
-            elif binding == "$SELF":
+            if binding == "$SELF":
                 value = caller_urn
-            elif binding == "$SHARES_SLICE":
+            if binding == "$SHARES_SLICE":
                 if subject_type == "MEMBER_URN" and \
                         shares_slice(caller_urn, subject, session):
                     value = "SHARES_SLICE"
-            elif binding == "$SHARES_PROJECT":
+            if binding == "$SHARES_PROJECT":
                 if subject_type == "MEMBER_URN" and \
                         shares_project(caller_urn, subject, session):
                     value = "SHARES_PROJECT"
-            elif binding == "$PROJECT_LEAD":
+            if binding == "$PROJECT_LEAD":
                 if subject_type == "MEMBER_URN" and \
                         has_role_on_some_project(subject, LEAD_ATTRIBUTE,\
                                                      session):
                     value = "PROJECT_LEAD"
-            elif binding == "$PROJECT_ADMIN":
+            if binding == "$PROJECT_ADMIN":
                 if subject_type == "MEMBER_URN" and \
                         has_role_on_some_project(subject, ADMIN_ATTRIBUTE,\
                                                      session):
                     value = "PROJECT_ADMIN"
-            elif binding == "$SEARCHING_BY_EMAIL":
+            if binding == "$SEARCHING_BY_EMAIL":
                 if 'match' in options and 'MEMBER_EMAIL' in options['match']:
                     value = "SEARCHING_BY_EMAIL"
-            elif binding == "$SEARCHING_FOR_PROJECT_LEAD_BY_UID":
+            if binding == "$SEARCHING_FOR_PROJECT_LEAD_BY_UID":
                 if 'match' in options and 'MEMBER_UID' in options['match'] \
                         and has_role_on_some_project(subject, LEAD_ATTRIBUTE,\
                                                          session):
                     value = "SEARCHING_FOR_PROJECT_LEAD_BY_UID"
-            elif binding == "$PENDING_REQUEST_TO_MEMBER":
+            if binding == "$PENDING_REQUEST_TO_MEMBER":
                 if subject_type == "MEMBER_URN" and \
                         has_pending_request_on_project_lead_by(subject, \
                                                                    caller_urn,\
                                                                    session):
                     value = "PENDING_REQUEST_TO_MEMBER"
-            elif binding == "$REQUEST_ROLE":
+            if binding == "$REQUEST_ROLE":
                 if subject_type == "REQUEST_ID":
                     project_urn = \
                         get_project_request_project_urn(subject, session)
@@ -498,7 +508,7 @@ class SubjectInvocationCheck(InvocationCheck):
                         if len(rows) > 0:
                             role = rows[0].role
                             value = attribute_type_names[role]
-            elif binding == "$REQUESTOR":
+            if binding == "$REQUESTOR":
                 if subject_type == "REQUEST_ID":
                     requestor_urn = \
                         get_project_request_requestor_urn(subject, session)
@@ -508,6 +518,7 @@ class SubjectInvocationCheck(InvocationCheck):
             if value:
                 self._bindings[binding]=value
 
+        chapi_info("GB","BINDINGS = %s SUBJECT = %s" % (self._bindings, subject))
     def _assert_bound_statements(self, abac_manager, statements):
         for stmt in statements:
             orig_stmt = stmt
@@ -551,7 +562,7 @@ class SubjectInvocationCheck(InvocationCheck):
                                     cert_files_by_name = {"ME" : self.cert_file}, 
                                     key_files_by_name = {"ME" : self.key_file},
                                     manage_context = False)
-        # abac_manager._verbose = True
+        abac_manager._verbose = True
 
         client_urn = get_urn_from_cert(client_cert)
 

@@ -1197,7 +1197,7 @@ def shares_slice(member1_urn, member2_urn, session):
     ma1 = aliased(db.MEMBER_ATTRIBUTE_TABLE)
     ma2 = aliased(db.MEMBER_ATTRIBUTE_TABLE)
 
-    q = session.query(pm1.c.project_id, pm.c.project_id, \
+    q = session.query(pm1.c.project_id, pm2.c.project_id, \
                           ma1.c.value, ma2.c.value)
     q = q.filter(pm1.c.project_id == pm2.c.project_id)
     q = q.filter(pm1.c.member_id == ma1.c.member_id)
@@ -1221,7 +1221,7 @@ def shares_project(member1_urn, member2_urn, session):
 
     q = session.query(sm1.c.slice_id, sm2.c.slice_id, \
                           ma1.c.value, ma2.c.value)
-    q = q.filter(sm1.c.slice_id == pm2.c.slice_id)
+    q = q.filter(sm1.c.slice_id == sm2.c.slice_id)
     q = q.filter(sm1.c.member_id == ma1.c.member_id)
     q = q.filter(sm2.c.member_id == ma2.c.member_id)
     q = q.filter(ma1.c.name == 'urn')
@@ -1265,7 +1265,7 @@ def has_pending_request_on_project_lead_by(lead_urn, requestor_urn, session):
     q = q.filter(ma1.c.name == 'urn')
     q = q.filter(ma2.c.name == 'urn')
     q = q.filter(ma1.c.value == lead_urn)
-    q = q.filter(ma2.c.value == caller_urn)
+    q = q.filter(ma2.c.value == requestor_urn)
     q = q.filter(db.PROJECT_REQUEST_TABLE.c.context_id == pm1.c.project_id)
     q = q.filter(pm1.c.role.in_([LEAD_ATTRIBUTE, ADMIN_ATTRIBUTE]))
     q = q.filter(db.PROJECT_REQUEST_TABLE.c.status == PENDING_STATUS)
