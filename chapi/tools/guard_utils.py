@@ -1094,55 +1094,6 @@ def sliver_info_extractor(options, arguments, session):
     raise CHAPIv1ArgumentError("Illegal options for lookup_sliver_info: %s"%\
                                    options)
         
-# Support for parsing CHAPI policies from JSON files
-# Take a JSON file and return a dictionary of 
-# method => {"policy" : ..., "asserters" :  ..., 
-#    "extractor" : ...", pass_empty_subject : ....}
-# Turn any function names into functions
-def parse_method_policies_orig(filename):
-    policies = {}
-    try:
-        data = open(filename).read()
-        raw_policies = json.loads(data)
-
-#        chapi_info("PMP", "DATA = %s" % data)
-#        chapi_info("PMP", "RP = %s" % raw_policies)
-        
-        # Replace names of functions with functions"
-        for method_name, method_attrs in raw_policies.items():
-            if method_name == "__DOC__" or \
-                    isinstance(method_attrs, basestring): 
-                continue
-#            chapi_info("PMP", "MN = %s MA = %s" % (method_name, method_attrs))
-            asserters = None
-            extractor = None
-            policy_statements = []
-            pass_empty_subject = False
-            for attr_name, attr_values in method_attrs.items():
-#               chapi_info("PMP", "AN = %s AV = %s" % (attr_name, attr_values))
-                if attr_name == 'asserters':
-                    asserters = [eval(asserter_name) \
-                                     for asserter_name in attr_values]
-                elif attr_name == 'extractor':
-                    extractor = eval(attr_values)
-                elif attr_name == 'policies':
-                    raw_policy_statements = attr_values
-                    policy_statements = \
-                        [rps.replace("$METHOD", method_name.upper()) \
-                             for rps in raw_policy_statements]
-                elif attr_name == 'pass_empty_subject':
-                    pass_empty_subject = bool(attr_values)
-            policies[method_name] = {"policies" : policy_statements, 
-                                     "asserters" : asserters,
-                                     "extractor" : extractor,
-                                     "pass_empty_subject" : pass_empty_subject}
-    except Exception, e:
-        chapi_info("Error", "%s" % e)
-        import traceback
-        chapi_info("Error", traceback.format_exc())
-        raise Exception("Error parsing policy file: %s" % filename)
-
-    return policies
 
 # **** New methods        
         
@@ -1167,7 +1118,6 @@ def parse_method_policies(filename):
             assertions = None
             extractor = None
             policy_statements = []
-            pass_empty_subject = False
             for attr_name, attr_values in method_attrs.items():
 #               chapi_info("PMP", "AN = %s AV = %s" % (attr_name, attr_values))
                 if attr_name == 'assertions':
@@ -1177,11 +1127,8 @@ def parse_method_policies(filename):
                     policy_statements = \
                         [rps.replace("$METHOD", method_name.upper()) \
                              for rps in raw_policy_statements]
-                elif attr_name == 'pass_empty_subject':
-                    pass_empty_subject = bool(attr(values))
             policies[method_name] = {"policies" : policy_statements, 
-                                     "assertions" : assertions,
-                                     "pass_empty_subject" : pass_empty_subject}
+                                     "assertions" : assertions}
     except Exception, e:
         chapi_info("Error", "%s" % e)
         raise Exception("Error parsing policy file: %s" % filename)

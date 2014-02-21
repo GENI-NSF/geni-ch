@@ -76,141 +76,9 @@ class InvocationCheck(object):
 
 # Class that determines if the caller has the right to invoke a given method on all
 # the subjects of a given method invocation
-class SubjectInvocationCheckOrig(InvocationCheck):
-
-    def __init__(self, policies, attribute_extractors,
-                 subject_extractor, pass_empty_subject = False):
-        self._policies = policies
-        self._attribute_extractors = attribute_extractors
-        if attribute_extractors and not isinstance(attribute_extractors, list): 
-            self._attribute_extractors = [attribute_extractors]
-        self._subject_extractor = subject_extractor
-        self._pass_empty_subject = pass_empty_subject
-        self.config = pm.getService('config')
-        self.key_file = self.config.get("chapiv1rpc.ch_key")
-        self.cert_file = self.config.get("chapiv1rpc.ch_cert")
-
-    # Check that there are subjects in the arguments if required
-    # Store the list of subjects for later authorization
-    def validate_arguments(self, client_cert, method, credentials, \
-                               options, arguments, session):
-        subjects = {}
-        if self._subject_extractor:
-            subjects = self._subject_extractor(options, arguments, session)
-#            if not subjects or len(subjects) == 0:
-#                raise CHAPIv1ArgumentError("No subjects supplied to call %s" % method);
-            if subjects and len(subjects) > 1:
-                raise CHAPIv1ArgumentError("Can't provide mixture of subject types for call %s: %s" % \
-                                               (method, subjects.keys()))
-            if subjects and len(subjects) > 0:
-                subject_type = subjects.keys()[0]
-                subjects_of_type = subjects[subject_type]
-                ensure_valid_urns(subject_type, subjects_of_type, session)
-
-#        chapi_debug('ABACGuard', 'method %s SUBJECTS = %s' % (method,subjects))
-        return subjects
-
-    def load_policies(self, abac_manager, subject_name):
-        for policy in self._policies:
-            if policy.find("$SUBJECT") >= 0:
-                if not subject_name:
-                    continue
-                policy = policy.replace("$SUBJECT", subject_name)
-            abac_manager.register_assertion(policy)
-
-        
-
-    # If there are subjects
-    #    For each subject prove AUTHORITY.MAY_$method(SUBJECT)<-CALLER
-    # If there are no subjects (and this is allowed by validate_arguments)
-    #    Prove AUTHORITYMAY_$method<-CALLER
-    def authorize_call(self, client_cert, method, credentials, options, \
-                           arguments, subjects, session):
-        abac_manager =  ABACManager(certs_by_name = {"CALLER" : client_cert}, 
-                                    cert_files_by_name = {"ME" : self.cert_file}, 
-                                    key_files_by_name = {"ME" : self.key_file},
-                                    manage_context = False)
-        abac_manager._verbose = True
-
-        client_urn = get_urn_from_cert(client_cert)
-
-        # Gather context-free assertions for caller
-        if lookup_operator_privilege(client_urn, session):
-            abac_manager.register_assertion("ME.IS_OPERATOR<-CALLER")
-        if lookup_pi_privilege(client_urn, session):
-            abac_manager.register_assertion("ME.IS_PI<-CALLER")
-        abac_manager.register_assertion("ME.IS_%s<-CALLER" % flatten_urn(client_urn))
-        if lookup_authority_privilege(client_urn, session):
-            abac_manager.register_assertion("ME.IS_AUTHORITY<-CALLER")
-
-#        chapi_info("SUBJECTS", "%s" % subjects)
-        if subjects:
-
-            subject_type = subjects.keys()[0]
-            subjects_of_type = subjects[subject_type]
-            if not isinstance(subjects_of_type, list) : 
-                subjects_of_type = [subjects_of_type]
-            # empty subject list means not returning anything, so okay          
-            if not subjects_of_type and self._pass_empty_subject:
-                return
-
-            # Register assertions for the user 
-            if self._attribute_extractors:
-#                chapi_debug('ABACGuard', "Method %s Registering assertions for callers %s, subjects %s" % (method, client_urn, subjects_of_type))
-                for attribute_extractor in self._attribute_extractors:
-                    attribute_extractor(client_urn, subjects_of_type, \
-                                        subject_type, options, arguments, abac_manager,
-                                        session)
-
-            # Register policies relative to the subjects
-            # And try to prove that the user may call the method, 
-            # given the policies
-            # About who can call the method and the attributes of the caller
-            for subject in subjects_of_type:
-#                print "SUBJECT = " + subject
-                subject_name = flatten_urn(subject)
-
-                self.load_policies(abac_manager, subject_name)
-
-                queries = [
-                    "ME.MAY_%s_%s<-CALLER" % (method.upper(), subject_name), 
-                    "ME.MAY_%s<-CALLER" % method.upper()
-                    ]
-
-                one_succeeded = False
-                for query in queries:
-                    ok, proof = abac_manager.query(query)
-                    if abac_manager._verbose:
-                        chapi_audit_and_log("ABAC", "Testing ABAC query %s OK = %s" % (query, ok), logging.DEBUG)
-                    if ok:
-                        one_succeeded = True
-                        break
-
-                if not one_succeeded:
-                    template = "Caller not authorized to call method %s " + \
-                        "with options %s arguments %s queries %s"
-                    raise CHAPIv1AuthorizationError(template % \
-                            (method, options, arguments, queries));
-                    
-        else:
-            self.load_policies(abac_manager, None)
-
-
-            query ="ME.MAY_%s<-CALLER" % method.upper()
-            ok, proof = abac_manager.query(query)
-            if abac_manager._verbose:
-                chapi_audit_and_log("ABAC", "Testing ABAC query %s OK = %s" % (query, ok), logging.DEBUG)
-            if not ok:
-                template = "Caller not authorized to call method %s " + \
-                    "with options %s arguments %s query %s"
-                raise CHAPIv1AuthorizationError(template % \
-                        (method, options, arguments, query));
-
-# Class that determines if the caller has the right to invoke a given method on all
-# the subjects of a given method invocation
 class SubjectInvocationCheck(InvocationCheck):
 
-    def __init__(self, policies, assertions, pass_empty_subject = False):
+    def __init__(self, policies, assertions):
         self._policies = policies
         if not policies: self._policies = []
         if policies and not isinstance(policies, list):
@@ -221,7 +89,6 @@ class SubjectInvocationCheck(InvocationCheck):
         if assertions and not isinstance(assertions, list):
             self._assertions = [assertions]
 
-        self._pass_empty_subject = pass_empty_subject
         self.config = pm.getService('config')
         self.key_file = self.config.get("chapiv1rpc.ch_key")
         self.cert_file = self.config.get("chapiv1rpc.ch_cert")
@@ -313,7 +180,6 @@ class SubjectInvocationCheck(InvocationCheck):
             slice_uid = attributes['SLICE']
             urns = convert_slice_uid_to_urn(slice_uid, session)
 
-        chapi_info("C_S_S", "%s %s %s" % (options, arguments, urns))
         return urns, "SLICE_URN"
 
     def _compute_project_subjects(self, options, arguments, session):
@@ -436,9 +302,18 @@ class SubjectInvocationCheck(InvocationCheck):
             return 'REQUEST_ID', request_id
         return None, None
 
+    # Generate groups of assertions into a single label
+    # e.g. BELONGS_TO means IS_LEAD, IS_ADMIN, ....
+    def _generate_assertion_groups(self, subject_type, subject, abac_manager):
+        if subject_type in ['SLICE_URN', 'PROJECT_URN']:
+            for role, role_name in attribute_type_names.items():
+                assertion = "ME.BELONGS_TO_%s<-ME.IS_%s_%s" % \
+                    (flatten_urn(subject), role_name, flatten_urn(subject))
+                abac_manager.register_assertion(assertion)
+
     def _generate_bindings(self, caller_urn, subject_type, subject, \
                                options, arguments, session):
-        chapi_info("GB","BINDINGS = %s SUBJECT = %s" % (self._bindings, subject))
+#        chapi_info("GB","BINDINGS = %s SUBJECT = %s" % (self._bindings, subject))
         for binding in self._bindings:
             value = None
             if binding == "$ROLE":
@@ -518,7 +393,7 @@ class SubjectInvocationCheck(InvocationCheck):
             if value:
                 self._bindings[binding]=value
 
-        chapi_info("GB","BINDINGS = %s SUBJECT = %s" % (self._bindings, subject))
+#        chapi_info("GB","BINDINGS = %s SUBJECT = %s" % (self._bindings, subject))
     def _assert_bound_statements(self, abac_manager, statements):
         for stmt in statements:
             orig_stmt = stmt
@@ -562,7 +437,7 @@ class SubjectInvocationCheck(InvocationCheck):
                                     cert_files_by_name = {"ME" : self.cert_file}, 
                                     key_files_by_name = {"ME" : self.key_file},
                                     manage_context = False)
-        abac_manager._verbose = True
+        #abac_manager._verbose = True
 
         client_urn = get_urn_from_cert(client_cert)
 
@@ -577,7 +452,7 @@ class SubjectInvocationCheck(InvocationCheck):
 
         # if there are subjects:
         # For each subject
-        # Bind context assertions (BELONGS_TO <+ Each role)
+        #   Bind assertion groups  (BELONGS_TO <+ Each role)
         #   Bind required variables for all assertions (optional) 
         #      and policies (required)
         #   Compute and assert assertions for which all variables are bound
@@ -591,6 +466,8 @@ class SubjectInvocationCheck(InvocationCheck):
             subjects_of_type = subjects[subject_type]
             for subject in subjects_of_type:
 
+                self._generate_assertion_groups(subject_type, subject, \
+                                                    abac_manager)
                 self._generate_bindings(client_urn, subject_type, \
                                             subject, options, arguments, \
                                             session)
@@ -711,27 +588,10 @@ class ABACGuardBase(GuardBase):
 # Method to convert
 # dictionary of method => arguments for creating SubjectInvocationChecks 
 #into a dictionary method => SubjectInvocationCheck
-def create_subject_invocation_checks_orig(policies):
-    checks = {}
-    for method, args in policies.items():
-        policies = args['policies']
-        asserters = args['asserters']
-        extractor = args['extractor']
-        pass_empty_subject = args['pass_empty_subject']
-        checks[method] = \
-            SubjectInvocationCheckOrig(policies, asserters, \
-                                           extractor, pass_empty_subject)
-    return checks
-
-# Method to convert
-# dictionary of method => arguments for creating SubjectInvocationChecks 
-#into a dictionary method => SubjectInvocationCheck
 def create_subject_invocation_checks(policies):
     checks = {}
     for method, args in policies.items():
         policies = args['policies']
         assertions = args['assertions']
-        pass_empty_subject = args['pass_empty_subject']
-        checks[method] = \
-            SubjectInvocationCheck(policies, assertions, pass_empty_subject)
+        checks[method] = SubjectInvocationCheck(policies, assertions)
     return checks
