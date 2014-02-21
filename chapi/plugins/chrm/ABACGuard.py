@@ -137,6 +137,7 @@ class SubjectInvocationCheck(InvocationCheck):
 
     def _compute_slice_subjects(self, options, arguments, session):
         urns = None
+        db = pm.getService('chdbengine')
         if 'match' in options:
             match_option = options['match']
             # Pulling slice out of match
@@ -163,7 +164,6 @@ class SubjectInvocationCheck(InvocationCheck):
                 'SLIVER_INFO_SLICE_URN' in options['fields']:
             urns = options['fields']['SLIVER_INFO_SLICE_URN']
         elif 'sliver_urn' in arguments:
-            db = pm.getService('chdbengine')
             q = session.query(db.SLIVER_INFO_TABLE.c.slice_urn)
             q = q.filter(db.SLIVER_INFO_TABLE.c.sliver_urn == \
                              arguments['sliver_urn'])
@@ -184,6 +184,7 @@ class SubjectInvocationCheck(InvocationCheck):
 
     def _compute_project_subjects(self, options, arguments, session):
         urns = None
+        db = pm.getService('chdbengine')
         if 'match' in options:
             match_option = options['match']
             # Pulling project out of match
@@ -226,6 +227,7 @@ class SubjectInvocationCheck(InvocationCheck):
 
     def _compute_member_subjects(self, options, arguments, session):
         urns = None
+        db = pm.getService('chdbengine')
         if 'match' in options:
             match_option = options['match']
             # Pulling member out of match
@@ -265,6 +267,8 @@ class SubjectInvocationCheck(InvocationCheck):
                 urns = convert_member_uid_to_urn(member_id, session)
             elif 'SLIVER_INFO_CREATOR_URN' in match_option:
                 urns = match_option['SLIVER_INFO_CREATOR_URN']
+        elif 'fields' in options and 'KEY_MEMBER' in options['fields']:
+            urns = options['fields']['KEY_MEMBER']
         elif 'member_urn' in arguments:
             urns = arguments['member_urn']
         elif 'member_id' in arguments:
@@ -289,10 +293,13 @@ class SubjectInvocationCheck(InvocationCheck):
                 arguments['context_type'] == MEMBER_CONTEXT:
             member_uid = arguments['context_id']
             urns = convert_member_uid_to_urn(member_uid, session)
-        elif 'attributes' in arguments and \
-                'MEMBER' in arguments['attributes']:
-            member_uid = attributes['MEMBER']
-            urns = convert_member_uid_to_urn(member_uid, session)
+        elif 'attributes' in arguments:
+            attributes = arguments['attributes']
+            if 'MEMBER' in attributes:
+                member_uid = attributes['MEMBER']
+                urns = convert_member_uid_to_urn(member_uid, session)
+
+        chapi_info("C_M_S", "%s" % urns)
 
         return urns, "MEMBER_URN"
 
@@ -437,7 +444,7 @@ class SubjectInvocationCheck(InvocationCheck):
                                     cert_files_by_name = {"ME" : self.cert_file}, 
                                     key_files_by_name = {"ME" : self.key_file},
                                     manage_context = False)
-        #abac_manager._verbose = True
+        abac_manager._verbose = True
 
         client_urn = get_urn_from_cert(client_cert)
 
