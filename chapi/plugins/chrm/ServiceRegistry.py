@@ -167,6 +167,8 @@ class SRv1Delegate(CHv1PersistentImplementation):
                                              CH.field_mapping, session) \
                         for row in rows]
 
+        self.add_service_attributes(rows, services, session)
+
         # Fill in the service_cert_contents
         if 'SERVICE_CERT' in selected_columns:
             for service in services:

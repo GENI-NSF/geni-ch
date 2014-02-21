@@ -23,7 +23,9 @@
 
 import amsoil.core.log
 import amsoil.core.pluginmanager as pm
+from sfa.trust.certificate import Certificate
 from amsoil.core import serviceinterface
+import os
 import traceback
 from Exceptions import *
 
@@ -38,6 +40,21 @@ class HandlerBase(xmlrpc.Dispatcher):
         self._logger = logger
         self._delegate = None
         self._guard = None
+        self._trusted_roots = None
+        self._trusted_roots = self.getTrustedRoots()
+
+    # Get list of trusted roots for handler
+    # If not set, initialize from chapiv1rpc.ch_cert_root directory
+    def getTrustedRoots(self):
+        if self._trusted_roots == None:
+            config = pm.getService('config')
+            trust_roots = config.get('chapiv1rpc.ch_cert_root')
+            pem_files = os.listdir(trust_roots)
+            pems = [open(os.path.join(trust_roots, pem_file)).read() \
+                        for pem_file in pem_files \
+                        if pem_file != 'CATedCACerts.pem']
+            self._trusted_roots = [Certificate(string=pem) for pem in pems]
+        return self._trusted_roots
 
     # Interfaces for setting/getting the delegate (for implementing API calls)
     @serviceinterface
@@ -61,7 +78,7 @@ class HandlerBase(xmlrpc.Dispatcher):
     # Standard format for successful returns from API calls
     def _successReturn(self, result):
         """Assembles a GENI compliant return result for successful methods."""
-        return { 'code' : 0, 'output' : None, 'value' : result  }
+        return { 'code' : 0, 'output' : '', 'value' : result  }
 
     @serviceinterface
     def requestCertificate(self):

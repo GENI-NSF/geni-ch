@@ -24,6 +24,7 @@
 import optparse
 import os, sys
 import sfa.trust.certificate
+import sfa.trust.gid
 import chapi_log
 from cert_utils import *
 from ABACManager import *
@@ -54,7 +55,7 @@ from chapi.Exceptions import *
 #        client_cert if not.
 #   revised_options : Original options with 
 #       {'speaking_as' : original_client_cert} added if 'speaks for'
-def determine_speaks_for(client_cert, credentials, options): 
+def determine_speaks_for(client_cert, credentials, options, trusted_roots=None): 
     # Pull out speaking_for option
     OPTION_SPEAKING_FOR = 'speaking_for'
     speaking_for = None
@@ -88,6 +89,14 @@ def determine_speaks_for(client_cert, credentials, options):
 
     # Get the agent_cert (the actor being spoken for)
     agent_cert = get_cert_from_credential(speaks_for_credential)
+
+    # Need to validate the agent_cert against the trust roots
+    if trusted_roots:
+        agent_gid = sfa.trust.gid.GID(string=agent_cert)
+        try :
+            agent_gid.verify_chain(trusted_roots)
+        except Exception, e:
+            raise Exception("Agent certifiate no trusted")
 
     # Get the agent_urn (of the actor being spoken for)
     agent_urn = get_urn_from_cert(agent_cert)

@@ -688,8 +688,10 @@ class ABACGuardBase(GuardBase):
     # If so, return the cert of the agent who signed the speaks-for
     #   credential and put the original (invoking) client_cert in a 
     #   'speaking_as' option
-    def adjust_client_identity(self, client_cert, credentials, options):
-        return determine_speaks_for(client_cert, credentials, options)
+    def adjust_client_identity(self, client_cert, credentials, options, 
+                               trusted_roots):
+        return determine_speaks_for(client_cert, credentials, options,
+                                    trusted_roots)
 
     def protect_results(self, client_cert, method, credentials, results):
         return results

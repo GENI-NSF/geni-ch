@@ -29,6 +29,7 @@ dist_tool_DATA = \
 	geni_utils.py \
 	guard_utils.py \
 	mapped_tables.py \
+	manage_service_attributes.py \
 	multiclient.py \
 	pgch_client.py
 
