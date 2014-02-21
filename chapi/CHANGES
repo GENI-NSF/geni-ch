@@ -10,6 +10,7 @@
  * Wrap MA.lookup result in standard code/value/output triple (#236)
  * Use "2" as API v2 version in get_version instead of "2.0" (#241)
  * Return empty string for output on success (#242)
+ * Format dates as RFC 3339 on input and from DB per API spec (#243)
 
 == 1.5.1 ==
  * Fix a guard that prevents new users from registering (#233)
