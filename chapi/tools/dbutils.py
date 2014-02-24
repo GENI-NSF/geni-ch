@@ -108,6 +108,8 @@ def add_filters(query, match_criteria, table, mapping, session):
                 query = query.filter(column == match_value)
     return query
 
+STANDARD_DATETIME_FORMAT = '%Y-%m-%dT%H:%M:%SZ'
+
 # Construct a result row {external_field : value, external_field : value} 
 # from row which is a set of values indexed by internal fields
 def construct_result_row(row, columns, mapping, session):
@@ -125,7 +127,7 @@ def construct_result_row(row, columns, mapping, session):
         else:
             column_value = eval("row.%s" % internal_name)
         if isinstance(column_value, datetime):
-            column_value = str(column_value)
+            column_value = column_value.strftime(STANDARD_DATETIME_FORMAT)
         result_row[column] = column_value
     return result_row
 
