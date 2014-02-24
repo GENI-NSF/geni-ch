@@ -297,7 +297,7 @@ class MAv1Implementation(MAv1DelegateBase):
         selected_columns, match_criteria = \
             unpack_query_options(options, MA.field_mapping)
         if not match_criteria:
-            raise CHAPIv1ArgumentError('Missing a "match" option')
+            raise CHAPIv1ArgumentError('Missing a valid "match" option')
         self.check_attributes(match_criteria)
         selected_columns = set(selected_columns) & set(allowed_fields)
 
@@ -466,6 +466,9 @@ class MAv1Implementation(MAv1DelegateBase):
                                                            credentials, \
                                                            options, arguments, session)
 #        chapi_info("DAM", "SUBJECTS = %s" % subjects)
+        if len(subjects) == 0:
+            return {}
+
         subject_type = subjects.keys()[0]
         subject_ids = subjects[subject_type]
 #        chapi_info("DAM", "SUBJECT_TYPE = %s" % subject_type)
@@ -825,7 +828,7 @@ class MAv1Implementation(MAv1DelegateBase):
         selected_columns, match_criteria = \
             unpack_query_options(options, MA.key_field_mapping)
         if not match_criteria:
-            raise CHAPIv1ArgumentError('Missing a "match" option')
+            raise CHAPIv1ArgumentError('Missing a valid "match" option')
         self.check_attributes(match_criteria)
 
         q = session.query(self.db.SSH_KEY_TABLE, \
