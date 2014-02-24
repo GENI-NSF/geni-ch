@@ -394,7 +394,15 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
 
     def get_slice_ids(self, session, field, value, include_expired=False):
         q = session.query(Slice.slice_id)
-        q = q.filter(getattr(Slice, field) == value)
+        # *** MSB 2-24-2014
+        # *** We are adding this for now to disallow creating 
+        # *** slices that differ only by case. If case insensitivity
+        # *** is the decided semantics, we need to make changes in lookup
+        # *** and other methods as well
+        if field == 'slice_name':
+            q = q.filter(func.upper(getattr(Slice, field)) == value)
+        else:
+            q = q.filter(getattr(Slice, field) == value)
         if not include_expired:
             q = q.filter(Slice.expired == "f")
         q = q.order_by(Slice.expiration.desc()) # first return value will be newest
@@ -409,7 +417,12 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
     # check whether a project exists, and if so return its id
     def get_project_id(self, session, field, value):
         q = session.query(Project.project_id)
-        q = q.filter(getattr(Project, field) == value)
+        # *** MSB 2-24-2014
+        # *** We are adding this for now to disallow creating 
+        # *** projects that differ only by case. If case insensitivity
+        # *** is the decided semantics, we need to make changes in lookup
+        # *** and other methods as well
+        q = q.filter(func.upper(getattr(Project, field)) == value.upper())
         rows = q.all()
         if (len(rows) == 0):
             return None
