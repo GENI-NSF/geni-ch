@@ -13,8 +13,8 @@
      "__DOC__" : [
        "Authorities, Operators, self",
        "Shares project with caller",
-       "is lead and searching by email",
-       "Searching for lead by email",
+       "is project lead/admin and searching by email",
+       "Searching for lead by UID",
        "Has pending request on project with member as lead"
      ],
      "assertions" : [
@@ -41,8 +41,8 @@
     "__DOC__" : [
        "Authorities, Operators, self",
        "Shares project with caller",
-       "is lead and searching by email",
-       "Searching for lead by email",
+       "is project lead/admin and searching by email",
+       "Searching for project lead by UID",
        "Has pending request on project with member as lead"
     ],
     "assertions" : [
