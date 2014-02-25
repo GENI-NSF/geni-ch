@@ -400,7 +400,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         # *** is the decided semantics, we need to make changes in lookup
         # *** and other methods as well
         if field == 'slice_name':
-            q = q.filter(func.upper(getattr(Slice, field)) == value)
+            q = q.filter(func.upper(getattr(Slice, field)) == value.upper())
         else:
             q = q.filter(getattr(Slice, field) == value)
         if not include_expired:
