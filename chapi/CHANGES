@@ -4,6 +4,8 @@
 
 = GENI Clearinghouse Release Notes =
 
+== 1.7 ==
+
 == 1.6 ==
  * Ensure that uniqueness of project and slice names is case-insensitive (#244)
  * Add credentials and options to all logging service APIs (#209)
