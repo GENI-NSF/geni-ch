@@ -67,7 +67,7 @@ class SAv1Handler(HandlerBase):
              result = self._errorReturn(CHAPIv1ArgumentError("Invalid type: %s" % type))
         return result
             
-    def update(self, urn, type, credentials, options):
+    def update(self, type, urn, credentials, options):
         if type == "SLICE":
             result = self.update_slice(urn, credentials, options)
         elif type == "SLIVER_INFO":
@@ -78,7 +78,7 @@ class SAv1Handler(HandlerBase):
             return self._errorReturn(CHAPIv1ArgumentError("Invalid type: %s" % type))
         return result
             
-    def delete(self, urn, type, credentials, options):
+    def delete(self, type, urn, credentials, options):
         if type == "SLICE":
             return self._errorReturn(CHAPIv1ArgumentError("method delete not supported for SLICE"))
         elif type == "SLICE_INFO":

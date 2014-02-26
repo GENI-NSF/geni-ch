@@ -4,6 +4,19 @@
 
 = GENI Clearinghouse Release Notes =
 
+== 1.6 ==
+ * Ensure that uniqueness of project and slice names is case-insensitive (#244)
+ * Add credentials and options to all logging service APIs (#209)
+ * Support service attributes (for speaks-for) in CHAPI SR (#228)
+ * Add additional checks to speaks-for processing (#231)
+ * Quiet down log messages during maintenance outage (#235)
+ * Wrap MA.lookup result in standard code/value/output triple (#236)
+ * Ensure lookup_allowed_member_info is properly guarded (#237)
+ * Update lookup("KEY", ...) return format for v2 (#240)
+ * Use "2" as API v2 version in get_version instead of "2.0" (#241)
+ * Return empty string for output on success (#242)
+ * Format dates as RFC 3339 on input and from DB per API spec (#243)
+
 == 1.5.1 ==
  * Fix a guard that prevents new users from registering (#233)
  * Fix error handling to only log a traceback on bad errors,

@@ -61,7 +61,7 @@ class MAv1Handler(HandlerBase):
             result = self._errorReturn(CHAPIv1ArgumentError("Invalid type: %s" % type))
         return result
             
-    def update(self, urn, type, credentials, options):
+    def update(self, type, urn, credentials, options):
         if type == "MEMBER":
             result = \
                 self.update_member_info(urn, credentials, options)
@@ -72,7 +72,7 @@ class MAv1Handler(HandlerBase):
             result = self._errorReturn(CHAPIv1ArgumentError("Invalid type: %s" % type))
         return result
             
-    def delete(self, urn, type, credentials, options):
+    def delete(self, type, urn, credentials, options):
         if type == "MEMBER":
             result = \
                 self._errorReturn(CHAPIv1ArgumentError("method delete not supported for MEMBER"))
@@ -88,8 +88,24 @@ class MAv1Handler(HandlerBase):
             result = \
                 self.lookup_allowed_member_info(credentials, options)
         elif type == "KEY":
+            # In v1 we return a dictionary (indexed by member URN)
+            # of a list of dictionaries, one for each key of that user
+            # In v2 we return a dictioanry (indexed by KEY_ID)
+            # with a dictionary for that key
             result = \
                 self.lookup_keys(credentials, options)
+            if result['code'] == NO_ERROR:
+                v2_result = {}
+#                chapi_info("LOOKUP", "RESULT = %s" % result)
+                for member_urn, key_infos in result['value'].items():
+                    for key_info in key_infos:
+#                        chapi_info("LOOKUP", "MURN = %s KEY_INFO = %s" % \
+#                                       (member_urn, key_info))
+                        if 'KEY_MEMBER' not in key_info:
+                            key_info['KEY_MEMBER'] = member_urn
+                        key_id = key_info['KEY_ID']
+                        v2_result[key_id] = key_info
+                result = self._successReturn(v2_result)
         else:
             result = self._errorReturn(CHAPIv1ArgumentError("Invalid type: %s" % type))
         return result

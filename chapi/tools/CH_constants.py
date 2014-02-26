@@ -80,6 +80,29 @@ mandatory_fields = {
 
 supplemental_fields = { 
     "_GENI_SERVICE_CERT_FILENAME": {"TYPE": "STRING", "OBJECT": "SERVICE"},
-    "_GENI_SERVICE_ID" : {"TYPE" : "INTEGER", "OBJECT": "SERVICE"}
+    "_GENI_SERVICE_ID" : {"TYPE" : "INTEGER", "OBJECT": "SERVICE"},
+    "_GENI_SERVICE_ATTRIBUTES" : {"TYPE" : "DICTIONARY", "OBJECT" : "SERVICE"}
     }
+
+
+# Defined attributes on services
+# A dictionary: For each attribute we have a name pointing to a dictionary
+# with 'description', 'service_types', 'acceptable_values'
+# 'service_types' means a list of service types to which this attribute
+# applies. This tag is optional and if not supplied it is not restricted
+# 'acceptable_values' means a list of acceptable values for this attribute
+# This tag is optional and if not supplied it is not restricted
+defined_attributes = {
+    "SPEAKS_FOR" : {
+        "description" : "Does this aggregate accept speaks-for credentials and options?",
+        "service_types" : [SERVICE_AGGREGATE_MANAGER],
+        "acceptable_values" : ['t', 'f']
+        },
+    "AM_API_VERSION" : {
+        "description" : "The version of the AM API supported by this aggregate",
+        "service_types" : [SERVICE_AGGREGATE_MANAGER],
+        "acceptable_values" : ['1', '2', '3']
+        }
+}
+
 

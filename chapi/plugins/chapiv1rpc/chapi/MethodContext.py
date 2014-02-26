@@ -117,10 +117,13 @@ class MethodContext:
         if not self._handler._guard:
             # If there's no guard, skip adjusting identity
             return
+        trusted_roots = self._handler.getTrustedRoots()
         new_client_cert, new_options = \
             self._handler._guard.adjust_client_identity(self._client_cert,
                                                         self._credentials,
-                                                        self._options)
+                                                        self._options, 
+                                                        trusted_roots)
+
         if (self._client_cert != new_client_cert):
             self._client_cert = new_client_cert
             self._options = new_options
@@ -146,10 +149,10 @@ class MethodContext:
                                                         self._session)
                 is_authority = lookup_authority_privilege(user_urn,
                                                           self._session)
-                msg = "USER_URN = %s IS_OPERATOR = %s IS_AUTHORITY = %s"
-                msg = msg % (user_urn, is_operator, is_authority)
-                chapi_info("OUTAGE", msg)
                 if not is_operator and not is_authority:
+                    msg = "User %s denied access during maintenance outage"
+                    msg = msg % (user_urn)
+                    chapi_info("OUTAGE", msg)
                     msg = ("Cannot access GENI Clearinghouse during"
                            + " maintenance outage.")
                     raise CHAPIv1AuthorizationError(msg)
