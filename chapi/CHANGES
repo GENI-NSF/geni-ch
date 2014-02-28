@@ -5,6 +5,7 @@
 = GENI Clearinghouse Release Notes =
 
 == 1.7 ==
+ * Fix the SA generic lookup_members, lookup_for_member, change_membership calls that were missing self argument (#247)
 
 == 1.6 ==
  * Ensure that uniqueness of project and slice names is case-insensitive (#244)
