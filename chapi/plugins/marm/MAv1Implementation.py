@@ -1016,7 +1016,7 @@ class MAv1Implementation(MAv1DelegateBase):
             # log_event
             msg = "Deauthorizing client %s for member %s" % (client_urn, self._get_displayname_for_member_urn(member_urn, session))
             attribs = {"MEMBER" : member_id}
-            self.logging_service.log_event(msg, attribs, credentials, options,
+            self.logging_service.log_event(msg, attribs, [], {},
                                            session=session)
             chapi_audit_and_log(MA_LOG_PREFIX, msg, logging.INFO, {'user': user_email})
 
