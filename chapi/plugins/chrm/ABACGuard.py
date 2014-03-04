@@ -105,6 +105,9 @@ class SubjectInvocationCheck(InvocationCheck):
             if subjects and len(subjects) > 0:
                 subject_type = subjects.keys()[0]
                 subjects_of_type = subjects[subject_type]
+                # Make sure the subjects are a list of identifiers
+                if subjects_of_type and not isinstance(subjects_of_type, list):
+                    subjects[subject_type] = [subjects_of_type]
                 ensure_valid_urns(subject_type, subjects_of_type, session)
 
 #        chapi_debug('ABACGuard', 'method %s SUBJECTS = %s' % (method,subjects))
