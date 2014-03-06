@@ -1,0 +1,86 @@
+.\"                                      Hey, EMACS: -*- nroff -*-
+.\" First parameter, NAME, should be all caps
+.\" Second parameter, SECTION, should be 1-8, maybe w/ subsection
+.\" other parameters are allowed: see man(7), man(1)
+.TH GENI-SIGN-TOOL-CSR 1 "March 6, 2014"
+.\" Please adjust this date whenever revising the manpage.
+.\"
+.\" Some roff macros, for reference:
+.\" .nh        disable hyphenation
+.\" .hy        enable hyphenation
+.\" .ad l      left justify
+.\" .ad b      justify to both left and right margins
+.\" .nf        disable filling
+.\" .fi        enable filling
+.\" .br        insert line break
+.\" .sp <n>    insert n+1 empty lines
+.\" for manpage-specific macros, see man(7)
+.SH NAME
+geni-sign-tool-csr \- create a GENI tool certificate from a CSR
+.SH SYNOPSIS
+.B geni-sign-tool-csr
+.IR -k \  KEY
+.IR -c \  CERT
+.IR -e \  EMAIL
+.IR -i \  ID
+.IR -a \  AUTHORITY
+.IR --csr \  CSR-FILE
+.
+.
+.SH DESCRIPTION
+.B geni-sign-tool-csr
+creates a GENI tool certificate from a certificate signing request
+(CSR). Some GENI tools require certificates to establish secure
+communications with GENI services like member authorities, slice
+authorities, and aggregate managers.
+.
+.
+.SH OPTIONS
+.B geni-sign-tool-csr
+follows the usual GNU command line syntax, with long
+options starting with two dashes (`-').
+A summary of options is included below.
+.TP
+.B \-a <authority domain>, \-\-authority <authority domain>
+The signing certificate.
+.TP
+.B \-c <certificate file>, \-\-certfile <certificate file>
+The signing certificate.
+.TP
+.B \-\-csr <CSR file>
+The certificate signing request to sign.
+.TP
+.B \-e <admin email>, \-\-certfile <admin email>
+Email address of the tool's administrator.
+.TP
+.B \-h, \-\-help
+Show summary of options.
+.TP
+.B \-i <unique id>, \-\-id <unique id>
+The unique id of this tool. This should generally be a concatenation
+of the tool and the instance of the tool. For instance, a portal tool
+running at the GPO site might have id "portal-gpo".
+.TP
+.B \-k <key file>, \-\-keyfile <key file>
+The private key matching the signing certificate.
+.TP
+.B \-o, \-\-output
+Add the OPERATOR privilege to the specified user.
+.
+.
+.SH EXAMPLES
+Sign a tool CSR sending the certificate to stdout:
+
+    geni-sign-tool-csr -k key.pem -c cert.pem \\
+          -e tool-admins@example.com -i tool-site -a ch.geni.net \\
+          --csr tool-site.csr
+
+Sign a tool CSR sending the certificate to a file:
+
+    geni-sign-tool-csr -k key.pem -c cert.pem \\
+          -e tool-admins@example.com -i tool-site -a ch.geni.net \\
+          --csr tool-site.csr -o /tmp/tool-site.pem
+.
+.
+.SH AUTHOR
+geni-sign-tool-csr was written by Raytheon BBN Technologies.

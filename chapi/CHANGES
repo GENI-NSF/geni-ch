@@ -5,6 +5,7 @@
 = GENI Clearinghouse Release Notes =
 
 == 1.7 ==
+ * Add script to create tool certificates (#207)
  * Fix the SA generic lookup_members, lookup_for_member,
    change_membership calls that were missing self argument (#247)
  * Fix stack trace when deauthorizing client tools (#249)
