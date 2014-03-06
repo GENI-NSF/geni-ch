@@ -1,0 +1,107 @@
+#!/usr/bin/env python
+# -*- Mode: python -*-
+
+#----------------------------------------------------------------------
+# Copyright (c) 2013-2014 Raytheon BBN Technologies
+#
+# Permission is hereby granted, free of charge, to any person obtaining
+# a copy of this software and/or hardware specification (the "Work") to
+# deal in the Work without restriction, including without limitation the
+# rights to use, copy, modify, merge, publish, distribute, sublicense,
+# and/or sell copies of the Work, and to permit persons to whom the Work
+# is furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be
+# included in all copies or substantial portions of the Work.
+#
+# THE WORK IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+# MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+# NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+# HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+# WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE WORK OR THE USE OR OTHER DEALINGS
+# IN THE WORK.
+#----------------------------------------------------------------------
+
+#----------------------------------------------------------------------
+#
+# Sign a CSR for a tool certificate.
+#
+#----------------------------------------------------------------------
+
+import sys
+import optparse
+import uuid
+
+# Add sfa include path after script directory but before system path
+sys.path.insert(1, '@gcfdir@')
+sys.path.insert(1, '@tooldir@')
+
+import cert_utils as cu
+
+def parse_args(argv):
+    parser = optparse.OptionParser(usage="Sign a CSR for a GENI tool")
+    parser.add_option("-k", "--keyfile", metavar="FILE",
+                      help="Signing private key")
+    parser.add_option("-c", "--certfile", metavar="FILE",
+                      help="Signing certificate")
+    parser.add_option("-e", "--email", metavar="TOOL_ADMIN_EMAIL",
+                      help="Tool administrator email address")
+    parser.add_option("-i", "--id",
+                      help="Unique id for tool URN")
+    parser.add_option("-a", "--authority",
+                      help="Authority for URN (matches signing certificate)")
+    parser.add_option("--csr", metavar="FILE",
+                      help="CSR file to sign")
+    parser.add_option("-o", "--output", metavar="FILE",
+                      help="Destination file for certificate (default: stdout)")
+    options,args = parser.parse_args()
+    if not (options.keyfile and options.certfile and options.email
+            and options.id and options.authority and options.csr):
+        parser.print_usage()
+        raise Exception("Missing some required arguments")
+    return options,args
+
+def main(argv=None):
+    if argv is None:
+        argv = sys.argv
+    try:
+        options,args = parse_args(argv)
+    except Exception as e:
+        sys.stderr.write(str(e) + '\n')
+        return 1
+
+    if options.output:
+        # Try writing the file first in case it's not writable
+        try:
+            with open(options.output, 'w') as f:
+                f.write('')
+            unlink(options.output)
+        except:
+            sys.stderr.write('Unable to write file %s. Aborting.\n'
+                             % (options.output))
+            return 1
+
+    # make_cert() prepends the 'URI:' part.
+    tool_urn = 'urn:publicid:IDN+%s+tool+%s' % (options.authority, options.id)
+    tool_uuid = uuid.uuid4()
+    cert = cu.make_cert(tool_uuid, options.email, tool_urn, options.certfile,
+                        options.keyfile, options.csr)
+    if options.output:
+        # Write cert to file
+        try:
+            with open(options.output, 'w') as f:
+                f.write(cert)
+        except:
+            # If the write to file failed, print to stdout.
+            sys.stderr.write('Unable to write file %s.' % (options.output)
+                             + ' Printing to standard output instead.\n')
+            print cert
+    else:
+        # send cert to stdout
+        print cert
+    return 0
+
+if __name__ == '__main__':
+    sys.exit(main())
