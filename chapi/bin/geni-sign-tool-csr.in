@@ -46,6 +46,8 @@ def parse_args(argv):
                       help="Signing private key")
     parser.add_option("-c", "--certfile", metavar="FILE",
                       help="Signing certificate")
+    parser.add_option("-d", "--days", metavar="NUMBER", default=365, type='int',
+                      help="Validity period in days")
     parser.add_option("-e", "--email", metavar="TOOL_ADMIN_EMAIL",
                       help="Tool administrator email address")
     parser.add_option("-i", "--id",
@@ -87,7 +89,7 @@ def main(argv=None):
     tool_urn = 'urn:publicid:IDN+%s+tool+%s' % (options.authority, options.id)
     tool_uuid = uuid.uuid4()
     cert = cu.make_cert(tool_uuid, options.email, tool_urn, options.certfile,
-                        options.keyfile, options.csr)
+                        options.keyfile, options.csr, options.days)
     if options.output:
         # Write cert to file
         try:
