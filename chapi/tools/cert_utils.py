@@ -125,8 +125,11 @@ def make_csr():
 
 # Generate an X509 cert and private key
 # Return cert
-def make_cert(uuid, email, urn, \
-                          signer_cert_file, signer_key_file, csr_file):
+def make_cert(uuid, email, urn, signer_cert_file, signer_key_file, csr_file,
+              days=365):
+    # Check validity of args (weak, I know)
+    # Ensure days is an integer, raise exception otherwise
+    days = int(days)
 
     # sign the csr to create cert
     extname = 'v3_user'
@@ -164,7 +167,8 @@ def make_cert(uuid, email, urn, \
                          '-notext', \
                          '-cert', signer_cert_file,\
                          '-keyfile', signer_key_file, \
-                         '-subj', subject ]
+                         '-subj', subject,
+                     '-days', str(days)]
     #chapi_debug("UTILS", "CERT args: "+" ".join(sign_csr_args))
     os.system(" ".join(sign_csr_args))
 
