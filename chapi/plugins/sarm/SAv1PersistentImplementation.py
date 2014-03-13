@@ -516,7 +516,10 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
             # FIXME: Externalize the #7 here
             slice.expiration = slice.creation + relativedelta(days=SA.SLICE_DEFAULT_LIFE_DAYS)
         else:
+            # Make timzeone UTC naive
             slice.expiration = dateutil.parser.parse(slice.expiration)
+            slice.expiration = slice.expiration.astimezone(dateutil.tz.tzutc())
+            slice.expiration = slice.expiration.replace(tzinfo=None)
 
         # if project expiration is sooner than slice expiration, use project expiration
         if project_expiration != None and slice.expiration > project_expiration:
