@@ -24,6 +24,8 @@
 from ABACGuard import *
 from ArgumentCheck import *
 import tools.MA_constants as MA
+from tools.chapi_log import *
+from tools.policy_file_checker import PolicyFileChecker
 
 # Specific guard for GPO MA
 # Provide a set of invocation checks and row checks per method
@@ -123,6 +125,12 @@ class MAv1Guard(ABACGuardBase):
     # Set of invocation checks indexed by method name
     INVOCATION_CHECK_FOR_METHOD = None
 
+    # Name of policies file
+    policies_filename = "/etc/geni-chapi/member_authority_policy.json"
+
+    # Thread to check whether the policies file has changed
+    policies_file_checker = None
+
     # Lookup argument check per method (or None if none registered)
     def get_argument_check(self, method):
         if self.ARGUMENT_CHECK_FOR_METHOD.has_key(method):
@@ -131,9 +139,16 @@ class MAv1Guard(ABACGuardBase):
 
     # Lookup invocation check per method (or None if none registered)
     def get_invocation_check(self, method):
+        # Initiate file check thread
+        if self.policies_file_checker == None:
+            self.policies_file_checker = \
+                PolicyFileChecker(self.policies_filename, 5, \
+                                      self, MA_LOG_PREFIX)
+            self.policies_file_checker.start()
+
         if self.INVOCATION_CHECK_FOR_METHOD == None:
             policies = \
-                parse_method_policies("/etc/geni-chapi/member_authority_policy.json")
+                parse_method_policies(self.policies_filename)
             self.INVOCATION_CHECK_FOR_METHOD = \
                 create_subject_invocation_checks(policies)
         if self.INVOCATION_CHECK_FOR_METHOD.has_key(method):
