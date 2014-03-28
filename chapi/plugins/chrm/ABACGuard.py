@@ -103,6 +103,7 @@ class SubjectInvocationCheck(InvocationCheck):
                                "$SEARCHING_BY_EMAIL", \
                                "$SEARCHING_FOR_PROJECT_LEAD_BY_UID", \
                                "$PENDING_REQUEST_TO_MEMBER", \
+                               "$PENDING_REQUEST_FROM_MEMBER", \
                                "$REQUEST_ID", \
                                "$REQUEST_ROLE", \
                                "$REQUESTOR" ]
@@ -377,6 +378,12 @@ class SubjectInvocationCheck(InvocationCheck):
                                                                    caller_urn,\
                                                                    session):
                     value = "PENDING_REQUEST_TO_MEMBER"
+            if binding == "$PENDING_REQUEST_FROM_MEMBER":
+                if subject_type == "MEMBER_URN" and \
+                        has_pending_request_on_project_lead_by(caller_urn,\
+                                                                   subject, \
+                                                                   session):
+                    value = "PENDING_REQUEST_FROM_MEMBER"
             if binding == "$REQUEST_ID":
                 if subject_type == "REQUEST_ID":
                     value = subject
@@ -452,7 +459,7 @@ class SubjectInvocationCheck(InvocationCheck):
                                     cert_files_by_name = {"ME" : self.cert_file}, 
                                     key_files_by_name = {"ME" : self.key_file},
                                     manage_context = False)
-        #abac_manager._verbose = True
+        abac_manager._verbose = True
 
         client_urn = get_urn_from_cert(client_cert)
 
