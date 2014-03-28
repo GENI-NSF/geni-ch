@@ -266,37 +266,40 @@ class SubjectInvocationCheck(InvocationCheck):
                 urns = convert_member_uid_to_urn(member_id, session)
             elif 'SLIVER_INFO_CREATOR_URN' in match_option:
                 urns = match_option['SLIVER_INFO_CREATOR_URN']
-        elif 'fields' in options and 'KEY_MEMBER' in options['fields']:
-            urns = options['fields']['KEY_MEMBER']
-        elif 'member_urn' in arguments:
-            urns = arguments['member_urn']
-        elif 'member_id' in arguments:
-            member_id = arguments['member_id']
-            urns = convert_member_uid_to_urn(member_id, session)
-        elif 'key_id' in arguments:
-            key_id = arguments['key_id']
-            q = session.query(db.SSH_KEY_TABLE.c.member_id)
-            q = q.filter(db.SSH_KEY_TABLE.c.id == key_id)
-            rows = q.all()
-            if len(rows) != 1:
-                raise CHAPIv1ArgumentError("No key with given ID %s" % key_id)
-            member_id = rows[0].member_id
-            urns = convert_member_uid_to_urn(member_id, session)
-        elif 'principal' in arguments:
-            principal_uid = arguments['principal']
-            urns = convert_member_uid_to_urn(principal_uid, session)
-        elif 'user_id' in arguments:
-            user_uid = arguments['user_id']
-            urns = convert_member_uid_to_urn(user_uid, session)
-        elif 'context_type' in arguments and 'context_id' in arguments and \
-                arguments['context_type'] == MEMBER_CONTEXT:
-            member_uid = arguments['context_id']
-            urns = convert_member_uid_to_urn(member_uid, session)
-        elif 'attributes' in arguments:
-            attributes = arguments['attributes']
-            if 'MEMBER' in attributes:
-                member_uid = attributes['MEMBER']
+
+        if urns is None:
+            if 'fields' in options and 'KEY_MEMBER' in options['fields']:
+                urns = options['fields']['KEY_MEMBER']
+            elif 'member_urn' in arguments:
+                urns = arguments['member_urn']
+            elif 'member_id' in arguments:
+                member_id = arguments['member_id']
+                urns = convert_member_uid_to_urn(member_id, session)
+            elif 'key_id' in arguments:
+                key_id = arguments['key_id']
+                q = session.query(db.SSH_KEY_TABLE.c.member_id)
+                q = q.filter(db.SSH_KEY_TABLE.c.id == key_id)
+                rows = q.all()
+                if len(rows) != 1:
+                    raise CHAPIv1ArgumentError("No key with given ID %s"\
+                                                   % key_id)
+                member_id = rows[0].member_id
+                urns = convert_member_uid_to_urn(member_id, session)
+            elif 'principal' in arguments:
+                principal_uid = arguments['principal']
+                urns = convert_member_uid_to_urn(principal_uid, session)
+            elif 'user_id' in arguments:
+                user_uid = arguments['user_id']
+                urns = convert_member_uid_to_urn(user_uid, session)
+            elif 'context_type' in arguments and 'context_id' in arguments \
+                    and arguments['context_type'] == MEMBER_CONTEXT:
+                member_uid = arguments['context_id']
                 urns = convert_member_uid_to_urn(member_uid, session)
+            elif 'attributes' in arguments:
+                attributes = arguments['attributes']
+                if 'MEMBER' in attributes:
+                    member_uid = attributes['MEMBER']
+                    urns = convert_member_uid_to_urn(member_uid, session)
 
 #        chapi_info("C_M_S", "%s" % urns)
 
@@ -388,16 +391,16 @@ class SubjectInvocationCheck(InvocationCheck):
                 if subject_type == "REQUEST_ID":
                     value = subject
             if binding == "$REQUEST_ROLE":
-                chapi_info("ABAC", "Request_role... %s" % subject_type);
+#                chapi_info("ABAC", "Request_role... %s" % subject_type);
                 if subject_type == "REQUEST_ID":
                     project_urn = \
                         get_project_request_project_urn(subject, session)
-                    chapi_info("ABAC", "Request_role PROJECT_URN %s..." % project_urn);
+#                    chapi_info("ABAC", "Request_role PROJECT_URN %s..." % project_urn);
                     if project_urn is not None:
                         rows = get_project_role_for_member(caller_urn, \
                                                                project_urn, \
                                                                session)
-                        chapi_info("ABAC", "Request_role rows %s..." % rows)
+#                        chapi_info("ABAC", "Request_role rows %s..." % rows)
                         if len(rows) > 0:
                             role = rows[0].role
                             value = attribute_type_names[role]
@@ -459,7 +462,7 @@ class SubjectInvocationCheck(InvocationCheck):
                                     cert_files_by_name = {"ME" : self.cert_file}, 
                                     key_files_by_name = {"ME" : self.key_file},
                                     manage_context = False)
-        abac_manager._verbose = True
+        #abac_manager._verbose = True
 
         client_urn = get_urn_from_cert(client_cert)
 
