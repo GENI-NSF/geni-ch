@@ -11,6 +11,7 @@
    change_membership calls that were missing self argument (#247)
  * Fix stack trace when deauthorizing client tools (#249)
  * Add ability to specify expiration of certificates (#252)
+ * geni-sign-tool-csr returns a certificate chain (#256)
 
 == 1.6 ==
  * Ensure that uniqueness of project and slice names is case-insensitive (#244)

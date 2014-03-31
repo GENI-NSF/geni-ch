@@ -65,6 +65,27 @@ def parse_args(argv):
         raise Exception("Missing some required arguments")
     return options,args
 
+def load_signer_chain(pemfile):
+    # Read the file line by line, loading everything between a begin
+    # marker and an end marker.
+    begin_marker = '-----BEGIN CERTIFICATE-----\n'
+    end_marker = '-----END CERTIFICATE-----'
+    chain = ''
+    cert = ''
+    with open(pemfile) as f:
+        pemline = f.readline()
+        while pemline:
+            if pemline.startswith(end_marker):
+                cert = cert + end_marker + '\n'
+                chain = chain + cert
+                cert = ''
+            elif cert:
+                cert = cert + pemline
+            elif pemline == begin_marker:
+                cert = pemline
+            pemline = f.readline()
+    return chain
+
 def main(argv=None):
     if argv is None:
         argv = sys.argv
@@ -85,11 +106,14 @@ def main(argv=None):
                              % (options.output))
             return 1
 
+    signer_chain = load_signer_chain(options.certfile)
+
     # make_cert() prepends the 'URI:' part.
     tool_urn = 'urn:publicid:IDN+%s+tool+%s' % (options.authority, options.id)
     tool_uuid = uuid.uuid4()
     cert = cu.make_cert(tool_uuid, options.email, tool_urn, options.certfile,
                         options.keyfile, options.csr, options.days)
+    chain = cert + signer_chain
     if options.output:
         # Write cert to file
         try:
@@ -99,10 +123,10 @@ def main(argv=None):
             # If the write to file failed, print to stdout.
             sys.stderr.write('Unable to write file %s.' % (options.output)
                              + ' Printing to standard output instead.\n')
-            print cert
+            print chain
     else:
         # send cert to stdout
-        print cert
+        print chain
     return 0
 
 if __name__ == '__main__':
