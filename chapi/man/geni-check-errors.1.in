@@ -1,0 +1,42 @@
+.\"                                      Hey, EMACS: -*- nroff -*-
+.\" First parameter, NAME, should be all caps
+.\" Second parameter, SECTION, should be 1-8, maybe w/ subsection
+.\" other parameters are allowed: see man(7), man(1)
+.TH GENI-CHECK-ERRORS 1 "March 31, 2014"
+.\" Please adjust this date whenever revising the manpage.
+.\"
+.\" Some roff macros, for reference:
+.\" .nh        disable hyphenation
+.\" .hy        enable hyphenation
+.\" .ad l      left justify
+.\" .ad b      justify to both left and right margins
+.\" .nf        disable filling
+.\" .fi        enable filling
+.\" .br        insert line break
+.\" .sp <n>    insert n+1 empty lines
+.\" for manpage-specific macros, see man(7)
+.SH NAME
+geni-check-errors \- check log files for errors
+.
+.SH SYNOPSIS
+.B geni-check-errors
+.
+.SH DESCRIPTION
+.B geni-check-errors
+examines the various log files related to the GENI
+clearinghouse for errors. Files of regular expressions are used to
+filter out known messages leaving only unexpected log messages.
+.SH FILES
+.I @pkgdatadir@/ch-error-log-out.txt
+.br
+.I @pkgdatadir@/amsoil-log-out.txt
+.br
+.I @pkgdatadir@/apache-error-log-out.txt
+.br
+.I @pkgdatadir@/chapi-log-out.txt
+.br
+.RS
+Files of regular expressions to filter known messages from log files.
+.RE
+.SH AUTHOR
+geni-check-errors was written by Raytheon BBN Technologies.
