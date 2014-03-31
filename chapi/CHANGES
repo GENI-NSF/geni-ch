@@ -12,6 +12,8 @@
  * Fix stack trace when deauthorizing client tools (#249)
  * Add ability to specify expiration of certificates (#252)
  * geni-sign-tool-csr returns a certificate chain (#256)
+ * Project join request IDs should be printed as a string in error
+   messages, not an integer. (#257)
 
 == 1.6 ==
  * Ensure that uniqueness of project and slice names is case-insensitive (#244)
