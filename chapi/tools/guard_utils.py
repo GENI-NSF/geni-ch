@@ -37,6 +37,7 @@ import MA_constants as MA
 from datetime import datetime, timedelta
 from dbutils import add_filters
 from chapi_log import *
+import json
 
 # context support
 _context = threading.local()
@@ -244,6 +245,54 @@ def convert_project_uid_to_urn(project_uid, session):
             raise CHAPIv1ArgumentError("Unknown project uid: %s " % project_uid)
     else:
         return validate_uid_list(project_uids, cache, 'project')
+
+# Take a project urn or list of urns, make sure they're all in the cache
+# and return a uid or list of uid
+def convert_project_urn_to_uid(project_urn, session):
+    db = pm.getService('chdbengine')
+    config = pm.getService('config')
+    authority = config.get("chrm.authority")
+
+    project_urns = project_urn
+    if not isinstance(project_urn, list): project_urns = [project_urn]
+
+    if len(project_urns) == 0:
+        return []
+
+
+    cache = cache_get('project_urn_to_uid')
+    uncached_urns = [id for id in project_urns if id not in cache]
+
+    if len(uncached_urns) > 0:
+        uncached_names = [from_project_urn(urn) for urn in uncached_urns]
+        q = session.query(db.PROJECT_TABLE.c.project_name, \
+                              db.PROJECT_TABLE.c.project_id)
+        q = q.filter(db.PROJECT_TABLE.c.project_name.in_(uncached_names))
+        rows = q.all()
+        for row in rows:
+            project_id = row.project_id
+            project_name = row.project_name
+            project_urn = to_project_urn(authority, project_name)
+            cache[project_urn] = project_id
+
+    if not isinstance(project_urn, list):
+        if project_urn in cache:
+            return cache[project_urn]
+        else:
+            raise CHAPIv1ArgumentError("Unknown project urn: %s " % \
+                                           project_urn)
+    else:
+        return validate_uid_list(project_urns, cache, 'project')
+
+# Convert a project URN to project name
+def convert_project_urn_to_name(urn, session):
+    return from_project_urn(urn)
+
+# Convert a project name to project urn
+def convert_project_name_to_urn(name, session):
+    config = pm.getService('config')
+    authority = config.get("chrm.authority")
+    return to_project_urn(authority, name)
 
 # Take a uid or list of uids, make sure they're all in the cache
 # and return a urn or list of urns
@@ -879,7 +928,8 @@ def key_subject_extractor(options, arguments, session):
         q = q.filter(db.SSH_KEY_TABLE.c.member_id ==
                      db.MEMBER_ATTRIBUTE_TABLE.c.member_id)
         q = q.filter(db.MEMBER_ATTRIBUTE_TABLE.c.name=='urn')
-        q = add_filters(q, match_option, db.SSH_KEY_TABLE, MA.key_field_mapping)
+        q = add_filters(q, match_option, db.SSH_KEY_TABLE, 
+                        MA.key_field_mapping, session)
         rows = q.all()
         extracted['MEMBER_URN'] = [row.value for row in rows]
 
@@ -1044,3 +1094,159 @@ def sliver_info_extractor(options, arguments, session):
     raise CHAPIv1ArgumentError("Illegal options for lookup_sliver_info: %s"%\
                                    options)
         
+
+# **** New methods        
+        
+# Support for parsing CHAPI policies from JSON files
+# Take a JSON file and return a dictionary of 
+# method => {"policy" : ..., "assertions" :  ... }
+def parse_method_policies(filename):
+    policies = {}
+    try:
+        data = open(filename).read()
+        raw_policies = json.loads(data)
+
+#        chapi_info("PMP", "DATA = %s" % data)
+#        chapi_info("PMP", "RP = %s" % raw_policies)
+        
+        # Replace names of functions with functions"
+        for method_name, method_attrs in raw_policies.items():
+            if method_name == "__DOC__" or \
+                    isinstance(method_attrs, basestring): 
+                continue
+#            chapi_info("PMP", "MN = %s MA = %s" % (method_name, method_attrs))
+            assertions = None
+            extractor = None
+            policy_statements = []
+            for attr_name, attr_values in method_attrs.items():
+#               chapi_info("PMP", "AN = %s AV = %s" % (attr_name, attr_values))
+                if attr_name == 'assertions':
+                    assertions = attr_values
+                elif attr_name == 'policies':
+                    raw_policy_statements = attr_values
+                    policy_statements = \
+                        [rps.replace("$METHOD", method_name.upper()) \
+                             for rps in raw_policy_statements]
+            policies[method_name] = {"policies" : policy_statements, 
+                                     "assertions" : assertions}
+    except Exception, e:
+        chapi_info("Error", "%s" % e)
+        raise Exception("Error parsing policy file: %s" % filename)
+
+    return policies
+
+# Do two members (by URN) share membership in some slice?
+def shares_slice(member1_urn, member2_urn, session):
+
+    db = pm.getService("chdbengine")
+    pm1 = aliased(db.PROJECT_MEMBER_TABLE)
+    pm2 = aliased(db.PROJECT_MEMBER_TABLE)
+    ma1 = aliased(db.MEMBER_ATTRIBUTE_TABLE)
+    ma2 = aliased(db.MEMBER_ATTRIBUTE_TABLE)
+
+    q = session.query(pm1.c.project_id, pm2.c.project_id, \
+                          ma1.c.value, ma2.c.value)
+    q = q.filter(pm1.c.project_id == pm2.c.project_id)
+    q = q.filter(pm1.c.member_id == ma1.c.member_id)
+    q = q.filter(pm2.c.member_id == ma2.c.member_id)
+    q = q.filter(ma1.c.name == 'urn')
+    q = q.filter(ma2.c.name == 'urn')
+    q = q.filter(ma1.c.value == member1_urn)
+    q = q.filter(ma2.c.value == member2_urn)
+
+    rows = q.all()
+
+    return len(rows) > 0
+
+# Do two members (by URN) share membership in some project?
+def shares_project(member1_urn, member2_urn, session):
+    db = pm.getService("chdbengine")
+    sm1 = aliased(db.SLICE_MEMBER_TABLE)
+    sm2 = aliased(db.SLICE_MEMBER_TABLE)
+    ma1 = aliased(db.MEMBER_ATTRIBUTE_TABLE)
+    ma2 = aliased(db.MEMBER_ATTRIBUTE_TABLE)
+
+    q = session.query(sm1.c.slice_id, sm2.c.slice_id, \
+                          ma1.c.value, ma2.c.value)
+    q = q.filter(sm1.c.slice_id == sm2.c.slice_id)
+    q = q.filter(sm1.c.member_id == ma1.c.member_id)
+    q = q.filter(sm2.c.member_id == ma2.c.member_id)
+    q = q.filter(ma1.c.name == 'urn')
+    q = q.filter(ma2.c.name == 'urn')
+    q = q.filter(ma1.c.value == member1_urn)
+    q = q.filter(ma2.c.value == member2_urn)
+
+    rows = q.all()
+
+    return len(rows) > 0
+
+
+# Does the given member (by URN) have the given role on some project?
+def has_role_on_some_project(member_urn, role, session):
+    db = pm.getService("chdbengine")
+    q = session.query(db.PROJECT_MEMBER_TABLE.c.member_id, \
+                          db.PROJECT_MEMBER_TABLE.c.role, \
+                          db.MEMBER_ATTRIBUTE_TABLE.c.value)
+    q = q.filter(db.MEMBER_ATTRIBUTE_TABLE.c.name == 'urn')
+    q = q.filter(db.MEMBER_ATTRIBUTE_TABLE.c.value == member_urn)
+    q = q.filter(db.MEMBER_ATTRIBUTE_TABLE.c.member_id == \
+                     db.PROJECT_MEMBER_TABLE.c.member_id)
+    q = q.filter(db.PROJECT_MEMBER_TABLE.c.role == role)
+
+    rows = q.all()
+
+    return len(rows) > 0
+
+# Does requestor (by URN) have a pending request for a project whose
+# lead is the given lead_urn
+def has_pending_request_on_project_lead_by(lead_urn, requestor_urn, session):
+    db = pm.getService("chdbengine")
+    pm1 = aliased(db.PROJECT_MEMBER_TABLE)
+    pm2 = aliased(db.PROJECT_MEMBER_TABLE)
+    ma1 = aliased(db.MEMBER_ATTRIBUTE_TABLE)
+    ma2 = aliased(db.MEMBER_ATTRIBUTE_TABLE)
+
+    q = session.query(db.PROJECT_REQUEST_TABLE.c.status, ma2.c.value)
+    q = q.filter(pm1.c.member_id == ma1.c.member_id)
+    q = q.filter(db.PROJECT_REQUEST_TABLE.c.requestor == ma2.c.member_id)
+    q = q.filter(ma1.c.name == 'urn')
+    q = q.filter(ma2.c.name == 'urn')
+    q = q.filter(ma1.c.value == lead_urn)
+    q = q.filter(ma2.c.value == requestor_urn)
+    q = q.filter(db.PROJECT_REQUEST_TABLE.c.context_id == pm1.c.project_id)
+    q = q.filter(pm1.c.role.in_([LEAD_ATTRIBUTE, ADMIN_ATTRIBUTE]))
+    q = q.filter(db.PROJECT_REQUEST_TABLE.c.status == PENDING_STATUS)
+
+    rows = q.all()
+    return len(rows) > 0
+
+
+# Return the requestor URN of the request ID, or None if none exists
+def get_project_request_requestor_urn(request_id, session):
+    db = pm.getService("chdbengine")
+    q = session.query(db.PROJECT_REQUEST_TABLE.c.requestor, \
+                          db.MEMBER_ATTRIBUTE_TABLE.c.value)
+    q = q.filter(db.PROJECT_REQUEST_TABLE.c.id == request_id)
+    q = q.filter(db.PROJECT_REQUEST_TABLE.c.requestor == \
+                     db.MEMBER_ATTRIBUTE_TABLE.c.member_id)
+    q = q.filter(db.MEMBER_ATTRIBUTE_TABLE.c.name == 'urn')
+    rows = q.all()
+    if len(rows) > 0:
+        requestor_urn = rows[0].value
+        return requestor_urn
+    else:
+        return None
+
+# Return the project URN of the request ID, or None if none exists
+def get_project_request_project_urn(request_id, session):
+    db = pm.getService("chdbengine")
+    q = session.query(db.PROJECT_REQUEST_TABLE.c.context_id)
+    q = q.filter(db.PROJECT_REQUEST_TABLE.c.id == request_id)
+    rows = q.all()
+    
+    if len(rows) > 0:
+        project_uid = rows[0].context_id
+        project_urn = convert_project_uid_to_urn(project_uid, session)
+        return project_urn
+    else:
+        return None

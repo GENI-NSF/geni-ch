@@ -25,13 +25,15 @@ dist_tool_DATA = \
 	cs_utils.py \
 	dbtest.py \
 	dbutils.py \
+	file_checker.py \
 	geni_constants.py \
 	geni_utils.py \
 	guard_utils.py \
 	mapped_tables.py \
 	manage_service_attributes.py \
 	multiclient.py \
-	pgch_client.py
+	pgch_client.py \
+	policy_file_checker.py 
 
 dist_tool_SCRIPTS = \
 	.bashrc \
