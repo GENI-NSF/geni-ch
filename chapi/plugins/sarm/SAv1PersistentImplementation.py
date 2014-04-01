@@ -34,10 +34,10 @@ from sqlalchemy.orm import mapper
 
 import amsoil.core.pluginmanager as pm
 
-import sfa.trust.gid as gid
-from sfa.trust.certificate import Certificate
-import geni.util.cred_util as cred_util
-import geni.util.cert_util as cert_util
+import gcf.sfa.trust.gid as gid
+from gcf.sfa.trust.certificate import Certificate
+import gcf.geni.util.cred_util as cred_util
+import gcf.geni.util.cert_util as cert_util
 from chapi.Exceptions import *
 import chapi.Parameters
 from chapi.SliceAuthority import SAv1DelegateBase

@@ -30,7 +30,6 @@ from sqlalchemy.orm import mapper
 from tools.cert_utils import *
 from chapi.GuardBase import GuardBase
 from chapi.Exceptions import *
-import sfa.trust.certificate;
 import types
 from ABAC import *
 from tools.SpeaksFor import determine_speaks_for
