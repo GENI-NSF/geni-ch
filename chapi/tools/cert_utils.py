@@ -26,6 +26,8 @@ import subprocess
 import os
 import os.path
 import tempfile
+import datetime
+import OpenSSL
 from chapi_log import *
 
 # A set of utilities to pull infomration out of X509 certs
@@ -86,6 +88,14 @@ def get_email_from_cert(cert):
             email = san_part[6:]
             break
     return email
+
+# Pull expiration datetime from certificate
+def get_expiration_from_cert(cert):
+    cert_object = OpenSSL.crypto.load_certificate(OpenSSL.crypto.FILETYPE_PEM,
+                                                  cert)
+    not_after = cert_object.get_notAfter()
+    expires = datetime.datetime.strptime(not_after, '%Y%m%d%H%M%SZ')
+    return expires
 
 # Pull the object name from the URN
 # It is the part after the last +

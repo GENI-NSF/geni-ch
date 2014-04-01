@@ -921,6 +921,8 @@ class MAv1Implementation(MAv1DelegateBase):
         cert_pem = make_cert(member_id, member_email, member_urn,
                              self.cert, self.key, csr_file)
 
+        expiration = get_expiration_from_cert(cert_pem)
+
         # Grab signer pem
         signer_pem = open(self.cert).read()
 
@@ -930,7 +932,8 @@ class MAv1Implementation(MAv1DelegateBase):
 
 
         # Store cert and key in outside_cert table
-        insert_fields={'certificate' : cert_chain, 'member_id' : member_id}
+        insert_fields={'certificate' : cert_chain, 'member_id' : member_id,
+                       'expiration' : expiration}
         if private_key:
             insert_fields['private_key'] = private_key
         ins = self.db.OUTSIDE_CERT_TABLE.insert().values(insert_fields)
@@ -985,7 +988,7 @@ class MAv1Implementation(MAv1DelegateBase):
             member_email = convert_member_uid_to_email(member_id, session)
             cert_pem = make_cert(member_id, member_email, member_urn, \
                                      self.cert, self.key, csr_file)
-
+            expiration = get_expiration_from_cert(cert_pem)
             signer_pem = open(self.cert).read()
             cert_chain = cert_pem + signer_pem
 
@@ -993,8 +996,11 @@ class MAv1Implementation(MAv1DelegateBase):
             # (member_id, client_urn, certificate, private_key)
             # values 
             # (member_id, client_urn, cert, key)
-            insert_values = {'client_urn' : client_urn, 'member_id' : str(member_id), \
-                                 'private_key' : private_key, 'certificate' : cert_chain}
+            insert_values = {'client_urn' : client_urn,
+                             'member_id' : str(member_id),
+                             'private_key' : private_key,
+                             'certificate' : cert_chain,
+                             'expiration' : expiration}
             ins = self.db.INSIDE_KEY_TABLE.insert().values(insert_values)
             session.execute(ins)
 
