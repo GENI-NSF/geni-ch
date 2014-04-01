@@ -14,6 +14,7 @@
  * geni-sign-tool-csr returns a certificate chain (#256)
  * Project join request IDs should be printed as a string in error
    messages, not an integer. (#257)
+ * Populate expiration column on certificate insert (#258)
 
 == 1.6 ==
  * Ensure that uniqueness of project and slice names is case-insensitive (#244)
