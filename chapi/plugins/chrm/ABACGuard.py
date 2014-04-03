@@ -54,25 +54,28 @@ class InvocationCheck(object):
     # Raise an ARGUMENT_ERROR if there is something wrong about the 
     # arguments passed to method
     # Return dictionary of {subject_type : subjects}
-    def validate_arguments(self, client_cert, method, credentials, \
-                               options, arguments, session):
+    def validate_arguments(self, client_cert, method, credentials,
+                           options, arguments, session):
         # Method-specific logic
         return None
 
     # Raise an AUTHORIZATION_ERROR if there is something wrong about the 
     # certs and credentials and options/arguments passed to the call
     # and subjects extracted from validate_arguments call
-    def authorize_call(self, client_cert, method, credentials, options, \
-                           arguments, subjects, session ):
+    def authorize_call(self, client_cert, method, credentials, options,
+                       arguments, subjects, session ):
         raise CHAPIv1NotImplementedError("Abstract Base class: InvocationCheck")
 
     # Validate arguments and check authorization
     def validate(self, client_cert, method, credentials, options, 
                  arguments, session):
-        subjects = self.validate_arguments(client_cert, method, credentials, \
-                                               options, arguments, session)
-        self.authorize_call(client_cert, method, credentials, \
-                                options, arguments, subjects, session)
+        subjects = self.validate_arguments(client_cert, method, credentials,
+                                           options, arguments, session)
+        # de-duplicate the lists of subjects to minimize labor
+        for key in subjects.keys():
+            subjects[key] = list(set(subjects[key]))
+        self.authorize_call(client_cert, method, credentials,
+                            options, arguments, subjects, session)
 
 # Class that determines if the caller has the right to invoke a given method on all
 # the subjects of a given method invocation
