@@ -1135,9 +1135,8 @@ def parse_method_policies(filename):
 
     return policies
 
-# Do two members (by URN) share membership in some slice?
-def shares_slice(member1_urn, member2_urn, session):
-
+# Do two members (by URN) share membership in some project?
+def shares_project(member1_urn, member2_urn, session):
     db = pm.getService("chdbengine")
     pm1 = aliased(db.PROJECT_MEMBER_TABLE)
     pm2 = aliased(db.PROJECT_MEMBER_TABLE)
@@ -1158,8 +1157,8 @@ def shares_slice(member1_urn, member2_urn, session):
 
     return len(rows) > 0
 
-# Do two members (by URN) share membership in some project?
-def shares_project(member1_urn, member2_urn, session):
+# Do two members (by URN) share membership in some slice?
+def shares_slice(member1_urn, member2_urn, session):
     db = pm.getService("chdbengine")
     sm1 = aliased(db.SLICE_MEMBER_TABLE)
     sm2 = aliased(db.SLICE_MEMBER_TABLE)
