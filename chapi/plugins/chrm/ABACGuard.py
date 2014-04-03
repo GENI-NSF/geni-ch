@@ -71,6 +71,9 @@ class InvocationCheck(object):
                  arguments, session):
         subjects = self.validate_arguments(client_cert, method, credentials, \
                                                options, arguments, session)
+        # de-duplicate the lists of subjects to minimize labor
+        for key in subjects.keys():
+            subjects[key] = list(set(subjects[key]))
         self.authorize_call(client_cert, method, credentials, \
                                 options, arguments, subjects, session)
 
