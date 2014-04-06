@@ -326,82 +326,97 @@ class SubjectInvocationCheck(InvocationCheck):
 
     def _generate_bindings_for_subjects(self, caller_urn, subject_type, subjects, \
                                options, arguments, session):
+
+        authority = pm.getService('config').get("chrm.authority")
+
         # Prepare a set of bindings (label => value) for each subject
         bindings_by_subject = {}
         for subject in subjects: 
-            bindings_by_subject[subject] = dict(self._bindings)
-
-        index_by_subject = {}
-        for i in range(len(subjects)): index_by_subject[subjects[i]] = i
+            bindings_by_subject[subject] = {}
 
         for binding in self._bindings:
-            values = [None for subject in subjects]
             if binding == "$ROLE":
                 if subject_type == "SLICE_URN":
                     rows = get_slice_role_for_member(caller_urn, \
                                                          subjects, session)
+                    for row in rows:
+                        role = row.role
+                        role_name = attribute_type_names[role]
+                        subject = row.slice_urn
+                        bindings_by_subject[subject][binding] = role_name
                 elif subject_type == "PROJECT_URN":
                     rows = get_project_role_for_member(caller_urn, \
                                                             subjects, session)
+                    for row in rows:
+                        role = row.role
+                        role_name = attribute_type_names[role]
+                        project_name = row.project_name
+                        subject = to_project_urn(authority, project_name)
+                        bindings_by_subject[subject][binding] = role_name
                 else:
                     # Can't compute role for other than slice/project
-                    rows = [None for i in range(len(subjects))] 
-                for row in rows:
-                    role = row.role
-                    subject = row.name
-                    role_name = attribute_type_names[role]
-                    values[index_by_subject[subject]] = role_name
+                    continue
 
             elif binding == "$SLICE":
                 if subject_type == "SLICE_URN":
-                    values = subjects
+                    for subject in subjects: 
+                        bindings_by_subject[subject][binding]=subject
             elif binding == "$PROJECT":
                 if subject_type == "PROJECT_URN":
-                    values = subjects
+                    for subject in subjects: 
+                        bindings_by_subject[subject][binding]=subject
             elif binding == "$MEMBER":
                 if subject_type == "MEMBER_URN":
-                    values = subjects
+                    for subject in subjects: 
+                        bindings_by_subject[subject][binding]=subject
             elif binding == "$SELF":
-                values = [caller_urn for subject in subjects]
+                for subject in subjects:
+                    bindings_by_subject[subject][binding]=caller_urn
             elif binding == "$SHARES_SLICE":
                 if subject_type == "MEMBER_URN":
-                    values = shares_slice(caller_urn, subjects, session)
+                    sharers = shares_slice(caller_urn, subjects, session)
+                    for sharer in sharers:
+                        bindings_by_subject[sharer][binding] = "SHARES_SLICE"
             elif binding == "$SHARES_PROJECT":
                 if subject_type == "MEMBER_URN":
-                    values = shares_project(caller_urn, subjects, session)
+                    sharers = shares_project(caller_urn, subjects, session)
+                    for sharer in sharers:
+                        bindings_by_subject[sharer][binding] = "SHARES_PROJECT"
             elif binding == "$PROJECT_LEAD":
                 if subject_type == "MEMBER_URN":
-                    values = \
-                        has_role_on_some_project(subjects, LEAD_ATTRIBUTE,\
-                                                     "PROJECT_LEAD",
+                    leads = has_role_on_some_project(subjects, LEAD_ATTRIBUTE,
                                                      session)
+                    for lead in leads:
+                        bindings_by_subject[lead][binding] = "PROJECT_LEAD"
             elif binding == "$PROJECT_ADMIN":
                 if subject_type == "MEMBER_URN":
-                    values = \
-                        has_role_on_some_project(subjects, ADMIN_ATTRIBUTE,\
-                                                     "PROJECT_ADMIN",
-                                                     session)
+                    admins = has_role_on_some_project(subjects, ADMIN_ATTRIBUTE,
+                                                      session)
+                    for admin in admins:
+                        bindings_by_subject[admin][binding] = "PROJECT_ADMIN"
             elif binding == "$SEARCHING_BY_EMAIL":
                 if 'match' in options and 'MEMBER_EMAIL' in options['match']:
-                    values = ["SEARCHING_BY_EMAIL" for subject in subjects]
+                    for subject in subjects:
+                        bindings_by_subject[subject][binding] = "SEARCHING_BY_EMAIL"
             elif binding == "$SEARCHING_FOR_PROJECT_LEAD_BY_UID":
                 if 'match' in options and 'MEMBER_UID' in options['match']:
-                    values = \
+                    leads = \
                         has_role_on_some_project(subjects, LEAD_ATTRIBUTE,\
-                                                     "SEARCHING_FOR_PROJECT_LEAD_BY_UID",
                                                      session)
+                    for lead in leads:
+                        bindings_by_subject[lead][binding] = "SEARCHING_FOR_PROJECT_LEAD_BY_UID"
             elif binding == "$PENDING_REQUEST_TO_MEMBER":
 
                 # This means I have a pending request to one of these people
                 # Meaning the request is created by me
                 # and is on a project of which they are lead or admin
                 if subject_type == "MEMBER_URN":
-                    values = \
+                    leads = \
                         has_pending_request_on_project_lead_by(subjects, [caller_urn], 
-                                                               "PENDING_REQUEST_TO_MEMBER",
                                                                True,
                                                                session)
-
+                    for lead in leads:
+                        bindings_by_subject[lead][binding] = "PENDING_REQUEST_TO_MEMBER"
 
             elif binding == "$PENDING_REQUEST_FROM_MEMBER":
 
@@ -409,150 +424,39 @@ class SubjectInvocationCheck(InvocationCheck):
                 # Meaning the request is created by me
                 # and is on a project of which they are lead or admin
                 if subject_type == "MEMBER_URN":
-                    values = \
+                    requestors = \
                         has_pending_request_on_project_lead_by([caller_urn],  subjects, 
-                                                               "PENDING_REQUEST_FROM_MEMBER",
                                                                False,
                                                                session)
+                    for requestor in requestors:
+                        bindings_by_subject[requestor][binding] = "PENDING_REQUEST_FROM_MEMBER"
+
 
             elif binding == "$REQUEST_ID":
                 if subject_type == "REQUEST_ID":
-                    values = subjects
+                    for subject in subjects:
+                        bindings_by_subject[subject][binding] = subject
             elif binding == "$REQUEST_ROLE":
-#                chapi_info("ABAC", "Request_role... %s" % subject_type);
                 if subject_type == "REQUEST_ID":
-                    project_urns = \
-                        get_project_request_project_urn(subjects, session)
-#                    chapi_info("ABAC", "Request_role PROJECT_URN %s..." % project_urn);
-                    if project_urn is not None:
-                        rows = get_project_role_for_member(caller_urn, \
-                                                               project_urn, \
-                                                               session)
-#                        chapi_info("ABAC", "Request_role rows %s..." % rows)
-                        if len(rows) > 0:
-                            role = rows[0].role
-                            value = attribute_type_names[role]
+                    for subject in subjects:
+                        project_urn = \
+                            get_project_request_project_urn(subject, session)
+                        if project_urn is not None:
+                            rows = get_project_role_for_member(caller_urn, \
+                                                                   project_urn, \
+                                                                   session)
+                            if len(rows) > 0:
+                                role = rows[0].role
+                                role_name = attribute_type_names[role]
+                                bindings_by_subject[subject][binding] = role_name
             elif binding == "$REQUESTOR":
                 if subject_type == "REQUEST_ID":
-                    requestor_urns = [get_project_request_requestor_urn(subject, session) \
-                                          for subject in subjects]
-                    for i in range(len(subjects)):
-                        subject = subjects[i]
-                        requestor_urn = requestor_urns[i]
+                    for subject in subjects:
+                        requestor_urn = get_project_request_requestor_urn(subject, session) 
                         if caller_urn == requestor_urn:
-                            values[subject] = "REQUESTOR"
-
-            for i in range(len(subjects)):
-                subject = subjects[i]
-                value = values[i]
-                bindings_by_subject[subject][binding] = value
+                            bindings_by_subject[subject][binding] = "REQUESTOR"
 
         return bindings_by_subject
-
-
-    def _generate_bindings(self, caller_urn, subject_type, subject, \
-                               options, arguments, session):
-
-        # Remove any bindings from previous subject
-        for binding in self._bindings: self._bindings[binding] = None
-
-#        chapi_info("GB1","BINDINGS = %s SUBJECT = %s" % (self._bindings, subject))
-        for binding in self._bindings:
-            t0 = time.time()
-            value = None
-            if binding == "$ROLE":
-                if subject_type == "SLICE_URN":
-                    rows = get_slice_role_for_member(caller_urn, \
-                                                         subject, session)
-                elif subject_type == "PROJECT_URN":
-                    rows = get_project_role_for_member(caller_urn, \
-                                                            subject, session)
-                else:
-                    rows = [] # Can't compute role for other than slice/project
-                for row in rows:
-                    role = row.role
-                    value = attribute_type_names[role]
-                    break
-            elif binding == "$SLICE":
-                if subject_type == "SLICE_URN":
-                    value = subject
-            elif binding == "$PROJECT":
-                if subject_type == "PROJECT_URN":
-                    value = subject
-            elif binding == "$MEMBER":
-                if subject_type == "MEMBER_URN":
-                    value = subject
-            elif binding == "$SELF":
-                value = caller_urn
-            elif binding == "$SHARES_SLICE":
-                if subject_type == "MEMBER_URN" and \
-                        shares_slice(caller_urn, subject, session):
-                    value = "SHARES_SLICE"
-            elif binding == "$SHARES_PROJECT":
-                if subject_type == "MEMBER_URN" and \
-                        shares_project(caller_urn, subject, session):
-                    value = "SHARES_PROJECT"
-            elif binding == "$PROJECT_LEAD":
-                if subject_type == "MEMBER_URN" and \
-                        has_role_on_some_project(subject, LEAD_ATTRIBUTE,\
-                                                     session):
-                    value = "PROJECT_LEAD"
-            elif binding == "$PROJECT_ADMIN":
-                if subject_type == "MEMBER_URN" and \
-                        has_role_on_some_project(subject, ADMIN_ATTRIBUTE,\
-                                                     session):
-                    value = "PROJECT_ADMIN"
-            elif binding == "$SEARCHING_BY_EMAIL":
-                if 'match' in options and 'MEMBER_EMAIL' in options['match']:
-                    value = "SEARCHING_BY_EMAIL"
-            elif binding == "$SEARCHING_FOR_PROJECT_LEAD_BY_UID":
-                if 'match' in options and 'MEMBER_UID' in options['match'] \
-                        and has_role_on_some_project(subject, LEAD_ATTRIBUTE,\
-                                                         session):
-                    value = "SEARCHING_FOR_PROJECT_LEAD_BY_UID"
-            elif binding == "$PENDING_REQUEST_TO_MEMBER":
-                if subject_type == "MEMBER_URN" and \
-                        has_pending_request_on_project_lead_by(subject, \
-                                                                   caller_urn,\
-                                                                   session):
-                    value = "PENDING_REQUEST_TO_MEMBER"
-            elif binding == "$PENDING_REQUEST_FROM_MEMBER":
-                if subject_type == "MEMBER_URN" and \
-                        has_pending_request_on_project_lead_by(caller_urn,\
-                                                                   subject, \
-                                                                   session):
-                    value = "PENDING_REQUEST_FROM_MEMBER"
-            elif binding == "$REQUEST_ID":
-                if subject_type == "REQUEST_ID":
-                    value = subject
-            elif binding == "$REQUEST_ROLE":
-#                chapi_info("ABAC", "Request_role... %s" % subject_type);
-                if subject_type == "REQUEST_ID":
-                    project_urn = \
-                        get_project_request_project_urn(subject, session)
-#                    chapi_info("ABAC", "Request_role PROJECT_URN %s..." % project_urn);
-                    if project_urn is not None:
-                        rows = get_project_role_for_member(caller_urn, \
-                                                               project_urn, \
-                                                               session)
-#                        chapi_info("ABAC", "Request_role rows %s..." % rows)
-                        if len(rows) > 0:
-                            role = rows[0].role
-                            value = attribute_type_names[role]
-            elif binding == "$REQUESTOR":
-                if subject_type == "REQUEST_ID":
-                    requestor_urn = \
-                        get_project_request_requestor_urn(subject, session)
-                    if caller_urn == requestor_urn:
-                        value = "REQUESTOR"
-
-            if value:
-                self._bindings[binding]=value
-
-            t1 = time.time()
-            chapi_info("GB", "%s %.6f" % (binding, (t1 - t0)))
-
-#        chapi_info("GB2","BINDINGS = %s SUBJECT = %s" % (self._bindings, subject))
 
     def _assert_bound_statements(self, abac_manager, statements):
         for stmt in statements:
@@ -637,9 +541,6 @@ class SubjectInvocationCheck(InvocationCheck):
                 for subject in subjects_of_type:
                     self._generate_assertion_groups(subject_type, subject, \
                                                         abac_manager)
-#                    self._generate_bindings(client_urn, subject_type, \
-#                                                subject, options, arguments, \
-#                                                session)
                     self._bindings = subjects_bindings[subject]
                     
                     self._assert_bound_statements(abac_manager, self._assertions)
