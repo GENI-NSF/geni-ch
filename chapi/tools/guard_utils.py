@@ -1135,31 +1135,36 @@ def parse_method_policies(filename):
 
     return policies
 
-# Do two members (by URN) share membership in some slice?
-def shares_slice(member1_urn, member2_urn, session):
+# The convention of these methods is to return the list of subjects that
+# Satisfy the criteria
+# e.g. shares_project(member1_urn, member2_urns) returns the subset of member2_urns that
+# share a project with member1_urn
 
+# Return those members of member2_urns that share membership in a project with member1_urn
+def shares_project(member1_urn, member2_urns, session):
     db = pm.getService("chdbengine")
     pm1 = aliased(db.PROJECT_MEMBER_TABLE)
     pm2 = aliased(db.PROJECT_MEMBER_TABLE)
     ma1 = aliased(db.MEMBER_ATTRIBUTE_TABLE)
     ma2 = aliased(db.MEMBER_ATTRIBUTE_TABLE)
 
-    q = session.query(pm1.c.project_id, pm2.c.project_id, \
-                          ma1.c.value, ma2.c.value)
+    q = session.query(pm1.c.project_id, 
+                          ma1.c.value.label('member1'), ma2.c.value.label('member2'))
     q = q.filter(pm1.c.project_id == pm2.c.project_id)
     q = q.filter(pm1.c.member_id == ma1.c.member_id)
     q = q.filter(pm2.c.member_id == ma2.c.member_id)
     q = q.filter(ma1.c.name == 'urn')
     q = q.filter(ma2.c.name == 'urn')
     q = q.filter(ma1.c.value == member1_urn)
-    q = q.filter(ma2.c.value == member2_urn)
+    q = q.filter(ma2.c.value.in_(member2_urns))
 
     rows = q.all()
 
-    return len(rows) > 0
+    sharers = [row.member2 for row in rows]
+    return sharers
 
-# Do two members (by URN) share membership in some project?
-def shares_project(member1_urn, member2_urn, session):
+# Return those members of member2_urns who share a slice with member1_urn
+def shares_slice(member1_urn, member2_urns, session):
     db = pm.getService("chdbengine")
     sm1 = aliased(db.SLICE_MEMBER_TABLE)
     sm2 = aliased(db.SLICE_MEMBER_TABLE)
@@ -1167,59 +1172,77 @@ def shares_project(member1_urn, member2_urn, session):
     ma2 = aliased(db.MEMBER_ATTRIBUTE_TABLE)
 
     q = session.query(sm1.c.slice_id, sm2.c.slice_id, \
-                          ma1.c.value, ma2.c.value)
+                          ma1.c.value.label('member1'), ma2.c.value.label('member2'))
     q = q.filter(sm1.c.slice_id == sm2.c.slice_id)
     q = q.filter(sm1.c.member_id == ma1.c.member_id)
     q = q.filter(sm2.c.member_id == ma2.c.member_id)
     q = q.filter(ma1.c.name == 'urn')
     q = q.filter(ma2.c.name == 'urn')
     q = q.filter(ma1.c.value == member1_urn)
-    q = q.filter(ma2.c.value == member2_urn)
+    q = q.filter(ma2.c.value.in_(member2_urns))
 
     rows = q.all()
 
-    return len(rows) > 0
+    sharers = [row.member2 for row in rows]
+    return sharers
 
-
-# Does the given member (by URN) have the given role on some project?
-def has_role_on_some_project(member_urn, role, session):
+# Return those members of member_urns that have a given role on some object
+def has_role_on_some_project(member_urns, role, session):
     db = pm.getService("chdbengine")
     q = session.query(db.PROJECT_MEMBER_TABLE.c.member_id, \
                           db.PROJECT_MEMBER_TABLE.c.role, \
                           db.MEMBER_ATTRIBUTE_TABLE.c.value)
     q = q.filter(db.MEMBER_ATTRIBUTE_TABLE.c.name == 'urn')
-    q = q.filter(db.MEMBER_ATTRIBUTE_TABLE.c.value == member_urn)
+    q = q.filter(db.MEMBER_ATTRIBUTE_TABLE.c.value.in_(member_urns))
     q = q.filter(db.MEMBER_ATTRIBUTE_TABLE.c.member_id == \
                      db.PROJECT_MEMBER_TABLE.c.member_id)
     q = q.filter(db.PROJECT_MEMBER_TABLE.c.role == role)
 
     rows = q.all()
 
-    return len(rows) > 0
+    members_with_role = [row.value for row in rows]
+    return members_with_role
 
-# Does requestor (by URN) have a pending request for a project whose
-# lead is the given lead_urn
-def has_pending_request_on_project_lead_by(lead_urn, requestor_urn, session):
+# Return the list of members who have a pending request from or to someone in list of other
+# members
+# That is, if subject_is_lead
+#    Return those members of lead_urns who have a request pending 
+#    from one or more of the requestor_urns
+# Otherwise if not subject_is_lead
+#    Return those members of requestor_urns who have a request pending 
+#    to one or more of the lead_urns
+def has_pending_request_on_project_lead_by(lead_urns, requestor_urns, subject_is_lead, 
+                                               session):
     db = pm.getService("chdbengine")
     pm1 = aliased(db.PROJECT_MEMBER_TABLE)
     pm2 = aliased(db.PROJECT_MEMBER_TABLE)
     ma1 = aliased(db.MEMBER_ATTRIBUTE_TABLE)
     ma2 = aliased(db.MEMBER_ATTRIBUTE_TABLE)
 
-    q = session.query(db.PROJECT_REQUEST_TABLE.c.status, ma2.c.value)
+    q = session.query(db.PROJECT_REQUEST_TABLE.c.status, ma1.c.value.label('lead_urn'),
+                      ma2.c.value.label('requestor_urn'))
     q = q.filter(pm1.c.member_id == ma1.c.member_id)
     q = q.filter(db.PROJECT_REQUEST_TABLE.c.requestor == ma2.c.member_id)
     q = q.filter(ma1.c.name == 'urn')
     q = q.filter(ma2.c.name == 'urn')
-    q = q.filter(ma1.c.value == lead_urn)
-    q = q.filter(ma2.c.value == requestor_urn)
+    q = q.filter(ma1.c.value.in_(lead_urns))
+    q = q.filter(ma2.c.value.in_(requestor_urns))
     q = q.filter(db.PROJECT_REQUEST_TABLE.c.context_id == pm1.c.project_id)
     q = q.filter(pm1.c.role.in_([LEAD_ATTRIBUTE, ADMIN_ATTRIBUTE]))
     q = q.filter(db.PROJECT_REQUEST_TABLE.c.status == PENDING_STATUS)
 
     rows = q.all()
-    return len(rows) > 0
 
+    subjects = requestor_urns
+    if subject_is_lead: subjects = lead_urns
+
+    members = []
+    for row in rows:
+        subject = row.requestor_urn
+        if subject_is_lead: subject = row.lead_urn
+        members.append(subject)
+
+    return members
 
 # Return the requestor URN of the request ID, or None if none exists
 def get_project_request_requestor_urn(request_id, session):
