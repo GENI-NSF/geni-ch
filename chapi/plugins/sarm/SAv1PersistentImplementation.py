@@ -431,7 +431,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
 
     # shared by create_slice() and create_project()
     def finish_create(self, session, object, field_mapping, extra = {}):
-        chapi_info("FC", "%s %s %s" % (object, field_mapping, extra))
+        chapi_debug(SA_LOG_PREFIX, "finish_create: %s %s %s" % (object, field_mapping, extra))
         ret = extra.copy()
         for k, v in field_mapping.iteritems():
             if isinstance(v, types.DictionaryType):
