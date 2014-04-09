@@ -26,6 +26,8 @@ import subprocess
 import os
 import os.path
 import tempfile
+import datetime
+import OpenSSL
 from chapi_log import *
 
 # A set of utilities to pull infomration out of X509 certs
@@ -87,6 +89,14 @@ def get_email_from_cert(cert):
             break
     return email
 
+# Pull expiration datetime from certificate
+def get_expiration_from_cert(cert):
+    cert_object = OpenSSL.crypto.load_certificate(OpenSSL.crypto.FILETYPE_PEM,
+                                                  cert)
+    not_after = cert_object.get_notAfter()
+    expires = datetime.datetime.strptime(not_after, '%Y%m%d%H%M%SZ')
+    return expires
+
 # Pull the object name from the URN
 # It is the part after the last +
 def get_name_from_urn(urn):
@@ -125,8 +135,11 @@ def make_csr():
 
 # Generate an X509 cert and private key
 # Return cert
-def make_cert(uuid, email, urn, \
-                          signer_cert_file, signer_key_file, csr_file):
+def make_cert(uuid, email, urn, signer_cert_file, signer_key_file, csr_file,
+              days=365):
+    # Check validity of args (weak, I know)
+    # Ensure days is an integer, raise exception otherwise
+    days = int(days)
 
     # sign the csr to create cert
     extname = 'v3_user'
@@ -164,7 +177,8 @@ def make_cert(uuid, email, urn, \
                          '-notext', \
                          '-cert', signer_cert_file,\
                          '-keyfile', signer_key_file, \
-                         '-subj', subject ]
+                         '-subj', subject,
+                     '-days', str(days)]
     #chapi_debug("UTILS", "CERT args: "+" ".join(sign_csr_args))
     os.system(" ".join(sign_csr_args))
 

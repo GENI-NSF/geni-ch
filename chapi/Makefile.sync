@@ -48,6 +48,9 @@ syncs: $(GITHASH)
 synct: $(GITHASH)
 	$(RSYNC) $(RSYNC_ARGS) ../chapi tau-ceti.gpolab.bbn.com:
 
+synctop: $(GITHASH)
+	$(RSYNC) $(RSYNC_ARGS) ../chapi tabletop.gpolab.bbn.com:
+
 syncp: $(GITHASH)
 	$(RSYNC) $(RSYNC_ARGS) ../chapi panther.gpolab.bbn.com:
 

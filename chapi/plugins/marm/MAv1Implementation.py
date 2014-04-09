@@ -297,7 +297,7 @@ class MAv1Implementation(MAv1DelegateBase):
         selected_columns, match_criteria = \
             unpack_query_options(options, MA.field_mapping)
         if not match_criteria:
-            raise CHAPIv1ArgumentError('Missing a "match" option')
+            raise CHAPIv1ArgumentError('Missing a valid "match" option')
         self.check_attributes(match_criteria)
         selected_columns = set(selected_columns) & set(allowed_fields)
 
@@ -466,6 +466,9 @@ class MAv1Implementation(MAv1DelegateBase):
                                                            credentials, \
                                                            options, arguments, session)
 #        chapi_info("DAM", "SUBJECTS = %s" % subjects)
+        if len(subjects) == 0:
+            return {}
+
         subject_type = subjects.keys()[0]
         subject_ids = subjects[subject_type]
 #        chapi_info("DAM", "SUBJECT_TYPE = %s" % subject_type)
@@ -825,7 +828,7 @@ class MAv1Implementation(MAv1DelegateBase):
         selected_columns, match_criteria = \
             unpack_query_options(options, MA.key_field_mapping)
         if not match_criteria:
-            raise CHAPIv1ArgumentError('Missing a "match" option')
+            raise CHAPIv1ArgumentError('Missing a valid "match" option')
         self.check_attributes(match_criteria)
 
         q = session.query(self.db.SSH_KEY_TABLE, \
@@ -849,7 +852,8 @@ class MAv1Implementation(MAv1DelegateBase):
                     q = q.filter(self.db.MEMBER_ATTRIBUTE_TABLE.c.value.in_(member_urns))
             del match_criteria['KEY_MEMBER']
 
-        q = add_filters(q, match_criteria, self.db.SSH_KEY_TABLE, MA.key_field_mapping)
+        q = add_filters(q, match_criteria, self.db.SSH_KEY_TABLE, 
+                        MA.key_field_mapping, session)
         rows = q.all()
 
         keys = {}
@@ -864,7 +868,7 @@ class MAv1Implementation(MAv1DelegateBase):
                 continue
 
             keys[member_urn].append(construct_result_row(row, \
-                         selected_columns, MA.key_field_mapping))
+                         selected_columns, MA.key_field_mapping, session))
             # Per federation API, the KEY ID must be exported as a string
             for key_data in keys[member_urn]:
                 if 'KEY_ID' in key_data:
@@ -917,6 +921,8 @@ class MAv1Implementation(MAv1DelegateBase):
         cert_pem = make_cert(member_id, member_email, member_urn,
                              self.cert, self.key, csr_file)
 
+        expiration = get_expiration_from_cert(cert_pem)
+
         # Grab signer pem
         signer_pem = open(self.cert).read()
 
@@ -926,7 +932,8 @@ class MAv1Implementation(MAv1DelegateBase):
 
 
         # Store cert and key in outside_cert table
-        insert_fields={'certificate' : cert_chain, 'member_id' : member_id}
+        insert_fields={'certificate' : cert_chain, 'member_id' : member_id,
+                       'expiration' : expiration}
         if private_key:
             insert_fields['private_key'] = private_key
         ins = self.db.OUTSIDE_CERT_TABLE.insert().values(insert_fields)
@@ -981,7 +988,7 @@ class MAv1Implementation(MAv1DelegateBase):
             member_email = convert_member_uid_to_email(member_id, session)
             cert_pem = make_cert(member_id, member_email, member_urn, \
                                      self.cert, self.key, csr_file)
-
+            expiration = get_expiration_from_cert(cert_pem)
             signer_pem = open(self.cert).read()
             cert_chain = cert_pem + signer_pem
 
@@ -989,8 +996,11 @@ class MAv1Implementation(MAv1DelegateBase):
             # (member_id, client_urn, certificate, private_key)
             # values 
             # (member_id, client_urn, cert, key)
-            insert_values = {'client_urn' : client_urn, 'member_id' : str(member_id), \
-                                 'private_key' : private_key, 'certificate' : cert_chain}
+            insert_values = {'client_urn' : client_urn,
+                             'member_id' : str(member_id),
+                             'private_key' : private_key,
+                             'certificate' : cert_chain,
+                             'expiration' : expiration}
             ins = self.db.INSIDE_KEY_TABLE.insert().values(insert_values)
             session.execute(ins)
 
@@ -1012,7 +1022,7 @@ class MAv1Implementation(MAv1DelegateBase):
             # log_event
             msg = "Deauthorizing client %s for member %s" % (client_urn, self._get_displayname_for_member_urn(member_urn, session))
             attribs = {"MEMBER" : member_id}
-            self.logging_service.log_event(msg, attribs, credentials, options,
+            self.logging_service.log_event(msg, attribs, [], {},
                                            session=session)
             chapi_audit_and_log(MA_LOG_PREFIX, msg, logging.INFO, {'user': user_email})
 

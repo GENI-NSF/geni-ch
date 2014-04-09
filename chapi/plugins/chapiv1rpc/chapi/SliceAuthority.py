@@ -101,7 +101,7 @@ class SAv1Handler(HandlerBase):
         return result
 
     # Generic v2 membership methods
-    def modify_membership(type, urn, credentials, options):
+    def modify_membership(self, type, urn, credentials, options):
         if type == "SLICE":
             result = self.modify_slice_membership(urn, credentials, options)
         elif type == "PROJECT":
@@ -110,7 +110,7 @@ class SAv1Handler(HandlerBase):
             result = self._errorReturn(CHAPIv1ArgumentError("Invalid type: %s" % type))
         return result
 
-    def lookup_members(type, urn, credentials, options):
+    def lookup_members(self, type, urn, credentials, options):
         if type == "SLICE":
             result = self.lookup_slice_members(urn, credentials, options)
         elif type == "PROJECT":
@@ -119,7 +119,7 @@ class SAv1Handler(HandlerBase):
             result = self._errorReturn(CHAPIv1ArgumentError("Invalid type: %s" % type))
         return result
 
-    def lookup_for_member(type, urn, credentials, options):
+    def lookup_for_member(self, type, urn, credentials, options):
         if type == "SLICE":
             result = self.lookup_slices_for_member(urn, credentials, options)
         elif type == "PROJECT":
