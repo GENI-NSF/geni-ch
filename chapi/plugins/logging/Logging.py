@@ -37,6 +37,7 @@ from tools.geni_constants import context_type_names
 from tools.chapi_log import *
 from tools.cert_utils import get_email_from_cert
 from tools.guard_utils import *
+from tools.policy_file_checker import PolicyFileChecker
 
 from sqlalchemy import *
 from datetime import datetime
@@ -187,7 +188,8 @@ class Loggingv1Delegate(DelegateBase):
         q = q.filter(self.db.LOGGING_ENTRY_TABLE.c.event_time >= min_event_time)
         rows = q.all()
         entries = [construct_result_row(row, self.columns, 
-                                        self.field_mapping) for row in rows]
+                                        self.field_mapping, session) \
+                       for row in rows]
         return self._successReturn(entries)
 
     def get_log_entries_for_context(self, client_cert, context_type, 
@@ -201,8 +203,9 @@ class Loggingv1Delegate(DelegateBase):
         q = q.filter(self.db.LOGGING_ENTRY_ATTRIBUTE_TABLE.c.attribute_name == context_type_names[context_type])
         q = q.filter(self.db.LOGGING_ENTRY_ATTRIBUTE_TABLE.c.attribute_value == context_id)
         rows = q.all()
-        entries = [construct_result_row(row, self.columns, 
-                                        self.field_mapping) for row in rows]
+        entries = [construct_result_row(row, self.columns, \
+                                            self.field_mapping, session) \
+                       for row in rows]
         return self._successReturn(entries)
 
     def get_log_entries_by_attributes(self, client_cert, attribute_sets, 
@@ -223,7 +226,8 @@ class Loggingv1Delegate(DelegateBase):
         q = q.distinct()
         rows = q.all()
         entries = [construct_result_row(row, self.columns, 
-                                        self.field_mapping) for row in rows]
+                                        self.field_mapping, session) \
+                       for row in rows]
         return self._successReturn(entries)
 
 
@@ -233,8 +237,10 @@ class Loggingv1Delegate(DelegateBase):
         q = session.query(self.db.LOGGING_ENTRY_ATTRIBUTE_TABLE)
         q = q.filter(self.db.LOGGING_ENTRY_ATTRIBUTE_TABLE.c.event_id == event_id)
         rows = q.all()
-        entries = [construct_result_row(row, self.attribute_columns, 
-                                        self.attribute_field_mapping) for row in rows]
+        entries = [construct_result_row(row, self.attribute_columns, \
+                                            self.attribute_field_mapping, \
+                                            session) \
+                       for row in rows]
         return self._successReturn(entries)
 
 
@@ -262,50 +268,13 @@ class Loggingv1Guard(ABACGuardBase):
             None
         }
 
-    INVOCATION_CHECK_FOR_METHOD = \
-        {
-        # user_id must be self
-        # Must belong to slice or project of context (if any)
-        # Or is about self and only about self
-        'log_event' : \
-            SubjectInvocationCheck([
-                "ME.MAY_LOG_EVENT<-ME.IS_AUTHORITY",
-                "ME.MAY_LOG_EVENT<-ME.IS_OPERATOR",
-                "ME.MAY_LOG_EVENT_$SUBJECT<-ME.BELONGS_TO_$SUBJECT",
-                "ME.MAY_LOG_EVENT_$SUBJECT<-ME.INVOKING_ON_SELF_$SUBJECT",
-                ], [assert_user_acting_on_self, 
-                    assert_user_belongs_to_slice_or_project], 
-                                   attribute_extractor),
-        # user_id must be self
-        'get_log_entries_by_author' : \
-            SubjectInvocationCheck([
-                "ME.MAY_GET_LOG_ENTRIES_BY_AUTHOR<-ME.IS_AUTHORITY",
-                "ME.MAY_GET_LOG_ENTRIES_BY_AUTHOR<-ME.IS_OPERATOR",
-                "ME.MAY_GET_LOG_ENTRIES_BY_AUTHOR_$SUBJECT<-ME.INVOKING_ON_SELF_$SUBJECT",
-                "ME.MAY_GET_LOG_EVENT_$SUBJECT<-ME.IS_$SUBJECT"
-                ], assert_user_acting_on_self, user_id_extractor),
-        # Must be member of project or slice
-        'get_log_entries_for_context' : \
-            SubjectInvocationCheck([
-                "ME.MAY_GET_LOG_ENTRIES_FOR_CONTEXT<-ME.IS_AUTHORITY",
-                "ME.MAY_GET_LOG_ENTRIES_FOR_CONTEXT<-ME.IS_OPERATOR",
-                "ME.MAY_GET_LOG_ENTRIES_FOR_CONTEXT_$SUBJECT<-ME.INVOKING_ON_SELF_$SUBJECT",
-                'ME.MAY_GET_LOG_ENTRIES_FOR_CONTEXT_$SUBJECT<-ME.BELONGS_TO_$SUBJECT'
-                ], [assert_user_acting_on_self, 
-                    assert_belongs_to_slice, assert_belongs_to_project], 
-                                   context_extractor),
-        # For now, leave open (we don't think anyone uses this)
-        'get_log_entries_by_attributes' : \
-            SubjectInvocationCheck([
-                "ME.MAY_GET_LOG_ENTRIES_BY_ATTRIBUTES<-CALLER",
-                ], None, None),
-        # For now, leave open
-        'get_attributes_for_log_entry' : \
-            SubjectInvocationCheck([
-                "ME.MAY_GET_ATTRIBUTES_FOR_LOG_ENTRY<-CALLER"
-                ], None, None)
-        }
+    INVOCATION_CHECK_FOR_METHOD = None
 
+    # Name of policies file
+    policies_filename = "/etc/geni-chapi/logging_policy.json"
+
+    # Thread to check whether the policies file has changed
+    policies_file_checker = None
 
     # Lookup argument check per method (or None if none registered)
     def get_argument_check(self, method):
@@ -315,6 +284,19 @@ class Loggingv1Guard(ABACGuardBase):
 
     # Lookup invocation check per method (or None if none registered)
     def get_invocation_check(self, method):
+
+        # Initiate file check thread
+        if self.policies_file_checker == None:
+            self.policies_file_checker = \
+                PolicyFileChecker(self.policies_filename, 5, \
+                                      self, LOG_LOG_PREFIX)
+            self.policies_file_checker.start()
+
+        if self.INVOCATION_CHECK_FOR_METHOD == None:
+            policies = \
+                parse_method_policies(Loggingv1Guard.policies_filename)
+            self.INVOCATION_CHECK_FOR_METHOD = \
+                create_subject_invocation_checks(policies)
         if self.INVOCATION_CHECK_FOR_METHOD.has_key(method):
             return self.INVOCATION_CHECK_FOR_METHOD[method]
         return None
