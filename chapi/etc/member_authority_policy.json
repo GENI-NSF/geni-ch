@@ -153,7 +153,9 @@
      "__DOC__" : "Authority, operator, self, shares_slice",
      "assertions" : [
        "ME.INVOKING_ON_$MEMBER<-CALLER",
-       "ME.$SHARES_SLICE_$MEMBER<-CALLER"
+       "ME.$SHARES_SLICE_$MEMBER<-CALLER",
+       "ME.INVOKING_ON_$KEY_OWNER<-CALLER"
+       
      ],
      "policies" : [
        "ME.MAY_$METHOD<-ME.IS_AUTHORITY", 

@@ -1273,3 +1273,18 @@ def get_project_request_project_urn(request_id, session):
         return project_urn
     else:
         return None
+
+# Return the URN of the owner of an SSH key
+def get_key_owner_urn(key_id, session):
+    db = pm.getService("chdbengine")
+    q = session.query(db.MEMBER_ATTRIBUTE_TABLE.c.value)
+    q = q.filter(db.MEMBER_ATTRIBUTE_TABLE.c.name == 'urn')
+    q = q.filter(db.MEMBER_ATTRIBUTE_TABLE.c.member_id == db.SSH_KEY_TABLE.c.member_id)
+    q = q.filter(db.SSH_KEY_TABLE.c.id == key_id)
+    rows = q.all()
+
+    owner_urn = None
+    if len(rows) > 0:
+        owner_urn = rows[0].value
+    return owner_urn
+

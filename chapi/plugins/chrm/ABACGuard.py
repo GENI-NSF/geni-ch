@@ -110,7 +110,8 @@ class SubjectInvocationCheck(InvocationCheck):
                                "$PENDING_REQUEST_FROM_MEMBER", \
                                "$REQUEST_ID", \
                                "$REQUEST_ROLE", \
-                               "$REQUESTOR" ]
+                               "$REQUESTOR", \
+                               "$KEY_OWNER"]
 
     def _gather_bindings(self, template):
         for recognized_binding in SubjectInvocationCheck.RECOGNIZED_BINDINGS:
@@ -121,17 +122,26 @@ class SubjectInvocationCheck(InvocationCheck):
     def _compute_subjects(self, options, arguments, session):
         subjects = {}
         urns, label = self._compute_slice_subjects(options, arguments, session)
+
         if urns is not None:
             subjects[label] = urns
         urns, label = self._compute_project_subjects(options, arguments, session)
         if urns is not None:
             subjects[label] = urns
+
         urns, label = self._compute_member_subjects(options, arguments, session)
         if urns is not None:
             subjects[label] = urns
+
         urns, label = self._compute_request_subjects(options, arguments, session)
         if urns is not None:
             subjects[label] = urns
+
+        urns, label = self._compute_key_subjects(options, arguments, session)
+        if urns is not None:
+            subjects[label] = urns
+
+            
         for label, urns in subjects.items():
             if not isinstance(urns, list): subjects[label] = [urns]
 #        chapi_info("_compute_subjects", "SUBJECTS = %s" % subjects)
@@ -309,11 +319,21 @@ class SubjectInvocationCheck(InvocationCheck):
 
         return urns, "MEMBER_URN"
 
+    # Grab request ID's from arguments
     def _compute_request_subjects(self, options, arguments, session):
         if 'request_id' in arguments:
             request_id = arguments['request_id']
             return request_id, 'REQUEST_ID'
         return None, None
+
+    # Grab request key's from arguments
+    def _compute_key_subjects(self, options, arguments, session):
+        key_id = None
+        if 'match' in options and 'KEY_ID' in options['match']:
+            key_id = options['match']['KEY_ID']
+        elif 'key_id' in arguments:
+            key_id = arguments['key_id']
+        return key_id, 'KEY_ID'
 
     # Generate groups of assertions into a single label
     # e.g. BELONGS_TO means IS_LEAD, IS_ADMIN, ....
@@ -333,6 +353,8 @@ class SubjectInvocationCheck(InvocationCheck):
         bindings_by_subject = {}
         for subject in subjects: 
             bindings_by_subject[subject] = {}
+
+#        chapi_info("ABAC", "BINDINGS = %s" % self._bindings)
 
         for binding in self._bindings:
             if binding == "$ROLE":
@@ -456,6 +478,13 @@ class SubjectInvocationCheck(InvocationCheck):
                         if caller_urn == requestor_urn:
                             bindings_by_subject[subject][binding] = "REQUESTOR"
 
+            elif binding == "$KEY_OWNER":
+                if subject_type == "KEY_ID":
+                    for subject in subjects:
+                        key_owner_urn = get_key_owner_urn(subject, session);
+                        if caller_urn == key_owner_urn:
+                            bindings_by_subject[subject][binding] = caller_urn
+
         return bindings_by_subject
 
     def _assert_bound_statements(self, abac_manager, statements):
@@ -479,7 +508,7 @@ class SubjectInvocationCheck(InvocationCheck):
 
         # Compute subjects
         subjects = self._compute_subjects(options, arguments, session)
-#        chapi_info("SIC",  "Subjects = %s" % subjects)
+        chapi_info("SIC",  "Subjects = %s" % subjects)
 
         for subject_type, subjects_of_type in subjects.items():
             ensure_valid_urns(subject_type, subjects_of_type, session)
@@ -518,6 +547,7 @@ class SubjectInvocationCheck(InvocationCheck):
             abac_manager.register_assertion("ME.IS_AUTHORITY<-CALLER")
         abac_manager.register_assertion("ME.IS_%s<-CALLER" % flatten_urn(client_urn))
 
+#        chapi_info("ABAC", "SUBJECTS = %s" % subjects)
 
         # if there are subjects:
         # For each subject
