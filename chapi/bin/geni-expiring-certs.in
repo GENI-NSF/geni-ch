@@ -53,7 +53,7 @@ class Notifier:
 
     def loadConfig(self, config):
         sec = 'chapi'
-        opts = ['portal_help_email', 'ch_from_email']
+        opts = ['portal_admin_email', 'portal_help_email', 'ch_from_email']
         for opt in opts:
             if config.has_option(sec, opt):
                 setattr(self, opt, config.get(sec, opt))
@@ -62,16 +62,16 @@ class Notifier:
                 msg = msg % (opt, conf_file)
                 raise Exception(msg)
 
-    def notify(self, address, expiration_date, logger):
+    def notify(self, address, subject, body, expiration_date, logger):
         """Notify a member by email that their certificate expires on
         expiration_date.
 
         """
-        logger.info('Email to %s, expiring on %s', address, expiration_date)
+        logger.debug('Email to %s, expiring on %s', address, expiration_date)
         from_addr = self.ch_from_email
         reply_to = self.portal_help_email
         msg = MIMEText(body % (expiration_date))
-        msg['Subject'] = 'GENI certificate expiring on %s' % (expiration_date)
+        msg['Subject'] = subject
         msg['From'] = from_addr
         msg['To'] = address
         msg['Cc'] = reply_to
@@ -79,7 +79,6 @@ class Notifier:
         s = smtplib.SMTP('localhost')
         s.sendmail(from_addr, [address, reply_to], msg.as_string())
         s.quit()
-
 
 def init_logging(options):
     level = logging.INFO
@@ -103,9 +102,13 @@ def parse_args(argv):
     options,args = parser.parse_args()
     return options,args
 
-def alert_no_email(member_id, logger):
+def alert_no_email(member_id, expiration_date, notifier, logger):
     """Alert an admin that no email address is available for this member."""
-    logger.warn('No email address for member id %s', member_id)
+    msg = 'No email address for member id %s' % (member_id)
+    msg = msg + ' with certificate expiring on %s.'
+    subject = 'Error: no email address for expiring certificate'
+    notifier.notify(notifier.portal_admin_email, subject, msg, expiration_date,
+                    logger)
 
 def member_emails(conn, member_id, logger):
     """Look up the email addresses of the given member id.
@@ -127,9 +130,8 @@ def notify_member(address, expiration_date, notifier, logger):
     expiration_date.
 
     """
-    address = 'phelinek01@gpolab.bbn.com'
-    logger.info('Email to %s, expiring on %s', address, expiration_date)
-    notifier.notify(address, expiration_date, logger)
+    subject = 'GENI certificate expiring on %s' % (expiration_date)
+    notifier.notify(address, subject, body, expiration_date, logger)
 
 def notify_expiring(conn, ndays, notifier, logger):
     """Notify of expiring certificate n days away from today."""
@@ -147,7 +149,7 @@ def notify_expiring(conn, ndays, notifier, logger):
             for addr in addrs:
                 notify_member(addr, expire_day, notifier, logger)
         else:
-            alert_no_email(member_id, logger)
+            alert_no_email(member_id, expire_day, notifier, logger)
     logger.debug('Notified %d members', len(members))
     cur.close()
 
