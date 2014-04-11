@@ -9,6 +9,7 @@
 #----------------------------------------------------------------------
 tooldir = $(pkgdatadir)/../geni-ch/chapi/chapi/tools
 gcfdir = $(pkgdatadir)/../geni-ch/gcf/src
+pkgsysconfdir = $(sysconfdir)/$(PACKAGE)
 
 edit = sed \
 	-e 's|@bindir[@]|$(bindir)|g' \
@@ -18,7 +19,7 @@ edit = sed \
 	-e 's|@tooldir[@]|$(tooldir)|g' \
 	-e 's|@gcfdir[@]|$(gcfdir)|g'
 
-geni-check-errors geni-sign-tool-csr: Makefile
+geni-check-errors geni-sign-tool-csr geni-expiring-certs: Makefile
 	rm -f $@ $@.tmp
 	srcdir=''; \
 	  test -f ./$@.in || srcdir=$(srcdir)/; \
@@ -28,6 +29,7 @@ geni-check-errors geni-sign-tool-csr: Makefile
 
 geni-check-errors: $(srcdir)/geni-check-errors.in
 geni-sign-tool-csr: $(srcdir)/geni-sign-tool-csr.in
+geni-expiring-certs: $(srcdir)/geni-expiring-certs.in
 
 dist_pkgdata_DATA = \
 	amsoil-log-out.txt \
@@ -35,4 +37,4 @@ dist_pkgdata_DATA = \
 	ch-error-log-out.txt \
 	chapi-log-out.txt
 
-dist_sbin_SCRIPTS = geni-check-errors geni-sign-tool-csr
+dist_sbin_SCRIPTS = geni-check-errors geni-sign-tool-csr geni-expiring-certs

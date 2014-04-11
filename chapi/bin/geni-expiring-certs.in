@@ -101,7 +101,7 @@ def parse_args(argv):
                       help="database user")
     days_help = "comma-separated list of expiration windows (e.g. '30,14,7')"
     parser.add_option("--days", default='30', help=days_help)
-    parser.add_option("-c", "--conf", default='/etc/geni-chapi/chapi.ini',
+    parser.add_option("-c", "--conf", default='@pkgsysconfdir@/chapi.ini',
                       help="chapi config file")
     options,args = parser.parse_args()
     return options,args
@@ -130,7 +130,7 @@ def notify_member(address, expiration_date, notifier, logger):
     expiration_date.
 
     """
-    address = 'phelinek01.gpolab.bbn.com'
+    address = 'phelinek01@gpolab.bbn.com'
     logger.info('Email to %s, expiring on %s', address, expiration_date)
     notifier.notify(address, expiration_date, logger)
 
