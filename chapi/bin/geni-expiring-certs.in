@@ -37,6 +37,7 @@ import optparse
 import psycopg2
 import psycopg2.extras
 import smtplib
+import urlparse
 from email.mime.text import MIMEText
 import sys
 
@@ -47,14 +48,12 @@ To generate a new certificate, please go to:
 """
 
 class Notifier:
-    def __init__(self, conf_file):
-        self.loadConfig(conf_file)
+    def __init__(self, config):
+        self.loadConfig(config)
 
-    def loadConfig(self, conf_file):
-        config = ConfigParser.RawConfigParser()
-        config.read(conf_file)
+    def loadConfig(self, config):
         sec = 'chapi'
-        opts = ['portal_admin_email', 'portal_help_email', 'ch_from_email']
+        opts = ['portal_help_email', 'ch_from_email']
         for opt in opts:
             if config.has_option(sec, opt):
                 setattr(self, opt, config.get(sec, opt))
@@ -91,18 +90,16 @@ def init_logging(options):
 def parse_args(argv):
     usage = '%s [options] --table TABLE' % (argv[0])
     parser = optparse.OptionParser(usage=usage)
+    days_default = '30'
+    days_help = "comma-separated list of expiration windows (e.g. '30,14,7')"
+    days_help = days_help + " (default: %s)" % (days_default)
+    parser.add_option("--days", default=days_default,
+                      help=days_help)
+    default_conf = '@pkgsysconfdir@/chapi.ini'
+    parser.add_option("-c", "--conf", default=default_conf,
+                      help='chapi config file (default:%s)' % (default_conf))
     parser.add_option("--debug", action="store_true", default=False,
                        help="enable debugging output")
-    parser.add_option("-d", "--database", default='portal',
-                      help="database name")
-    parser.add_option("--host", default='localhost',
-                      help="database host")
-    parser.add_option("-u", "--user", default='portal',
-                      help="database user")
-    days_help = "comma-separated list of expiration windows (e.g. '30,14,7')"
-    parser.add_option("--days", default='30', help=days_help)
-    parser.add_option("-c", "--conf", default='@pkgsysconfdir@/chapi.ini',
-                      help="chapi config file")
     options,args = parser.parse_args()
     return options,args
 
@@ -154,6 +151,16 @@ def notify_expiring(conn, ndays, notifier, logger):
     logger.debug('Notified %d members', len(members))
     cur.close()
 
+def db_connect(uri):
+    result = urlparse.urlparse(uri)
+    username = result.username
+    password = result.password
+    database = result.path[1:]
+    hostname = result.hostname
+    connection = psycopg2.connect(database = database, user = username,
+                                  password = password, host = hostname)
+    return connection
+
 def main(argv=None):
     if argv is None:
         argv = sys.argv
@@ -164,6 +171,12 @@ def main(argv=None):
         sys.stderr.write(str(e) + "\n")
         return 1
     logger = logging.getLogger()
+
+    config = ConfigParser.RawConfigParser()
+    config.read(options.conf)
+    db_url = config.get('chrm', 'db_url')
+    notifier = Notifier(config)
+
     try:
         # Convert days to integers as a validity check
         days = [int(d) for d in options.days.split(',')]
@@ -173,11 +186,7 @@ def main(argv=None):
         return 1
     logger.debug('days = %r' % (days))
 
-    notifier = Notifier(options.conf)
-
-    conn = psycopg2.connect(database=options.database,
-                            user=options.user,
-                            host=options.host)
+    conn = db_connect(db_url)
     try:
         for day in days:
             notify_expiring(conn, day, notifier, logger)

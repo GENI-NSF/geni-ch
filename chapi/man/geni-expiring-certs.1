@@ -37,24 +37,15 @@ follows the usual GNU command line syntax, with long
 options starting with two dashes (`-').
 A summary of options is included below.
 .TP
-.B \-c <conf file>, \-\-conf <conf file>
-The chapi config file. Used for configured email addresses.
-.TP
-.B \-\-days days,days,days,...
+.B \-\-days d,d,d,...
 A comma-separated list of days from now on which to report certificate
 expirations. The default is 30 days (--days 30).
 .TP
-.B \-d <database> \-\-database <database>
-The name of the database where member authority data is stored.
-.TP
-.B \-\-host <database host>
-The database host. Defaults to 'localhost'.
+.B \-c <conf file>, \-\-conf <conf file>
+The chapi config file. Used for configured email addresses.
 .TP
 .B \-h, \-\-help
 Show summary of options and their defaults.
-.TP
-.B \-u <database user>, \-\-user <database user>
-The database username. The associated password is read from $HOME/.pgpass
 .TP
 .B \-\-debug
 Display debugging messages.
@@ -68,6 +59,33 @@ Notify users of expiring certificates 30, 14, and 7 days from now:
 Use an alternate config file:
 
     geni-expiring-certs --days 30,14,7 --conf /tmp/chapi.ini
+.
+.
+.SH CONFIGURATION
+The configuration file specified by the
+.B \-c
+or
+.B \-\-conf
+options is in INI file format. The sections and options
+are the same as the
+.I chapi.ini
+file used for chapi.
+
+The following sections and options are used by
+.B geni-expiring-certs
+:
+
+    [chrm]
+    ;  Syntax: postgresql://USER:PASSWORD@HOST/DB
+    db_url=postgresql://scott:tiger@localhost/chapi
+
+    [chapi]
+    ; Cc and Reply-To email address
+    portal_help_email=help@example.com
+
+    ; From email address
+    ch_from_email=expire-daemon@example.com
+
 .
 .
 .SH AUTHOR
