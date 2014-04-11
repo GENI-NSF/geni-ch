@@ -5,6 +5,7 @@
 = GENI Clearinghouse Release Notes =
 
 == 1.8 ==
+ * Notify users when their certificates are expiring (#169)
 
 == 1.7 ==
  * Add support for externalized ABAC Guard policies (#232)
