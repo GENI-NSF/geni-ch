@@ -30,6 +30,7 @@
 #
 #----------------------------------------------------------------------
 
+import ConfigParser
 import datetime
 import logging
 import optparse
@@ -44,6 +45,42 @@ To generate a new certificate, please go to:
 
    https://portal.geni.net/secure/home.php
 """
+
+class Notifier:
+    def __init__(self, conf_file):
+        self.loadConfig(conf_file)
+
+    def loadConfig(self, conf_file):
+        config = ConfigParser.RawConfigParser()
+        config.read(conf_file)
+        sec = 'chapi'
+        opts = ['portal_admin_email', 'portal_help_email', 'ch_from_email']
+        for opt in opts:
+            if config.has_option(sec, opt):
+                setattr(self, opt, config.get(sec, opt))
+            else:
+                msg = 'config option %s not found in %s'
+                msg = msg % (opt, conf_file)
+                raise Exception(msg)
+
+    def notify(self, address, expiration_date, logger):
+        """Notify a member by email that their certificate expires on
+        expiration_date.
+
+        """
+        logger.info('Email to %s, expiring on %s', address, expiration_date)
+        from_addr = self.ch_from_email
+        reply_to = self.portal_help_email
+        msg = MIMEText(body % (expiration_date))
+        msg['Subject'] = 'GENI certificate expiring on %s' % (expiration_date)
+        msg['From'] = from_addr
+        msg['To'] = address
+        msg['Cc'] = reply_to
+        msg['Reply-To'] = reply_to
+        s = smtplib.SMTP('localhost')
+        s.sendmail(from_addr, [address, reply_to], msg.as_string())
+        s.quit()
+
 
 def init_logging(options):
     level = logging.INFO
@@ -64,6 +101,8 @@ def parse_args(argv):
                       help="database user")
     days_help = "comma-separated list of expiration windows (e.g. '30,14,7')"
     parser.add_option("--days", default='30', help=days_help)
+    parser.add_option("-c", "--conf", default='/etc/geni-chapi/chapi.ini',
+                      help="chapi config file")
     options,args = parser.parse_args()
     return options,args
 
@@ -86,23 +125,16 @@ def member_emails(conn, member_id, logger):
     cur.close()
     return result
 
-def notify_member(address, expiration_date, logger):
+def notify_member(address, expiration_date, notifier, logger):
     """Notify a member by email that their certificate expires on
     expiration_date.
 
     """
+    address = 'phelinek01.gpolab.bbn.com'
     logger.info('Email to %s, expiring on %s', address, expiration_date)
-    from_addr = 'portal-sendbox-admin@gpolab.bbn.com'
-    msg = MIMEText(body % (expiration_date))
-    msg['Subject'] = 'GENI certificate expiring on %s' % (expiration_date)
-    msg['From'] = from_addr
-    msg['To'] = address
-    msg['Cc'] = from_addr
-    s = smtplib.SMTP('localhost')
-    s.sendmail(from_addr, [address, from_addr], msg.as_string())
-    s.quit()
+    notifier.notify(address, expiration_date, logger)
 
-def notify_expiring(conn, ndays, logger):
+def notify_expiring(conn, ndays, notifier, logger):
     """Notify of expiring certificate n days away from today."""
     expire_day = datetime.date.today() + datetime.timedelta(ndays)
     cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
@@ -116,7 +148,7 @@ def notify_expiring(conn, ndays, logger):
         addrs = member_emails(conn, member_id, logger)
         if addrs:
             for addr in addrs:
-                notify_member(addr, expire_day, logger)
+                notify_member(addr, expire_day, notifier, logger)
         else:
             alert_no_email(member_id, logger)
     logger.debug('Notified %d members', len(members))
@@ -141,12 +173,14 @@ def main(argv=None):
         return 1
     logger.debug('days = %r' % (days))
 
+    notifier = Notifier(options.conf)
+
     conn = psycopg2.connect(database=options.database,
                             user=options.user,
                             host=options.host)
     try:
         for day in days:
-            notify_expiring(conn, day, logger)
+            notify_expiring(conn, day, notifier, logger)
     finally:
         conn.close()
     return 0
