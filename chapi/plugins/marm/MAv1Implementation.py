@@ -162,6 +162,7 @@ class MAv1Implementation(MAv1DelegateBase):
         mapper(SshKey, self.db.SSH_KEY_TABLE)
         self.table_mapping = {
             "_GENI_MEMBER_SSL_CERTIFICATE": OutsideCert,
+            "_GENI_MEMBER_SSL_EXPIRATION": OutsideCert,
             "_GENI_MEMBER_SSL_PUBLIC_KEY": OutsideCert,
             "_GENI_MEMBER_SSL_PRIVATE_KEY": OutsideCert,
             "_GENI_MEMBER_INSIDE_CERTIFICATE": InsideKey,
@@ -290,6 +291,20 @@ class MAv1Implementation(MAv1DelegateBase):
                 ret[i][key] = getattr(row, key)
         return ret
 
+    def transform_for_result(self, val):
+        """Transform values to be returned as results to client. Datatypes
+        requiring transformation from internal representation to
+        external represnetation should be modified here.
+
+        """
+        # datetimes get returned as strings
+        if isinstance(val, datetime.datetime):
+            return val.strftime(STANDARD_DATETIME_FORMAT)
+        else:
+            # No other transformation so just return it
+            return val
+
+
     # Common code for answering query
     def lookup_member_info(self, options, allowed_fields, session):
         
@@ -329,6 +344,7 @@ class MAv1Implementation(MAv1DelegateBase):
                     elif col in self.table_mapping:
                         vals = self.get_val_for_uid(session, \
                             self.table_mapping[col], MA.field_mapping[col], uid)
+                    vals = [self.transform_for_result(v) for v in vals]
                     if vals:
                         values[col] = vals[0]
                     elif 'filter' in options:
