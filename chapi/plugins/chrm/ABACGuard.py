@@ -487,10 +487,10 @@ class SubjectInvocationCheck(InvocationCheck):
 
         return bindings_by_subject
 
-    def _assert_bound_statements(self, abac_manager, statements):
+    def _assert_bound_statements(self, abac_manager, statements, bindings):
         for stmt in statements:
             orig_stmt = stmt
-            for binding_name, binding_value in self._bindings.items():
+            for binding_name, binding_value in bindings.items():
                 if binding_value:
                     stmt = stmt.replace(binding_name, flatten_urn(binding_value))
             if stmt.find('$')<0:
@@ -571,10 +571,12 @@ class SubjectInvocationCheck(InvocationCheck):
                 for subject in subjects_of_type:
                     self._generate_assertion_groups(subject_type, subject, \
                                                         abac_manager)
-                    self._bindings = subjects_bindings[subject]
+                    bindings = subjects_bindings[subject]
                     
-                    self._assert_bound_statements(abac_manager, self._assertions)
-                    self._assert_bound_statements(abac_manager, self._policies)
+                    self._assert_bound_statements(abac_manager,
+                                                  self._assertions, bindings)
+                    self._assert_bound_statements(abac_manager, self._policies,
+                                                  bindings)
 
                     queries = [
                         "ME.MAY_%s_%s<-CALLER" % (method.upper(), \
