@@ -204,6 +204,17 @@ class FieldsArgumentCheck(ArgumentCheck):
                     properly_formed = True
                 except Exception, e:
                     pass
+        elif field_type == "DATETIME_OR_NULL":
+            properly_formed = False
+            if value:
+                try:
+                    parsed_value = dateutil.parser.parse(value)
+                    properly_formed = True
+                except Exception, e:
+                    pass
+            else:
+                # If there's no value, that's fine too
+                properly_formed = True
         elif field_type == "EMAIL":
             properly_formed = value.find('@')>= 0 and value.find('.') >= 0
         elif field_type == "KEY":

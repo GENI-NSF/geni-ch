@@ -5,6 +5,7 @@
 = GENI Clearinghouse Release Notes =
 
 == 1.7.1 ==
+ * Allow project expiration to be null (#268)
  * Fix authorization error in log_event on create slice (#270)
 
 == 1.7 ==
