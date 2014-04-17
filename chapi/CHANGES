@@ -4,6 +4,9 @@
 
 = GENI Clearinghouse Release Notes =
 
+== 1.7.1 ==
+ * Fix authorization error in log_event on create slice (#270)
+
 == 1.7 ==
  * Add support for externalized ABAC Guard policies (#232)
  * Add script to create tool certificates (#207)
