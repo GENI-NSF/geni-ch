@@ -7,6 +7,9 @@
 == 1.7.1 ==
  * Allow project expiration to be null (#268)
  * Fix authorization error in log_event on create slice (#270)
+ * Fix authorization error on project lead or admin looking
+   up a member by email address (as in bulk upload from 
+   the portal). (#269)
 
 == 1.7 ==
  * Add support for externalized ABAC Guard policies (#232)
