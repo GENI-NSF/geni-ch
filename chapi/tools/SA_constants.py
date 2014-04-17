@@ -76,7 +76,9 @@ project_mandatory_fields = {
     "PROJECT_UID" : {"TYPE" : "UID"},
     "PROJECT_NAME" : {"TYPE" : "STRING", "CREATE" : "REQUIRED"},
     "PROJECT_DESCRIPTION" : {"TYPE" : "STRING", "CREATE" : "ALLOWED", "UPDATE" : True},
-    "PROJECT_EXPIRATION" : {"TYPE" : "DATETIME", "CREATE" : "ALLOWED", "UPDATE" : True},
+    "PROJECT_EXPIRATION" : {"TYPE" : "DATETIME_OR_NULL",
+                            "CREATE" : "ALLOWED",
+                            "UPDATE" : True},
     "PROJECT_EXPIRED" : {"TYPE" : "BOOLEAN"},
     "PROJECT_CREATION" : {"TYPE" : "DATETIME"},
 }
