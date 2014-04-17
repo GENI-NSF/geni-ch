@@ -572,8 +572,20 @@ class SubjectInvocationCheck(InvocationCheck):
 
 
         else:
-            self._assert_bound_statements(abac_manager, self._assertions)
-            self._assert_bound_statements(abac_manager, self._policies)
+            subject_type = 'MEMBER_URN'
+            subjects_of_type = [client_urn]
+            subjects_bindings \
+                = self._generate_bindings_for_subjects(client_urn,
+                                                       subject_type,
+                                                       subjects_of_type,
+                                                       options,
+                                                       arguments,
+                                                       session)
+            bindings = subjects_bindings[client_urn]
+            self._assert_bound_statements(abac_manager, self._assertions,
+                                          bindings)
+            self._assert_bound_statements(abac_manager, self._policies,
+                                          bindings)
             query ="ME.MAY_%s<-CALLER" % method.upper()
             ok, proof = abac_manager.query(query)
             if abac_manager._verbose:
