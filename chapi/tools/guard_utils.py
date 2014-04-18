@@ -125,6 +125,7 @@ def validate_uid_list(uids, cache, label):
 
 # Look at a list of URN's of a given type and determine that they are all valid
 def ensure_valid_urns(urn_type, urns, session):
+#    chapi_info("ENSURE_VALID_URNS", "%s %s" % (urn_type, urns))
     if not isinstance(urns, list): urns = [urns]
     db = pm.getService('chdbengine')
     if urn_type == 'PROJECT_URN':
@@ -177,6 +178,14 @@ def ensure_valid_urns(urn_type, urns, session):
         bad_urns = [urn for urn in not_found_urns if urn not in cache]
         if len(bad_urns) > 0: 
             raise CHAPIv1ArgumentError('Unknown member urns: [%s]' % bad_urns)
+    elif urn_type == 'SLIVER_URN':
+        q = session.query(db.SLIVER_INFO_TABLE.c.sliver_urn)
+        q = q.filter(db.SLIVER_INFO_TABLE.c.sliver_urn.in_(urns))
+        rows = q.all()
+        found_urns = [row.sliver_urn for row in rows]
+        bad_urns = [urn for urn in urns if urn not in found_urns]
+        if len(bad_urns) > 0:
+            raise CHAPIv1ArgumentError('Unknown sliver urns: [%s]' % bad_urns)
     else:
         pass
 
