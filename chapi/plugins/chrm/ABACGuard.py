@@ -108,6 +108,8 @@ class SubjectInvocationCheck(InvocationCheck):
                                "$SEARCHING_FOR_PROJECT_LEAD_BY_UID", \
                                "$PENDING_REQUEST_TO_MEMBER", \
                                "$PENDING_REQUEST_FROM_MEMBER", \
+                               "$SHARES_ATTRIBUTED_SLICE", \
+                               "$SHARES_ATTRIBUTED_PROJECT", \
                                "$REQUEST_ID", \
                                "$REQUEST_ROLE", \
                                "$REQUESTOR", \
@@ -432,6 +434,31 @@ class SubjectInvocationCheck(InvocationCheck):
                 if caller_urn in admins:
                     for subject in subjects:
                         bindings_by_subject[subject][binding] = "PROJECT_ADMIN"
+            elif binding == "$SHARES_ATTRIBUTED_PROJECT":
+                if subject_type == "MEMBER_URN" and \
+                        'attributes' in arguments and \
+                        'PROJECT' in arguments['attributes']:
+                    project_uid = arguments['attributes']['PROJECT']
+                    # Which callers share this project with caller?
+                    sharers = shares_project(caller_urn, 
+                                            subjects, 
+                                            session, 
+                                            project_uid = project_uid)
+                    for sharer in sharers:
+                        bindings_by_subject[sharer][binding] = \
+                            "SHARES_ATTRIBUTED_PROJECT"
+            elif binding == "$SHARES_ATTRIBUTED_SLICE":
+                if subject_type == "MEMBER_URN" and \
+                        'attributes' in arguments and \
+                        'SLICE' in arguments['attributes']:
+                    slice_uid = arguments['attributes']['SLICE']
+                    # Which callers share this slice with caller?
+                    sharers = shares_slice(caller_urn, 
+                                           subjects, 
+                                           session, slice_uid=slice_uid)
+                    for sharer in sharers:
+                        bindings_by_subject[sharer][binding] = \
+                            "SHARES_ATTRIBUTED_SLICE"
             elif binding == "$SEARCHING_BY_EMAIL":
                 # Is this a lookup by email address?
                 # Specifically, project leads/admins should be allowed to look

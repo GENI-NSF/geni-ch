@@ -565,8 +565,9 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
 
         # Log the slice create event
         attribs = {"SLICE" : slice.slice_id, "PROJECT" : slice.project_id}
+        log_options = {}
         self.logging_service.log_event("Created slice " + name, 
-                                       attribs, credentials, options,
+                                       attribs, credentials, log_options,
                                        session=session)
         chapi_audit_and_log(SA_LOG_PREFIX, "Created slice " + name + " in project " + slice.project_id, logging.INFO, {'user': user_email})
 
@@ -669,15 +670,16 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         # Log the update slice
         client_uuid = get_uuid_from_cert(client_cert)
         attribs = {"PROJECT" : project_uuid, "SLICE" : slice_uuid}
+        log_options = {}
         if "SLICE_EXPIRATION" in options['fields']: 
             # FIXME: Format in RFC3339 format not iso
             self.logging_service.log_event("Renewed slice %s until %s" % \
                                                (slice_name, new_exp.isoformat()), \
-                                               attribs, credentials, options,
+                                               attribs, credentials, log_options,
                                            session=session)
         else:
             self.logging_service.log_event("Updated slice " + slice_name, 
-                                           attribs, credentials, options,
+                                           attribs, credentials, log_options,
                                            session=session)
 
         result = self._successReturn(True)
@@ -753,8 +755,9 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
             for row in info:
                 leadname = get_member_display_name(info[row],row)
 
+        log_options = {}
         self.logging_service.log_event("Created project " + name + " with lead " + leadname, 
-                                       attribs, credentials, options,
+                                       attribs, credentials, log_options,
                                        session=session)
         chapi_audit_and_log(SA_LOG_PREFIX, "Created project " + name + " with lead " + leadname, logging.INFO, {'user': user_email})
 
@@ -819,8 +822,9 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         client_uuid = get_uuid_from_cert(client_cert)
         attribs = {"PROJECT" : project_uuid}
 
+        log_options = {}
         self.logging_service.log_event("Updated project " + name + change, 
-                                       attribs, credentials, options,
+                                       attribs, credentials, log_options,
                                        session=session)
 
         # Force this project to be expired/unexpired and logged now
@@ -1329,10 +1333,11 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
             for member_to_remove in members_to_remove:
                 member_name = urn_to_display_name[member_to_remove]
                 attribs["MEMBER"] = urn_to_id[member_to_remove]
+                log_options = {}
                 self.logging_service.log_event(
                     "Removed member %s from %s %s" % \
                         (member_name, text_str, label), \
-                        attribs, credentials, options, session=session)
+                        attribs, credentials, log_options, session=session)
                 chapi_info(SA_LOG_PREFIX, "Removed member %s from %s %s" % (member_name, text_str, label2), {'user': user_email})
 
         # Log all adds
@@ -1344,11 +1349,12 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                 member_name = urn_to_display_name[member_urn]
                 member_role = member_to_add[role_str]
                 attribs["MEMBER"] = urn_to_id[member_urn]
+                log_options = {}
                 if caller_urn == member_urn:
                     self.logging_service.log_event(
                         "%s accepted an invitation to join %s %s in role %s" % \
                             (member_name, text_str, label, member_role), 
-                        attribs, credentials, options, session=session)
+                        attribs, credentials, log_options, session=session)
                     chapi_audit_and_log(SA_LOG_PREFIX, 
                                         "%s accepted an invitation to join %s %s in role %s" % \
                                             (member_name, text_str, label2, member_role), logging.INFO, {'user': user_email})
@@ -1356,7 +1362,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                     self.logging_service.log_event(
                         "%s Added member %s in role %s to %s %s" % \
                             (caller_name, member_name, member_role, text_str, label), 
-                        attribs, credentials, options, session=session)
+                        attribs, credentials, log_options, session=session)
                     chapi_audit_and_log(SA_LOG_PREFIX, 
                                         "%s Added member %s in role %s to %s %s" % \
                                             (caller_name, member_name, member_role, text_str, label2), logging.INFO, {'user': user_email})
@@ -1380,10 +1386,11 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                 member_name = urn_to_display_name[member_urn]
                 member_role = member_to_change[role_str]
                 attribs["MEMBER"] = urn_to_id[member_urn]
+                log_options = {}
                 self.logging_service.log_event(
                     "Changed member %s to role %s in %s %s" % \
                         (member_name, member_role, text_str, label), 
-                        attribs, credentials, options, session=session)
+                        attribs, credentials, log_options, session=session)
                 chapi_info(SA_LOG_PREFIX, "Changed member %s to role %s in %s %s" % (member_name, member_role, text_str, label2), {'user': user_email})
 
         return self._successReturn(None)

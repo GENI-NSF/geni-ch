@@ -1150,7 +1150,7 @@ def parse_method_policies(filename):
 # share a project with member1_urn
 
 # Return those members of member2_urns that share membership in a project with member1_urn
-def shares_project(member1_urn, member2_urns, session):
+def shares_project(member1_urn, member2_urns, session, project_uid = None):
     db = pm.getService("chdbengine")
     pm1 = aliased(db.PROJECT_MEMBER_TABLE)
     pm2 = aliased(db.PROJECT_MEMBER_TABLE)
@@ -1159,6 +1159,8 @@ def shares_project(member1_urn, member2_urns, session):
 
     q = session.query(pm1.c.project_id, 
                           ma1.c.value.label('member1'), ma2.c.value.label('member2'))
+    if project_uid is not None:
+        q = q.filter(pm1.c.project_id == project_uid)
     q = q.filter(pm1.c.project_id == pm2.c.project_id)
     q = q.filter(pm1.c.member_id == ma1.c.member_id)
     q = q.filter(pm2.c.member_id == ma2.c.member_id)
@@ -1173,7 +1175,7 @@ def shares_project(member1_urn, member2_urns, session):
     return sharers
 
 # Return those members of member2_urns who share a slice with member1_urn
-def shares_slice(member1_urn, member2_urns, session):
+def shares_slice(member1_urn, member2_urns, session, slice_uid = None):
     db = pm.getService("chdbengine")
     sm1 = aliased(db.SLICE_MEMBER_TABLE)
     sm2 = aliased(db.SLICE_MEMBER_TABLE)
@@ -1182,6 +1184,8 @@ def shares_slice(member1_urn, member2_urns, session):
 
     q = session.query(sm1.c.slice_id, sm2.c.slice_id, \
                           ma1.c.value.label('member1'), ma2.c.value.label('member2'))
+    if slice_uid is not None:
+        q = q.filter(sm1.c.slice_id == slice_uid)
     q = q.filter(sm1.c.slice_id == sm2.c.slice_id)
     q = q.filter(sm1.c.member_id == ma1.c.member_id)
     q = q.filter(sm2.c.member_id == ma2.c.member_id)
