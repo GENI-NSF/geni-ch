@@ -65,7 +65,7 @@ class InvocationCheck(object):
     # and subjects extracted from validate_arguments call
     def authorize_call(self, client_cert, method, credentials, options,
                        arguments, subjects, session ):
-        raise CHAPIv1NotImplementedError("Abstract Base class: InvocationCheck")
+        raise CHAPIv1NotImplementedError("Abstract Baseclass: InvocationCheck")
 
     # Validate arguments and check authorization
     def validate(self, client_cert, method, credentials, options, 
@@ -78,8 +78,8 @@ class InvocationCheck(object):
         self.authorize_call(client_cert, method, credentials,
                             options, arguments, subjects, session)
 
-# Class that determines if the caller has the right to invoke a given method on all
-# the subjects of a given method invocation
+# Class that determines if the caller has the right to invoke 
+# a given method on all the subjects of a given method invocation
 class SubjectInvocationCheck(InvocationCheck):
 
     def __init__(self, policies, assertions):
@@ -97,6 +97,7 @@ class SubjectInvocationCheck(InvocationCheck):
         self.key_file = self.config.get("chapiv1rpc.ch_key")
         self.cert_file = self.config.get("chapiv1rpc.ch_cert")
         self._bindings = {}
+        self._verbose = False # Set this to True for verbose output
 
     # All recognized binding types (variables that can be
     # substituted in assertions and policies)
@@ -115,27 +116,39 @@ class SubjectInvocationCheck(InvocationCheck):
                                "$REQUESTOR", \
                                "$KEY_OWNER"]
 
+    
+    # Gather all bindings in the given ABAC template (policy or assertion)
+    # That is, see which of the RECOGNIZED BINDINGS are in the template
+    # And set binding in 'self._bindings'. 
+    # These are the ones we'll seek to resolve for each subject
     def _gather_bindings(self, template):
         for recognized_binding in SubjectInvocationCheck.RECOGNIZED_BINDINGS:
             if template.find(recognized_binding) > 0:
                 if recognized_binding not in self._bindings:
                     self._bindings[recognized_binding] = None
 
+    # Compute the subjects of a given call from call arguments and options
+    # The 'subjects' are the entities on our about the call operates and
+    # on which policies will determine if the caller has sufficent privileges
+    # with respect to these entities
     def _compute_subjects(self, options, arguments, session):
         subjects = {}
         urns, label = self._compute_slice_subjects(options, arguments, session)
 
         if urns is not None:
             subjects[label] = urns
-        urns, label = self._compute_project_subjects(options, arguments, session)
+        urns, label = self._compute_project_subjects(options, arguments, 
+                                                     session)
         if urns is not None:
             subjects[label] = urns
 
-        urns, label = self._compute_member_subjects(options, arguments, session)
+        urns, label = self._compute_member_subjects(options, arguments, 
+                                                    session)
         if urns is not None:
             subjects[label] = urns
 
-        urns, label = self._compute_request_subjects(options, arguments, session)
+        urns, label = self._compute_request_subjects(options, arguments, 
+                                                     session)
         if urns is not None:
             subjects[label] = urns
 
@@ -143,7 +156,8 @@ class SubjectInvocationCheck(InvocationCheck):
         if urns is not None:
             subjects[label] = urns
 
-        urns, label = self._compute_sliver_subjects(options, arguments, session)
+        urns, label = self._compute_sliver_subjects(options, arguments, 
+                                                    session)
         if urns is not None:
             subjects[label] = urns
 
@@ -153,6 +167,7 @@ class SubjectInvocationCheck(InvocationCheck):
 #        chapi_info("_compute_subjects", "SUBJECTS = %s" % subjects)
         return subjects
 
+    # Determine what subjects in options and arguments are of type slice
     def _compute_slice_subjects(self, options, arguments, session):
         urns = None
         db = pm.getService('chdbengine')
@@ -203,6 +218,7 @@ class SubjectInvocationCheck(InvocationCheck):
 
         return urns, "SLICE_URN"
 
+    # Determine what subjects in options and arguments are of type project
     def _compute_project_subjects(self, options, arguments, session):
         urns = None
         db = pm.getService('chdbengine')
@@ -244,6 +260,7 @@ class SubjectInvocationCheck(InvocationCheck):
 
         return urns, "PROJECT_URN"
 
+    # Determine what subjects in options and arguments are of type member
     def _compute_member_subjects(self, options, arguments, session):
         urns = None
         db = pm.getService('chdbengine')
@@ -356,19 +373,34 @@ class SubjectInvocationCheck(InvocationCheck):
                     (flatten_urn(subject), role_name, flatten_urn(subject))
                 abac_manager.register_assertion(assertion)
 
-    def _generate_bindings_for_subjects(self, caller_urn, subject_type, subjects, \
-                               options, arguments, session):
+    # Determine, for a set of subjects of a particular type, which
+    # subjects have bindings for each binding gathered from the
+    # policies and assertions of the invoked method
+    #
+    # Loop over all bindings and do a query over all subjects to 
+    # determine which subjects have the given attribute relative to the caller
+    # and set these in bindings_by_subject
+    # That is, bindings_by_subject (the return of this call)
+    # is a dictionary of (subject => {binding_name : binding_value...)
+    # for each binding_name that is determined to have a value (otherwise
+    # the dictionary has no entry for that binding
+    def _generate_bindings_for_subjects(self, caller_urn, subject_type, 
+                                        subjects, 
+                                        options, arguments, session):
 
         authority = pm.getService('config').get("chrm.authority")
 
-#        chapi_info('gen_bindings', "Subject Type: %s; self.bindings: %s; subjects: %s" % (subject_type, self._bindings, subjects))
+        chapi_info('gen_bindings', 
+                   "Subject Type: %s; self.bindings: %s; subjects: %s" % \
+                       (subject_type, self._bindings, subjects))
 
         # Prepare a set of bindings (label => value) for each subject
         bindings_by_subject = {}
         for subject in subjects: 
             bindings_by_subject[subject] = {}
 
-#        chapi_info("ABAC", "BINDINGS = %s" % self._bindings)
+        if self._verbose:
+            chapi_info("ABAC", "BINDINGS = %s" % self._bindings)
 
         for binding in self._bindings:
             if binding == "$ROLE":
@@ -419,17 +451,22 @@ class SubjectInvocationCheck(InvocationCheck):
                     for sharer in sharers:
                         bindings_by_subject[sharer][binding] = "SHARES_PROJECT"
             elif binding == "$PROJECT_LEAD":
-                # Fill in this binding if the _caller_ is a project lead on some project.
-                # Use this EG so a project lead/admin can look up details of people they want to add to a project
+                # Fill in this binding if the _caller_ is a project lead 
+                # on some project.
+                # Use this EG so a project lead/admin can look up details of 
+                # people they want to add to a project
                 leads = has_role_on_some_project([caller_urn], LEAD_ATTRIBUTE,
                                                  session)
                 if caller_urn in leads:
                     for subject in subjects:
                         bindings_by_subject[subject][binding] = "PROJECT_LEAD"
             elif binding == "$PROJECT_ADMIN":
-                # Fill in this binding if the _caller_ is a project lead on some project.
-                # Use this EG so a project lead/admin can look up details of people they want to add to a project
-                admins = has_role_on_some_project([caller_urn], ADMIN_ATTRIBUTE,
+                # Fill in this binding if the _caller_ is a project lead 
+                # on some project.
+                # Use this EG so a project lead/admin can look up details of 
+                # people they want to add to a project
+                admins = has_role_on_some_project([caller_urn], 
+                                                  ADMIN_ATTRIBUTE,
                                                   session)
                 if caller_urn in admins:
                     for subject in subjects:
@@ -462,18 +499,20 @@ class SubjectInvocationCheck(InvocationCheck):
             elif binding == "$SEARCHING_BY_EMAIL":
                 # Is this a lookup by email address?
                 # Specifically, project leads/admins should be allowed to look
-                # up member info for members not in their project by email address,
-                # to support adding members by email address
+                # up member info for members not in their project by 
+                # email address, to support adding members by email address
                 if 'match' in options and 'MEMBER_EMAIL' in options['match']:
                     for subject in subjects:
-                        bindings_by_subject[subject][binding] = "SEARCHING_BY_EMAIL"
+                        bindings_by_subject[subject][binding] = \
+                            "SEARCHING_BY_EMAIL"
             elif binding == "$SEARCHING_FOR_PROJECT_LEAD_BY_UID":
                 if 'match' in options and 'MEMBER_UID' in options['match']:
                     leads = \
                         has_role_on_some_project(subjects, LEAD_ATTRIBUTE,\
                                                      session)
                     for lead in leads:
-                        bindings_by_subject[lead][binding] = "SEARCHING_FOR_PROJECT_LEAD_BY_UID"
+                        bindings_by_subject[lead][binding] = \
+                            "SEARCHING_FOR_PROJECT_LEAD_BY_UID"
             elif binding == "$PENDING_REQUEST_TO_MEMBER":
 
                 # This means I have a pending request to one of these people
@@ -481,11 +520,13 @@ class SubjectInvocationCheck(InvocationCheck):
                 # and is on a project of which they are lead or admin
                 if subject_type == "MEMBER_URN":
                     leads = \
-                        has_pending_request_on_project_lead_by(subjects, [caller_urn], 
+                        has_pending_request_on_project_lead_by(subjects, 
+                                                               [caller_urn], 
                                                                True,
                                                                session)
                     for lead in leads:
-                        bindings_by_subject[lead][binding] = "PENDING_REQUEST_TO_MEMBER"
+                        bindings_by_subject[lead][binding] = \
+                            "PENDING_REQUEST_TO_MEMBER"
 
             elif binding == "$PENDING_REQUEST_FROM_MEMBER":
 
@@ -494,11 +535,13 @@ class SubjectInvocationCheck(InvocationCheck):
                 # and is on a project of which they are lead or admin
                 if subject_type == "MEMBER_URN":
                     requestors = \
-                        has_pending_request_on_project_lead_by([caller_urn],  subjects, 
+                        has_pending_request_on_project_lead_by([caller_urn],  
+                                                               subjects, 
                                                                False,
                                                                session)
                     for requestor in requestors:
-                        bindings_by_subject[requestor][binding] = "PENDING_REQUEST_FROM_MEMBER"
+                        bindings_by_subject[requestor][binding] = \
+                            "PENDING_REQUEST_FROM_MEMBER"
 
 
             elif binding == "$REQUEST_ID":
@@ -511,17 +554,19 @@ class SubjectInvocationCheck(InvocationCheck):
                         project_urn = \
                             get_project_request_project_urn(subject, session)
                         if project_urn is not None:
-                            rows = get_project_role_for_member(caller_urn, \
-                                                                   project_urn, \
-                                                                   session)
+                            rows = get_project_role_for_member(caller_urn, 
+                                                               project_urn, 
+                                                               session)
                             if len(rows) > 0:
                                 role = rows[0].role
                                 role_name = attribute_type_names[role]
-                                bindings_by_subject[subject][binding] = role_name
+                                bindings_by_subject[subject][binding] = \
+                                    role_name
             elif binding == "$REQUESTOR":
                 if subject_type == "REQUEST_ID":
                     for subject in subjects:
-                        requestor_urn = get_project_request_requestor_urn(subject, session) 
+                        requestor_urn = \
+                            get_project_request_requestor_urn(subject,session) 
                         if caller_urn == requestor_urn:
                             bindings_by_subject[subject][binding] = "REQUESTOR"
 
@@ -534,17 +579,23 @@ class SubjectInvocationCheck(InvocationCheck):
 
         return bindings_by_subject
 
+    # Iterate over a list of templated statements (policies or assertions)
+    # Try to replace all template variables (beginning with $) with 
+    # provided bindings. If all template variables are replaced, make
+    # an ABAC assertion for that statement.
     def _assert_bound_statements(self, abac_manager, statements, bindings):
         for stmt in statements:
             orig_stmt = stmt
             for binding_name, binding_value in bindings.items():
                 if binding_value:
-                    stmt = stmt.replace(binding_name, flatten_urn(binding_value))
+                    stmt = stmt.replace(binding_name, 
+                                        flatten_urn(binding_value))
             if stmt.find('$')<0:
                 abac_manager.register_assertion(stmt)
             else:
 #                chapi_info("ABACGuard", 
-#                           "Cannot assert statement due to unbound variables: %s => %s" % (orig_stmt, stmt))
+#                           "Statement with unbound variables: %s => %s" % \
+#                               (orig_stmt, stmt))
                 pass
         
 
@@ -555,7 +606,7 @@ class SubjectInvocationCheck(InvocationCheck):
 
         # Compute subjects
         subjects = self._compute_subjects(options, arguments, session)
-        chapi_info("SIC",  "Subjects = %s" % subjects)
+#        chapi_info("SIC",  "Subjects = %s" % subjects)
 
         for subject_type, subjects_of_type in subjects.items():
             ensure_valid_urns(subject_type, subjects_of_type, session)
@@ -578,10 +629,13 @@ class SubjectInvocationCheck(InvocationCheck):
 
 
         abac_manager =  ABACManager(certs_by_name = {"CALLER" : client_cert}, 
-                                    cert_files_by_name = {"ME" : self.cert_file}, 
-                                    key_files_by_name = {"ME" : self.key_file},
+                                    cert_files_by_name = \
+                                        {"ME" : self.cert_file}, 
+                                    key_files_by_name = \
+                                        {"ME" : self.key_file},
                                     manage_context = False)
-        #abac_manager._verbose = True
+        if self._verbose:
+            abac_manager._verbose = True
 
         client_urn = get_urn_from_cert(client_cert)
 
@@ -592,9 +646,11 @@ class SubjectInvocationCheck(InvocationCheck):
             abac_manager.register_assertion("ME.IS_PI<-CALLER")
         if lookup_authority_privilege(client_urn, session):
             abac_manager.register_assertion("ME.IS_AUTHORITY<-CALLER")
-        abac_manager.register_assertion("ME.IS_%s<-CALLER" % flatten_urn(client_urn))
+        abac_manager.register_assertion("ME.IS_%s<-CALLER" % \
+                                            flatten_urn(client_urn))
 
-#        chapi_info("ABAC", "SUBJECTS = %s" % subjects)
+        if self._verbose:
+            chapi_info("ABAC", "SUBJECTS = %s" % subjects)
 
         # if there are subjects:
         # For each subject
@@ -610,10 +666,14 @@ class SubjectInvocationCheck(InvocationCheck):
         if subjects and len(subjects) > 0:
             for subject_type, subjects_of_type in subjects.items():
                 subjects_bindings = \
-                    self._generate_bindings_for_subjects(client_urn, subject_type, 
-                                                         subjects_of_type, options, arguments,
+                    self._generate_bindings_for_subjects(client_urn, 
+                                                         subject_type, 
+                                                         subjects_of_type, 
+                                                         options, arguments,
                                                          session)
-#                chapi_info("ABAC", "SUBJECT_BINDINGS = %s" % subjects_bindings)
+                if self._verbose:
+                    chapi_info("ABAC", "SUBJECT_BINDINGS = %s : %s" % \
+                                   (subjects_of_type, subjects_bindings))
 
                 for subject in subjects_of_type:
                     self._generate_assertion_groups(subject_type, subject, \
@@ -635,18 +695,18 @@ class SubjectInvocationCheck(InvocationCheck):
                         ok, proof = abac_manager.query(query)
                         if abac_manager._verbose:
                             chapi_audit_and_log("ABAC", 
-                                                "Testing ABAC query %s OK = %s" % \
+                                                "Test ABAC query %s OK = %s"% \
                                                     (query, ok), logging.DEBUG)
                         if ok:
                             one_succeeded = True
                             break
                     if not one_succeeded:
-                        template = "Caller not authorized to call method %s " + \
+                        template = "Caller not authorized to call method %s "+\
                             "with options %s arguments %s queries %s"
                         raise CHAPIv1AuthorizationError(template % \
-                                                            (method, options, arguments, queries));
-
-
+                                                            (method, options, 
+                                                             arguments, 
+                                                             queries));
 
         else:
             subject_type = 'MEMBER_URN'
@@ -666,25 +726,27 @@ class SubjectInvocationCheck(InvocationCheck):
             query ="ME.MAY_%s<-CALLER" % method.upper()
             ok, proof = abac_manager.query(query)
             if abac_manager._verbose:
-                chapi_audit_and_log("ABAC", "Testing ABAC query %s OK = %s" % \
+                chapi_audit_and_log("ABAC", "Test ABAC query %s OK = %s" % \
                                         (query, ok), logging.DEBUG)
             if not ok:
                 template = "Caller not authorized to call method %s " + \
                     "with options %s arguments %s query %s"
                 raise CHAPIv1AuthorizationError(template % \
-                                                    (method, options, \
-                                                         arguments, query));
+                                                    (method, options, 
+                                                     arguments, query));
 
 
 class RowCheck(object):
     def permit(self, client_cert, credentials, urn):
         raise CHAPIv1NotImplementedError("Abstract Base class: RowCheck")
 
-# # An ABAC check gathers a set of assertions and then validates a set of queries
-# # If all queries pass, then the overall Check passes
+# An ABAC check gathers a set of assertions and 
+# then validates a set of queries
+# If all queries pass, then the overall Check passes
 # An ABAC Guard Base maintains a list of invocation checks and row checks
 # Before we can invoke a method, make sure that all the invocation checks pass
-# Then after we have results, make sure all the row checks check for each row (discarding rows that fail)
+# Then after we have results, make sure all the row checks check for each row 
+# (discarding rows that fail)
 class ABACGuardBase(GuardBase):
     def __init__(self):
         GuardBase.__init__(self)
@@ -694,16 +756,20 @@ class ABACGuardBase(GuardBase):
     # Base class: Provide a list of argument checks, 
     # invocation_checks and row_checks
     def get_argument_check(self, method): 
-        raise CHAPIv1NotImplementedError('Abstract Base class ABACGuard.get_argument_check')
+        raise CHAPIv1NotImplementedError('Abstract Base class ' + \
+                                             'ABACGuard.get_argument_check')
     def get_invocation_check(self, method): 
-        raise CHAPIv1NotImplementedError('Abstract Base class ABACGuard.get_invocation_check')
+        raise CHAPIv1NotImplementedError('Abstract Base class ' + \
+                                         'ABACGuard.get_invocation_check')
     def get_row_check(self, method): 
-        raise CHAPIv1NotImplementedError('Abstract Base class ABACGuard.get_row_check')
+        raise CHAPIv1NotImplementedError('Abstract Base class ' + \
+                                         'ABACGuard.get_row_check')
 
 
     def validate_call(self, client_cert, method, credentials, options, 
                       arguments, session):
-#        print "ABACGuardBase.validate_call : " + method + " " + str(arguments) + " " + str(options)
+#        print "ABACGuardBase.validate_call : " + method + " " + \
+#            str(arguments) + " " + str(options)
 
         self.user_check(client_cert, session)
 
@@ -724,16 +790,20 @@ class ABACGuardBase(GuardBase):
 
         q = session.query(MemberAttribute.value).\
             filter(MemberAttribute.member_id == client_uuid).\
-            filter(MemberAttribute.name == MA_constants.field_mapping['_GENI_MEMBER_ENABLED'])
+            filter(MemberAttribute.name == \
+                       MA_constants.field_mapping['_GENI_MEMBER_ENABLED'])
         rows = q.all()
         is_enabled = (len(rows)==0 or rows[0][0] == 'y')
 
         if is_enabled:
-            #chapi_debug("ABAC", "UC: user '%s' (%s) enabled" % (client_name, client_urn))
+#            chapi_debug("ABAC", "UC: user '%s' (%s) enabled" % \
+#                            (client_name, client_urn))
             pass
         else:
-            chapi_audit_and_log("ABAC", "UC: user '%s' (%s) disabled" % (client_name, client_urn))
-            raise CHAPIv1AuthorizationError("User %s (%s) disabled" % (client_name, client_urn));
+            chapi_audit_and_log("ABAC", "UC: user '%s' (%s) disabled" % \
+                                    (client_name, client_urn))
+            raise CHAPIv1AuthorizationError("User %s (%s) disabled" % \
+                                                (client_name, client_urn));
 
     # Support speaks-for invocation:
     # If a speaks-for credential is provided and 
