@@ -390,9 +390,9 @@ class SubjectInvocationCheck(InvocationCheck):
 
         authority = pm.getService('config').get("chrm.authority")
 
-        chapi_info('gen_bindings', 
-                   "Subject Type: %s; self.bindings: %s; subjects: %s" % \
-                       (subject_type, self._bindings, subjects))
+#        chapi_info('gen_bindings', 
+#                   "Subject Type: %s; self.bindings: %s; subjects: %s" % \
+#                       (subject_type, self._bindings, subjects))
 
         # Prepare a set of bindings (label => value) for each subject
         bindings_by_subject = {}
