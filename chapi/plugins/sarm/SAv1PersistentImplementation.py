@@ -1235,6 +1235,38 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                 urn_to_id[member_urn] = result['value'][member_urn]["_GENI_IDENTIFYING_MEMBER_UID"]
         chapi_debug('SA:MA', "URN_TO_DISPLAY_NAME = %s" % urn_to_display_name)
 
+        # Get attributes for logging membership changes
+        if text_str == 'slice':
+            project_name, authority, slice_name = \
+                extract_data_from_slice_urn(urn)
+            project_id = \
+                self.get_project_id(session, 'project_name', project_name)
+            attribs = {"SLICE" : id, "PROJECT" : project_id}
+            label = slice_name
+            label2 = "%s in project %s" % (slice_name, project_name)
+        else:
+            project_name = get_name_from_urn(urn)
+            attribs = {"PROJECT" : id}
+            label = project_name
+            label2 = label
+
+        # Log all removals before doing the removal, so that the caller and member
+        # being removed share this slice/project, and the caller has permission to log this change.
+        # see ticket #276
+        if 'members_to_remove' in options:
+            members_to_remove = options['members_to_remove']
+            for member_to_remove in members_to_remove:
+                member_name = urn_to_display_name[member_to_remove]
+                attribs["MEMBER"] = urn_to_id[member_to_remove]
+                log_options = {}
+                self.logging_service.log_event(
+                    "Removed member %s from %s %s" % \
+                        (member_name, text_str, label), \
+                        attribs, credentials, log_options, session=session)
+                chapi_info(SA_LOG_PREFIX, "Removed member %s from %s %s" % (member_name, text_str, label2), {'user': user_email})
+
+        # Now do the membership changes.
+
         # first, do the removes
         if 'members_to_remove' in options and len(options['members_to_remove']) > 0:
             q = session.query(member_class)
@@ -1309,36 +1341,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
             raise CHAPIv1ArgumentError('Cannot modify membership: this would result in ' + \
                           str(num_leads) + ' leads for the ' + text_str)
 
-
-        # Now log the removals, adds, changes
-
-        # Get attributes for logging membership changes
-        if text_str == 'slice':
-            project_name, authority, slice_name = \
-                extract_data_from_slice_urn(urn)
-            project_id = \
-                self.get_project_id(session, 'project_name', project_name)
-            attribs = {"SLICE" : id, "PROJECT" : project_id}
-            label = slice_name
-            label2 = "%s in project %s" % (slice_name, project_name)
-        else:
-            project_name = get_name_from_urn(urn)
-            attribs = {"PROJECT" : id}
-            label = project_name
-            label2 = label
-
-        # Log all removals
-        if 'members_to_remove' in options:
-            members_to_remove = options['members_to_remove']
-            for member_to_remove in members_to_remove:
-                member_name = urn_to_display_name[member_to_remove]
-                attribs["MEMBER"] = urn_to_id[member_to_remove]
-                log_options = {}
-                self.logging_service.log_event(
-                    "Removed member %s from %s %s" % \
-                        (member_name, text_str, label), \
-                        attribs, credentials, log_options, session=session)
-                chapi_info(SA_LOG_PREFIX, "Removed member %s from %s %s" % (member_name, text_str, label2), {'user': user_email})
+        # Now log the adds, changes
 
         # Log all adds
         if 'members_to_add' in options:
