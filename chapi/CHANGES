@@ -16,6 +16,8 @@
  * Remove OBE authorization code, add better comments, and a flag
    for enabling verbose logging in `SubjectInvocationCheck`. (#275,#277)
  * Filter portal speaksfor messsages from geni-check-errors. (#265)
+ * Fix authorization of `delete_sliver_info` by not trying to 
+   extract sliver as a subject. (#283)
 
 == 1.7.1 ==
  * Allow project expiration to be null (#268)
