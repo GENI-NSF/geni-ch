@@ -15,6 +15,7 @@
    person is a member of. (#276)
  * Remove OBE authorization code, add better comments, and a flag
    for enabling verbose logging in `SubjectInvocationCheck`. (#275,#277)
+ * Filter portal speaksfor messsages from geni-check-errors. (#265)
 
 == 1.7.1 ==
  * Allow project expiration to be null (#268)
