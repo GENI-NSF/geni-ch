@@ -156,12 +156,6 @@ class SubjectInvocationCheck(InvocationCheck):
         if urns is not None:
             subjects[label] = urns
 
-        urns, label = self._compute_sliver_subjects(options, arguments, 
-                                                    session)
-        if urns is not None:
-            subjects[label] = urns
-
-            
         for label, urns in subjects.items():
             if not isinstance(urns, list): subjects[label] = [urns]
 #        chapi_info("_compute_subjects", "SUBJECTS = %s" % subjects)
@@ -341,12 +335,6 @@ class SubjectInvocationCheck(InvocationCheck):
 #        chapi_info("C_M_S", "%s" % urns)
 
         return urns, "MEMBER_URN"
-
-    # Grab sliver URNs from arguments
-    def _compute_sliver_subjects(self, options, arguments, session):
-        if 'sliver_urn' in arguments:
-            return arguments['sliver_urn'], 'SLIVER_URN'
-        return None, None
 
     # Grab request ID's from arguments
     def _compute_request_subjects(self, options, arguments, session):
