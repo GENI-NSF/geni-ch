@@ -18,6 +18,7 @@
  * Filter portal speaksfor messsages from geni-check-errors. (#265)
  * Fix authorization of `delete_sliver_info` by not trying to 
    extract sliver as a subject. (#283)
+ * Notify users when their certificates are expiring (#169)
 
 == 1.7.1 ==
  * Allow project expiration to be null (#268)
