@@ -329,6 +329,8 @@ class SubjectInvocationCheck(InvocationCheck):
 
         authority = pm.getService('config').get("chrm.authority")
 
+#        chapi_info('gen_bindings', "Subject Type: %s; self.bindings: %s; subjects: %s" % (subject_type, self._bindings, subjects))
+
         # Prepare a set of bindings (label => value) for each subject
         bindings_by_subject = {}
         for subject in subjects: 
@@ -383,18 +385,26 @@ class SubjectInvocationCheck(InvocationCheck):
                     for sharer in sharers:
                         bindings_by_subject[sharer][binding] = "SHARES_PROJECT"
             elif binding == "$PROJECT_LEAD":
-                if subject_type == "MEMBER_URN":
-                    leads = has_role_on_some_project(subjects, LEAD_ATTRIBUTE,
-                                                     session)
-                    for lead in leads:
-                        bindings_by_subject[lead][binding] = "PROJECT_LEAD"
+                # Fill in this binding if the _caller_ is a project lead on some project.
+                # Use this EG so a project lead/admin can look up details of people they want to add to a project
+                leads = has_role_on_some_project([caller_urn], LEAD_ATTRIBUTE,
+                                                 session)
+                if caller_urn in leads:
+                    for subject in subjects:
+                        bindings_by_subject[subject][binding] = "PROJECT_LEAD"
             elif binding == "$PROJECT_ADMIN":
-                if subject_type == "MEMBER_URN":
-                    admins = has_role_on_some_project(subjects, ADMIN_ATTRIBUTE,
-                                                      session)
-                    for admin in admins:
-                        bindings_by_subject[admin][binding] = "PROJECT_ADMIN"
+                # Fill in this binding if the _caller_ is a project lead on some project.
+                # Use this EG so a project lead/admin can look up details of people they want to add to a project
+                admins = has_role_on_some_project([caller_urn], ADMIN_ATTRIBUTE,
+                                                  session)
+                if caller_urn in admins:
+                    for subject in subjects:
+                        bindings_by_subject[subject][binding] = "PROJECT_ADMIN"
             elif binding == "$SEARCHING_BY_EMAIL":
+                # Is this a lookup by email address?
+                # Specifically, project leads/admins should be allowed to look
+                # up member info for members not in their project by email address,
+                # to support adding members by email address
                 if 'match' in options and 'MEMBER_EMAIL' in options['match']:
                     for subject in subjects:
                         bindings_by_subject[subject][binding] = "SEARCHING_BY_EMAIL"
@@ -458,10 +468,10 @@ class SubjectInvocationCheck(InvocationCheck):
 
         return bindings_by_subject
 
-    def _assert_bound_statements(self, abac_manager, statements):
+    def _assert_bound_statements(self, abac_manager, statements, bindings):
         for stmt in statements:
             orig_stmt = stmt
-            for binding_name, binding_value in self._bindings.items():
+            for binding_name, binding_value in bindings.items():
                 if binding_value:
                     stmt = stmt.replace(binding_name, flatten_urn(binding_value))
             if stmt.find('$')<0:
@@ -541,10 +551,12 @@ class SubjectInvocationCheck(InvocationCheck):
                 for subject in subjects_of_type:
                     self._generate_assertion_groups(subject_type, subject, \
                                                         abac_manager)
-                    self._bindings = subjects_bindings[subject]
+                    bindings = subjects_bindings[subject]
                     
-                    self._assert_bound_statements(abac_manager, self._assertions)
-                    self._assert_bound_statements(abac_manager, self._policies)
+                    self._assert_bound_statements(abac_manager,
+                                                  self._assertions, bindings)
+                    self._assert_bound_statements(abac_manager, self._policies,
+                                                  bindings)
 
                     queries = [
                         "ME.MAY_%s_%s<-CALLER" % (method.upper(), \
@@ -570,8 +582,20 @@ class SubjectInvocationCheck(InvocationCheck):
 
 
         else:
-            self._assert_bound_statements(abac_manager, self._assertions)
-            self._assert_bound_statements(abac_manager, self._policies)
+            subject_type = 'MEMBER_URN'
+            subjects_of_type = [client_urn]
+            subjects_bindings \
+                = self._generate_bindings_for_subjects(client_urn,
+                                                       subject_type,
+                                                       subjects_of_type,
+                                                       options,
+                                                       arguments,
+                                                       session)
+            bindings = subjects_bindings[client_urn]
+            self._assert_bound_statements(abac_manager, self._assertions,
+                                          bindings)
+            self._assert_bound_statements(abac_manager, self._policies,
+                                          bindings)
             query ="ME.MAY_%s<-CALLER" % method.upper()
             ok, proof = abac_manager.query(query)
             if abac_manager._verbose:
