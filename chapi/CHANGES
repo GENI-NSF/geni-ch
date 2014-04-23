@@ -4,6 +4,22 @@
 
 = GENI Clearinghouse Release Notes =
 
+== 1.8 ==
+ * Fix key lookup by id (#266)
+ * Return certificate expiration when requested (#267)
+ * When a sliver has no record in the sliver info tables,
+   return an Argument error, not an authorization error. (#273)
+ * Fix authorization errors logging changes to slice and project
+   membership, by adding a policy that allows logging about someone
+   else if you also logging about a slice/project that the other
+   person is a member of. (#276)
+ * Remove OBE authorization code, add better comments, and a flag
+   for enabling verbose logging in `SubjectInvocationCheck`. (#275,#277)
+ * Filter portal speaksfor messsages from geni-check-errors. (#265)
+ * Fix authorization of `delete_sliver_info` by not trying to 
+   extract sliver as a subject. (#283)
+ * Notify users when their certificates are expiring (#169)
+
 == 1.7.1 ==
  * Allow project expiration to be null (#268)
  * Fix authorization error in log_event on create slice (#270)
