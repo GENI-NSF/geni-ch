@@ -96,7 +96,6 @@ class SubjectInvocationCheck(InvocationCheck):
         self.config = pm.getService('config')
         self.key_file = self.config.get("chapiv1rpc.ch_key")
         self.cert_file = self.config.get("chapiv1rpc.ch_cert")
-        self._bindings = {}
         self._verbose = False # Set this to True for verbose output
 
     # All recognized binding types (variables that can be
@@ -119,13 +118,13 @@ class SubjectInvocationCheck(InvocationCheck):
     
     # Gather all bindings in the given ABAC template (policy or assertion)
     # That is, see which of the RECOGNIZED BINDINGS are in the template
-    # And set binding in 'self._bindings'. 
+    # And set these in the provided bindings variable
     # These are the ones we'll seek to resolve for each subject
-    def _gather_bindings(self, template):
+    def _gather_bindings(self, template, bindings):
         for recognized_binding in SubjectInvocationCheck.RECOGNIZED_BINDINGS:
             if template.find(recognized_binding) > 0:
-                if recognized_binding not in self._bindings:
-                    self._bindings[recognized_binding] = None
+                if recognized_binding not in bindings:
+                    bindings[recognized_binding] = None
 
     # Compute the subjects of a given call from call arguments and options
     # The 'subjects' are the entities on our about the call operates and
@@ -373,14 +372,14 @@ class SubjectInvocationCheck(InvocationCheck):
     # for each binding_name that is determined to have a value (otherwise
     # the dictionary has no entry for that binding
     def _generate_bindings_for_subjects(self, caller_urn, subject_type, 
-                                        subjects, 
+                                        subjects, bindings,
                                         options, arguments, session):
 
         authority = pm.getService('config').get("chrm.authority")
 
 #        chapi_info('gen_bindings', 
 #                   "Subject Type: %s; self.bindings: %s; subjects: %s" % \
-#                       (subject_type, self._bindings, subjects))
+#                       (subject_type, bindings, subjects))
 
         # Prepare a set of bindings (label => value) for each subject
         bindings_by_subject = {}
@@ -388,9 +387,9 @@ class SubjectInvocationCheck(InvocationCheck):
             bindings_by_subject[subject] = {}
 
         if self._verbose:
-            chapi_info("ABAC", "BINDINGS = %s" % self._bindings)
+            chapi_info("ABAC", "BINDINGS = %s" % bindings)
 
-        for binding in self._bindings:
+        for binding in bindings:
             if binding == "$ROLE":
                 if subject_type == "SLICE_URN":
                     rows = get_slice_role_for_member(caller_urn, \
@@ -608,12 +607,12 @@ class SubjectInvocationCheck(InvocationCheck):
     def authorize_call(self, client_cert, method, credentials, options, \
                            arguments, subjects, session):
 
-        self._bindings = {}
+        bindings = {}
         # Gather all required bindings
         for assertion in self._assertions:
-            self._gather_bindings(assertion)
+            self._gather_bindings(assertion, bindings)
         for policy in self._policies:
-            self._gather_bindings(policy)
+            self._gather_bindings(policy, bindings)
 
 
         abac_manager =  ABACManager(certs_by_name = {"CALLER" : client_cert}, 
@@ -657,6 +656,7 @@ class SubjectInvocationCheck(InvocationCheck):
                     self._generate_bindings_for_subjects(client_urn, 
                                                          subject_type, 
                                                          subjects_of_type, 
+                                                         bindings,
                                                          options, arguments,
                                                          session)
                 if self._verbose:
@@ -703,6 +703,7 @@ class SubjectInvocationCheck(InvocationCheck):
                 = self._generate_bindings_for_subjects(client_urn,
                                                        subject_type,
                                                        subjects_of_type,
+                                                       bindings,
                                                        options,
                                                        arguments,
                                                        session)
