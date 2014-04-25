@@ -160,6 +160,20 @@ class SubjectInvocationCheck(InvocationCheck):
 #        chapi_info("_compute_subjects", "SUBJECTS = %s" % subjects)
         return subjects
 
+    # Pull out non subject arguments so these arguments can also be validated
+    def _compute_nonsubjects(self, options, arguments, session):
+        nonsubjects = {}
+
+        # slivers are not subjects, but we validate the URN is known in the sliver_info table
+        urns, label = self._compute_sliver_nonsubjects(options, arguments, session)
+        if urns is not None:
+            nonsubjects[label] = urns
+
+        for label, urns in nonsubjects.items():
+            if not isinstance(urns, list): nonsubjects[label] = [urns]
+#        chapi_info("_compute_nonsubjects", "NONSUBJECTS = %s" % nonsubjects)
+        return nonsubjects
+
     # Determine what subjects in options and arguments are of type slice
     def _compute_slice_subjects(self, options, arguments, session):
         urns = None
@@ -334,6 +348,13 @@ class SubjectInvocationCheck(InvocationCheck):
 #        chapi_info("C_M_S", "%s" % urns)
 
         return urns, "MEMBER_URN"
+
+    # grab sliver URNs from arguments
+    # We do not treat these as subjects, but as other arguments to validate
+    def _compute_sliver_nonsubjects(self, options, arguments, session):
+        if 'sliver_urn' in arguments:
+            return arguments['sliver_urn'], 'SLIVER_URN'
+        return None, None
 
     # Grab request ID's from arguments
     def _compute_request_subjects(self, options, arguments, session):
@@ -595,7 +616,15 @@ class SubjectInvocationCheck(InvocationCheck):
         subjects = self._compute_subjects(options, arguments, session)
 #        chapi_info("SIC",  "Subjects = %s" % subjects)
 
+        # Compute non subject arguments
+        nonsubjects = self._compute_nonsubjects(options, arguments, session)
+
+        # Validate subject arguments
         for subject_type, subjects_of_type in subjects.items():
+            ensure_valid_urns(subject_type, subjects_of_type, session)
+
+        # Validate non subject arguments
+        for subject_type, subjects_of_type in nonsubjects.items():
             ensure_valid_urns(subject_type, subjects_of_type, session)
 
         return subjects
