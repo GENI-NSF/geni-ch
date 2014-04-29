@@ -92,6 +92,9 @@ class MAv1Handler(HandlerBase):
             # of a list of dictionaries, one for each key of that user
             # In v2 we return a dictioanry (indexed by KEY_ID)
             # with a dictionary for that key
+            # Make sure we get the KEY_ID back
+            if 'filter' in options and 'KEY_ID' not in 'filter':
+                options['filter'].append('KEY_ID')
             result = \
                 self.lookup_keys(credentials, options)
             if result['code'] == NO_ERROR:

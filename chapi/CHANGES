@@ -4,7 +4,37 @@
 
 = GENI Clearinghouse Release Notes =
 
+== 1.9 ==
+ * Store ABAC Guard bindings in a per invocation variable
+   to make it threadsafe. (#285)
+ * Proper fix to guard on `update_sliver_info`: add logic
+   to check arguments that are not subjects (no applicable
+   policy). Slivers are the only example of this so far.
+   This way, we can get an `ARGUMENT_ERROR` on unknown
+   slivers as expected. (#286)
+
 == 1.8 ==
+ * Fix key lookup by id (#266)
+ * Return certificate expiration when requested (#267)
+ * When a sliver has no record in the sliver info tables,
+   return an Argument error, not an authorization error. (#273)
+ * Fix authorization errors logging changes to slice and project
+   membership, by adding a policy that allows logging about someone
+   else if you also logging about a slice/project that the other
+   person is a member of. (#276)
+ * Remove OBE authorization code, add better comments, and a flag
+   for enabling verbose logging in `SubjectInvocationCheck`. (#275,#277)
+ * Filter portal speaksfor messsages from geni-check-errors. (#265)
+ * Fix authorization of `delete_sliver_info` by not trying to 
+   extract sliver as a subject. (#283)
+ * Notify users when their certificates are expiring (#169)
+
+== 1.7.1 ==
+ * Allow project expiration to be null (#268)
+ * Fix authorization error in log_event on create slice (#270)
+ * Fix authorization error on project lead or admin looking
+   up a member by email address (as in bulk upload from 
+   the portal). (#269)
 
 == 1.7 ==
  * Add support for externalized ABAC Guard policies (#232)
