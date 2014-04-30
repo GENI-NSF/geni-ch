@@ -4,6 +4,8 @@
 
 = GENI Clearinghouse Release Notes =
 
+== 1.10 ==
+
 == 1.9 ==
  * Store ABAC Guard bindings in a per invocation variable
    to make it threadsafe. (#285)
