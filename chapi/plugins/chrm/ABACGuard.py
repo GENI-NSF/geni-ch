@@ -399,7 +399,7 @@ class SubjectInvocationCheck(InvocationCheck):
         authority = pm.getService('config').get("chrm.authority")
 
 #        chapi_info('gen_bindings', 
-#                   "Subject Type: %s; self.bindings: %s; subjects: %s" % \
+#                   "Subject Type: %s; bindings: %s; subjects: %s" % \
 #                       (subject_type, bindings, subjects))
 
         # Prepare a set of bindings (label => value) for each subject
@@ -695,12 +695,12 @@ class SubjectInvocationCheck(InvocationCheck):
                 for subject in subjects_of_type:
                     self._generate_assertion_groups(subject_type, subject, \
                                                         abac_manager)
-                    bindings = subjects_bindings[subject]
+                    subjbindings = subjects_bindings[subject]
                     
                     self._assert_bound_statements(abac_manager,
-                                                  self._assertions, bindings)
+                                                  self._assertions, subjbindings)
                     self._assert_bound_statements(abac_manager, self._policies,
-                                                  bindings)
+                                                  subjbindings)
 
                     queries = [
                         "ME.MAY_%s_%s<-CALLER" % (method.upper(), \
@@ -736,11 +736,11 @@ class SubjectInvocationCheck(InvocationCheck):
                                                        options,
                                                        arguments,
                                                        session)
-            bindings = subjects_bindings[client_urn]
+            subjbindings = subjects_bindings[client_urn]
             self._assert_bound_statements(abac_manager, self._assertions,
-                                          bindings)
+                                          subjbindings)
             self._assert_bound_statements(abac_manager, self._policies,
-                                          bindings)
+                                          subjbindings)
             query ="ME.MAY_%s<-CALLER" % method.upper()
             ok, proof = abac_manager.query(query)
             if abac_manager._verbose:
