@@ -133,6 +133,24 @@ def make_csr():
     private_key = open(key_file).read()
     return private_key, csr_file
 
+def make_csr_from_key(private_key):
+    """Create a certificate signing request (CSR) from the given private
+    key.
+
+    """
+    (csr_fd, csr_file) = tempfile.mkstemp()
+    os.close(csr_fd)
+    # Write private key to temporary file
+    (key_fd, key_file) = tempfile.mkstemp()
+    os.write(key_fd, private_key)
+    os.close(key_fd)
+    csr_request_args = ['/usr/bin/openssl', 'req', '-new',
+                        '-key', key_file,
+                        '-out', csr_file, '-batch']
+    subprocess.call(csr_request_args)
+    os.unlink(key_file)
+    return private_key, csr_file
+
 # Generate an X509 cert and private key
 # Return cert
 def make_cert(uuid, email, urn, signer_cert_file, signer_key_file, csr_file,
