@@ -909,11 +909,41 @@ class MAv1Implementation(MAv1DelegateBase):
 
         return result
 
+    def _make_csr(self, member_urn, member_id, session):
+        """Create a certifcate signing request. If the given member has a
+        private key in the outside cert table, use it. Otherwise
+        generate a new private key along with the csr.
+
+        Return a tuple of (private_key, csr_file).
+
+        """
+        q = session.query(OutsideCert.private_key)
+        q = q.filter(OutsideCert.member_id == member_id)
+        rows = q.all()
+        if len(rows) > 0 and rows[0].private_key:
+            chapi_info(MA_LOG_PREFIX,
+                       "Reusing private key for member %s" % (member_urn))
+            return make_csr_from_key(rows[0].private_key)
+        else:
+            chapi_info(MA_LOG_PREFIX,
+                       "Creating new private key for member %s" % (member_urn))
+            return make_csr()
+
     # Member certificate methods
     def create_certificate(self, client_cert, member_urn, 
                            credentials, options, session):
 
         user_email = get_email_from_cert(client_cert)
+
+        # Lookup UID and email from URN
+        match = {'MEMBER_URN' : member_urn}
+        lookup_options = {'match' : match}
+        lookup_response = self.lookup_member_info(lookup_options,
+                                                  ['MEMBER_EMAIL',
+                                                   'MEMBER_UID'], session)
+        member_info = lookup_response['value'][member_urn]
+        member_email = str(member_info['MEMBER_EMAIL'])
+        member_id = str(member_info['MEMBER_UID'])
 
         # Grab the CSR or make CSR/KEY
         if 'csr' in options:
@@ -925,17 +955,8 @@ class MAv1Implementation(MAv1DelegateBase):
             open(csr_file, 'w').write(csr_data)
         else:
             # No CSR provided: Generate cert and private key
-            private_key, csr_file = make_csr()
-
-        # Lookup UID and email from URN
-        match = {'MEMBER_URN' : member_urn}
-        lookup_options = {'match' : match}
-        lookup_response = self.lookup_member_info(lookup_options,
-                                                  ['MEMBER_EMAIL',
-                                                   'MEMBER_UID'], session)
-        member_info = lookup_response['value'][member_urn]
-        member_email = str(member_info['MEMBER_EMAIL'])
-        member_id = str(member_info['MEMBER_UID'])
+            private_key, csr_file = self._make_csr(member_urn, member_id,
+                                                   session)
 
         cert_pem = make_cert(member_id, member_email, member_urn,
                              self.cert, self.key, csr_file)
