@@ -5,6 +5,7 @@
 = GENI Clearinghouse Release Notes =
 
 == 1.10 ==
+ * Reuse existing private keys when renewing certificates (#274)
 
 == 1.9.1 ==
  * Fix authorization logic for policies with multiple subjects,
