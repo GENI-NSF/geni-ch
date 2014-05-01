@@ -33,6 +33,7 @@ import tempfile
 import uuid
 
 from sqlalchemy.orm import mapper
+import sqlalchemy
 
 import amsoil.core.pluginmanager as pm
 
@@ -929,6 +930,47 @@ class MAv1Implementation(MAv1DelegateBase):
                        "Creating new private key for member %s" % (member_urn))
             return make_csr()
 
+    def _store_outside_cert(self, session, member_id, certificate, expiration,
+                            private_key):
+        """Store cert and key in outside_cert table. If an entry exists,
+        update the row, otherwise insert a new row.
+
+        Return True on success, raises an exception on failure.
+        """
+        # Query for a row. If one exists, update it in the db. If no
+        # result found, insert a new row.
+        q = session.query(OutsideCert)
+        q = q.filter(OutsideCert.member_id == member_id)
+        try:
+            row = q.one()
+            # Found one row, update it with new info.
+            values = dict(certificate=certificate,
+                          expiration=expiration,
+                          private_key=private_key)
+            # Returns row count on success, raises exception on error
+            q.update(values)
+            msg = 'Updated certificate for %s' % (member_id)
+            chapi_info(MA_LOG_PREFIX, msg)
+            return True
+        except sqlalchemy.orm.exc.NoResultFound:
+            # Insert a new row
+            insert_fields = dict(certificate=certificate,
+                                 member_id=member_id,
+                                 expiration=expiration)
+            if private_key:
+                insert_fields['private_key'] = private_key
+            ins = self.db.OUTSIDE_CERT_TABLE.insert().values(insert_fields)
+            # Nothing useful returned on insert, raises exception on error.
+            session.execute(ins)
+            msg = 'Inserted new certificate for %s' % (member_id)
+            chapi_info(MA_LOG_PREFIX, msg)
+            return True
+        except sqlalchemy.orm.exc.MultipleResultsFound:
+            # Inconsistent database!
+            msg = ('Multiple rows found for member_id %s'
+                   + ' in outside certificate table.')
+            raise Exception(msg % (member_id))
+
     # Member certificate methods
     def create_certificate(self, client_cert, member_urn, 
                            credentials, options, session):
@@ -970,15 +1012,8 @@ class MAv1Implementation(MAv1DelegateBase):
         # Need to return it somehow
         cert_chain = cert_pem + signer_pem
 
-
-        # Store cert and key in outside_cert table
-        insert_fields={'certificate' : cert_chain, 'member_id' : member_id,
-                       'expiration' : expiration}
-        if private_key:
-            insert_fields['private_key'] = private_key
-        ins = self.db.OUTSIDE_CERT_TABLE.insert().values(insert_fields)
-        result = session.execute(ins)
-
+        store_result = self._store_outside_cert(session, member_id, cert_chain,
+                                                expiration, private_key)
         result = self._successReturn(True)
 
         # chapi_audit call
