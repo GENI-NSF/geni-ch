@@ -6,6 +6,7 @@
 
 == 1.10 ==
  * Reuse existing private keys when renewing certificates (#274)
+ * Ignore `ARGUMENT_ERROR` on `update_sliver_info`. (#288)
 
 == 1.9.1 ==
  * Fix authorization logic for policies with multiple subjects,
