@@ -4,6 +4,11 @@
 
 = GENI Clearinghouse Release Notes =
 
+== 1.10 ==
+ * Reuse existing private keys when renewing certificates (#274)
+ * Ignore `ARGUMENT_ERROR` on `update_sliver_info`. (#288)
+ * Put new URL in expiring certificate email (#284)
+
 == 1.9.1 ==
  * Fix authorization logic for policies with multiple subjects,
    specifically `log_event`: do not overwrite the method variable
