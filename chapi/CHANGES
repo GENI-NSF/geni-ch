@@ -4,6 +4,8 @@
 
 = GENI Clearinghouse Release Notes =
 
+== 1.11 ==
+
 == 1.10 ==
  * Reuse existing private keys when renewing certificates (#274)
  * Ignore `ARGUMENT_ERROR` on `update_sliver_info`. (#288)
