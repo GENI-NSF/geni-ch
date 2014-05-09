@@ -33,6 +33,7 @@ import tempfile
 import uuid
 
 from sqlalchemy.orm import mapper
+import sqlalchemy
 
 import amsoil.core.pluginmanager as pm
 
@@ -909,11 +910,82 @@ class MAv1Implementation(MAv1DelegateBase):
 
         return result
 
+    def _make_csr(self, member_urn, member_id, session):
+        """Create a certifcate signing request. If the given member has a
+        private key in the outside cert table, use it. Otherwise
+        generate a new private key along with the csr.
+
+        Return a tuple of (private_key, csr_file).
+
+        """
+        q = session.query(OutsideCert.private_key)
+        q = q.filter(OutsideCert.member_id == member_id)
+        rows = q.all()
+        if len(rows) > 0 and rows[0].private_key:
+            chapi_info(MA_LOG_PREFIX,
+                       "Reusing private key for member %s" % (member_urn))
+            return make_csr_from_key(rows[0].private_key)
+        else:
+            chapi_info(MA_LOG_PREFIX,
+                       "Creating new private key for member %s" % (member_urn))
+            return make_csr()
+
+    def _store_outside_cert(self, session, member_id, certificate, expiration,
+                            private_key):
+        """Store cert and key in outside_cert table. If an entry exists,
+        update the row, otherwise insert a new row.
+
+        Return True on success, raises an exception on failure.
+        """
+        # Query for a row. If one exists, update it in the db. If no
+        # result found, insert a new row.
+        q = session.query(OutsideCert)
+        q = q.filter(OutsideCert.member_id == member_id)
+        try:
+            row = q.one()
+            # Found one row, update it with new info.
+            values = dict(certificate=certificate,
+                          expiration=expiration,
+                          private_key=private_key)
+            # Returns row count on success, raises exception on error
+            q.update(values)
+            msg = 'Updated certificate for %s' % (member_id)
+            chapi_info(MA_LOG_PREFIX, msg)
+            return True
+        except sqlalchemy.orm.exc.NoResultFound:
+            # Insert a new row
+            insert_fields = dict(certificate=certificate,
+                                 member_id=member_id,
+                                 expiration=expiration)
+            if private_key:
+                insert_fields['private_key'] = private_key
+            ins = self.db.OUTSIDE_CERT_TABLE.insert().values(insert_fields)
+            # Nothing useful returned on insert, raises exception on error.
+            session.execute(ins)
+            msg = 'Inserted new certificate for %s' % (member_id)
+            chapi_info(MA_LOG_PREFIX, msg)
+            return True
+        except sqlalchemy.orm.exc.MultipleResultsFound:
+            # Inconsistent database!
+            msg = ('Multiple rows found for member_id %s'
+                   + ' in outside certificate table.')
+            raise Exception(msg % (member_id))
+
     # Member certificate methods
     def create_certificate(self, client_cert, member_urn, 
                            credentials, options, session):
 
         user_email = get_email_from_cert(client_cert)
+
+        # Lookup UID and email from URN
+        match = {'MEMBER_URN' : member_urn}
+        lookup_options = {'match' : match}
+        lookup_response = self.lookup_member_info(lookup_options,
+                                                  ['MEMBER_EMAIL',
+                                                   'MEMBER_UID'], session)
+        member_info = lookup_response['value'][member_urn]
+        member_email = str(member_info['MEMBER_EMAIL'])
+        member_id = str(member_info['MEMBER_UID'])
 
         # Grab the CSR or make CSR/KEY
         if 'csr' in options:
@@ -925,17 +997,8 @@ class MAv1Implementation(MAv1DelegateBase):
             open(csr_file, 'w').write(csr_data)
         else:
             # No CSR provided: Generate cert and private key
-            private_key, csr_file = make_csr()
-
-        # Lookup UID and email from URN
-        match = {'MEMBER_URN' : member_urn}
-        lookup_options = {'match' : match}
-        lookup_response = self.lookup_member_info(lookup_options,
-                                                  ['MEMBER_EMAIL',
-                                                   'MEMBER_UID'], session)
-        member_info = lookup_response['value'][member_urn]
-        member_email = str(member_info['MEMBER_EMAIL'])
-        member_id = str(member_info['MEMBER_UID'])
+            private_key, csr_file = self._make_csr(member_urn, member_id,
+                                                   session)
 
         cert_pem = make_cert(member_id, member_email, member_urn,
                              self.cert, self.key, csr_file)
@@ -949,15 +1012,8 @@ class MAv1Implementation(MAv1DelegateBase):
         # Need to return it somehow
         cert_chain = cert_pem + signer_pem
 
-
-        # Store cert and key in outside_cert table
-        insert_fields={'certificate' : cert_chain, 'member_id' : member_id,
-                       'expiration' : expiration}
-        if private_key:
-            insert_fields['private_key'] = private_key
-        ins = self.db.OUTSIDE_CERT_TABLE.insert().values(insert_fields)
-        result = session.execute(ins)
-
+        store_result = self._store_outside_cert(session, member_id, cert_chain,
+                                                expiration, private_key)
         result = self._successReturn(True)
 
         # chapi_audit call

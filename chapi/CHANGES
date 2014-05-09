@@ -4,6 +4,18 @@
 
 = GENI Clearinghouse Release Notes =
 
+== 1.11 ==
+
+== 1.10 ==
+ * Reuse existing private keys when renewing certificates (#274)
+ * Ignore `ARGUMENT_ERROR` on `update_sliver_info`. (#288)
+ * Put new URL in expiring certificate email (#284)
+
+== 1.9.1 ==
+ * Fix authorization logic for policies with multiple subjects,
+   specifically `log_event`: do not overwrite the method variable
+   `bindings` with the per-subject bindings. (#287)
+
 == 1.9 ==
  * Store ABAC Guard bindings in a per invocation variable
    to make it threadsafe. (#285)

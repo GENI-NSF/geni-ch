@@ -44,7 +44,7 @@ import sys
 body = """Your GENI certificate is going to expire on %s.
 To generate a new certificate, please go to:
 
-   https://portal.geni.net/secure/home.php
+   https://portal.geni.net/secure/renewcert.php
 """
 
 class Notifier:
