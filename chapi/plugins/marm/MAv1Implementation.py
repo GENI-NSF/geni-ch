@@ -65,16 +65,6 @@ class InsideKey(object):
 class SshKey(object):
     pass
 
-def row_cert_to_public_key(row):
-    raw_certificate = row.certificate
-    cert_obj = cert.Certificate(string=raw_certificate)
-    public_key = cert_obj.get_pubkey()
-    return public_key.get_pubkey_string()
-
-MA.field_mapping["_GENI_MEMBER_SSL_PUBLIC_KEY"] = row_cert_to_public_key
-MA.field_mapping["_GENI_MEMBER_INSIDE_PUBLIC_KEY"] = row_cert_to_public_key
-
-
 def derive_username(email_address, session):
     # See http://www.linuxjournal.com/article/9585
     # try to figure out a reasonable username.
@@ -164,10 +154,8 @@ class MAv1Implementation(MAv1DelegateBase):
         self.table_mapping = {
             "_GENI_MEMBER_SSL_CERTIFICATE": OutsideCert,
             "_GENI_MEMBER_SSL_EXPIRATION": OutsideCert,
-            "_GENI_MEMBER_SSL_PUBLIC_KEY": OutsideCert,
             "_GENI_MEMBER_SSL_PRIVATE_KEY": OutsideCert,
             "_GENI_MEMBER_INSIDE_CERTIFICATE": InsideKey,
-            "_GENI_MEMBER_INSIDE_PUBLIC_KEY": InsideKey,
             "_GENI_MEMBER_INSIDE_PRIVATE_KEY": InsideKey
             }
         self.cert = self.config.get('chapi.ma_cert')
