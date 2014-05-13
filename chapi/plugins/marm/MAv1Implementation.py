@@ -31,6 +31,7 @@ import re
 import subprocess
 import tempfile
 import uuid
+from collections import defaultdict
 
 from sqlalchemy.orm import mapper
 import sqlalchemy
@@ -296,51 +297,120 @@ class MAv1Implementation(MAv1DelegateBase):
 
     # Common code for answering query
     def lookup_member_info(self, options, allowed_fields, session):
-        
+        """Look up a set of fields about a set of members.
+
+        Return a dictionary whose top-level keys are the URNS of
+        members whose information has been retrieved. The top-level
+        values are dictionaries whose keys are field names and whose
+        values are the data elements extracted from the database.
+
+        """
         # preliminaries
-        selected_columns, match_criteria = \
-            unpack_query_options(options, MA.field_mapping)
+        (selected_columns,
+         match_criteria) = unpack_query_options(options, MA.field_mapping)
         if not match_criteria:
             raise CHAPIv1ArgumentError('Missing a valid "match" option')
         self.check_attributes(match_criteria)
         selected_columns = set(selected_columns) & set(allowed_fields)
 
         # first, get all the member ids of matches
-        uids = [set(self.get_uids_for_attribute(session, attr, value)) \
+        uids = [set(self.get_uids_for_attribute(session, attr, value))
                 for attr, value in match_criteria.iteritems()]
         uids = set.intersection(*uids)
 
-#        chapi_debug(MA_LOG_PREFIX, "UIDS = %s COLS = %s CRIT = %s" % \
-#                        (uids, selected_columns, match_criteria))
+        chapi_info(MA_LOG_PREFIX,
+                    "UIDS = %s COLS = %s CRIT = %s" % (uids,
+                                                       selected_columns,
+                                                       match_criteria))
+        # Bucket the requested columns so we can make efficient use of
+        # the database
+        uid_cols = ["MEMBER_UID", "_GENI_IDENTIFYING_MEMBER_UID",
+                    "_GENI_PRIVATE_MEMBER_UID"]
+        table_cols = defaultdict(set)
+        for col in selected_columns:
+            if col in uid_cols:
+                table_cols['uid'].add(col)
+            elif col in self.table_mapping:
+                table_cols[self.table_mapping[col]].add(col)
+            else:
+                table_cols[MemberAttribute].add(col)
+        for x in table_cols:
+            chapi_info(MA_LOG_PREFIX,
+                        "Get columns %r from table %s" % (table_cols[x], x))
 
-        # then, get the values
-        members = {}
+        # Construct appropriate queries
+        uid_result = defaultdict(dict)
+
+        # MemberAttribute
+
+        # Add some 'always' columns
+        # Always include the MEMBER_URN, we need it for the result
+        table_cols[MemberAttribute].add('MEMBER_URN')
+
+        q = session.query(MemberAttribute.member_id, MemberAttribute.name,
+                          MemberAttribute.value)
+        q = q.filter(MemberAttribute.member_id.in_(uids))
+        def _map_ma_name(col):
+            if MA.field_mapping.has_key(col):
+                return MA.field_mapping[col]
+            else:
+                return col
+        ma_names = dict()
+        for col in table_cols[MemberAttribute]:
+            ma_names[_map_ma_name(col)] = col
+        q = q.filter(MemberAttribute.name.in_(ma_names.keys()))
+        maRows = q.all()
+        chapi_info(MA_LOG_PREFIX,
+                   "Found %d rows in member_attribute table" % (len(maRows)))
+        tmp_result = defaultdict(dict)
+        for row in maRows:
+            chapi_info(MA_LOG_PREFIX, "M_A Row: %r" % (row,))
+            tmp_result[row.member_id][row.name] = row.value
         for uid in uids:
-            row = self.get_attr_for_uid(session,"MEMBER_URN",uid)
-            if row is None or len(row) == 0:
-                chapi_info(MA_LOG_PREFIX, "lookup_member_info: no member_urn row from get_attr_for_uid %s (the MA?)" % uid)
-                continue
-            urn = row[0]
-            values = {}
-            for col in selected_columns:
-                if col in ["MEMBER_UID", "_GENI_IDENTIFYING_MEMBER_UID", 
-                           "_GENI_PRIVATE_MEMBER_UID"]:
-                    values[col] = uid
+            db_fields = tmp_result[uid]
+            uid_fields = uid_result[uid]
+            for field in table_cols[MemberAttribute]:
+                if field in MA.field_mapping:
+                    col = MA.field_mapping[field]
                 else:
-                    vals = None
-                    if col in MA.attributes:
-                        vals = self.get_attr_for_uid(session, col, uid)
-                    elif col in self.table_mapping:
-                        vals = self.get_val_for_uid(session, \
-                            self.table_mapping[col], MA.field_mapping[col], uid)
-                    vals = [self.transform_for_result(v) for v in vals]
-                    if vals:
-                        values[col] = vals[0]
-                    elif 'filter' in options:
-                        values[col] = None
-            members[urn] = values
+                    col = field
+                if col in db_fields:
+                    uid_fields[field] = db_fields[col]
 
-        return self._successReturn(members)
+
+        # Extract above into _lookup_member_attribute_info()
+
+        # InsideKey
+        if InsideKey in table_cols:
+            self._lookup_inside_key_info(session, uids, table_cols[InsideKey],
+                                         uid_result)
+        # OutsideCert
+        if OutsideCert in table_cols:
+            self._lookup_outside_cert_info(session, uids,
+                                           table_cols[OutsideCert], uid_result)
+
+        # Add requested UID columns with UID value
+        if 'uid' in table_cols:
+            for uid in uids:
+                inner = uid_result[uid]
+                for field in table_cols['uid']:
+                    inner[field] = uid
+
+        # Post-process the results to key them by URN instead
+        # of UID
+        chapi_info(MA_LOG_PREFIX, 'uid_result keys = %r' % (uid_result.keys()))
+        result = dict()
+        for uid in uid_result:
+            chapi_info(MA_LOG_PREFIX,
+                       'uid_result keys for %s = %r' % (uid,
+                                                        uid_result[uid].keys()))
+            urn = uid_result[uid]['MEMBER_URN']
+            result[urn] = uid_result[uid]
+            if 'MEMBER_URN' not in selected_columns:
+                del result[urn]['MEMBER_URN']
+        for key in result.keys():
+            chapi_info(MA_LOG_PREFIX, "%r = %r" % (key, result[key]))
+        return self._successReturn(result)
 
     # This call is unprotected: no checking of credentials
     def lookup_public_member_info(self, client_cert, 
@@ -1472,3 +1542,62 @@ class MAv1Implementation(MAv1DelegateBase):
             return member_urn
         else:
             return get_member_display_name(result['value'][member_urn], member_urn)
+
+    def _lookup_inside_key_info(self, session, m_ids, fields, result):
+        """Look up the fields for the given member ids in the InsideKey
+        table. Put the fields in result, keyed by member id, then
+        field.
+
+        """
+        # Filter requested fields to only those for which a mapping
+        # exists. No mapping, no info.
+        fields = [f for f in fields if f in MA.field_mapping]
+
+        # If no members or no fields (after filtering), do nothing
+        if not m_ids or not fields:
+            return result
+
+        # Always fetch expiration to renew expiring certificates
+        columns = set([InsideKey.member_id, InsideKey.expiration])
+        for f in fields:
+            columns.add(getattr(InsideKey, MA.field_mapping[f]))
+
+        # Convert the set columns into a list for SQLAlchemy
+        q = session.query(*columns)
+        q = q.filter(InsideKey.member_id.in_(m_ids))
+        rows = q.all()
+        for row in rows:
+            for f in fields:
+                result[row.member_id][f] = getattr(row, MA.field_mapping[f])
+            # And check for expiration on each row...
+            chapi_info(MA_LOG_PREFIX,
+                       "Inside cert for %s expires %s" % (row.member_id,
+                                                          row.expiration))
+        return result
+
+    def _lookup_outside_cert_info(self, session, m_ids, fields, result):
+        """Look up the fields for the given member ids in the OutsideCert
+        table. Put the fields in result, keyed by member id, then
+        field.
+
+        """
+        # Filter requested fields to only those for which a mapping
+        # exists. No mapping, no info.
+        fields = [f for f in fields if f in MA.field_mapping]
+
+        # If no members or no fields (after filtering), do nothing
+        if not m_ids or not fields:
+            return result
+
+        # Always fetch expiration to renew expiring certificates
+        columns = set(OutsideCert.member_id)
+        for f in fields:
+            columns.add(getattr(OutsideCert, MA.field_mapping[f]))
+
+        q = session.query(columns)
+        q = q.filter(MemberAttribute.member_id.in_(m_ids))
+        rows = q.all()
+        for row in rows:
+            for f in fields:
+                result[row.member_id][f] = getattr(row, MA.field_mapping[f])
+        return result
