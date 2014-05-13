@@ -1592,7 +1592,6 @@ class MAv1Implementation(MAv1DelegateBase):
         if not m_ids or not fields:
             return result
 
-        # Always fetch expiration to renew expiring certificates
         columns = set(OutsideCert.member_id)
         for f in fields:
             columns.add(getattr(OutsideCert, MA.field_mapping[f]))
