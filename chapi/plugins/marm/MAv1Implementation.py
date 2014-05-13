@@ -317,11 +317,11 @@ class MAv1Implementation(MAv1DelegateBase):
         uids = [set(self.get_uids_for_attribute(session, attr, value))
                 for attr, value in match_criteria.iteritems()]
         uids = set.intersection(*uids)
+        #chapi_info(MA_LOG_PREFIX,
+        #            "UIDS = %s COLS = %s CRIT = %s" % (uids,
+        #                                               selected_columns,
+        #                                               match_criteria))
 
-        chapi_info(MA_LOG_PREFIX,
-                    "UIDS = %s COLS = %s CRIT = %s" % (uids,
-                                                       selected_columns,
-                                                       match_criteria))
         # Bucket the requested columns so we can make efficient use of
         # the database
         uid_cols = ["MEMBER_UID", "_GENI_IDENTIFYING_MEMBER_UID",
@@ -334,52 +334,17 @@ class MAv1Implementation(MAv1DelegateBase):
                 table_cols[self.table_mapping[col]].add(col)
             else:
                 table_cols[MemberAttribute].add(col)
-        for x in table_cols:
-            chapi_info(MA_LOG_PREFIX,
-                        "Get columns %r from table %s" % (table_cols[x], x))
+        #for x in table_cols:
+        #    chapi_info(MA_LOG_PREFIX,
+        #                "Get columns %r from table %s" % (table_cols[x], x))
 
-        # Construct appropriate queries
+        # Store the results in a dictionary of dictionaries
         uid_result = defaultdict(dict)
 
-        # MemberAttribute
-
-        # Add some 'always' columns
-        # Always include the MEMBER_URN, we need it for the result
-        table_cols[MemberAttribute].add('MEMBER_URN')
-
-        q = session.query(MemberAttribute.member_id, MemberAttribute.name,
-                          MemberAttribute.value)
-        q = q.filter(MemberAttribute.member_id.in_(uids))
-        def _map_ma_name(col):
-            if MA.field_mapping.has_key(col):
-                return MA.field_mapping[col]
-            else:
-                return col
-        ma_names = dict()
-        for col in table_cols[MemberAttribute]:
-            ma_names[_map_ma_name(col)] = col
-        q = q.filter(MemberAttribute.name.in_(ma_names.keys()))
-        maRows = q.all()
-        chapi_info(MA_LOG_PREFIX,
-                   "Found %d rows in member_attribute table" % (len(maRows)))
-        tmp_result = defaultdict(dict)
-        for row in maRows:
-            chapi_info(MA_LOG_PREFIX, "M_A Row: %r" % (row,))
-            tmp_result[row.member_id][row.name] = row.value
-        for uid in uids:
-            db_fields = tmp_result[uid]
-            uid_fields = uid_result[uid]
-            for field in table_cols[MemberAttribute]:
-                if field in MA.field_mapping:
-                    col = MA.field_mapping[field]
-                else:
-                    col = field
-                if col in db_fields:
-                    uid_fields[field] = db_fields[col]
-
-
-        # Extract above into _lookup_member_attribute_info()
-
+        # MemberAttribute -- always fetch these because it will
+        # include the URN which is required for keying the result.
+        self._lookup_member_attributes(session, uids,
+                                       table_cols[MemberAttribute], uid_result)
         # InsideKey
         if InsideKey in table_cols:
             self._lookup_inside_key_info(session, uids, table_cols[InsideKey],
@@ -388,7 +353,6 @@ class MAv1Implementation(MAv1DelegateBase):
         if OutsideCert in table_cols:
             self._lookup_outside_cert_info(session, uids,
                                            table_cols[OutsideCert], uid_result)
-
         # Add requested UID columns with UID value
         if 'uid' in table_cols:
             for uid in uids:
@@ -396,20 +360,16 @@ class MAv1Implementation(MAv1DelegateBase):
                 for field in table_cols['uid']:
                     inner[field] = uid
 
-        # Post-process the results to key them by URN instead
-        # of UID
-        chapi_info(MA_LOG_PREFIX, 'uid_result keys = %r' % (uid_result.keys()))
+        # Post-process the results to key them by URN instead of UID
         result = dict()
         for uid in uid_result:
-            chapi_info(MA_LOG_PREFIX,
-                       'uid_result keys for %s = %r' % (uid,
-                                                        uid_result[uid].keys()))
             urn = uid_result[uid]['MEMBER_URN']
             result[urn] = uid_result[uid]
+            # Clean up: if MEMBER_URN was not part of the original
+            # request, remove it from the result. It was added for
+            # keying the result.
             if 'MEMBER_URN' not in selected_columns:
                 del result[urn]['MEMBER_URN']
-        for key in result.keys():
-            chapi_info(MA_LOG_PREFIX, "%r = %r" % (key, result[key]))
         return self._successReturn(result)
 
     # This call is unprotected: no checking of credentials
@@ -1542,6 +1502,49 @@ class MAv1Implementation(MAv1DelegateBase):
             return member_urn
         else:
             return get_member_display_name(result['value'][member_urn], member_urn)
+
+    def _lookup_member_attributes(self, session, m_ids, fields, result):
+        """Look up the fields for the given member ids in the
+        ma_member_attributes table. Put the fields in result, keyed by
+        member id, then field.
+
+        """
+        # A utility function to leverage list comprehension
+        def field2db_name(field):
+            if field in MA.field_mapping:
+                return MA.field_mapping[field]
+            else:
+                return field
+
+        # Always include the MEMBER_URN, we need it for the result
+        if 'MEMBER_URN' not in fields:
+            fields.add('MEMBER_URN')
+        db_names = set([field2db_name(x) for x in fields])
+        q = session.query(MemberAttribute.member_id, MemberAttribute.name,
+                          MemberAttribute.value)
+        q = q.filter(MemberAttribute.member_id.in_(m_ids))
+        q = q.filter(MemberAttribute.name.in_(db_names))
+        maRows = q.all()
+
+        # Build a temporary structure for the data. Top level keys are
+        # the member ids and top level values are dictionaries. The
+        # value dictionaries are keyed by db_names and contain the
+        # values from the db.
+        tmp_result = defaultdict(dict)
+        for row in maRows:
+            #chapi_info(MA_LOG_PREFIX, "M_A Row: %r" % (row,))
+            tmp_result[row.member_id][row.name] = row.value
+
+        # Now build the result structure using field names instead of
+        # db_names for the keys of the inner dictionaries.
+        for uid in m_ids:
+            db_fields = tmp_result[uid]
+            uid_fields = result[uid]
+            for field in fields:
+                db_name = field2db_name(field)
+                if db_name in db_fields:
+                    uid_fields[field] = db_fields[db_name]
+        return result
 
     def _lookup_inside_key_info(self, session, m_ids, fields, result):
         """Look up the fields for the given member ids in the InsideKey
