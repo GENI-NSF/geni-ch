@@ -1573,10 +1573,82 @@ class MAv1Implementation(MAv1DelegateBase):
             for f in fields:
                 result[row.member_id][f] = getattr(row, MA.field_mapping[f])
             # And check for expiration on each row...
-            chapi_info(MA_LOG_PREFIX,
-                       "Inside cert for %s expires %s" % (row.member_id,
-                                                          row.expiration))
+            dt = row.expiration - datetime.datetime.utcnow()
+            if dt.days < 14:
+                chapi_info(MA_LOG_PREFIX,
+                           "Renewing inside cert for %s" % (row.member_id))
+                # call renew
+                private_key = getattr(row, 'private_key', None)
+                self._renew_inside_cert(session, row.member_id, private_key)
         return result
+
+    def _renew_inside_cert(self, session, member_id, private_key):
+        """Renew the inside certificate of the given member."""
+        if not private_key:
+            # private key is not available, get it from the DB
+            q = session.query(InsideKey.private_key)
+            q = q.filter(InsideKey.member_id == member_id)
+            row = q.one()
+            private_key = row.private_key
+        (pk, csr_file) = make_csr_from_key(private_key)
+        q = session.query(MemberAttribute.name, MemberAttribute.value)
+        q = q.filter(MemberAttribute.member_id == member_id)
+        q = q.filter(MemberAttribute.name.in_(['email_address', 'urn']))
+        rows = q.all()
+        meminfo = dict()
+        for row in rows:
+            meminfo[row.name] = row.value
+        cert_pem = make_cert(member_id, meminfo['email_address'],
+                             meminfo['urn'], self.cert, self.key, csr_file)
+        expiration = get_expiration_from_cert(cert_pem)
+        # Grab signer pem
+        signer_pem = open(self.cert).read()
+        # This is the certificate chain
+        cert_chain = cert_pem + signer_pem
+        store_result = self._store_renewed_inside_cert(session, member_id,
+                                                       cert_chain, expiration,
+                                                       private_key)
+
+    def _store_renewed_inside_cert(self, session, member_id, certificate,
+                                   expiration, private_key):
+        """Store cert and key in inside_key table. If an entry exists, update
+        the row, otherwise error because we don't have enough info to
+        do otherwise. Inside certificates have a tool associated with
+        them (client_urn), but that's not known in the thread that
+        calls this method.
+
+        Return True on success, raises an exception on failure.
+
+        """
+        # Query for a row. If one exists, update it in the db. If no
+        # result found, insert a new row.
+        q = session.query(InsideKey)
+        q = q.filter(InsideKey.member_id == member_id)
+        try:
+            row = q.one()
+            # Found one row, update it with new info.
+            values = dict(certificate=certificate,
+                          expiration=expiration)
+            # Returns row count on success, raises exception on error
+            updated = q.update(values)
+            # Must explicitly commit here because we're run as part of
+            # a read-only method so no autocommit happens
+            session.commit()
+            msg = 'Updated inside certificate for %s' % (member_id)
+            chapi_info(MA_LOG_PREFIX, msg)
+            return True
+        except sqlalchemy.orm.exc.NoResultFound:
+            # How did we get here?
+            msg = ('No row found for member_id %s'
+                   + ' in inside certificate table on renewal.'
+                   + ' Please notify portal-help@geni.net')
+            raise Exception(msg % (member_id))
+        except sqlalchemy.orm.exc.MultipleResultsFound:
+            # Inconsistent database!
+            msg = ('Multiple rows found for member_id %s'
+                   + ' in inside certificate table. Please'
+                   + ' notify portal-help@geni.net')
+            raise Exception(msg % (member_id))
 
     def _lookup_outside_cert_info(self, session, m_ids, fields, result):
         """Look up the fields for the given member ids in the OutsideCert
