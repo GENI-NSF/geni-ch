@@ -1543,7 +1543,8 @@ class MAv1Implementation(MAv1DelegateBase):
             for field in fields:
                 db_name = field2db_name(field)
                 if db_name in db_fields:
-                    uid_fields[field] = db_fields[db_name]
+                    val = db_fields[db_name]
+                    uid_fields[field] = self.transform_for_result(val)
         return result
 
     def _lookup_inside_key_info(self, session, m_ids, fields, result):
@@ -1571,7 +1572,8 @@ class MAv1Implementation(MAv1DelegateBase):
         rows = q.all()
         for row in rows:
             for f in fields:
-                result[row.member_id][f] = getattr(row, MA.field_mapping[f])
+                val = getattr(row, MA.field_mapping[f])
+                result[row.member_id][f] = self.transform_for_result(val)
             # And check for expiration on each row...
             dt = row.expiration - datetime.datetime.utcnow()
             if dt.days < 14:
@@ -1673,5 +1675,6 @@ class MAv1Implementation(MAv1DelegateBase):
         rows = q.all()
         for row in rows:
             for f in fields:
-                result[row.member_id][f] = getattr(row, MA.field_mapping[f])
+                val = getattr(row, MA.field_mapping[f])
+                result[row.member_id][f] = self.transform_for_result(val)
         return result
