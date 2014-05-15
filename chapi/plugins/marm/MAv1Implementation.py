@@ -363,6 +363,14 @@ class MAv1Implementation(MAv1DelegateBase):
         # Post-process the results to key them by URN instead of UID
         result = dict()
         for uid in uid_result:
+            if 'MEMBER_URN' not in uid_result[uid]:
+                # Is this a problem? Probably not, but better safe
+                # than sorry.  It might indicate erroneous queries by
+                # a client or erroneous result sets from
+                # sub-functions. Warn and move on.
+                msg = 'No MEMBER_URN for %s in lookup_member_info.'
+                chapi_warn(MA_LOG_PREFIX, msg % (uid))
+                continue
             urn = uid_result[uid]['MEMBER_URN']
             result[urn] = uid_result[uid]
             # Clean up: if MEMBER_URN was not part of the original
