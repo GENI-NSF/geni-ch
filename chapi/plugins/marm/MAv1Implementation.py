@@ -1553,6 +1553,8 @@ class MAv1Implementation(MAv1DelegateBase):
                 if db_name in db_fields:
                     val = db_fields[db_name]
                     uid_fields[field] = self.transform_for_result(val)
+                else:
+                    uid_fields[field] = None
         return result
 
     def _lookup_inside_key_info(self, session, m_ids, fields, result):
