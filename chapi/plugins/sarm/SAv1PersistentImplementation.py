@@ -804,6 +804,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                     tz_utc = dateutil.tz.tzutc()
                     newtime = newtime.astimezone(tz_utc)
                     newtime = newtime.replace(tzinfo=None)
+                options['fields']['PROJECT_EXPIRATION'] = newtime
                 curtime = row.expiration
                 if newtime - curtime > dt.timedelta.resolution:
                     change = " expiration"
