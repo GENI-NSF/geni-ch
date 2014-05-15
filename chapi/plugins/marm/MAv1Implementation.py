@@ -1664,12 +1664,12 @@ class MAv1Implementation(MAv1DelegateBase):
         if not m_ids or not fields:
             return result
 
-        columns = set(OutsideCert.member_id)
+        columns = set([OutsideCert.member_id])
         for f in fields:
             columns.add(getattr(OutsideCert, MA.field_mapping[f]))
 
-        q = session.query(columns)
-        q = q.filter(MemberAttribute.member_id.in_(m_ids))
+        q = session.query(*columns)
+        q = q.filter(OutsideCert.member_id.in_(m_ids))
         rows = q.all()
         for row in rows:
             for f in fields:
