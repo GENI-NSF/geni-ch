@@ -5,6 +5,7 @@
 = GENI Clearinghouse Release Notes =
 
 == 1.11 ==
+ * Auto-renew inside certificates (#289)
 
 == 1.10 ==
  * Reuse existing private keys when renewing certificates (#274)
