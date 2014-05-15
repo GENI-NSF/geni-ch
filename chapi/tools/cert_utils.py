@@ -21,7 +21,7 @@
 # IN THE WORK.
 #----------------------------------------------------------------------
 
-import sfa.trust.certificate
+import gcf.sfa.trust.certificate
 import subprocess
 import os
 import os.path
@@ -45,7 +45,7 @@ def get_cert_from_credential(cred):
 
 # Pull out the UUID from the certificate
 def get_uuid_from_cert(cert):
-    cert_object = sfa.trust.certificate.Certificate(string=cert)
+    cert_object = gcf.sfa.trust.certificate.Certificate(string=cert)
     subject_alt_names = cert_object.get_extension('subjectAltName')
     san_parts = subject_alt_names.split(',')
     uuid = None
@@ -65,7 +65,7 @@ def get_uuid_from_cert(cert):
 
 # Pull out the URN from the certificate
 def get_urn_from_cert(cert):
-    cert_object = sfa.trust.certificate.Certificate(string=cert)
+    cert_object = gcf.sfa.trust.certificate.Certificate(string=cert)
     subject_alt_names = cert_object.get_extension('subjectAltName')
     san_parts = subject_alt_names.split(',')
     urn = None
@@ -78,7 +78,7 @@ def get_urn_from_cert(cert):
 
 # Pull out the email from the certificate
 def get_email_from_cert(cert):
-    cert_object = sfa.trust.certificate.Certificate(string=cert)
+    cert_object = gcf.sfa.trust.certificate.Certificate(string=cert)
     subject_alt_names = cert_object.get_extension('subjectAltName')
     san_parts = subject_alt_names.split(',')
     email = None

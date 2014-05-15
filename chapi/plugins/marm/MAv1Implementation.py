@@ -38,10 +38,10 @@ import sqlalchemy
 
 import amsoil.core.pluginmanager as pm
 
-from geni.util.urn_util import URN
-import sfa.trust.gid as sfa_gid
-import sfa.trust.certificate as cert
-import geni.util.cred_util as cred_util
+from gcf.geni.util.urn_util import URN
+import gcf.sfa.trust.gid as sfa_gid
+import gcf.sfa.trust.certificate as cert
+import gcf.geni.util.cred_util as cred_util
 
 import tools.MA_constants as MA
 from tools.dbutils import *

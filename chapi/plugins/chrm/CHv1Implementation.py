@@ -24,7 +24,7 @@
 # Simple persistence-free version of CH for testing/development
 from chapi.Clearinghouse import CHv1DelegateBase
 from chapi.Exceptions import *
-from geni.util.urn_util import URN
+from gcf.geni.util.urn_util import URN
 from tools.dbutils import *
 from tools.cert_utils import *
 from tools.chapi_utils import *

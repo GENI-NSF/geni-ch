@@ -23,7 +23,7 @@
 
 import amsoil.core.log
 import amsoil.core.pluginmanager as pm
-from sfa.trust.certificate import Certificate
+from gcf.sfa.trust.certificate import Certificate
 from amsoil.core import serviceinterface
 import os
 import traceback
