@@ -5,6 +5,7 @@
 = GENI Clearinghouse Release Notes =
 
 == 1.11 ==
+ * Transition to gcf 2.5 (#260)
  * Auto-renew inside certificates (#289)
 
 == 1.10 ==
