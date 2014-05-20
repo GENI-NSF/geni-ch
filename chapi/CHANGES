@@ -7,6 +7,7 @@
 == 1.11 ==
  * Transition to gcf 2.5 (#260)
  * Auto-renew inside certificates (#289)
+ * Notify active users of expiring certificates (#293)
 
 == 1.10 ==
  * Reuse existing private keys when renewing certificates (#274)
