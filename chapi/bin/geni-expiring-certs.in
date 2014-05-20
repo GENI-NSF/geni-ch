@@ -138,7 +138,10 @@ def notify_expiring(conn, ndays, notifier, logger):
     expire_day = datetime.date.today() + datetime.timedelta(ndays)
     cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
     select_sql = ('SELECT member_id FROM ma_outside_cert'
-                  + ' WHERE date(expiration) = %s')
+                  + ' WHERE date(expiration) = %s'
+                  + ' AND member_id NOT IN'
+                  + ('(SELECT member_id FROM ma_member_attribute'
+                     " WHERE name = 'member_enabled' AND value = 'n')"))
     cur.execute(select_sql, (expire_day,))
     rows = cur.fetchall()
     members = [row['member_id'] for row in rows]
