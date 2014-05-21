@@ -30,7 +30,7 @@ from amsoil.config import expand_amsoil_path
 from exceptions import *
 from Exceptions import *
 import traceback
-import geni
+import gcf.geni.util.cred_util
 
 class DelegateBase(object):
 
@@ -55,13 +55,13 @@ class DelegateBase(object):
         if client_cert == None:
             # work around if the certificate could not be acquired due to the shortcommings of the werkzeug library
             if config.get("flask.debug"):
-                import sfa.trust.credential as cred
+                import gcf.sfa.trust.credential as cred
                 client_cert = cred.Credential(string=geni_credentials[0]).gidCaller.save_to_string(save_parents=True)
             else:
                 raise CHAPIv1ForbiddenError("Could not determine the client SSL certificate")
         # test the credential
         try:
-            cred_verifier = ext.geni.CredentialVerifier(cert_root)
+            cred_verifier = gcf.geni.cred_util.CredentialVerifier(cert_root)
             cred_verifier.verify_from_strings(client_cert, geni_credentials, slice_urn, privileges)
         except Exception as e:
             raise CHAPIv1ForbiddenError(str(e))

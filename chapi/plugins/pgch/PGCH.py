@@ -23,7 +23,7 @@
 
 import amsoil.core.log
 import amsoil.core.pluginmanager as pm
-import sfa.util.xrn
+import gcf.sfa.util.xrn
 from amsoil.core import serviceinterface
 from chapi.DelegateBase import DelegateBase
 from chapi.HandlerBase import HandlerBase
@@ -32,8 +32,8 @@ from chapi.MethodContext import *
 from tools.cert_utils import get_uuid_from_cert, get_urn_from_cert, get_email_from_cert
 from tools.chapi_log import *
 from tools.chapi_utils import *
-import sfa.trust.gid as gid
-import geni.util.urn_util as urn_util
+import gcf.sfa.trust.gid as gid
+import gcf.geni.util.urn_util as urn_util
 
 pgch_logger = amsoil.core.log.getLogger('pgchv1')
 
@@ -308,7 +308,7 @@ class PGCHv1Delegate(DelegateBase):
             raise CHAPIv1ArgumentError("No UUID, URN or HRN identifier provided")
 
         if hrn and not urn:
-            urn = sfa.util.xrn.hrn_to_urn(hrn, type)
+            urn = gcf.sfa.util.xrn.hrn_to_urn(hrn, type)
 
         if type == 'user':
             # User
@@ -355,7 +355,7 @@ class PGCHv1Delegate(DelegateBase):
             identifying_info = identifying_info[this_urn]
 
             member_uuid = public_info['MEMBER_UID']
-            member_hrn = sfa.util.xrn.urn_to_hrn(public_info['MEMBER_URN'])[0]
+            member_hrn = gcf.sfa.util.xrn.urn_to_hrn(public_info['MEMBER_URN'])[0]
             member_uuid = public_info['MEMBER_UID']
             member_email = identifying_info['MEMBER_EMAIL']
             member_gid = public_info['_GENI_MEMBER_SSL_CERTIFICATE']
@@ -504,7 +504,7 @@ class PGCHv1Delegate(DelegateBase):
             raise CHAPIv1ArgumentError("URN or HRN required for PGCH.Register")
 
         if hrn and not urn:
-            urn = sfa.util.xrn.hrn_to_urn(hrn, type)
+            urn = gcf.sfa.util.xrn.hrn_to_urn(hrn, type)
 
         # Pull out slice name and project_name
         urn_parts = urn.split('+')
@@ -557,7 +557,7 @@ class PGCHv1Delegate(DelegateBase):
         slice_credential = args['credential']
         expiration = args['expiration']
 
-        cred = sfa.trust.credential.Credential(string=slice_credential)
+        cred = gcf.sfa.trust.credential.Credential(string=slice_credential)
         slice_gid = cred.get_gid_object()
         slice_urn = slice_gid.get_urn()
 
@@ -650,7 +650,7 @@ class PGCHv1Delegate(DelegateBase):
             gid_file = aggregate['SERVICE_CERT']
             urn = aggregate['SERVICE_URN']
             url = aggregate['SERVICE_URL']
-            sfa_hrn,sfa_type = sfa.util.xrn.urn_to_hrn(urn)
+            sfa_hrn,sfa_type = gcf.sfa.util.xrn.urn_to_hrn(urn)
             # Clean up the HRN
             hrn = sfa_hrn.replace('\\', '')
             # Load the certificate from file

@@ -22,9 +22,9 @@
 #----------------------------------------------------------------------
 
 from chapi.Exceptions import *
-from geni.util.urn_util import is_valid_urn
+from gcf.geni.util.urn_util import is_valid_urn
 from tools.geni_constants import *
-from sfa.trust.certificate import Certificate
+from gcf.sfa.trust.certificate import Certificate
 from tools.chapi_log import *
 import types
 import uuid

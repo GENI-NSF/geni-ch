@@ -23,8 +23,8 @@
 
 import optparse
 import os, sys
-import sfa.trust.certificate
-import sfa.trust.gid
+import gcf.sfa.trust.certificate
+import gcf.sfa.trust.gid
 import chapi_log
 from cert_utils import *
 from ABACManager import *
@@ -92,11 +92,11 @@ def determine_speaks_for(client_cert, credentials, options, trusted_roots=None):
 
     # Need to validate the agent_cert against the trust roots
     if trusted_roots:
-        agent_gid = sfa.trust.gid.GID(string=agent_cert)
+        agent_gid = gcf.sfa.trust.gid.GID(string=agent_cert)
         try :
             agent_gid.verify_chain(trusted_roots)
         except Exception, e:
-            raise Exception("Agent certifiate no trusted")
+            raise Exception("Agent certificate not trusted")
 
     # Get the agent_urn (of the actor being spoken for)
     agent_urn = get_urn_from_cert(agent_cert)

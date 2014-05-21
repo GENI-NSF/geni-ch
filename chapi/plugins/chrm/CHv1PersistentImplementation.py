@@ -65,7 +65,10 @@ class CHv1PersistentImplementation(CHv1Implementation):
 
         q = session.query(self.db.SERVICES_TABLE)
         if service_type is not None:
-            q = q.filter(self.db.SERVICES_TABLE.c.service_type == service_type)
+            if isinstance(service_type, list):
+                q = q.filter(self.db.SERVICES_TABLE.c.service_type.in_(service_type))
+            else:
+                q = q.filter(self.db.SERVICES_TABLE.c.service_type == service_type)
         q = add_filters(q,  match_criteria, self.db.SERVICES_TABLE, 
                         CH.field_mapping, session)
         rows = q.all()
@@ -85,6 +88,29 @@ class CHv1PersistentImplementation(CHv1Implementation):
         service_type = None
         if 'match' in options and 'SERVICE_TYPE' in options['match']:
             service_type = options['match']['SERVICE_TYPE']
+
+            # If there are service type names and not codes, change to codes
+            # Raise ArgumentError if there are any undefined services
+            if not isinstance(service_type, list): 
+                service_type = [service_type]
+            bad_service_types = []
+            new_service_types = []
+            for st in service_type:
+                new_st = st
+                if st in CH.service_types:
+                    new_st = CH.service_types[st]
+                new_service_types.append(new_st)
+                if (isinstance(st, basestring) and \
+                        st not in CH.service_types) or \
+                        (isinstance(st, int) and \
+                             st not in CH.service_types.values()):
+                    bad_service_types.append(st)
+            service_type = new_service_types
+            options['match']['SERVICE_TYPE'] = new_service_types
+            if len(bad_service_types) > 0:
+                raise CHAPIv1ArgumentError(\
+                    "Illegal service type: %s" % bad_service_types)
+
         services = self.lookup_authorities(client_cert, service_type, options, session)
         return services
 
