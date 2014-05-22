@@ -346,7 +346,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         client_chain = client_cert + ma_cert
         user_gid = gid.GID(string=client_chain)
         slice_gid = gid.GID(string=row.certificate)
-        delegatable = False
+        delegatable = True # Allow experimenters to delegate their slice credentials. #297
         slice_cred = cred_util.create_credential(user_gid, slice_gid, \
                                                      expiration, 'slice', \
                                                      self.key, self.cert, \
