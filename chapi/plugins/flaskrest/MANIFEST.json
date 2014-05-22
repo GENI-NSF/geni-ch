@@ -1,0 +1,9 @@
+{
+  "name" : "Operations monitoring service",
+  "author" : "Marshall Brinn",
+  "author-email" : "mbrinn@bbn.com",
+  "version" : 1,
+  "implements" : ["rest"],
+  "loads-after" : ["rpcserver"],
+  "requires" : []
+}
