@@ -57,7 +57,7 @@ ln -s "${AMSOIL_VERSION}" AMsoil
 cd AMsoil
 
 # fix up the amsoil directory
-for pl in chrm chapiv1rpc sarm marm csrm logging pgch
+for pl in chrm chapiv1rpc sarm marm csrm logging opsmon flaskrest pgch
 do
     ln -s ../../../chapi/plugins/$pl src/plugins/$pl
 done

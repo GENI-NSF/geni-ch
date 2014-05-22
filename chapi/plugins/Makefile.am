@@ -48,6 +48,8 @@ nobase_dist_plugin_DATA = \
 	csrm/CredentialStore.py \
 	csrm/MANIFEST.json \
 	csrm/plugin.py \
+	flaskrest/plugin.py \
+	flaskrest/MANIFEST.json \
 	logging/Logging.py \
 	logging/MANIFEST.json \
 	logging/plugin.py \
@@ -55,6 +57,9 @@ nobase_dist_plugin_DATA = \
 	marm/MAv1Guard.py \
 	marm/MAv1Implementation.py \
 	marm/plugin.py \
+	opsmon/plugin.py \
+	opsmon/MANIFEST.json \
+	opsmon/OpsMon.py \
 	pgch/MANIFEST.json \
 	pgch/PGCH.py \
 	pgch/__init__.py \
