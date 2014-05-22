@@ -5,7 +5,8 @@
 = GENI Clearinghouse Release Notes =
 
 == 1.12 ==
-
+ * Addition of flaskrest and opsmon plugins to support ops-monitoring REST
+   API for authority, slice and user queries
 
 == 1.11 ==
  * Transition to gcf 2.5 (#260)
