@@ -373,10 +373,10 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
             abac_raw_creds.append(slice_role_credential)
 
         sfa_creds = \
-            [{'geni_type' : 'geni_sfa', 'geni_version' : 3, 'geni_value' : cred} 
+            [{'geni_type' : 'geni_sfa', 'geni_version' : '3', 'geni_value' : cred}
              for cred in sfa_raw_creds]
         abac_creds = \
-            [{'geni_type' : 'geni_abac', 'geni_version' : 1, 'geni_value' : cred} 
+            [{'geni_type' : 'geni_abac', 'geni_version' : '1', 'geni_value' : cred}
              for cred in abac_raw_creds]
         creds = sfa_creds + abac_creds
 
