@@ -890,12 +890,18 @@ class MAv1Implementation(MAv1DelegateBase):
                     member_urns = [member_urns]
             if len(member_urns) == 0:
                 # FIXME: If you specify an empty list, what should the behavior be?
-                # Do you mean any value? Or only a value of None? Or only rows with no entry for this value?
-                # Is this right?
+                # ANSWER: This is fine. An empty list means 
+                # 'give me keys for no users' hence ' give me no keys'
                 q = q.filter(self.db.MEMBER_ATTRIBUTE_TABLE.c.value == None)
                 #  chapi_debug(MA_LOG_PREFIX, "lookup_keys had empty list of urns")
             else:
                     q = q.filter(self.db.MEMBER_ATTRIBUTE_TABLE.c.value.in_(member_urns))
+                    enabled, disabled = check_disabled_users(self.db, member_urns, session)
+                    member_urns = enabled
+                    if len(disabled) > 0:
+                        chapi_info(MA_LOG_PREFIX, 
+                                   "Attempt to access SSH keys of disabled users %s" % 
+                                   disabled)
             del match_criteria['KEY_MEMBER']
 
         q = add_filters(q, match_criteria, self.db.SSH_KEY_TABLE, 
@@ -926,7 +932,7 @@ class MAv1Implementation(MAv1DelegateBase):
         # calling user
         member_urn = get_urn_from_cert(client_cert)
         for urn, all_key_fields in keys.items():
-#            chapi_info("FOO", "URN = %s FIELDS = %s" % (urn, all_key_fields))
+#            chapi_info(MA_LOG_PREFIX, "URN = %s FIELDS = %s" % (urn, all_key_fields))
             if urn != member_urn:
                 for key_fields in all_key_fields:
                     if 'KEY_PRIVATE' in key_fields:

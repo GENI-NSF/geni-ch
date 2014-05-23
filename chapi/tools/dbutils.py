@@ -25,6 +25,7 @@ from chapi_log import *
 from chapi.Exceptions import *
 import types
 from datetime import *
+from  sqlalchemy.orm import aliased
 
 # A set of utilities for dealing with SQL alchemy as the database backend
 # Convert between external (in get_version) and internal (in database) field names
@@ -146,3 +147,22 @@ def unpack_query_options(options, mapping):
         match_criteria = options['match']
 
     return selected_columns, match_criteria
+
+# Split the set of member urns into enabled and disabled member urns
+def check_disabled_users(db, member_urns, session):
+    ma1 = aliased(db.MEMBER_ATTRIBUTE_TABLE)
+    ma2 = aliased(db.MEMBER_ATTRIBUTE_TABLE)
+    q = session.query(ma1.c.value)
+    q = q.filter(ma1.c.member_id == ma2.c.member_id)
+    q = q.filter(ma1.c.name == 'urn')
+    q = q.filter(ma1.c.value.in_(member_urns))
+    q = q.filter(ma2.c.name == 'member_enabled')
+    q = q.filter(ma2.c.value == 'n')
+    rows = q.all()
+    disabled_members = [row.value for row in rows]
+    enabled_members = [member_urn for member_urn in member_urns \
+                           if member_urn not in disabled_members]
+    return enabled_members, disabled_members
+       
+
+

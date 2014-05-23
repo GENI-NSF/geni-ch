@@ -1213,6 +1213,21 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                 all_urns.append(member_to_change[member_str])
 #        chapi_info('SA', "ALL_URNS = %s" % all_urns)
 
+        # Only allow adding non-disabled members. 
+        # Log but ignore any attempt to do so.
+        if 'members_to_add' in options:
+            additions = options['members_to_add']
+            members_to_add = [mem[member_str] for mem in additions]
+            enabled, disabled = check_disabled_users(self.db, members_to_add, session)
+            if len(disabled) > 0:
+                chapi_info(SA_LOG_PREFIX, 
+                                   "Attempt to add disabled users %s" %
+                                   disabled)
+                new_additions = [addition for addition in additions \
+                                     if addition[member_str] not in disabled]
+                options['members_to_add'] = new_additions
+                for dis in disabled: all_urns.remove(dis)
+
         # Also get the caller's pretty name
         caller_urn = get_urn_from_cert(client_cert)
         all_urns.append(caller_urn)

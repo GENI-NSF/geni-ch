@@ -10,6 +10,8 @@
  * Make slice credentials delegatable. (#297)
  * Fix but in SliceAuthority on V2 delete sliver_info calls (#298)
  * Remove leftover temp files in cert creation (#246)
+ * Don't return SSH keys for disabled users, and 
+   don't let them join projects/slices (#215)
 
 == 1.11 ==
  * Transition to gcf 2.5 (#260)
