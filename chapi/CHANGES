@@ -7,6 +7,7 @@
 == 1.12 ==
  * Don't return SSH keys for disabled users, and don't let them join
    projects/slices (#215)
+ * Change credential version from int to string (#239)
  * Remove leftover temp files in cert creation (#246)
  * Addition of flaskrest and opsmon plugins to support ops-monitoring REST
    API for authority, slice and user queries (#296)

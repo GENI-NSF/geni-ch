@@ -678,10 +678,10 @@ class MAv1Implementation(MAv1DelegateBase):
                                                  self.cert, self.key, {"CALLER" : user_cert})
             abac_raw_creds.append(assertion)
         sfa_creds = \
-            [{'geni_type' : 'geni_sfa', 'geni_version' : 3, 'geni_value' : cred} 
+            [{'geni_type' : 'geni_sfa', 'geni_version' : '3', 'geni_value' : cred}
              for cred in sfa_raw_creds if cred is not None]
         abac_creds = \
-            [{'geni_type' : 'geni_abac', 'geni_version' : 1, 'geni_value' : cred} 
+            [{'geni_type' : 'geni_abac', 'geni_version' : '1', 'geni_value' : cred}
              for cred in abac_raw_creds]
         creds = sfa_creds + abac_creds
         return creds
