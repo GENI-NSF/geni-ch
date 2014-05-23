@@ -689,29 +689,7 @@ class MAv1Implementation(MAv1DelegateBase):
 
     # build a user credential based on the user's cert
     def get_user_credential(self, session, uid, client_cert):
-        user_email = get_email_from_cert(client_cert)
-        cred_cert = None
-        certs = self.get_val_for_uid(session, OutsideCert, "certificate", uid)
-        for cert in certs:
-            if cert.startswith(client_cert):
-#                chapi_debug(MA_LOG_PREFIX, 'found client in outside certs', {'user': user_email})
-                cred_cert = cert
-                break
-        if not cred_cert:
-            certs = self.get_val_for_uid(session, InsideKey, "certificate", uid)
-            if certs:
-                for cert in certs:
-                    if cert.startswith(client_cert):
-#                        chapi_debug(MA_LOG_PREFIX, 'found client in inside certs', {'user': user_email})
-                        cred_cert = cert
-                        break
-        if not cred_cert:
-            chapi_warn(MA_LOG_PREFIX,
-                       'get_user_credential did not find a matching certificate',
-                       {'user': user_email})
-            return None
-
-        gid = sfa_gid.GID(string=cred_cert)
+        gid = sfa_gid.GID(string=client_cert)
         #chapi_debug(MA_LOG_PREFIX, 'GUC: gid = '+str(gid))
         expires = datetime.datetime.utcnow() + relativedelta(years=MA.USER_CRED_LIFE_YEARS)
         cred = cred_util.create_credential(gid, gid, expires, "user", \
