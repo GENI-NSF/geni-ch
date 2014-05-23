@@ -1029,6 +1029,8 @@ class MAv1Implementation(MAv1DelegateBase):
         cert_pem = make_cert(member_id, member_email, member_urn,
                              self.cert, self.key, csr_file)
 
+        os.unlink(csr_file)
+
         expiration = get_expiration_from_cert(cert_pem)
 
         # Grab signer pem

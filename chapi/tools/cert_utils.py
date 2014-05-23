@@ -204,6 +204,9 @@ def make_cert(uuid, email, urn, signer_cert_file, signer_key_file, csr_file,
     cert_pem = open(cert_file).read()
     #chapi_debug("UTILS", "CERT_PEM = " + cert_pem)
 
+    os.unlink(cert_file)
+    os.unlink(ext_file)
+
     return cert_pem
 
 def get_cert_from_file(filename):
