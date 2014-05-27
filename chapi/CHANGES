@@ -9,7 +9,7 @@
    projects/slices (#215)
  * Change credential version from int to string (#239)
  * Remove leftover temp files in cert creation (#246)
- * Update expiring certificate email (#249)
+ * Update expiring certificate email (#294)
  * Addition of `flaskrest` and `opsmon` plugins to support ops-monitoring REST
    API for authority, slice and user queries (#296)
   * Add copyright to opsmon/plugin.py (syseng #6126)
