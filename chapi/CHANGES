@@ -15,6 +15,7 @@
  * Fix but in SliceAuthority on V2 delete sliver_info calls (#298)
  * Use invoking certificate in user credential (#299)
  * Support match criteria on lookup_slices_for_member and lookup_projects_for_member (#300)
+ * Correct CHAPI speaks-for logic to search list of credentials, not take first (#230)
 
 == 1.11 ==
  * Transition to gcf 2.5 (#260)
