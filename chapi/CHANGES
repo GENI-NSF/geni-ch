@@ -4,6 +4,9 @@
 
 = GENI Clearinghouse Release Notes =
 
+== 1.13 ==
+
+
 == 1.12 ==
  * Don't return SSH keys for disabled users, and don't let them join
    projects/slices (#215)
