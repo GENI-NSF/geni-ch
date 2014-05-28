@@ -689,7 +689,12 @@ class MAv1Implementation(MAv1DelegateBase):
 
     # build a user credential based on the user's cert
     def get_user_credential(self, session, uid, client_cert):
-        gid = sfa_gid.GID(string=client_cert)
+        # append the MA cert to the client_cert to make a proper chain
+        ma_cert = None
+        with open(self.cert, 'r') as f:
+            ma_cert = f.read()
+        chain_cert = client_cert + ma_cert
+        gid = sfa_gid.GID(string=chain_cert)
         #chapi_debug(MA_LOG_PREFIX, 'GUC: gid = '+str(gid))
         expires = datetime.datetime.utcnow() + relativedelta(years=MA.USER_CRED_LIFE_YEARS)
         cred = cred_util.create_credential(gid, gid, expires, "user", \

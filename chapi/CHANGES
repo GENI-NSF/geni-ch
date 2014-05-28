@@ -9,6 +9,9 @@
  * Correct CHAPI speaks-for logic to search list of credentials, not take first (#230)
  * Remove problematic mail headers (#301)
 
+== 1.12.1 ==
+ * User credentials are missing intermediate CA (#303)
+
 == 1.12 ==
  * Don't return SSH keys for disabled users, and don't let them join
    projects/slices (#215)
