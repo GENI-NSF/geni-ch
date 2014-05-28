@@ -131,6 +131,7 @@ def make_csr():
                             '-out', csr_file, '-batch']
     subprocess.call(csr_request_args)
     private_key = open(key_file).read()
+    os.unlink(key_file)
     return private_key, csr_file
 
 def make_csr_from_key(private_key):
