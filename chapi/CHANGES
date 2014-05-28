@@ -17,6 +17,7 @@
  * Support match criteria on lookup_slices_for_member and lookup_projects_for_member (#300)
  * Add copyright to opsmon/plugin.py (syseng #6126)
  * Correct CHAPI speaks-for logic to search list of credentials, not take first (#230)
+ * Delete obsolete tmp keyfile in make_csr (#302)
 
 == 1.11 ==
  * Transition to gcf 2.5 (#260)
