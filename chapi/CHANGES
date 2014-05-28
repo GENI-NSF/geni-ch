@@ -5,13 +5,26 @@
 = GENI Clearinghouse Release Notes =
 
 == 1.12 ==
- * Convert service type names to service type codes to support 
-   CHAPI v2 (lookup on services (#290)
+ * Don't return SSH keys for disabled users, and don't let them join
+   projects/slices (#215)
+ * Change credential version from int to string (#239)
+ * Remove leftover temp files in cert creation (#246)
+ * Update expiring certificate email (#249)
+ * Addition of flaskrest and opsmon plugins to support ops-monitoring REST
+   API for authority, slice and user queries (#296)
+ * Make slice credentials delegatable. (#297)
+ * Fix but in SliceAuthority on V2 delete sliver_info calls (#298)
+ * Use invoking certificate in user credential (#299)
+ * Support match criteria on lookup_slices_for_member and
+   lookup_projects_for_member (#300)
+ * Add copyright to opsmon/plugin.py (syseng #6126)
 
 == 1.11 ==
  * Transition to gcf 2.5 (#260)
  * Auto-renew inside certificates (#289)
  * Notify active users of expiring certificates (#293)
+ * Convert service type names to service type codes to support CHAPI
+   v2 lookup on services (#290)
 
 == 1.10 ==
  * Reuse existing private keys when renewing certificates (#274)

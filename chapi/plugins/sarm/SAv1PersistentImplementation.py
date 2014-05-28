@@ -310,8 +310,11 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         client_uuid = get_uuid_from_cert(client_cert)
         self.update_slice_expirations(client_uuid, session)
 
-        rows = self.lookup_for_member(member_urn, self.db.SLICE_TABLE, \
-                  self.db.SLICE_MEMBER_TABLE, "slice_urn", "slice_id", session)
+        rows = self.lookup_for_member(member_urn, self.db.SLICE_TABLE, 
+                                      self.db.SLICE_MEMBER_TABLE, 
+                                      SA.slice_field_mapping,
+                                      "slice_urn", "slice_id", 
+                                      options, session)
         slices = [{"SLICE_ROLE" : row.name, \
                        "SLICE_UID" : row.slice_id, \
                        "SLICE_URN": row.slice_urn, \
@@ -346,7 +349,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         client_chain = client_cert + ma_cert
         user_gid = gid.GID(string=client_chain)
         slice_gid = gid.GID(string=row.certificate)
-        delegatable = False
+        delegatable = True # Allow experimenters to delegate their slice credentials. #297
         slice_cred = cred_util.create_credential(user_gid, slice_gid, \
                                                      expiration, 'slice', \
                                                      self.key, self.cert, \
@@ -373,10 +376,10 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
             abac_raw_creds.append(slice_role_credential)
 
         sfa_creds = \
-            [{'geni_type' : 'geni_sfa', 'geni_version' : 3, 'geni_value' : cred} 
+            [{'geni_type' : 'geni_sfa', 'geni_version' : '3', 'geni_value' : cred}
              for cred in sfa_raw_creds]
         abac_creds = \
-            [{'geni_type' : 'geni_abac', 'geni_version' : 1, 'geni_value' : cred} 
+            [{'geni_type' : 'geni_abac', 'geni_version' : '1', 'geni_value' : cred}
              for cred in abac_raw_creds]
         creds = sfa_creds + abac_creds
 
@@ -873,10 +876,11 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         client_uuid = get_uuid_from_cert(client_cert)
         self.update_project_expirations(client_uuid, session)
 
-        rows = self.lookup_for_member(member_urn, self.db.PROJECT_TABLE, \
-                                          self.db.PROJECT_MEMBER_TABLE, 
+        rows = self.lookup_for_member(member_urn, self.db.PROJECT_TABLE, 
+                                      self.db.PROJECT_MEMBER_TABLE, 
+                                      SA.project_field_mapping, 
                                       "project_name", "project_id", 
-                                      session)
+                                      options, session)
         projects = [{"PROJECT_ROLE" : row.name, \
                          "PROJECT_UID" : row.project_id, \
                          "PROJECT_URN": row_to_project_urn(row), \
@@ -887,8 +891,9 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         return result
 
     # shared code between projects and slices
-    def lookup_for_member(self, member_urn, table, member_table, \
-                          name_field, id_field, session):
+    def lookup_for_member(self, member_urn, table, member_table, 
+                          field_mapping,
+                          name_field, id_field, options, session):
         q = session.query(member_table, self.db.MEMBER_ATTRIBUTE_TABLE,
                           table.c[name_field], self.db.ROLE_TABLE.c.name, table.c['expired'])
         q = q.filter(self.db.MEMBER_ATTRIBUTE_TABLE.c.name == 'urn')
@@ -897,6 +902,11 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                      self.db.MEMBER_ATTRIBUTE_TABLE.c.member_id)
         q = q.filter(table.c[id_field] == member_table.c[id_field])
         q = q.filter(member_table.c.role == self.db.ROLE_TABLE.c.id)
+
+        selected_columns, match_criteria = \
+            unpack_query_options(options, field_mapping)
+        q = add_filters(q, match_criteria, table, \
+                            field_mapping, session)
         rows = q.all()
         return rows
 
@@ -1166,9 +1176,11 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         q = q.filter(Slice.slice_id == slice_id)
         slice_row = q.one()
 
-        rows = self.lookup_for_member(new_lead_urn, self.db.PROJECT_TABLE, \
-                  self.db.PROJECT_MEMBER_TABLE, "project_name", "project_id", 
-                                      session)
+        rows = self.lookup_for_member(new_lead_urn, self.db.PROJECT_TABLE, 
+                                      self.db.PROJECT_MEMBER_TABLE, 
+                                      SA.project_field_mapping,
+                                      "project_name", "project_id", 
+                                      {}, session)
         projects = [{"PROJECT_ROLE" : row.name, \
                          "PROJECT_UID" : row.project_id, \
                          "PROJECT_URN": row_to_project_urn(row), \
@@ -1212,6 +1224,21 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
             for member_to_change in options['members_to_change']:
                 all_urns.append(member_to_change[member_str])
 #        chapi_info('SA', "ALL_URNS = %s" % all_urns)
+
+        # Only allow adding non-disabled members. 
+        # Log but ignore any attempt to do so.
+        if 'members_to_add' in options:
+            additions = options['members_to_add']
+            members_to_add = [mem[member_str] for mem in additions]
+            enabled, disabled = check_disabled_users(self.db, members_to_add, session)
+            if len(disabled) > 0:
+                chapi_info(SA_LOG_PREFIX, 
+                                   "Attempt to add disabled users %s" %
+                                   disabled)
+                new_additions = [addition for addition in additions \
+                                     if addition[member_str] not in disabled]
+                options['members_to_add'] = new_additions
+                for dis in disabled: all_urns.remove(dis)
 
         # Also get the caller's pretty name
         caller_urn = get_urn_from_cert(client_cert)

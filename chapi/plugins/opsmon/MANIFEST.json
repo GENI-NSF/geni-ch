@@ -1,0 +1,9 @@
+{
+  "name" : "Operations monitoring service",
+  "author" : "Marshall Brinn",
+  "author-email" : "mbrinn@bbn.com",
+  "version" : 1,
+  "implements" : ["opsmon_handler"],
+  "loads-after" : ["chdbengine", "rest"],
+  "requires" : []
+}

@@ -41,10 +41,29 @@ import urlparse
 from email.mime.text import MIMEText
 import sys
 
-body = """Your GENI certificate is going to expire on %s.
-To generate a new certificate, please go to:
+body = """A GENI certificate belonging to you is going to expire on %s.
 
-   https://portal.geni.net/secure/renewcert.php
+The expiring certificate is used by tools that run outside the GENI Portal
+(https://portal.geni.net). Examples of affected tools are omni [1] and GENI
+Desktop.
+
+To avoid interruption of your use of GENI via these tools, please follow these
+steps before the date listed at the top of the email:
+
+1) Generate a new certificate:
+
+      https://portal.geni.net/secure/renewcert.php
+
+2) Reconfigure any affected tools to use the new certificate.
+	To reconfigure omni, see:
+                http://trac.gpolab.bbn.com/gcf/wiki/OmniConfigure/Automatic
+	No additional action is needed for GENI Desktop.
+
+If you have any questions, please email portal-help@geni.net for further assistance.
+
+Thank you!
+
+[1] http://trac.gpolab.bbn.com/gcf/wiki
 """
 
 class Notifier:

@@ -678,10 +678,10 @@ class MAv1Implementation(MAv1DelegateBase):
                                                  self.cert, self.key, {"CALLER" : user_cert})
             abac_raw_creds.append(assertion)
         sfa_creds = \
-            [{'geni_type' : 'geni_sfa', 'geni_version' : 3, 'geni_value' : cred} 
+            [{'geni_type' : 'geni_sfa', 'geni_version' : '3', 'geni_value' : cred}
              for cred in sfa_raw_creds if cred is not None]
         abac_creds = \
-            [{'geni_type' : 'geni_abac', 'geni_version' : 1, 'geni_value' : cred} 
+            [{'geni_type' : 'geni_abac', 'geni_version' : '1', 'geni_value' : cred}
              for cred in abac_raw_creds]
         creds = sfa_creds + abac_creds
         return creds
@@ -689,29 +689,7 @@ class MAv1Implementation(MAv1DelegateBase):
 
     # build a user credential based on the user's cert
     def get_user_credential(self, session, uid, client_cert):
-        user_email = get_email_from_cert(client_cert)
-        cred_cert = None
-        certs = self.get_val_for_uid(session, OutsideCert, "certificate", uid)
-        for cert in certs:
-            if cert.startswith(client_cert):
-#                chapi_debug(MA_LOG_PREFIX, 'found client in outside certs', {'user': user_email})
-                cred_cert = cert
-                break
-        if not cred_cert:
-            certs = self.get_val_for_uid(session, InsideKey, "certificate", uid)
-            if certs:
-                for cert in certs:
-                    if cert.startswith(client_cert):
-#                        chapi_debug(MA_LOG_PREFIX, 'found client in inside certs', {'user': user_email})
-                        cred_cert = cert
-                        break
-        if not cred_cert:
-            chapi_warn(MA_LOG_PREFIX,
-                       'get_user_credential did not find a matching certificate',
-                       {'user': user_email})
-            return None
-
-        gid = sfa_gid.GID(string=cred_cert)
+        gid = sfa_gid.GID(string=client_cert)
         #chapi_debug(MA_LOG_PREFIX, 'GUC: gid = '+str(gid))
         expires = datetime.datetime.utcnow() + relativedelta(years=MA.USER_CRED_LIFE_YEARS)
         cred = cred_util.create_credential(gid, gid, expires, "user", \
@@ -890,12 +868,18 @@ class MAv1Implementation(MAv1DelegateBase):
                     member_urns = [member_urns]
             if len(member_urns) == 0:
                 # FIXME: If you specify an empty list, what should the behavior be?
-                # Do you mean any value? Or only a value of None? Or only rows with no entry for this value?
-                # Is this right?
+                # ANSWER: This is fine. An empty list means 
+                # 'give me keys for no users' hence ' give me no keys'
                 q = q.filter(self.db.MEMBER_ATTRIBUTE_TABLE.c.value == None)
                 #  chapi_debug(MA_LOG_PREFIX, "lookup_keys had empty list of urns")
             else:
                     q = q.filter(self.db.MEMBER_ATTRIBUTE_TABLE.c.value.in_(member_urns))
+                    enabled, disabled = check_disabled_users(self.db, member_urns, session)
+                    member_urns = enabled
+                    if len(disabled) > 0:
+                        chapi_info(MA_LOG_PREFIX, 
+                                   "Attempt to access SSH keys of disabled users %s" % 
+                                   disabled)
             del match_criteria['KEY_MEMBER']
 
         q = add_filters(q, match_criteria, self.db.SSH_KEY_TABLE, 
@@ -926,7 +910,7 @@ class MAv1Implementation(MAv1DelegateBase):
         # calling user
         member_urn = get_urn_from_cert(client_cert)
         for urn, all_key_fields in keys.items():
-#            chapi_info("FOO", "URN = %s FIELDS = %s" % (urn, all_key_fields))
+#            chapi_info(MA_LOG_PREFIX, "URN = %s FIELDS = %s" % (urn, all_key_fields))
             if urn != member_urn:
                 for key_fields in all_key_fields:
                     if 'KEY_PRIVATE' in key_fields:
@@ -1028,6 +1012,8 @@ class MAv1Implementation(MAv1DelegateBase):
 
         cert_pem = make_cert(member_id, member_email, member_urn,
                              self.cert, self.key, csr_file)
+
+        os.unlink(csr_file)
 
         expiration = get_expiration_from_cert(cert_pem)
 
