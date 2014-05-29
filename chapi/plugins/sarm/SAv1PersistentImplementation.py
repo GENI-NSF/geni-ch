@@ -965,8 +965,8 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
 
                             break
                     if new_lead_urn==None:
-                        raise CHAPIv1ArgumentError('Cannot remove %s lead %s: ' + 
-                                                   'No project admins are authorized to be a project lead' % 
+                        raise CHAPIv1ArgumentError(('Cannot remove %s lead %s: ' +
+                                                    'No project admins are authorized to be a project lead') %
                                                    (project_urn, old_lead_urn))
                     
         if 'members_to_change' in options:
