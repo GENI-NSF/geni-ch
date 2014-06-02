@@ -84,7 +84,8 @@ class OpsMonHandler:
         if obj_id is None:
             obj_id = flatten(self.truncate_urn(urn))
         href = self.generate_href(obj_type, obj_id)
-        return {'urn' : urn, 'href' : href, 'id' : obj_id}
+#        return {'urn' : urn, 'href' : href, 'id' : obj_id}
+        return {'urn' : urn, 'href' : href}
 
     # Turn a datetime into a timestamp (microseconds since 1-1-1970
     def to_timestamp(self, dt):
@@ -176,7 +177,7 @@ class OpsMonHandler:
 
         slice_data = {
             '$schema' : self._slice_schema,
-            'id' : self.slice_urn_to_id(slice_urn),
+#            'id' : self.slice_urn_to_id(slice_urn),
             'selfRef' : self.generate_href('slice', slice_id),
             'urn' : slice_urn,
             'uuid' : slice_id,
@@ -226,7 +227,7 @@ class OpsMonHandler:
 
         user_data = {
             '$schema' : self._user_schema,
-            'id' : user_id,
+#            'id' : user_id,
             'selfRef' : user_href,
             'urn' : user_urn,
             'ts' : ts,
