@@ -1080,6 +1080,7 @@ class MAv1Implementation(MAv1DelegateBase):
             member_email = convert_member_uid_to_email(member_id, session)
             cert_pem = make_cert(member_id, member_email, member_urn, \
                                      self.cert, self.key, csr_file)
+            os.unlink(csr_file)
             expiration = get_expiration_from_cert(cert_pem)
             signer_pem = open(self.cert).read()
             cert_chain = cert_pem + signer_pem
