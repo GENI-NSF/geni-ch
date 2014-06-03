@@ -8,7 +8,7 @@
  * Delete obsolete tmp keyfile in make_csr (#302)
  * Correct CHAPI speaks-for logic to search list of credentials, not take first (#230)
  * Remove problematic mail headers (#301)
- * Make opsmon authority return for slice/user conform with schema (syseng #69)
+ * Make opsmon authority return for slice/user conform with schema (ops-monitoring #69)
 
 == 1.12.1 ==
  * User credentials are missing intermediate CA (#303)
