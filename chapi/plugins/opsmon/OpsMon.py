@@ -40,6 +40,10 @@ def flatten(urn):
 def generate_urn(authority, obj_type, obj_id):
     return "urn:publicid+IDN+%s+%s+%s" % (authority, obj_type, obj_id)
 
+# Extract the enty name (last) portion from a urn
+def extract_name_from_urn(urn):
+    return urn.split('+')[-1]
+
 
 # Class to handle Ops-mon (/info/<slice, authority, user>/<id> REST requests
 class OpsMonHandler:
@@ -169,15 +173,17 @@ class OpsMonHandler:
         if len(rows) == 0: return ""
         row = rows[0]
 
+        lead_urn = row.value
+        lead_id = extract_name_from_urn(lead_urn)
         lead_info = \
-            self.compute_reference_info(row.value, 'user', row.owner_id)
+            self.compute_reference_info(lead_urn, 'user', lead_id)
         lead_info['role'] = 'lead'
 
         opsmon_logger.info("TIME = %s" % dir(row.creation))
 
         slice_data = {
             '$schema' : self._slice_schema,
-#            'id' : self.slice_urn_to_id(slice_urn),
+            'id' : self.slice_urn_to_id(slice_urn),
             'selfRef' : self.generate_href('slice', slice_id),
             'urn' : slice_urn,
             'uuid' : slice_id,
@@ -227,7 +233,7 @@ class OpsMonHandler:
 
         user_data = {
             '$schema' : self._user_schema,
-#            'id' : user_id,
+            'id' : user_id,
             'selfRef' : user_href,
             'urn' : user_urn,
             'ts' : ts,
