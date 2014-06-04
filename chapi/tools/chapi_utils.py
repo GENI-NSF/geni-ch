@@ -61,8 +61,10 @@ def send_email(to_list,fromaddr,replyaddr,subject,msgbody,cc_list=None):
         toaddrs = to_list + cc_list 
     else:
         toaddrs = to_list
-    msg['Precedence'] = "bulk"
-    msg['Auto-Submitted'] = "auto-generated"
+    # Setting Precedence and Auto-Submitted seem to cause enough mail
+    # to bounce or fail that their costs outweigh their benefits.
+    #msg['Precedence'] = "bulk"
+    #msg['Auto-Submitted'] = "auto-generated"
     s = smtplib.SMTP('localhost')
     s.sendmail(fromaddr,toaddrs,msg.as_string())
     s.quit()

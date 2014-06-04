@@ -4,6 +4,13 @@
 
 = GENI Clearinghouse Release Notes =
 
+== 1.13 ==
+ * Delete obsolete tmp keyfile in make_csr (#302)
+ * Correct CHAPI speaks-for logic to search list of credentials, not take first (#230)
+ * Remove problematic mail headers (#301)
+ * Make opsmon authority return for slice/user conform with schema (ops-monitoring #69)
+ * Delete obsolete csr file in authorize_client (#304)
+
 == 1.12.1 ==
  * User credentials are missing intermediate CA (#303)
 
@@ -12,9 +19,10 @@
    projects/slices (#215)
  * Change credential version from int to string (#239)
  * Remove leftover temp files in cert creation (#246)
- * Update expiring certificate email (#249)
- * Addition of flaskrest and opsmon plugins to support ops-monitoring REST
+ * Update expiring certificate email (#294)
+ * Addition of `flaskrest` and `opsmon` plugins to support ops-monitoring REST
    API for authority, slice and user queries (#296)
+  * Add copyright to opsmon/plugin.py (syseng #6126)
  * Make slice credentials delegatable. (#297)
  * Fix but in SliceAuthority on V2 delete sliver_info calls (#298)
  * Use invoking certificate in user credential (#299)

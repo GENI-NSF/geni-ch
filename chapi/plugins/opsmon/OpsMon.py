@@ -40,6 +40,10 @@ def flatten(urn):
 def generate_urn(authority, obj_type, obj_id):
     return "urn:publicid+IDN+%s+%s+%s" % (authority, obj_type, obj_id)
 
+# Extract the enty name (last) portion from a urn
+def extract_name_from_urn(urn):
+    return urn.split('+')[-1]
+
 
 # Class to handle Ops-mon (/info/<slice, authority, user>/<id> REST requests
 class OpsMonHandler:
@@ -60,7 +64,6 @@ class OpsMonHandler:
     def __init__(self):
         # Capture singleton instance
         OpsMonHandler._instance = self
-        opsmon_logger.info("Setting self._instance %s" % OpsMonHandler._instance)
         config = pm.getService('config')
         authority = config.get('chrm.authority')
         self._base_url = "https://%s" % authority
@@ -84,7 +87,8 @@ class OpsMonHandler:
         if obj_id is None:
             obj_id = flatten(self.truncate_urn(urn))
         href = self.generate_href(obj_type, obj_id)
-        return {'urn' : urn, 'href' : href, 'id' : obj_id}
+#        return {'urn' : urn, 'href' : href, 'id' : obj_id}
+        return {'urn' : urn, 'href' : href}
 
     # Turn a datetime into a timestamp (microseconds since 1-1-1970
     def to_timestamp(self, dt):
@@ -168,11 +172,11 @@ class OpsMonHandler:
         if len(rows) == 0: return ""
         row = rows[0]
 
+        lead_urn = row.value
+        lead_id = extract_name_from_urn(lead_urn)
         lead_info = \
-            self.compute_reference_info(row.value, 'user', row.owner_id)
+            self.compute_reference_info(lead_urn, 'user', lead_id)
         lead_info['role'] = 'lead'
-
-        opsmon_logger.info("TIME = %s" % dir(row.creation))
 
         slice_data = {
             '$schema' : self._slice_schema,
