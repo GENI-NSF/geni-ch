@@ -4,6 +4,8 @@
 
 = GENI Clearinghouse Release Notes =
 
+== 1.14 ==
+
 == 1.13 ==
  * Delete obsolete tmp keyfile in make_csr (#302)
  * Correct CHAPI speaks-for logic to search list of credentials, not take first (#230)
