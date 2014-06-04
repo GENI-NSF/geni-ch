@@ -64,7 +64,6 @@ class OpsMonHandler:
     def __init__(self):
         # Capture singleton instance
         OpsMonHandler._instance = self
-        opsmon_logger.info("Setting self._instance %s" % OpsMonHandler._instance)
         config = pm.getService('config')
         authority = config.get('chrm.authority')
         self._base_url = "https://%s" % authority
@@ -178,8 +177,6 @@ class OpsMonHandler:
         lead_info = \
             self.compute_reference_info(lead_urn, 'user', lead_id)
         lead_info['role'] = 'lead'
-
-        opsmon_logger.info("TIME = %s" % dir(row.creation))
 
         slice_data = {
             '$schema' : self._slice_schema,
