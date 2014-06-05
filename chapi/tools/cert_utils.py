@@ -21,11 +21,13 @@
 # IN THE WORK.
 #----------------------------------------------------------------------
 
-import sfa.trust.certificate
+import gcf.sfa.trust.certificate
 import subprocess
 import os
 import os.path
 import tempfile
+import datetime
+import OpenSSL
 from chapi_log import *
 
 # A set of utilities to pull infomration out of X509 certs
@@ -43,7 +45,7 @@ def get_cert_from_credential(cred):
 
 # Pull out the UUID from the certificate
 def get_uuid_from_cert(cert):
-    cert_object = sfa.trust.certificate.Certificate(string=cert)
+    cert_object = gcf.sfa.trust.certificate.Certificate(string=cert)
     subject_alt_names = cert_object.get_extension('subjectAltName')
     san_parts = subject_alt_names.split(',')
     uuid = None
@@ -63,7 +65,7 @@ def get_uuid_from_cert(cert):
 
 # Pull out the URN from the certificate
 def get_urn_from_cert(cert):
-    cert_object = sfa.trust.certificate.Certificate(string=cert)
+    cert_object = gcf.sfa.trust.certificate.Certificate(string=cert)
     subject_alt_names = cert_object.get_extension('subjectAltName')
     san_parts = subject_alt_names.split(',')
     urn = None
@@ -76,7 +78,7 @@ def get_urn_from_cert(cert):
 
 # Pull out the email from the certificate
 def get_email_from_cert(cert):
-    cert_object = sfa.trust.certificate.Certificate(string=cert)
+    cert_object = gcf.sfa.trust.certificate.Certificate(string=cert)
     subject_alt_names = cert_object.get_extension('subjectAltName')
     san_parts = subject_alt_names.split(',')
     email = None
@@ -86,6 +88,14 @@ def get_email_from_cert(cert):
             email = san_part[6:]
             break
     return email
+
+# Pull expiration datetime from certificate
+def get_expiration_from_cert(cert):
+    cert_object = OpenSSL.crypto.load_certificate(OpenSSL.crypto.FILETYPE_PEM,
+                                                  cert)
+    not_after = cert_object.get_notAfter()
+    expires = datetime.datetime.strptime(not_after, '%Y%m%d%H%M%SZ')
+    return expires
 
 # Pull the object name from the URN
 # It is the part after the last +
@@ -121,12 +131,34 @@ def make_csr():
                             '-out', csr_file, '-batch']
     subprocess.call(csr_request_args)
     private_key = open(key_file).read()
+    os.unlink(key_file)
+    return private_key, csr_file
+
+def make_csr_from_key(private_key):
+    """Create a certificate signing request (CSR) from the given private
+    key.
+
+    """
+    (csr_fd, csr_file) = tempfile.mkstemp()
+    os.close(csr_fd)
+    # Write private key to temporary file
+    (key_fd, key_file) = tempfile.mkstemp()
+    os.write(key_fd, private_key)
+    os.close(key_fd)
+    csr_request_args = ['/usr/bin/openssl', 'req', '-new',
+                        '-key', key_file,
+                        '-out', csr_file, '-batch']
+    subprocess.call(csr_request_args)
+    os.unlink(key_file)
     return private_key, csr_file
 
 # Generate an X509 cert and private key
 # Return cert
-def make_cert(uuid, email, urn, \
-                          signer_cert_file, signer_key_file, csr_file):
+def make_cert(uuid, email, urn, signer_cert_file, signer_key_file, csr_file,
+              days=365):
+    # Check validity of args (weak, I know)
+    # Ensure days is an integer, raise exception otherwise
+    days = int(days)
 
     # sign the csr to create cert
     extname = 'v3_user'
@@ -164,13 +196,17 @@ def make_cert(uuid, email, urn, \
                          '-notext', \
                          '-cert', signer_cert_file,\
                          '-keyfile', signer_key_file, \
-                         '-subj', subject ]
+                         '-subj', subject,
+                     '-days', str(days)]
     #chapi_debug("UTILS", "CERT args: "+" ".join(sign_csr_args))
     os.system(" ".join(sign_csr_args))
 
     # Grab cert from cert_file
     cert_pem = open(cert_file).read()
     #chapi_debug("UTILS", "CERT_PEM = " + cert_pem)
+
+    os.unlink(cert_file)
+    os.unlink(ext_file)
 
     return cert_pem
 

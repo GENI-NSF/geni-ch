@@ -23,8 +23,10 @@
 
 import optparse
 import os, sys
-import sfa.trust.certificate
-import sfa.trust.gid
+import gcf.sfa.trust.certificate
+import gcf.sfa.trust.credential
+import gcf.sfa.trust.credential_factory
+import gcf.sfa.trust.gid
 import chapi_log
 from cert_utils import *
 from ABACManager import *
@@ -56,6 +58,7 @@ from chapi.Exceptions import *
 #   revised_options : Original options with 
 #       {'speaking_as' : original_client_cert} added if 'speaks for'
 def determine_speaks_for(client_cert, credentials, options, trusted_roots=None): 
+
     # Pull out speaking_for option
     OPTION_SPEAKING_FOR = 'speaking_for'
     speaking_for = None
@@ -67,62 +70,50 @@ def determine_speaks_for(client_cert, credentials, options, trusted_roots=None):
     if not speaking_for:
         return client_cert, options
 
-    # Pull out speaks_for credential
-    # Caution -- what if more than one speaks_for credential? Continue
-    # to hunt until we find the right one?
-    speaks_for_credential = None
-    for credential in credentials:
-        if credential['geni_type'] == 'geni_abac' and \
-                credential['geni_value'].find('speaks_for') >= 0:
-            speaks_for_credential = credential['geni_value']
+    # Grab client URN out of client cert
+    client_urn = get_urn_from_cert(client_cert)
+
+    # Loop over all ABAC credentials and see if any prove 
+    # AGENT.speaks_for(AGENT)<-CLIENT
+    speaks_for_found = False
+    for sf_credential in credentials:
+        if sf_credential['geni_type'] != 'geni_abac': continue
+        sf_cred_value = sf_credential['geni_value']
+        agent_cert = get_cert_from_credential(sf_cred_value)
+        agent_urn = get_urn_from_cert(agent_cert)
+
+        # Need to validate the agent_cert against the trust roots
+        if trusted_roots:
+            agent_gid = gcf.sfa.trust.gid.GID(string=agent_cert)
+            try :
+                agent_gid.verify_chain(trusted_roots)
+            except Exception, e:
+                chapi_info("SPEAKSFOR", "Agent certificate not trusted %s" % \
+                               agent_urn)
+
+        # The agent_urn must match the speaking_for option
+        if agent_urn != speaking_for:
+            continue
+
+        # See if the credential asserts the right speaks_for statement
+        query = "AGENT.speaks_for(AGENT)<-CLIENT"
+        certs_by_name = {"CLIENT" : client_cert, "AGENT" : agent_cert}
+        ok, proof = execute_abac_query(query, certs_by_name, 
+                                       [sf_cred_value])
+        if ok: 
+            speaks_for_found = True
             break
 
-    client_urn = get_urn_from_cert(client_cert)
-    # If there is a speaking_for option but no speaks-for credential, error.
-    if speaking_for and not speaks_for_credential:
+    # If we didn't found a speaks-for credential, raise error
+    if not speaks_for_found:
+        # If there is a speaking_for option but no 
+        # speaks-for credential, error.
         msg = "No speaks-for credential but %r passed option speaking_for = %r"
         msg = msg % (client_urn, speaking_for)
         chapi_error('SPEAKSFOR', msg)
-        raise CHAPIv1AuthorizationError("Missing speaks-for credential.")
+        raise CHAPIv1AuthorizationError("Missing credential allowing %s to speak-for  %s." % (client_urn, speaking_for))
 
-    # We are processing a speaks-for request
-
-    # Get the agent_cert (the actor being spoken for)
-    agent_cert = get_cert_from_credential(speaks_for_credential)
-
-    # Need to validate the agent_cert against the trust roots
-    if trusted_roots:
-        agent_gid = sfa.trust.gid.GID(string=agent_cert)
-        try :
-            agent_gid.verify_chain(trusted_roots)
-        except Exception, e:
-            raise Exception("Agent certifiate no trusted")
-
-    # Get the agent_urn (of the actor being spoken for)
-    agent_urn = get_urn_from_cert(agent_cert)
-    
-    # The agent_urn must match the speaking_for option
-    if agent_urn != speaking_for:
-        msg = "Mismatch: speaking_for %s and agent URN %s"
-        msg = msg % (speaking_for, agent_urn)
-        chapi_error('SPEAKSFOR', msg)
-        raise CHAPIv1AuthorizationError(msg)
-
-    # The speaks-for credential must assert the statement 
-    # AGENT.speaks_for(AGENT)<-CLIENT
-    query = "AGENT.speaks_for(AGENT)<-CLIENT"
-    certs_by_name = {"CLIENT" : client_cert, "AGENT" : agent_cert}
-
-    # Run the proof in a separate process to avoid memory issues
-    ok, proof = execute_abac_query(query, certs_by_name,
-                                   [speaks_for_credential])
-    if not ok:
-        msg = ("Speaks-For credential does not assert that agent %s"
-               + " allows client %s to speak for agent")
-        msg = msg % (agent_urn, client_urn)
-        chapi_error('SPEAKSFOR', msg)
-        raise CHAPIv1AuthorizationError(msg)
-
+    # Success: add the speaking_as option and return the agent_cert
     msg = "%r is speaking for %r" % (client_urn, agent_urn)
     chapi_info('SPEAKSFOR', msg)
 

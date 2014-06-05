@@ -81,7 +81,7 @@ class SAv1Handler(HandlerBase):
     def delete(self, type, urn, credentials, options):
         if type == "SLICE":
             return self._errorReturn(CHAPIv1ArgumentError("method delete not supported for SLICE"))
-        elif type == "SLICE_INFO":
+        elif type == "SLIVER_INFO":
             result = self.delete_sliver_info(urn, credentials, options)
         elif type == "PROJECT":
             result = self._errorReturn(CHAPIv1ArgumentError("method delete not supported for PROJECT"))

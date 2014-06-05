@@ -31,15 +31,17 @@ import re
 import subprocess
 import tempfile
 import uuid
+from collections import defaultdict
 
 from sqlalchemy.orm import mapper
+import sqlalchemy
 
 import amsoil.core.pluginmanager as pm
 
-from geni.util.urn_util import URN
-import sfa.trust.gid as sfa_gid
-import sfa.trust.certificate as cert
-import geni.util.cred_util as cred_util
+from gcf.geni.util.urn_util import URN
+import gcf.sfa.trust.gid as sfa_gid
+import gcf.sfa.trust.certificate as cert
+import gcf.geni.util.cred_util as cred_util
 
 import tools.MA_constants as MA
 from tools.dbutils import *
@@ -63,16 +65,6 @@ class InsideKey(object):
 
 class SshKey(object):
     pass
-
-def row_cert_to_public_key(row):
-    raw_certificate = row.certificate
-    cert_obj = cert.Certificate(string=raw_certificate)
-    public_key = cert_obj.get_pubkey()
-    return public_key.get_pubkey_string()
-
-MA.field_mapping["_GENI_MEMBER_SSL_PUBLIC_KEY"] = row_cert_to_public_key
-MA.field_mapping["_GENI_MEMBER_INSIDE_PUBLIC_KEY"] = row_cert_to_public_key
-
 
 def derive_username(email_address, session):
     # See http://www.linuxjournal.com/article/9585
@@ -162,10 +154,9 @@ class MAv1Implementation(MAv1DelegateBase):
         mapper(SshKey, self.db.SSH_KEY_TABLE)
         self.table_mapping = {
             "_GENI_MEMBER_SSL_CERTIFICATE": OutsideCert,
-            "_GENI_MEMBER_SSL_PUBLIC_KEY": OutsideCert,
+            "_GENI_MEMBER_SSL_EXPIRATION": OutsideCert,
             "_GENI_MEMBER_SSL_PRIVATE_KEY": OutsideCert,
             "_GENI_MEMBER_INSIDE_CERTIFICATE": InsideKey,
-            "_GENI_MEMBER_INSIDE_PUBLIC_KEY": InsideKey,
             "_GENI_MEMBER_INSIDE_PRIVATE_KEY": InsideKey
             }
         self.cert = self.config.get('chapi.ma_cert')
@@ -290,52 +281,104 @@ class MAv1Implementation(MAv1DelegateBase):
                 ret[i][key] = getattr(row, key)
         return ret
 
+    def transform_for_result(self, val):
+        """Transform values to be returned as results to client. Datatypes
+        requiring transformation from internal representation to
+        external represnetation should be modified here.
+
+        """
+        # datetimes get returned as strings
+        if isinstance(val, datetime.datetime):
+            return val.strftime(STANDARD_DATETIME_FORMAT)
+        else:
+            # No other transformation so just return it
+            return val
+
+
     # Common code for answering query
     def lookup_member_info(self, options, allowed_fields, session):
-        
+        """Look up a set of fields about a set of members.
+
+        Return a dictionary whose top-level keys are the URNS of
+        members whose information has been retrieved. The top-level
+        values are dictionaries whose keys are field names and whose
+        values are the data elements extracted from the database.
+
+        """
         # preliminaries
-        selected_columns, match_criteria = \
-            unpack_query_options(options, MA.field_mapping)
+        (selected_columns,
+         match_criteria) = unpack_query_options(options, MA.field_mapping)
         if not match_criteria:
-            raise CHAPIv1ArgumentError('Missing a "match" option')
+            raise CHAPIv1ArgumentError('Missing a valid "match" option')
         self.check_attributes(match_criteria)
         selected_columns = set(selected_columns) & set(allowed_fields)
 
         # first, get all the member ids of matches
-        uids = [set(self.get_uids_for_attribute(session, attr, value)) \
+        uids = [set(self.get_uids_for_attribute(session, attr, value))
                 for attr, value in match_criteria.iteritems()]
         uids = set.intersection(*uids)
+        #chapi_info(MA_LOG_PREFIX,
+        #            "UIDS = %s COLS = %s CRIT = %s" % (uids,
+        #                                               selected_columns,
+        #                                               match_criteria))
 
-#        chapi_debug(MA_LOG_PREFIX, "UIDS = %s COLS = %s CRIT = %s" % \
-#                        (uids, selected_columns, match_criteria))
+        # Bucket the requested columns so we can make efficient use of
+        # the database
+        uid_cols = ["MEMBER_UID", "_GENI_IDENTIFYING_MEMBER_UID",
+                    "_GENI_PRIVATE_MEMBER_UID"]
+        table_cols = defaultdict(set)
+        for col in selected_columns:
+            if col in uid_cols:
+                table_cols['uid'].add(col)
+            elif col in self.table_mapping:
+                table_cols[self.table_mapping[col]].add(col)
+            else:
+                table_cols[MemberAttribute].add(col)
+        #for x in table_cols:
+        #    chapi_info(MA_LOG_PREFIX,
+        #                "Get columns %r from table %s" % (table_cols[x], x))
 
-        # then, get the values
-        members = {}
-        for uid in uids:
-            row = self.get_attr_for_uid(session,"MEMBER_URN",uid)
-            if row is None or len(row) == 0:
-                chapi_info(MA_LOG_PREFIX, "lookup_member_info: no member_urn row from get_attr_for_uid %s (the MA?)" % uid)
+        # Store the results in a dictionary of dictionaries
+        uid_result = defaultdict(dict)
+
+        # MemberAttribute -- always fetch these because it will
+        # include the URN which is required for keying the result.
+        self._lookup_member_attributes(session, uids,
+                                       table_cols[MemberAttribute], uid_result)
+        # InsideKey
+        if InsideKey in table_cols:
+            self._lookup_inside_key_info(session, uids, table_cols[InsideKey],
+                                         uid_result)
+        # OutsideCert
+        if OutsideCert in table_cols:
+            self._lookup_outside_cert_info(session, uids,
+                                           table_cols[OutsideCert], uid_result)
+        # Add requested UID columns with UID value
+        if 'uid' in table_cols:
+            for uid in uids:
+                inner = uid_result[uid]
+                for field in table_cols['uid']:
+                    inner[field] = uid
+
+        # Post-process the results to key them by URN instead of UID
+        result = dict()
+        for uid in uid_result:
+            if 'MEMBER_URN' not in uid_result[uid]:
+                # Is this a problem? Probably not, but better safe
+                # than sorry.  It might indicate erroneous queries by
+                # a client or erroneous result sets from
+                # sub-functions. Warn and move on.
+                msg = 'No MEMBER_URN for %s in lookup_member_info.'
+                chapi_warn(MA_LOG_PREFIX, msg % (uid))
                 continue
-            urn = row[0]
-            values = {}
-            for col in selected_columns:
-                if col in ["MEMBER_UID", "_GENI_IDENTIFYING_MEMBER_UID", 
-                           "_GENI_PRIVATE_MEMBER_UID"]:
-                    values[col] = uid
-                else:
-                    vals = None
-                    if col in MA.attributes:
-                        vals = self.get_attr_for_uid(session, col, uid)
-                    elif col in self.table_mapping:
-                        vals = self.get_val_for_uid(session, \
-                            self.table_mapping[col], MA.field_mapping[col], uid)
-                    if vals:
-                        values[col] = vals[0]
-                    elif 'filter' in options:
-                        values[col] = None
-            members[urn] = values
-
-        return self._successReturn(members)
+            urn = uid_result[uid]['MEMBER_URN']
+            result[urn] = uid_result[uid]
+            # Clean up: if MEMBER_URN was not part of the original
+            # request, remove it from the result. It was added for
+            # keying the result.
+            if 'MEMBER_URN' not in selected_columns:
+                del result[urn]['MEMBER_URN']
+        return self._successReturn(result)
 
     # This call is unprotected: no checking of credentials
     def lookup_public_member_info(self, client_cert, 
@@ -466,6 +509,9 @@ class MAv1Implementation(MAv1DelegateBase):
                                                            credentials, \
                                                            options, arguments, session)
 #        chapi_info("DAM", "SUBJECTS = %s" % subjects)
+        if len(subjects) == 0:
+            return {}
+
         subject_type = subjects.keys()[0]
         subject_ids = subjects[subject_type]
 #        chapi_info("DAM", "SUBJECT_TYPE = %s" % subject_type)
@@ -632,10 +678,10 @@ class MAv1Implementation(MAv1DelegateBase):
                                                  self.cert, self.key, {"CALLER" : user_cert})
             abac_raw_creds.append(assertion)
         sfa_creds = \
-            [{'geni_type' : 'geni_sfa', 'geni_version' : 3, 'geni_value' : cred} 
+            [{'geni_type' : 'geni_sfa', 'geni_version' : '3', 'geni_value' : cred}
              for cred in sfa_raw_creds if cred is not None]
         abac_creds = \
-            [{'geni_type' : 'geni_abac', 'geni_version' : 1, 'geni_value' : cred} 
+            [{'geni_type' : 'geni_abac', 'geni_version' : '1', 'geni_value' : cred}
              for cred in abac_raw_creds]
         creds = sfa_creds + abac_creds
         return creds
@@ -643,29 +689,12 @@ class MAv1Implementation(MAv1DelegateBase):
 
     # build a user credential based on the user's cert
     def get_user_credential(self, session, uid, client_cert):
-        user_email = get_email_from_cert(client_cert)
-        cred_cert = None
-        certs = self.get_val_for_uid(session, OutsideCert, "certificate", uid)
-        for cert in certs:
-            if cert.startswith(client_cert):
-#                chapi_debug(MA_LOG_PREFIX, 'found client in outside certs', {'user': user_email})
-                cred_cert = cert
-                break
-        if not cred_cert:
-            certs = self.get_val_for_uid(session, InsideKey, "certificate", uid)
-            if certs:
-                for cert in certs:
-                    if cert.startswith(client_cert):
-#                        chapi_debug(MA_LOG_PREFIX, 'found client in inside certs', {'user': user_email})
-                        cred_cert = cert
-                        break
-        if not cred_cert:
-            chapi_warn(MA_LOG_PREFIX,
-                       'get_user_credential did not find a matching certificate',
-                       {'user': user_email})
-            return None
-
-        gid = sfa_gid.GID(string=cred_cert)
+        # append the MA cert to the client_cert to make a proper chain
+        ma_cert = None
+        with open(self.cert, 'r') as f:
+            ma_cert = f.read()
+        chain_cert = client_cert + ma_cert
+        gid = sfa_gid.GID(string=chain_cert)
         #chapi_debug(MA_LOG_PREFIX, 'GUC: gid = '+str(gid))
         expires = datetime.datetime.utcnow() + relativedelta(years=MA.USER_CRED_LIFE_YEARS)
         cred = cred_util.create_credential(gid, gid, expires, "user", \
@@ -711,7 +740,8 @@ class MAv1Implementation(MAv1DelegateBase):
         # Log the successful creation of member
         msg = "Activated GENI user : %s (%s)" % (self._get_displayname_for_member_urn(user_urn, session), user_urn)
         attrs = {"MEMBER" : str(member_id)}
-        self.logging_service.log_event(msg, attrs, credentials, options,
+        log_options = {}
+        self.logging_service.log_event(msg, attrs, credentials, log_options,
                                        session=session)
         chapi_audit_and_log(MA_LOG_PREFIX, msg, logging.INFO, {'user': user_email})
         # Send email to portal admins
@@ -768,8 +798,9 @@ class MAv1Implementation(MAv1DelegateBase):
         # Log the creation of the SSH key
         client_uuid = get_uuid_from_cert(client_cert)
         attrs = {"MEMBER" : client_uuid}
+        log_options = {}
         msg = "%s registering SSH key %s" % (self._get_displayname_for_member_urn(member_urn, session), key_id)
-        self.logging_service.log_event(msg, attrs, credentials, options,
+        self.logging_service.log_event(msg, attrs, credentials, log_options,
                                        session=session)
         chapi_audit_and_log(MA_LOG_PREFIX, msg, logging.INFO, {'user': user_email})
 
@@ -791,7 +822,8 @@ class MAv1Implementation(MAv1DelegateBase):
         member_urn = convert_member_uid_to_urn(client_uuid, session)
         attrs = {"MEMBER" : client_uuid}
         msg = "%s deleting SSH key %s" % (self._get_displayname_for_member_urn(member_urn, session), key_id)
-        self.logging_service.log_event(msg, attrs, credentials, options,
+        log_options = {}
+        self.logging_service.log_event(msg, attrs, credentials, log_options,
                                        session=session)
 
         result = self._successReturn(True)
@@ -825,7 +857,7 @@ class MAv1Implementation(MAv1DelegateBase):
         selected_columns, match_criteria = \
             unpack_query_options(options, MA.key_field_mapping)
         if not match_criteria:
-            raise CHAPIv1ArgumentError('Missing a "match" option')
+            raise CHAPIv1ArgumentError('Missing a valid "match" option')
         self.check_attributes(match_criteria)
 
         q = session.query(self.db.SSH_KEY_TABLE, \
@@ -841,15 +873,22 @@ class MAv1Implementation(MAv1DelegateBase):
                     member_urns = [member_urns]
             if len(member_urns) == 0:
                 # FIXME: If you specify an empty list, what should the behavior be?
-                # Do you mean any value? Or only a value of None? Or only rows with no entry for this value?
-                # Is this right?
+                # ANSWER: This is fine. An empty list means 
+                # 'give me keys for no users' hence ' give me no keys'
                 q = q.filter(self.db.MEMBER_ATTRIBUTE_TABLE.c.value == None)
                 #  chapi_debug(MA_LOG_PREFIX, "lookup_keys had empty list of urns")
             else:
                     q = q.filter(self.db.MEMBER_ATTRIBUTE_TABLE.c.value.in_(member_urns))
+                    enabled, disabled = check_disabled_users(self.db, member_urns, session)
+                    member_urns = enabled
+                    if len(disabled) > 0:
+                        chapi_info(MA_LOG_PREFIX, 
+                                   "Attempt to access SSH keys of disabled users %s" % 
+                                   disabled)
             del match_criteria['KEY_MEMBER']
 
-        q = add_filters(q, match_criteria, self.db.SSH_KEY_TABLE, MA.key_field_mapping)
+        q = add_filters(q, match_criteria, self.db.SSH_KEY_TABLE, 
+                        MA.key_field_mapping, session)
         rows = q.all()
 
         keys = {}
@@ -864,7 +903,7 @@ class MAv1Implementation(MAv1DelegateBase):
                 continue
 
             keys[member_urn].append(construct_result_row(row, \
-                         selected_columns, MA.key_field_mapping))
+                         selected_columns, MA.key_field_mapping, session))
             # Per federation API, the KEY ID must be exported as a string
             for key_data in keys[member_urn]:
                 if 'KEY_ID' in key_data:
@@ -876,7 +915,7 @@ class MAv1Implementation(MAv1DelegateBase):
         # calling user
         member_urn = get_urn_from_cert(client_cert)
         for urn, all_key_fields in keys.items():
-#            chapi_info("FOO", "URN = %s FIELDS = %s" % (urn, all_key_fields))
+#            chapi_info(MA_LOG_PREFIX, "URN = %s FIELDS = %s" % (urn, all_key_fields))
             if urn != member_urn:
                 for key_fields in all_key_fields:
                     if 'KEY_PRIVATE' in key_fields:
@@ -886,23 +925,72 @@ class MAv1Implementation(MAv1DelegateBase):
 
         return result
 
+    def _make_csr(self, member_urn, member_id, session):
+        """Create a certifcate signing request. If the given member has a
+        private key in the outside cert table, use it. Otherwise
+        generate a new private key along with the csr.
+
+        Return a tuple of (private_key, csr_file).
+
+        """
+        q = session.query(OutsideCert.private_key)
+        q = q.filter(OutsideCert.member_id == member_id)
+        rows = q.all()
+        if len(rows) > 0 and rows[0].private_key:
+            chapi_info(MA_LOG_PREFIX,
+                       "Reusing private key for member %s" % (member_urn))
+            return make_csr_from_key(rows[0].private_key)
+        else:
+            chapi_info(MA_LOG_PREFIX,
+                       "Creating new private key for member %s" % (member_urn))
+            return make_csr()
+
+    def _store_outside_cert(self, session, member_id, certificate, expiration,
+                            private_key):
+        """Store cert and key in outside_cert table. If an entry exists,
+        update the row, otherwise insert a new row.
+
+        Return True on success, raises an exception on failure.
+        """
+        # Query for a row. If one exists, update it in the db. If no
+        # result found, insert a new row.
+        q = session.query(OutsideCert)
+        q = q.filter(OutsideCert.member_id == member_id)
+        try:
+            row = q.one()
+            # Found one row, update it with new info.
+            values = dict(certificate=certificate,
+                          expiration=expiration,
+                          private_key=private_key)
+            # Returns row count on success, raises exception on error
+            q.update(values)
+            msg = 'Updated certificate for %s' % (member_id)
+            chapi_info(MA_LOG_PREFIX, msg)
+            return True
+        except sqlalchemy.orm.exc.NoResultFound:
+            # Insert a new row
+            insert_fields = dict(certificate=certificate,
+                                 member_id=member_id,
+                                 expiration=expiration)
+            if private_key:
+                insert_fields['private_key'] = private_key
+            ins = self.db.OUTSIDE_CERT_TABLE.insert().values(insert_fields)
+            # Nothing useful returned on insert, raises exception on error.
+            session.execute(ins)
+            msg = 'Inserted new certificate for %s' % (member_id)
+            chapi_info(MA_LOG_PREFIX, msg)
+            return True
+        except sqlalchemy.orm.exc.MultipleResultsFound:
+            # Inconsistent database!
+            msg = ('Multiple rows found for member_id %s'
+                   + ' in outside certificate table.')
+            raise Exception(msg % (member_id))
+
     # Member certificate methods
     def create_certificate(self, client_cert, member_urn, 
                            credentials, options, session):
 
         user_email = get_email_from_cert(client_cert)
-
-        # Grab the CSR or make CSR/KEY
-        if 'csr' in options:
-            # CSR provided: Generate cert but no private key
-            private_key = None
-            csr_data = options['csr']
-            (csr_fd, csr_file) = tempfile.mkstemp()
-            os.close(csr_fd)
-            open(csr_file, 'w').write(csr_data)
-        else:
-            # No CSR provided: Generate cert and private key
-            private_key, csr_file = make_csr()
 
         # Lookup UID and email from URN
         match = {'MEMBER_URN' : member_urn}
@@ -914,8 +1002,25 @@ class MAv1Implementation(MAv1DelegateBase):
         member_email = str(member_info['MEMBER_EMAIL'])
         member_id = str(member_info['MEMBER_UID'])
 
+        # Grab the CSR or make CSR/KEY
+        if 'csr' in options:
+            # CSR provided: Generate cert but no private key
+            private_key = None
+            csr_data = options['csr']
+            (csr_fd, csr_file) = tempfile.mkstemp()
+            os.close(csr_fd)
+            open(csr_file, 'w').write(csr_data)
+        else:
+            # No CSR provided: Generate cert and private key
+            private_key, csr_file = self._make_csr(member_urn, member_id,
+                                                   session)
+
         cert_pem = make_cert(member_id, member_email, member_urn,
                              self.cert, self.key, csr_file)
+
+        os.unlink(csr_file)
+
+        expiration = get_expiration_from_cert(cert_pem)
 
         # Grab signer pem
         signer_pem = open(self.cert).read()
@@ -924,14 +1029,8 @@ class MAv1Implementation(MAv1DelegateBase):
         # Need to return it somehow
         cert_chain = cert_pem + signer_pem
 
-
-        # Store cert and key in outside_cert table
-        insert_fields={'certificate' : cert_chain, 'member_id' : member_id}
-        if private_key:
-            insert_fields['private_key'] = private_key
-        ins = self.db.OUTSIDE_CERT_TABLE.insert().values(insert_fields)
-        result = session.execute(ins)
-
+        store_result = self._store_outside_cert(session, member_id, cert_chain,
+                                                expiration, private_key)
         result = self._successReturn(True)
 
         # chapi_audit call
@@ -981,7 +1080,8 @@ class MAv1Implementation(MAv1DelegateBase):
             member_email = convert_member_uid_to_email(member_id, session)
             cert_pem = make_cert(member_id, member_email, member_urn, \
                                      self.cert, self.key, csr_file)
-
+            os.unlink(csr_file)
+            expiration = get_expiration_from_cert(cert_pem)
             signer_pem = open(self.cert).read()
             cert_chain = cert_pem + signer_pem
 
@@ -989,8 +1089,11 @@ class MAv1Implementation(MAv1DelegateBase):
             # (member_id, client_urn, certificate, private_key)
             # values 
             # (member_id, client_urn, cert, key)
-            insert_values = {'client_urn' : client_urn, 'member_id' : str(member_id), \
-                                 'private_key' : private_key, 'certificate' : cert_chain}
+            insert_values = {'client_urn' : client_urn,
+                             'member_id' : str(member_id),
+                             'private_key' : private_key,
+                             'certificate' : cert_chain,
+                             'expiration' : expiration}
             ins = self.db.INSIDE_KEY_TABLE.insert().values(insert_values)
             session.execute(ins)
 
@@ -1064,7 +1167,8 @@ class MAv1Implementation(MAv1DelegateBase):
             msg = "Set member %s status to %s" % \
                 (member_urn, 'enabled' if enable_sense else 'disabled')
             attribs = {"MEMBER" : member_id}
-            self.logging_service.log_event(msg, attribs, credentials, options,
+            log_options = {}
+            self.logging_service.log_event(msg, attribs, credentials, log_options,
                                            session=session)
             chapi_audit_and_log(MA_LOG_PREFIX, msg, logging.INFO, {'user': user_email})
             self.mail_enable_user(user_email + " " + msg, ("Enabled CH user" if enable_sense else "Disabled CH user"))
@@ -1154,7 +1258,8 @@ class MAv1Implementation(MAv1DelegateBase):
             # log_event
             msg = "Granted member %s privilege %s" %  (self._get_displayname_for_member_id(member_uid, session), privilege)
             attribs = {"MEMBER" : member_uid}
-            self.logging_service.log_event(msg, attribs, credentials, options,
+            log_options = {}
+            self.logging_service.log_event(msg, attribs, credentials, log_options,
                                            session=session)
             chapi_audit_and_log(MA_LOG_PREFIX, msg, logging.INFO, {'user': user_email})
 
@@ -1232,7 +1337,8 @@ class MAv1Implementation(MAv1DelegateBase):
             # log_event
             msg = "Revoking member %s privilege %s" %  (self._get_displayname_for_member_id(member_uid, session), privilege)
             attribs = {"MEMBER" : member_uid}
-            self.logging_service.log_event(msg, attribs, credentials, options,
+            log_options = {}
+            self.logging_service.log_event(msg, attribs, credentials, log_options,
                                            session=session)
             chapi_audit_and_log(MA_LOG_PREFIX, msg, logging.INFO, {'user': user_email})
 
@@ -1304,7 +1410,8 @@ class MAv1Implementation(MAv1DelegateBase):
             # log_event
             msg = "Set member %s attribute %s to %s" %  (self._get_displayname_for_member_urn(member_urn, session), attr_name, attr_value )
             attribs = {"MEMBER" : member_uid}
-            self.logging_service.log_event(msg, attribs, credentials, options,
+            log_options = {}
+            self.logging_service.log_event(msg, attribs, credentials, log_options,
                                            session=session)
             chapi_audit_and_log(MA_LOG_PREFIX, msg, logging.INFO, {'user': user_email})
         result = self._successReturn(old_value)
@@ -1366,7 +1473,8 @@ class MAv1Implementation(MAv1DelegateBase):
             if attr_value is not None:
                 msg = msg + "=%s" % attr_value
             attribs = {"MEMBER" : member_uid}
-            self.logging_service.log_event(msg, attribs, credentials, options,
+            log_options = {}
+            self.logging_service.log_event(msg, attribs, credentials, log_options,
                                            session=session)
             chapi_audit_and_log(MA_LOG_PREFIX, msg, logging.INFO, {'user': user_email})
 
@@ -1394,3 +1502,181 @@ class MAv1Implementation(MAv1DelegateBase):
             return member_urn
         else:
             return get_member_display_name(result['value'][member_urn], member_urn)
+
+    def _lookup_member_attributes(self, session, m_ids, fields, result):
+        """Look up the fields for the given member ids in the
+        ma_member_attributes table. Put the fields in result, keyed by
+        member id, then field.
+
+        """
+        # A utility function to leverage list comprehension
+        def field2db_name(field):
+            if field in MA.field_mapping:
+                return MA.field_mapping[field]
+            else:
+                return field
+
+        # Always include the MEMBER_URN, we need it for the result
+        if 'MEMBER_URN' not in fields:
+            fields.add('MEMBER_URN')
+        db_names = set([field2db_name(x) for x in fields])
+        q = session.query(MemberAttribute.member_id, MemberAttribute.name,
+                          MemberAttribute.value)
+        q = q.filter(MemberAttribute.member_id.in_(m_ids))
+        q = q.filter(MemberAttribute.name.in_(db_names))
+        maRows = q.all()
+
+        # Build a temporary structure for the data. Top level keys are
+        # the member ids and top level values are dictionaries. The
+        # value dictionaries are keyed by db_names and contain the
+        # values from the db.
+        tmp_result = defaultdict(dict)
+        for row in maRows:
+            #chapi_info(MA_LOG_PREFIX, "M_A Row: %r" % (row,))
+            tmp_result[row.member_id][row.name] = row.value
+
+        # Now build the result structure using field names instead of
+        # db_names for the keys of the inner dictionaries.
+        for uid in m_ids:
+            db_fields = tmp_result[uid]
+            uid_fields = result[uid]
+            for field in fields:
+                db_name = field2db_name(field)
+                if db_name in db_fields:
+                    val = db_fields[db_name]
+                    uid_fields[field] = self.transform_for_result(val)
+                else:
+                    uid_fields[field] = None
+        return result
+
+    def _lookup_inside_key_info(self, session, m_ids, fields, result):
+        """Look up the fields for the given member ids in the InsideKey
+        table. Put the fields in result, keyed by member id, then
+        field.
+
+        """
+        # Filter requested fields to only those for which a mapping
+        # exists. No mapping, no info.
+        fields = [f for f in fields if f in MA.field_mapping]
+
+        # If no members or no fields (after filtering), do nothing
+        if not m_ids or not fields:
+            return result
+
+        # Always fetch expiration to renew expiring certificates
+        columns = set([InsideKey.member_id, InsideKey.expiration])
+        for f in fields:
+            columns.add(getattr(InsideKey, MA.field_mapping[f]))
+
+        # Convert the set columns into a list for SQLAlchemy
+        q = session.query(*columns)
+        q = q.filter(InsideKey.member_id.in_(m_ids))
+        rows = q.all()
+        for row in rows:
+            for f in fields:
+                val = getattr(row, MA.field_mapping[f])
+                result[row.member_id][f] = self.transform_for_result(val)
+            # And check for expiration on each row...
+            dt = row.expiration - datetime.datetime.utcnow()
+            if dt.days < 14:
+                chapi_info(MA_LOG_PREFIX,
+                           "Renewing inside cert for %s" % (row.member_id))
+                # call renew
+                private_key = getattr(row, 'private_key', None)
+                self._renew_inside_cert(session, row.member_id, private_key)
+        return result
+
+    def _renew_inside_cert(self, session, member_id, private_key):
+        """Renew the inside certificate of the given member."""
+        if not private_key:
+            # private key is not available, get it from the DB
+            q = session.query(InsideKey.private_key)
+            q = q.filter(InsideKey.member_id == member_id)
+            row = q.one()
+            private_key = row.private_key
+        (pk, csr_file) = make_csr_from_key(private_key)
+        q = session.query(MemberAttribute.name, MemberAttribute.value)
+        q = q.filter(MemberAttribute.member_id == member_id)
+        q = q.filter(MemberAttribute.name.in_(['email_address', 'urn']))
+        rows = q.all()
+        meminfo = dict()
+        for row in rows:
+            meminfo[row.name] = row.value
+        cert_pem = make_cert(member_id, meminfo['email_address'],
+                             meminfo['urn'], self.cert, self.key, csr_file)
+        expiration = get_expiration_from_cert(cert_pem)
+        # Grab signer pem
+        signer_pem = open(self.cert).read()
+        # This is the certificate chain
+        cert_chain = cert_pem + signer_pem
+        store_result = self._store_renewed_inside_cert(session, member_id,
+                                                       cert_chain, expiration,
+                                                       private_key)
+
+    def _store_renewed_inside_cert(self, session, member_id, certificate,
+                                   expiration, private_key):
+        """Store cert and key in inside_key table. If an entry exists, update
+        the row, otherwise error because we don't have enough info to
+        do otherwise. Inside certificates have a tool associated with
+        them (client_urn), but that's not known in the thread that
+        calls this method.
+
+        Return True on success, raises an exception on failure.
+
+        """
+        # Query for a row. If one exists, update it in the db. If no
+        # result found, insert a new row.
+        q = session.query(InsideKey)
+        q = q.filter(InsideKey.member_id == member_id)
+        try:
+            row = q.one()
+            # Found one row, update it with new info.
+            values = dict(certificate=certificate,
+                          expiration=expiration)
+            # Returns row count on success, raises exception on error
+            updated = q.update(values)
+            # Must explicitly commit here because we're run as part of
+            # a read-only method so no autocommit happens
+            session.commit()
+            msg = 'Updated inside certificate for %s' % (member_id)
+            chapi_info(MA_LOG_PREFIX, msg)
+            return True
+        except sqlalchemy.orm.exc.NoResultFound:
+            # How did we get here?
+            msg = ('No row found for member_id %s'
+                   + ' in inside certificate table on renewal.'
+                   + ' Please notify portal-help@geni.net')
+            raise Exception(msg % (member_id))
+        except sqlalchemy.orm.exc.MultipleResultsFound:
+            # Inconsistent database!
+            msg = ('Multiple rows found for member_id %s'
+                   + ' in inside certificate table. Please'
+                   + ' notify portal-help@geni.net')
+            raise Exception(msg % (member_id))
+
+    def _lookup_outside_cert_info(self, session, m_ids, fields, result):
+        """Look up the fields for the given member ids in the OutsideCert
+        table. Put the fields in result, keyed by member id, then
+        field.
+
+        """
+        # Filter requested fields to only those for which a mapping
+        # exists. No mapping, no info.
+        fields = [f for f in fields if f in MA.field_mapping]
+
+        # If no members or no fields (after filtering), do nothing
+        if not m_ids or not fields:
+            return result
+
+        columns = set([OutsideCert.member_id])
+        for f in fields:
+            columns.add(getattr(OutsideCert, MA.field_mapping[f]))
+
+        q = session.query(*columns)
+        q = q.filter(OutsideCert.member_id.in_(m_ids))
+        rows = q.all()
+        for row in rows:
+            for f in fields:
+                val = getattr(row, MA.field_mapping[f])
+                result[row.member_id][f] = self.transform_for_result(val)
+        return result

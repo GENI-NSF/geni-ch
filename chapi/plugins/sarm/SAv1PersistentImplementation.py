@@ -34,10 +34,10 @@ from sqlalchemy.orm import mapper
 
 import amsoil.core.pluginmanager as pm
 
-import sfa.trust.gid as gid
-from sfa.trust.certificate import Certificate
-import geni.util.cred_util as cred_util
-import geni.util.cert_util as cert_util
+import gcf.sfa.trust.gid as gid
+from gcf.sfa.trust.certificate import Certificate
+import gcf.geni.util.cred_util as cred_util
+import gcf.geni.util.cert_util as cert_util
 from chapi.Exceptions import *
 import chapi.Parameters
 from chapi.SliceAuthority import SAv1DelegateBase
@@ -223,14 +223,15 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
 
         q = q.filter(self.db.SLICE_TABLE.c.project_id == self.db.PROJECT_TABLE.c.project_id)
 
-        q = add_filters(q, match_criteria, self.db.SLICE_TABLE, SA.slice_field_mapping)
+        q = add_filters(q, match_criteria, self.db.SLICE_TABLE, SA.slice_field_mapping, session)
+
         rows = q.all()
 
         # in python 2.7, could do dictionary comprehension !!!!!!!!
         slices = {}
         for row in rows:
             slices[row.slice_urn] = construct_result_row(row, \
-                selected_columns, SA.slice_field_mapping)
+                selected_columns, SA.slice_field_mapping, session)
 
         result = self._successReturn(slices)
 
@@ -309,8 +310,11 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         client_uuid = get_uuid_from_cert(client_cert)
         self.update_slice_expirations(client_uuid, session)
 
-        rows = self.lookup_for_member(member_urn, self.db.SLICE_TABLE, \
-                  self.db.SLICE_MEMBER_TABLE, "slice_urn", "slice_id", session)
+        rows = self.lookup_for_member(member_urn, self.db.SLICE_TABLE, 
+                                      self.db.SLICE_MEMBER_TABLE, 
+                                      SA.slice_field_mapping,
+                                      "slice_urn", "slice_id", 
+                                      options, session)
         slices = [{"SLICE_ROLE" : row.name, \
                        "SLICE_UID" : row.slice_id, \
                        "SLICE_URN": row.slice_urn, \
@@ -345,7 +349,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         client_chain = client_cert + ma_cert
         user_gid = gid.GID(string=client_chain)
         slice_gid = gid.GID(string=row.certificate)
-        delegatable = False
+        delegatable = True # Allow experimenters to delegate their slice credentials. #297
         slice_cred = cred_util.create_credential(user_gid, slice_gid, \
                                                      expiration, 'slice', \
                                                      self.key, self.cert, \
@@ -372,10 +376,10 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
             abac_raw_creds.append(slice_role_credential)
 
         sfa_creds = \
-            [{'geni_type' : 'geni_sfa', 'geni_version' : 3, 'geni_value' : cred} 
+            [{'geni_type' : 'geni_sfa', 'geni_version' : '3', 'geni_value' : cred}
              for cred in sfa_raw_creds]
         abac_creds = \
-            [{'geni_type' : 'geni_abac', 'geni_version' : 1, 'geni_value' : cred} 
+            [{'geni_type' : 'geni_abac', 'geni_version' : '1', 'geni_value' : cred}
              for cred in abac_raw_creds]
         creds = sfa_creds + abac_creds
 
@@ -430,9 +434,16 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
 
     # shared by create_slice() and create_project()
     def finish_create(self, session, object, field_mapping, extra = {}):
+        chapi_debug(SA_LOG_PREFIX, "finish_create: %s %s %s" % (object, field_mapping, extra))
         ret = extra.copy()
         for k, v in field_mapping.iteritems():
-            if not isinstance(v, types.FunctionType) and getattr(object, v):
+            if isinstance(v, types.DictionaryType):
+                base_field = v['base_field']
+                to_external = v['to_external']
+                internal_value = getattr(object, base_field)
+                external_value = to_external(internal_value, session)
+                ret[k] = external_value
+            elif isinstance(v, types.StringType):
                 ret[k] = getattr(object, v)
         session.add(object)
         return self._successReturn(ret)
@@ -508,7 +519,10 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
             # FIXME: Externalize the #7 here
             slice.expiration = slice.creation + relativedelta(days=SA.SLICE_DEFAULT_LIFE_DAYS)
         else:
+            # Make timzeone UTC naive
             slice.expiration = dateutil.parser.parse(slice.expiration)
+            slice.expiration = slice.expiration.astimezone(dateutil.tz.tzutc())
+            slice.expiration = slice.expiration.replace(tzinfo=None)
 
         # if project expiration is sooner than slice expiration, use project expiration
         if project_expiration != None and slice.expiration > project_expiration:
@@ -554,8 +568,9 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
 
         # Log the slice create event
         attribs = {"SLICE" : slice.slice_id, "PROJECT" : slice.project_id}
+        log_options = {}
         self.logging_service.log_event("Created slice " + name, 
-                                       attribs, credentials, options,
+                                       attribs, credentials, log_options,
                                        session=session)
         chapi_audit_and_log(SA_LOG_PREFIX, "Created slice " + name + " in project " + slice.project_id, logging.INFO, {'user': user_email})
 
@@ -658,15 +673,16 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         # Log the update slice
         client_uuid = get_uuid_from_cert(client_cert)
         attribs = {"PROJECT" : project_uuid, "SLICE" : slice_uuid}
+        log_options = {}
         if "SLICE_EXPIRATION" in options['fields']: 
             # FIXME: Format in RFC3339 format not iso
             self.logging_service.log_event("Renewed slice %s until %s" % \
                                                (slice_name, new_exp.isoformat()), \
-                                               attribs, credentials, options,
+                                               attribs, credentials, log_options,
                                            session=session)
         else:
             self.logging_service.log_event("Updated slice " + slice_name, 
-                                           attribs, credentials, options,
+                                           attribs, credentials, log_options,
                                            session=session)
 
         result = self._successReturn(True)
@@ -742,8 +758,9 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
             for row in info:
                 leadname = get_member_display_name(info[row],row)
 
+        log_options = {}
         self.logging_service.log_event("Created project " + name + " with lead " + leadname, 
-                                       attribs, credentials, options,
+                                       attribs, credentials, log_options,
                                        session=session)
         chapi_audit_and_log(SA_LOG_PREFIX, "Created project " + name + " with lead " + leadname, logging.INFO, {'user': user_email})
 
@@ -790,6 +807,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                     tz_utc = dateutil.tz.tzutc()
                     newtime = newtime.astimezone(tz_utc)
                     newtime = newtime.replace(tzinfo=None)
+                options['fields']['PROJECT_EXPIRATION'] = newtime
                 curtime = row.expiration
                 if newtime - curtime > dt.timedelta.resolution:
                     change = " expiration"
@@ -808,8 +826,9 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         client_uuid = get_uuid_from_cert(client_cert)
         attribs = {"PROJECT" : project_uuid}
 
+        log_options = {}
         self.logging_service.log_event("Updated project " + name + change, 
-                                       attribs, credentials, options,
+                                       attribs, credentials, log_options,
                                        session=session)
 
         # Force this project to be expired/unexpired and logged now
@@ -839,12 +858,13 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
 
         q = session.query(self.db.PROJECT_TABLE)
         q = add_filters(q, match_criteria, self.db.PROJECT_TABLE, \
-                        SA.project_field_mapping)
+                        SA.project_field_mapping, session)
         rows = q.all()
         projects = {}
         for row in rows:
             projects[row_to_project_urn(row)] = \
-                construct_result_row(row, columns, SA.project_field_mapping)
+                construct_result_row(row, columns, \
+                                         SA.project_field_mapping, session)
         result = self._successReturn(projects)
 
         return result
@@ -856,10 +876,11 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         client_uuid = get_uuid_from_cert(client_cert)
         self.update_project_expirations(client_uuid, session)
 
-        rows = self.lookup_for_member(member_urn, self.db.PROJECT_TABLE, \
-                                          self.db.PROJECT_MEMBER_TABLE, 
+        rows = self.lookup_for_member(member_urn, self.db.PROJECT_TABLE, 
+                                      self.db.PROJECT_MEMBER_TABLE, 
+                                      SA.project_field_mapping, 
                                       "project_name", "project_id", 
-                                      session)
+                                      options, session)
         projects = [{"PROJECT_ROLE" : row.name, \
                          "PROJECT_UID" : row.project_id, \
                          "PROJECT_URN": row_to_project_urn(row), \
@@ -870,8 +891,9 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         return result
 
     # shared code between projects and slices
-    def lookup_for_member(self, member_urn, table, member_table, \
-                          name_field, id_field, session):
+    def lookup_for_member(self, member_urn, table, member_table, 
+                          field_mapping,
+                          name_field, id_field, options, session):
         q = session.query(member_table, self.db.MEMBER_ATTRIBUTE_TABLE,
                           table.c[name_field], self.db.ROLE_TABLE.c.name, table.c['expired'])
         q = q.filter(self.db.MEMBER_ATTRIBUTE_TABLE.c.name == 'urn')
@@ -880,6 +902,11 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                      self.db.MEMBER_ATTRIBUTE_TABLE.c.member_id)
         q = q.filter(table.c[id_field] == member_table.c[id_field])
         q = q.filter(member_table.c.role == self.db.ROLE_TABLE.c.id)
+
+        selected_columns, match_criteria = \
+            unpack_query_options(options, field_mapping)
+        q = add_filters(q, match_criteria, table, \
+                            field_mapping, session)
         rows = q.all()
         return rows
 
@@ -938,8 +965,8 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
 
                             break
                     if new_lead_urn==None:
-                        raise CHAPIv1ArgumentError('Cannot remove %s lead %s: ' + 
-                                                   'No project admins are authorized to be a project lead' % 
+                        raise CHAPIv1ArgumentError(('Cannot remove %s lead %s: ' +
+                                                    'No project admins are authorized to be a project lead') %
                                                    (project_urn, old_lead_urn))
                     
         if 'members_to_change' in options:
@@ -1149,9 +1176,11 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         q = q.filter(Slice.slice_id == slice_id)
         slice_row = q.one()
 
-        rows = self.lookup_for_member(new_lead_urn, self.db.PROJECT_TABLE, \
-                  self.db.PROJECT_MEMBER_TABLE, "project_name", "project_id", 
-                                      session)
+        rows = self.lookup_for_member(new_lead_urn, self.db.PROJECT_TABLE, 
+                                      self.db.PROJECT_MEMBER_TABLE, 
+                                      SA.project_field_mapping,
+                                      "project_name", "project_id", 
+                                      {}, session)
         projects = [{"PROJECT_ROLE" : row.name, \
                          "PROJECT_UID" : row.project_id, \
                          "PROJECT_URN": row_to_project_urn(row), \
@@ -1196,6 +1225,21 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                 all_urns.append(member_to_change[member_str])
 #        chapi_info('SA', "ALL_URNS = %s" % all_urns)
 
+        # Only allow adding non-disabled members. 
+        # Log but ignore any attempt to do so.
+        if 'members_to_add' in options:
+            additions = options['members_to_add']
+            members_to_add = [mem[member_str] for mem in additions]
+            enabled, disabled = check_disabled_users(self.db, members_to_add, session)
+            if len(disabled) > 0:
+                chapi_info(SA_LOG_PREFIX, 
+                                   "Attempt to add disabled users %s" %
+                                   disabled)
+                new_additions = [addition for addition in additions \
+                                     if addition[member_str] not in disabled]
+                options['members_to_add'] = new_additions
+                for dis in disabled: all_urns.remove(dis)
+
         # Also get the caller's pretty name
         caller_urn = get_urn_from_cert(client_cert)
         all_urns.append(caller_urn)
@@ -1218,6 +1262,38 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                     get_member_display_name(result['value'][member_urn], member_urn)
                 urn_to_id[member_urn] = result['value'][member_urn]["_GENI_IDENTIFYING_MEMBER_UID"]
         chapi_debug('SA:MA', "URN_TO_DISPLAY_NAME = %s" % urn_to_display_name)
+
+        # Get attributes for logging membership changes
+        if text_str == 'slice':
+            project_name, authority, slice_name = \
+                extract_data_from_slice_urn(urn)
+            project_id = \
+                self.get_project_id(session, 'project_name', project_name)
+            attribs = {"SLICE" : id, "PROJECT" : project_id}
+            label = slice_name
+            label2 = "%s in project %s" % (slice_name, project_name)
+        else:
+            project_name = get_name_from_urn(urn)
+            attribs = {"PROJECT" : id}
+            label = project_name
+            label2 = label
+
+        # Log all removals before doing the removal, so that the caller and member
+        # being removed share this slice/project, and the caller has permission to log this change.
+        # see ticket #276
+        if 'members_to_remove' in options:
+            members_to_remove = options['members_to_remove']
+            for member_to_remove in members_to_remove:
+                member_name = urn_to_display_name[member_to_remove]
+                attribs["MEMBER"] = urn_to_id[member_to_remove]
+                log_options = {}
+                self.logging_service.log_event(
+                    "Removed member %s from %s %s" % \
+                        (member_name, text_str, label), \
+                        attribs, credentials, log_options, session=session)
+                chapi_info(SA_LOG_PREFIX, "Removed member %s from %s %s" % (member_name, text_str, label2), {'user': user_email})
+
+        # Now do the membership changes.
 
         # first, do the removes
         if 'members_to_remove' in options and len(options['members_to_remove']) > 0:
@@ -1293,35 +1369,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
             raise CHAPIv1ArgumentError('Cannot modify membership: this would result in ' + \
                           str(num_leads) + ' leads for the ' + text_str)
 
-
-        # Now log the removals, adds, changes
-
-        # Get attributes for logging membership changes
-        if text_str == 'slice':
-            project_name, authority, slice_name = \
-                extract_data_from_slice_urn(urn)
-            project_id = \
-                self.get_project_id(session, 'project_name', project_name)
-            attribs = {"SLICE" : id, "PROJECT" : project_id}
-            label = slice_name
-            label2 = "%s in project %s" % (slice_name, project_name)
-        else:
-            project_name = get_name_from_urn(urn)
-            attribs = {"PROJECT" : id}
-            label = project_name
-            label2 = label
-
-        # Log all removals
-        if 'members_to_remove' in options:
-            members_to_remove = options['members_to_remove']
-            for member_to_remove in members_to_remove:
-                member_name = urn_to_display_name[member_to_remove]
-                attribs["MEMBER"] = urn_to_id[member_to_remove]
-                self.logging_service.log_event(
-                    "Removed member %s from %s %s" % \
-                        (member_name, text_str, label), \
-                        attribs, credentials, options, session=session)
-                chapi_info(SA_LOG_PREFIX, "Removed member %s from %s %s" % (member_name, text_str, label2), {'user': user_email})
+        # Now log the adds, changes
 
         # Log all adds
         if 'members_to_add' in options:
@@ -1332,11 +1380,12 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                 member_name = urn_to_display_name[member_urn]
                 member_role = member_to_add[role_str]
                 attribs["MEMBER"] = urn_to_id[member_urn]
+                log_options = {}
                 if caller_urn == member_urn:
                     self.logging_service.log_event(
                         "%s accepted an invitation to join %s %s in role %s" % \
                             (member_name, text_str, label, member_role), 
-                        attribs, credentials, options, session=session)
+                        attribs, credentials, log_options, session=session)
                     chapi_audit_and_log(SA_LOG_PREFIX, 
                                         "%s accepted an invitation to join %s %s in role %s" % \
                                             (member_name, text_str, label2, member_role), logging.INFO, {'user': user_email})
@@ -1344,7 +1393,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                     self.logging_service.log_event(
                         "%s Added member %s in role %s to %s %s" % \
                             (caller_name, member_name, member_role, text_str, label), 
-                        attribs, credentials, options, session=session)
+                        attribs, credentials, log_options, session=session)
                     chapi_audit_and_log(SA_LOG_PREFIX, 
                                         "%s Added member %s in role %s to %s %s" % \
                                             (caller_name, member_name, member_role, text_str, label2), logging.INFO, {'user': user_email})
@@ -1368,10 +1417,11 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                 member_name = urn_to_display_name[member_urn]
                 member_role = member_to_change[role_str]
                 attribs["MEMBER"] = urn_to_id[member_urn]
+                log_options = {}
                 self.logging_service.log_event(
                     "Changed member %s to role %s in %s %s" % \
                         (member_name, member_role, text_str, label), 
-                        attribs, credentials, options, session=session)
+                        attribs, credentials, log_options, session=session)
                 chapi_info(SA_LOG_PREFIX, "Changed member %s to role %s in %s %s" % (member_name, member_role, text_str, label2), {'user': user_email})
 
         return self._successReturn(None)
@@ -1548,7 +1598,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
             unpack_query_options(options, SA.sliver_info_field_mapping)
         q = session.query(self.db.SLIVER_INFO_TABLE)
         q = add_filters(q, match_criteria, self.db.SLIVER_INFO_TABLE, \
-                        SA.sliver_info_field_mapping)
+                        SA.sliver_info_field_mapping, session)
 
         # Hide any expired slivers (expired at least X minutes ago)
         gracemin = 0 # FIXME: externalize this
@@ -1560,7 +1610,8 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         slivers = {}
         for row in rows:
             slivers[row.sliver_urn] = \
-                construct_result_row(row, columns, SA.sliver_info_field_mapping)
+                construct_result_row(row, columns, \
+                                         SA.sliver_info_field_mapping, session)
         return self._successReturn(slivers)
 
 
@@ -1624,7 +1675,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         q = q.filter(self.db.PROJECT_REQUEST_TABLE.c.id == request_id)
         status_info = q.one()
         if not status_info.status == PENDING_STATUS:
-            raise CHAPIv1ArgumentError("Request %d is no longer pending" % request_id)
+            raise CHAPIv1ArgumentError("Request %s is no longer pending" % str(request_id))
         
         update_values = {'status' : resolution_status, 
                          'resolver' : client_uuid, 
@@ -1650,7 +1701,8 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
             q = q.filter(self.db.PROJECT_REQUEST_TABLE.c.status == status)
         rows = q.all()
         result = [construct_result_row(row, SA.project_request_columns, 
-                                       SA.project_request_field_mapping) \
+                                       SA.project_request_field_mapping, 
+                                       session) \
                       for row in rows]
         result = self._successReturn(result)
 
@@ -1670,8 +1722,9 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
 
         rows = q.all()
 #        print "ROWS = " + str(rows)
-        result = [construct_result_row(row, SA.project_request_columns, \
-                                           SA.project_request_field_mapping) \
+        result = [construct_result_row(row, SA.project_request_columns, 
+                                       SA.project_request_field_mapping,
+                                       session) \
                       for row in rows]
 
         return self._successReturn(result)
@@ -1692,8 +1745,9 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         q = q.filter(self.db.PROJECT_REQUEST_TABLE.c.status == PENDING_STATUS)
         rows = q.all()
 #        print "ROWS = " + str(rows)
-        result = [construct_result_row(row, SA.project_request_columns, \
-                                           SA.project_request_field_mapping) \
+        result = [construct_result_row(row, SA.project_request_columns, 
+                                       SA.project_request_field_mapping,
+                                       session) \
                       for row in rows]
         result = self._successReturn(result)
 
@@ -1727,7 +1781,8 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         result = \
             self._successReturn(construct_result_row(rows[0], 
                                                      SA.project_request_columns, 
-                                                     SA.project_request_field_mapping))
+                                                     SA.project_request_field_mapping,
+                                                     session))
 
         return result
 

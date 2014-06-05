@@ -21,7 +21,8 @@
 # IN THE WORK.
 #----------------------------------------------------------------------
 
-from tools.geni_utils import row_to_project_urn
+from guard_utils import convert_project_uid_to_urn, convert_project_urn_to_uid
+from guard_utils import convert_project_name_to_urn, convert_project_urn_to_name
 
 services = ["SLICE", "PROJECT", "SLICE_MEMBER", "PROJECT_MEMBER", "SLIVER_INFO"]
 
@@ -75,7 +76,9 @@ project_mandatory_fields = {
     "PROJECT_UID" : {"TYPE" : "UID"},
     "PROJECT_NAME" : {"TYPE" : "STRING", "CREATE" : "REQUIRED"},
     "PROJECT_DESCRIPTION" : {"TYPE" : "STRING", "CREATE" : "ALLOWED", "UPDATE" : True},
-    "PROJECT_EXPIRATION" : {"TYPE" : "DATETIME", "CREATE" : "ALLOWED", "UPDATE" : True},
+    "PROJECT_EXPIRATION" : {"TYPE" : "DATETIME_OR_NULL",
+                            "CREATE" : "ALLOWED",
+                            "UPDATE" : True},
     "PROJECT_EXPIRED" : {"TYPE" : "BOOLEAN"},
     "PROJECT_CREATION" : {"TYPE" : "DATETIME"},
 }
@@ -101,7 +104,9 @@ slice_field_mapping = {
     "SLICE_EXPIRATION" :  "expiration",
     "SLICE_EXPIRED" :  "expired",
     "SLICE_CREATION" :  "creation",
-    "SLICE_PROJECT_URN" : row_to_project_urn,
+    "SLICE_PROJECT_URN" : {"base_field" : "project_id", 
+                           "to_external" : convert_project_uid_to_urn,
+                           "to_internal" : convert_project_urn_to_uid},
     "_GENI_SLICE_EMAIL" : "slice_email",
     "_GENI_SLICE_OWNER" : "owner_id", 
     "_GENI_PROJECT_UID": 'project_id'
@@ -119,7 +124,9 @@ sliver_info_field_mapping = {
 
 # Mapping from external to internal data schema (PROJECT)
 project_field_mapping = {
-    "PROJECT_URN" : row_to_project_urn,
+    "PROJECT_URN" : {"base_field" : "project_name",
+                     "to_external" : convert_project_name_to_urn,
+                     "to_internal" : convert_project_urn_to_name},
     "PROJECT_UID" : "project_id",
     "PROJECT_NAME" : "project_name",
     "PROJECT_DESCRIPTION" : "project_purpose",

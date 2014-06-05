@@ -38,6 +38,7 @@ from tools.dbutils import *
 from tools.cert_utils import *
 from tools.chapi_log import *
 from tools.geni_constants import *
+from tools.policy_file_checker import PolicyFileChecker
 
 cs_logger = amsoil.core.log.getLogger('csv1')
 xmlrpc = pm.getService('xmlrpc')
@@ -215,20 +216,13 @@ class CSv1Guard(ABACGuardBase):
         'get_permissions' : None
         }
 
-    INVOCATION_CHECK_FOR_METHOD = \
-        {
-        'get_attributes' : \
-            SubjectInvocationCheck([
-                "ME.MAY_GET_ATTRIBUTES<-ME.IS_AUTHORITY",
-                "ME.MAY_GET_ATTRIBUTES_$SUBJECT<-ME.IS_$SUBJECT"
-                ], None, principal_extractor),
-        'get_permissions' : \
-            SubjectInvocationCheck([
-                "ME.MAY_GET_PERMISSIONS<-ME.IS_AUTHORITY",
-                "ME.MAY_GET_PERMISSIONS_$SUBJECT<-ME.IS_$SUBJECT"
-                ], None, principal_extractor),
-        }
+    INVOCATION_CHECK_FOR_METHOD = None
 
+    # Name of policies file
+    policies_filename = "/etc/geni-chapi/credential_store_policy.json"
+
+    # Thread to check whether the policies file has changed
+    policies_file_checker = None
 
     # Lookup argument check per method (or None if none registered)
     def get_argument_check(self, method):
@@ -238,6 +232,19 @@ class CSv1Guard(ABACGuardBase):
 
     # Lookup invocation check per method (or None if none registered)
     def get_invocation_check(self, method):
+
+        # Initiate file check thread
+        if self.policies_file_checker == None:
+            self.policies_file_checker = \
+                PolicyFileChecker(self.policies_filename, 5, \
+                                      self, CS_LOG_PREFIX)
+            self.policies_file_checker.start()
+
+        if self.INVOCATION_CHECK_FOR_METHOD == None:
+            policies = \
+                parse_method_policies(CSv1Guard.policies_filename)
+            self.INVOCATION_CHECK_FOR_METHOD = \
+                create_subject_invocation_checks(policies)
         if self.INVOCATION_CHECK_FOR_METHOD.has_key(method):
             return self.INVOCATION_CHECK_FOR_METHOD[method]
         return None

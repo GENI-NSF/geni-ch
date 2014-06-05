@@ -28,3 +28,6 @@ INFO    :chapi:PGCH:.*: Result from Resolve: {'output': 'No slice found URN urn:
 ERROR   :amsoil:\[sav1\] \[ARGUMENT\] ARGUMENT_ERROR (Unknown slice urns: \[\['urn:publicid:IDN+ch.*'\]\])
 INFO    :chapi:SA:.*: Result from lookup_slices: {'output': "\[ARGUMENT\] ARGUMENT_ERROR (Unknown slice urns: \[\['urn:publicid:IDN+ch.*'\]\])".*}
 INFO    :chapi:PGCH:.*: Result from Resolve: {'output': "\[ARGUMENT\] ARGUMENT_ERROR (Unknown slice urns: \[\['urn:publicid:IDN+ch.*'\]\])".*}
+INFO    :chapi:SPEAKSFOR: 'urn:publicid:IDN+ch.*+authority+portal' is speaking for 'urn:publicid:IDN+ch.*+user+
+ERROR   :amsoil:\[sav1\] \[ARGUMENT\] ARGUMENT_ERROR (Unknown sliver urns
+INFO    :chapi:SA:.*: Result from update_sliver_info: {'output': "\[ARGUMENT\] ARGUMENT_ERROR (Unknown sliver urns

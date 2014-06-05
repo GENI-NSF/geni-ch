@@ -25,7 +25,7 @@ import amsoil.core.pluginmanager as pm
 from chapi.Clearinghouse import CHv1Handler
 import tools.CH_constants as CH
 from CHv1PersistentImplementation import CHv1PersistentImplementation
-from geni.util.urn_util import URN
+from gcf.geni.util.urn_util import URN
 from chapi.Exceptions import *
 from tools.dbutils import *
 from tools.chapi_log import *
@@ -160,11 +160,11 @@ class SRv1Delegate(CHv1PersistentImplementation):
 
         q = session.query(self.db.SERVICES_TABLE)
         q = add_filters(q,  match_criteria, self.db.SERVICES_TABLE, \
-                            CH.field_mapping)
+                            CH.field_mapping, session)
         rows = q.all()
 
         services = [construct_result_row(row, selected_columns, \
-                                             CH.field_mapping) \
+                                             CH.field_mapping, session) \
                         for row in rows]
 
         self.add_service_attributes(rows, services, session)

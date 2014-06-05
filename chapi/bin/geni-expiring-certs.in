@@ -1,0 +1,222 @@
+#!/usr/bin/env python
+# -*- Mode: python -*-
+#
+#----------------------------------------------------------------------
+# Copyright (c) 2014 Raytheon BBN Technologies
+#
+# Permission is hereby granted, free of charge, to any person obtaining
+# a copy of this software and/or hardware specification (the "Work") to
+# deal in the Work without restriction, including without limitation the
+# rights to use, copy, modify, merge, publish, distribute, sublicense,
+# and/or sell copies of the Work, and to permit persons to whom the Work
+# is furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be
+# included in all copies or substantial portions of the Work.
+#
+# THE WORK IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+# MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+# NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+# HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+# WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE WORK OR THE USE OR OTHER DEALINGS
+# IN THE WORK.
+#----------------------------------------------------------------------
+
+#----------------------------------------------------------------------
+#
+# Notify users that their certificates are expiring.
+#
+#----------------------------------------------------------------------
+
+import ConfigParser
+import datetime
+import logging
+import optparse
+import psycopg2
+import psycopg2.extras
+import smtplib
+import urlparse
+from email.mime.text import MIMEText
+import sys
+
+body = """A GENI certificate belonging to you is going to expire on %s.
+
+The expiring certificate is used by tools that run outside the GENI Portal
+(https://portal.geni.net). Examples of affected tools are omni [1] and GENI
+Desktop.
+
+To avoid interruption of your use of GENI via these tools, please follow these
+steps before the date listed at the top of the email:
+
+1) Generate a new certificate:
+
+      https://portal.geni.net/secure/renewcert.php
+
+2) Reconfigure any affected tools to use the new certificate.
+	To reconfigure omni, see:
+                http://trac.gpolab.bbn.com/gcf/wiki/OmniConfigure/Automatic
+	No additional action is needed for GENI Desktop.
+
+If you have any questions, please email portal-help@geni.net for further assistance.
+
+Thank you!
+
+[1] http://trac.gpolab.bbn.com/gcf/wiki
+"""
+
+class Notifier:
+    def __init__(self, config):
+        self.loadConfig(config)
+
+    def loadConfig(self, config):
+        sec = 'chapi'
+        opts = ['portal_admin_email', 'portal_help_email', 'ch_from_email']
+        for opt in opts:
+            if config.has_option(sec, opt):
+                setattr(self, opt, config.get(sec, opt))
+            else:
+                msg = 'config option %s not found in %s'
+                msg = msg % (opt, conf_file)
+                raise Exception(msg)
+
+    def notify(self, address, subject, body, expiration_date, logger):
+        """Notify a member by email that their certificate expires on
+        expiration_date.
+
+        """
+        logger.debug('Email to %s, expiring on %s', address, expiration_date)
+        from_addr = self.ch_from_email
+        reply_to = self.portal_help_email
+        msg = MIMEText(body % (expiration_date))
+        msg['Subject'] = subject
+        msg['From'] = from_addr
+        msg['To'] = address
+        msg['Cc'] = reply_to
+        msg['Reply-To'] = reply_to
+        s = smtplib.SMTP('localhost')
+        s.sendmail(from_addr, [address, reply_to], msg.as_string())
+        s.quit()
+
+def init_logging(options):
+    level = logging.INFO
+    if options.debug:
+        level = logging.DEBUG
+    logging.basicConfig(level=level)
+
+def parse_args(argv):
+    usage = '%s [options] --table TABLE' % (argv[0])
+    parser = optparse.OptionParser(usage=usage)
+    days_default = '30'
+    days_help = "comma-separated list of expiration windows (e.g. '30,14,7')"
+    days_help = days_help + " (default: %s)" % (days_default)
+    parser.add_option("--days", default=days_default,
+                      help=days_help)
+    default_conf = '@pkgsysconfdir@/chapi.ini'
+    parser.add_option("-c", "--conf", default=default_conf,
+                      help='chapi config file (default:%s)' % (default_conf))
+    parser.add_option("--debug", action="store_true", default=False,
+                       help="enable debugging output")
+    options,args = parser.parse_args()
+    return options,args
+
+def alert_no_email(member_id, expiration_date, notifier, logger):
+    """Alert an admin that no email address is available for this member."""
+    msg = 'No email address for member id %s' % (member_id)
+    msg = msg + ' with certificate expiring on %s.'
+    subject = 'Error: no email address for expiring certificate'
+    notifier.notify(notifier.portal_admin_email, subject, msg, expiration_date,
+                    logger)
+
+def member_emails(conn, member_id, logger):
+    """Look up the email addresses of the given member id.
+
+    Note: will return a list of email addresses.
+    """
+    cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+    select_sql = ('SELECT value FROM ma_member_attribute'
+                  + ' WHERE member_id = %s'
+                  + ' AND name = %s')
+    cur.execute(select_sql, (member_id, 'email_address'))
+    rows = cur.fetchall()
+    result = [row['value'] for row in rows]
+    cur.close()
+    return result
+
+def notify_member(address, expiration_date, notifier, logger):
+    """Notify a member by email that their certificate expires on
+    expiration_date.
+
+    """
+    subject = 'GENI certificate expiring on %s' % (expiration_date)
+    notifier.notify(address, subject, body, expiration_date, logger)
+
+def notify_expiring(conn, ndays, notifier, logger):
+    """Notify of expiring certificate n days away from today."""
+    expire_day = datetime.date.today() + datetime.timedelta(ndays)
+    cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+    select_sql = ('SELECT member_id FROM ma_outside_cert'
+                  + ' WHERE date(expiration) = %s'
+                  + ' AND member_id NOT IN'
+                  + ('(SELECT member_id FROM ma_member_attribute'
+                     " WHERE name = 'member_enabled' AND value = 'n')"))
+    cur.execute(select_sql, (expire_day,))
+    rows = cur.fetchall()
+    members = [row['member_id'] for row in rows]
+    for member_id in members:
+        logger.debug('%s\'s expiration: %s', member_id, expire_day)
+        addrs = member_emails(conn, member_id, logger)
+        if addrs:
+            for addr in addrs:
+                notify_member(addr, expire_day, notifier, logger)
+        else:
+            alert_no_email(member_id, expire_day, notifier, logger)
+    logger.debug('Notified %d members', len(members))
+    cur.close()
+
+def db_connect(uri):
+    result = urlparse.urlparse(uri)
+    username = result.username
+    password = result.password
+    database = result.path[1:]
+    hostname = result.hostname
+    connection = psycopg2.connect(database = database, user = username,
+                                  password = password, host = hostname)
+    return connection
+
+def main(argv=None):
+    if argv is None:
+        argv = sys.argv
+    try:
+        options,args = parse_args(argv)
+        init_logging(options)
+    except Exception as e:
+        sys.stderr.write(str(e) + "\n")
+        return 1
+    logger = logging.getLogger()
+
+    config = ConfigParser.RawConfigParser()
+    config.read(options.conf)
+    db_url = config.get('chrm', 'db_url')
+    notifier = Notifier(config)
+
+    try:
+        # Convert days to integers as a validity check
+        days = [int(d) for d in options.days.split(',')]
+    except ValueError:
+        msg = 'Invalid days parameter, must be integers\n'
+        sys.stderr.write(msg)
+        return 1
+    logger.debug('days = %r' % (days))
+
+    conn = db_connect(db_url)
+    try:
+        for day in days:
+            notify_expiring(conn, day, notifier, logger)
+    finally:
+        conn.close()
+    return 0
+
+if __name__ == "__main__":
+    sys.exit(main())

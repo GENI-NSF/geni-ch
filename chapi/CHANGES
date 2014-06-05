@@ -4,11 +4,97 @@
 
 = GENI Clearinghouse Release Notes =
 
+== 1.14 ==
+
+== 1.13 ==
+ * Delete obsolete tmp keyfile in make_csr (#302)
+ * Correct CHAPI speaks-for logic to search list of credentials, not take first (#230)
+ * Remove problematic mail headers (#301)
+ * Make opsmon authority return for slice/user conform with schema (ops-monitoring #69)
+ * Delete obsolete csr file in authorize_client (#304)
+
+== 1.12.1 ==
+ * User credentials are missing intermediate CA (#303)
+
+== 1.12 ==
+ * Don't return SSH keys for disabled users, and don't let them join
+   projects/slices (#215)
+ * Change credential version from int to string (#239)
+ * Remove leftover temp files in cert creation (#246)
+ * Update expiring certificate email (#294)
+ * Addition of `flaskrest` and `opsmon` plugins to support ops-monitoring REST
+   API for authority, slice and user queries (#296)
+  * Add copyright to opsmon/plugin.py (syseng #6126)
+ * Make slice credentials delegatable. (#297)
+ * Fix but in SliceAuthority on V2 delete sliver_info calls (#298)
+ * Use invoking certificate in user credential (#299)
+ * Support match criteria on lookup_slices_for_member and
+   lookup_projects_for_member (#300)
+ * Add copyright to opsmon/plugin.py (syseng #6126)
+
+== 1.11 ==
+ * Transition to gcf 2.5 (#260)
+ * Auto-renew inside certificates (#289)
+ * Notify active users of expiring certificates (#293)
+ * Convert service type names to service type codes to support CHAPI
+   v2 lookup on services (#290)
+
+== 1.10 ==
+ * Reuse existing private keys when renewing certificates (#274)
+ * Put new URL in expiring certificate email (#284)
+ * Ignore `ARGUMENT_ERROR` on `update_sliver_info`. (#288)
+
+== 1.9.1 ==
+ * Fix authorization logic for policies with multiple subjects,
+   specifically `log_event`: do not overwrite the method variable
+   `bindings` with the per-subject bindings. (#287)
+
+== 1.9 ==
+ * Store ABAC Guard bindings in a per invocation variable
+   to make it threadsafe. (#285)
+ * Proper fix to guard on `update_sliver_info`: add logic
+   to check arguments that are not subjects (no applicable
+   policy). Slivers are the only example of this so far.
+   This way, we can get an `ARGUMENT_ERROR` on unknown
+   slivers as expected. (#286)
+
+== 1.8 ==
+ * Fix key lookup by id (#266)
+ * Return certificate expiration when requested (#267)
+ * When a sliver has no record in the sliver info tables,
+   return an Argument error, not an authorization error. (#273)
+ * Fix authorization errors logging changes to slice and project
+   membership, by adding a policy that allows logging about someone
+   else if you also logging about a slice/project that the other
+   person is a member of. (#276)
+ * Remove OBE authorization code, add better comments, and a flag
+   for enabling verbose logging in `SubjectInvocationCheck`. (#275,#277)
+ * Filter portal speaksfor messsages from geni-check-errors. (#265)
+ * Fix authorization of `delete_sliver_info` by not trying to 
+   extract sliver as a subject. (#283)
+ * Notify users when their certificates are expiring (#169)
+
+== 1.7.1 ==
+ * Allow project expiration to be null (#268)
+ * Fix authorization error in log_event on create slice (#270)
+ * Fix authorization error on project lead or admin looking
+   up a member by email address (as in bulk upload from 
+   the portal). (#269)
+
 == 1.7 ==
+ * Add support for externalized ABAC Guard policies (#232)
  * Add script to create tool certificates (#207)
  * Fix the SA generic lookup_members, lookup_for_member,
    change_membership calls that were missing self argument (#247)
  * Fix stack trace when deauthorizing client tools (#249)
+ * Add ability to specify expiration of certificates (#252)
+ * geni-sign-tool-csr returns a certificate chain (#256)
+ * Project join request IDs should be printed as a string in error
+   messages, not an integer. (#257)
+ * Populate expiration column on certificate insert (#258)
+ * Remove duplicates in list of subjects about whom we do queries,
+   unify the queries for permission, and keep only needed bindings, 
+   improving performance of permission checking. (#262)
 
 == 1.6 ==
  * Ensure that uniqueness of project and slice names is case-insensitive (#244)

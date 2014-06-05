@@ -1,0 +1,264 @@
+{
+  "__DOC__" : "ABAC policies for CHAPI MA service",
+
+   "lookup_public_member_info" : {
+     "__DOC__" : "Caller may call on anyone",
+     "policies" : [
+       "ME.MAY_$METHOD<-CALLER"
+     ],
+     "extractor" : "standard_subject_extractor"
+    },
+
+   "lookup_identifying_member_info" : {
+     "__DOC__" : [
+       "Authorities, Operators, self",
+       "Shares project with caller",
+       "is project lead/admin and searching by email",
+       "Searching for lead by UID",
+       "Has pending request on project with member as lead"
+     ],
+     "assertions" : [
+       "ME.INVOKING_ON_$MEMBER<-CALLER",
+       "ME.$SHARES_PROJECT_$MEMBER<-CALLER",
+       "ME.IS_$PROJECT_LEAD_AND_$SEARCHING_BY_EMAIL<-CALLER",
+       "ME.IS_$PROJECT_ADMIN_AND_$SEARCHING_BY_EMAIL<-CALLER",
+       "ME.IS_$SEARCHING_FOR_PROJECT_LEAD_BY_UID<-CALLER",
+       "ME.HAS_$PENDING_REQUEST_TO_MEMBER<-CALLER",
+       "ME.HAS_$PENDING_REQUEST_FROM_MEMBER<-CALLER"
+     ],
+     "policies" : [
+       "ME.MAY_$METHOD<-ME.IS_AUTHORITY",
+       "ME.MAY_$METHOD<-ME.IS_OPERATOR", 
+       "ME.MAY_$METHOD<-ME.INVOKING_ON_$SELF",
+       "ME.MAY_$METHOD_$MEMBER<-ME.SHARES_PROJECT_$MEMBER",
+       "ME.MAY_$METHOD<-ME.IS_PROJECT_LEAD_AND_SEARCHING_BY_EMAIL", 
+       "ME.MAY_$METHOD<-ME.IS_PROJECT_ADMIN_AND_SEARCHING_BY_EMAIL", 
+       "ME.MAY_$METHOD<-ME.IS_SEARCHING_FOR_PROJECT_LEAD_BY_UID",
+       "ME.MAY_$METHOD<-ME.HAS_PENDING_REQUEST_TO_MEMBER",
+       "ME.MAY_$METHOD<-ME.HAS_PENDING_REQUEST_FROM_MEMBER"
+      ]
+  },
+
+  "lookup_public_identifying_member_info" : {
+    "__DOC__" : [
+       "Authorities, Operators, self",
+       "Shares project with caller",
+       "is project lead/admin and searching by email",
+       "Searching for project lead by UID",
+       "Has pending request on project with member as lead"
+    ],
+    "assertions" : [
+       "ME.INVOKING_ON_$MEMBER<-CALLER",
+       "ME.$SHARES_PROJECT_$MEMBER<-CALLER",
+       "ME.IS_$PROJECT_LEAD_AND_$SEARCHING_BY_EMAIL<-CALLER",
+       "ME.IS_$PROJECT_ADMIN_AND_$SEARCHING_BY_EMAIL<-CALLER",
+       "ME.IS_$SEARCHING_FOR_PROJECT_LEAD_BY_UID<-CALLER",
+       "ME.HAS_$PENDING_REQUEST_TO_MEMBER<-CALLER",
+       "ME.HAS_$PENDING_REQUEST_FROM_MEMBER<-CALLER"
+    ],
+    "policies" : [
+       "ME.MAY_$METHOD<-ME.IS_AUTHORITY",
+       "ME.MAY_$METHOD<-ME.IS_OPERATOR", 
+       "ME.MAY_$METHOD<-ME.INVOKING_ON_$SELF",
+       "ME.MAY_$METHOD_$MEMBER<-ME.SHARES_PROJECT_$MEMBER",
+       "ME.MAY_$METHOD<-ME.IS_PROJECT_LEAD_AND_SEARCHING_BY_EMAIL", 
+       "ME.MAY_$METHOD<-ME.IS_PROJECT_ADMIN_AND_SEARCHING_BY_EMAIL", 
+       "ME.MAY_$METHOD<-ME.IS_SEARCHING_FOR_PROJECT_LEAD_BY_UID",
+       "ME.MAY_$METHOD<-ME.HAS_PENDING_REQUEST_TO_MEMBER",
+       "ME.MAY_$METHOD<-ME.HAS_PENDING_REQUEST_FROM_MEMBER"
+      ]
+  },
+
+  "lookup_private_member_info" : {
+    "__DOC__" : "Authority, operator, self",
+     "assertions" : [
+       "ME.INVOKING_ON_$MEMBER<-CALLER"
+     ],
+    "policies" : [
+      "ME.MAY_$METHOD<-ME.IS_AUTHORITY", 
+      "ME.MAY_$METHOD<-ME.IS_OPERATOR", 
+      "ME.MAY_$METHOD<-ME.INVOKING_ON_$SELF"
+    ]
+  },
+
+  "lookup_login_info" : {
+    "__DOC__" : "Authority, operator, self",
+     "assertions" : [
+       "ME.INVOKING_ON_$MEMBER<-CALLER"
+     ],
+    "policies" : [
+      "ME.MAY_$METHOD<-ME.IS_AUTHORITY", 
+      "ME.MAY_$METHOD<-ME.IS_OPERATOR", 
+      "ME.MAY_$METHOD<-ME.INVOKING_ON_$SELF"
+    ]
+  },
+
+   "get_credentials" : {
+    "__DOC__" : "Authority, operator, self",
+     "assertions" : [
+       "ME.INVOKING_ON_$MEMBER<-CALLER"
+     ],
+    "policies" : [
+      "ME.MAY_$METHOD<-ME.IS_AUTHORITY", 
+      "ME.MAY_$METHOD<-ME.IS_OPERATOR", 
+      "ME.MAY_$METHOD<-ME.INVOKING_ON_$SELF"
+    ]
+  },
+
+  "update_member_info" : {
+    "__DOC__" : "Operator, self",
+     "assertions" : [
+       "ME.INVOKING_ON_$MEMBER<-CALLER"
+     ],
+    "policies" : [
+      "ME.MAY_$METHOD<-ME.IS_OPERATOR", 
+      "ME.MAY_$METHOD<-ME.INVOKING_ON_$SELF"
+    ]
+  },
+
+  "create_key" : {
+     "__DOC__" : "Operator, self",
+     "assertions" : [
+       "ME.INVOKING_ON_$MEMBER<-CALLER"
+     ],
+     "policies" : [
+        "ME.MAY_$METHOD<-ME.IS_OPERATOR",
+        "ME.MAY_$METHOD<-ME.INVOKING_ON_$SELF"
+     ]
+   },
+
+  "delete_key" : {
+     "__DOC__" : "Operator, self",
+     "assertions" : [
+       "ME.INVOKING_ON_$MEMBER<-CALLER"
+     ],
+     "policies" : [
+        "ME.MAY_$METHOD<-ME.IS_OPERATOR",
+        "ME.MAY_$METHOD<-ME.INVOKING_ON_$SELF"
+     ]
+   },
+
+  "update_key" : {
+     "__DOC__" : "Operator, self",
+     "assertions" : [
+       "ME.INVOKING_ON_$MEMBER<-CALLER"
+     ],
+     "policies" : [
+        "ME.MAY_$METHOD<-ME.IS_OPERATOR",
+        "ME.MAY_$METHOD<-ME.INVOKING_ON_$SELF"
+     ]
+   },
+
+   "lookup_keys" : {
+     "__DOC__" : "Authority, operator, self, shares_slice",
+     "assertions" : [
+       "ME.INVOKING_ON_$MEMBER<-CALLER",
+       "ME.$SHARES_SLICE_$MEMBER<-CALLER",
+       "ME.INVOKING_ON_$KEY_OWNER<-CALLER"
+       
+     ],
+     "policies" : [
+       "ME.MAY_$METHOD<-ME.IS_AUTHORITY", 
+       "ME.MAY_$METHOD<-ME.IS_OPERATOR", 
+       "ME.MAY_$METHOD<-ME.INVOKING_ON_$SELF",
+       "ME.MAY_$METHOD_$MEMBER<-ME.SHARES_SLICE_$MEMBER"
+     ]
+   },
+
+   "create_certificate" : {
+     "__DOC__" : "Operator, authority, self",
+     "assertions" : [
+       "ME.INVOKING_ON_$MEMBER<-CALLER"
+     ],
+     "policies" : [
+       "ME.MAY_$METHOD<-ME.IS_OPERATOR",
+       "ME.MAY_$METHOD<-ME.IS_AUTHORITY",
+       "ME.MAY_$METHOD<-ME.INVOKING_ON_$SELF"
+     ]
+   },
+
+   "create_member" : {
+     "__DOC__" : "Operator, authority",
+     "policies" : [
+       "ME.MAY_$METHOD<-ME.IS_OPERATOR",
+       "ME.MAY_$METHOD<-ME.IS_AUTHORITY"
+     ]
+   },
+
+   "list_clients" : {
+      "__DOC__" : "Open to all",
+      "policies" : [
+         "ME.MAY_$METHOD<-CALLER"
+       ]
+   },
+
+    "list_authorized_clients" : {
+       "__DOC__" : "Authority or self",
+       "assertions" : [
+         "ME.INVOKING_ON_$MEMBER<-CALLER"
+       ],
+       "policies" : [
+        "ME.MAY_$METHOD<-ME.IS_AUTHORITY",
+        "ME.MAY_$METHOD<-ME.INVOKING_ON_$SELF"
+       ]
+    },
+
+    "authorize_client" : {
+       "__DOC__" : "Authority or self",
+       "assertions" : [
+         "ME.INVOKING_ON_$MEMBER<-CALLER"
+       ],
+       "policies" : [
+        "ME.MAY_$METHOD<-ME.IS_AUTHORITY",
+        "ME.MAY_$METHOD<-ME.INVOKING_ON_$SELF"
+       ]
+    },
+
+    "enable_user" : {
+      "__DOC__" : "Only operators/autorities can enable/disable users",
+      "policies" : [
+        "ME.MAY_$METHOD<-ME.IS_AUTHORITY",
+        "ME.MAY_$METHOD<-ME.IS_OPERATOR"
+      ]
+    },
+
+    "add_member_privilege" : {
+      "__DOC__" : "Only operators/autorities can add member privilege",
+      "policies" : [
+        "ME.MAY_$METHOD<-ME.IS_AUTHORITY",
+        "ME.MAY_$METHOD<-ME.IS_OPERATOR"
+      ] 
+    },
+
+    "revoke_member_privilege" : {
+      "__DOC__" : "Only operators/autorities can revoke member privilege",
+      "policies" : [
+        "ME.MAY_$METHOD<-ME.IS_AUTHORITY",
+        "ME.MAY_$METHOD<-ME.IS_OPERATOR"
+      ] 
+    },
+
+    "add_member_attribute" : {
+      "__DOC__" : "Only operators/autorities/self can add member attribute",
+      "assertions" : [
+        "ME.INVOKING_ON_$MEMBER<-CALLER"
+      ],
+      "policies" : [
+        "ME.MAY_$METHOD<-ME.IS_AUTHORITY",
+        "ME.MAY_$METHOD<-ME.IS_OPERATOR",
+        "ME.MAY_$METHOD<-ME.INVOKING_ON_$SELF"
+      ]
+    },
+
+    "revoke_member_privilege" : {
+      "__DOC__" : "Only operators/autorities/self can revoke member attribute",
+      "assertions" : [
+        "ME.INVOKING_ON_$MEMBER<-CALLER"
+      ],
+      "policies" : [
+        "ME.MAY_$METHOD<-ME.IS_AUTHORITY",
+        "ME.MAY_$METHOD<-ME.IS_OPERATOR",
+        "ME.MAY_$METHOD<-ME.INVOKING_ON_$SELF"
+      ]
+    }
+}
