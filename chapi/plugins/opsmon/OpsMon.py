@@ -110,14 +110,12 @@ class OpsMonHandler:
 
     # Return the opsmon information about this authority (only this one)
     # Return non-expired slices and their leads
-    def handle_authority_request(self, auth_id, ts):
+    def handle_authority_request(self, auth_id, ts, session):
 
         opsmon_logger.info("Requested opsmon info for authority %s" % auth_id)
 
         if auth_id != self._authority:
             return ""
-
-        session = self._db.getSession()
 
         # Grab URN's and leads of all unexpired slices
         q = session.query(self._db.SLICE_TABLE.c.slice_urn, 
@@ -153,10 +151,9 @@ class OpsMonHandler:
     # Compute opsmon ifnormation about a given slice
     # slice_id is the flattened truncated URN:
     #    authority_projectname_slice_slicename
-    def handle_slice_request(self, slice_id, ts):
+    def handle_slice_request(self, slice_id, ts, session):
 
         opsmon_logger.info("Requested opsmon info for slice %s" % slice_id)
-        session = self._db.getSession()
 
         slice_urn = self.slice_id_to_urn(slice_id)
 
@@ -195,9 +192,8 @@ class OpsMonHandler:
         return slice_data
 
     # Generate the dictionary required for a given user by ID (username)
-    def handle_user_request(self, user_id, ts):
+    def handle_user_request(self, user_id, ts, session):
         opsmon_logger.info("Requested opsmon info for user %s" % user_id)
-        session = self._db.getSession()
 
         # Grab all attributes of user based on username
         ma1 = alias(self._db.MEMBER_ATTRIBUTE_TABLE)
@@ -251,15 +247,18 @@ class OpsMonHandler:
     def handle_opsmon_request(variety, id):
         id_data = ""
         opsmon = OpsMonHandler._instance
+        session = opsmon._db.getSession()
         ts = int(time.time()*1000000)
         if variety == "authority":
-            id_data = opsmon.handle_authority_request(id, ts)
+            id_data = opsmon.handle_authority_request(id, ts, session)
         elif variety == "slice":
-            id_data = opsmon.handle_slice_request(id, ts)
+            id_data = opsmon.handle_slice_request(id, ts, session)
         elif variety == "user":
-            id_data = opsmon.handle_user_request(id, ts)
+            id_data = opsmon.handle_user_request(id, ts, session)
         else:
             opsmon_logger.info("Unknown variety %s" % variety)
+
+        session.close()
         
         return json.dumps(id_data)
 
