@@ -5,6 +5,7 @@
 = GENI Clearinghouse Release Notes =
 
 == 1.14 ==
+ * Close sessions on REST calls in OpsMon
 
 == 1.13 ==
  * Delete obsolete tmp keyfile in make_csr (#302)
