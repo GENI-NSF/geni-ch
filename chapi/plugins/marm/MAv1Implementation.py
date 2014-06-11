@@ -1242,6 +1242,10 @@ class MAv1Implementation(MAv1DelegateBase):
             raise CHAPIv1ArgumentError('Privilege %s undefined' % (privilege))
 
         # find the old value
+        # Technically we should use the MA.field_mapping, but we know
+        # the privilege is one of two strings that map to themselves.
+        # If there are ever other privilege strings you can use here that do
+        # not map to themselves, fix this query.
         q = session.query(MemberAttribute.value).\
             filter(MemberAttribute.member_id == member_uid).\
             filter(MemberAttribute.name == privilege)
@@ -1282,6 +1286,10 @@ class MAv1Implementation(MAv1DelegateBase):
             raise CHAPIv1ArgumentError('Privilege %s undefined' % (privilege))
 
         # find the old value
+        # Technically we should use the MA.field_mapping, but we know
+        # the privilege is one of two strings that map to themselves.
+        # If there are ever other privilege strings you can use here that do
+        # not map to themselves, fix this query.
         q = session.query(MemberAttribute.value).\
             filter(MemberAttribute.member_id == member_uid).\
             filter(MemberAttribute.name == privilege)
@@ -1390,10 +1398,16 @@ class MAv1Implementation(MAv1DelegateBase):
                 chapi_warn(MA_LOG_PREFIX, "Caller tried to add own attribute %s and say it was not self asserted" % attr_name, {'user': user_email})
                 attr_self_assert = 't'
 
+        # Map the requested attribute from the API attribute name to the internal (db) name,
+        # if necessary.
+        db_name = attr_name
+        if MA.field_mapping.has_key(attr_name):
+            db_name = MA.field_mapping[attr_name]
+
         # find the old value
         q = session.query(MemberAttribute.value).\
             filter(MemberAttribute.member_id == member_uid).\
-            filter(MemberAttribute.name == attr_name)
+            filter(MemberAttribute.name == db_name)
         rows = q.all()
 
         was_defined = (len(rows)>0)
@@ -1408,7 +1422,8 @@ class MAv1Implementation(MAv1DelegateBase):
 
         if not was_defined:
             # log_event
-            msg = "Set member %s attribute %s to %s" %  (self._get_displayname_for_member_urn(member_urn, session), attr_name, attr_value )
+            # Here we use the mapped value of the attribute name. Not all caps looks nicer.
+            msg = "Set member %s attribute %s to %s" %  (self._get_displayname_for_member_urn(member_urn, session), db_name, attr_value )
             attribs = {"MEMBER" : member_uid}
             log_options = {}
             self.logging_service.log_event(msg, attribs, credentials, log_options,
@@ -1434,10 +1449,16 @@ class MAv1Implementation(MAv1DelegateBase):
             raise CHAPIv1ArgumentError('No member with URN ' + member_urn)
         member_uid = uids[0]
 
+        # Map the requested attribute from the API attribute name to the internal (db) name,
+        # if necessary.
+        db_name = attr_name
+        if MA.field_mapping.has_key(attr_name):
+            db_name = MA.field_mapping[attr_name]
+
         # find the old value
         q = session.query(MemberAttribute.value, MemberAttribute.self_asserted).\
             filter(MemberAttribute.member_id == member_uid).\
-            filter(MemberAttribute.name == attr_name)
+            filter(MemberAttribute.name == db_name)
         if attr_value is not None:
             q = q.filter(MemberAttribute.value == attr_value)
         rows = q.all()
@@ -1462,14 +1483,15 @@ class MAv1Implementation(MAv1DelegateBase):
                     is_op = q2.count() > 0
                     if not is_op:
                         chapi_info(MA_LOG_PREFIX, "User %s tried to remove own non self-asserted attribute %s" % (member_urn,
-                                                                                                                  attr_name), {'user': user_email})
+                                                                                                                  db_name), {'user': user_email})
                         do_remove = False
             if do_remove:
                 self.delete_attr(session, attr_name, member_uid, attr_value)
 
         # log_event
         if was_defined and do_remove:
-            msg = "Removed member %s attribute %s" %  (self._get_displayname_for_member_urn(member_urn, session), attr_name)
+            # Here we use the mapped value of the attribute name. Not all caps looks nicer.
+            msg = "Removed member %s attribute %s" %  (self._get_displayname_for_member_urn(member_urn, session), db_name)
             if attr_value is not None:
                 msg = msg + "=%s" % attr_value
             attribs = {"MEMBER" : member_uid}
