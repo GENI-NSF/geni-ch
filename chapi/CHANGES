@@ -6,6 +6,7 @@
 
 == 1.14 ==
  * Use MA field_mapping when adding and removing member attributes. (#309)
+ * Filter out more harmless logs in `geni-check-errors`. (#313)
 
 == 1.13.1 ==
  * Close sessions on REST calls in OpsMon (#308)

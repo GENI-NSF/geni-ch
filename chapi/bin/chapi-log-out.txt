@@ -31,3 +31,21 @@ INFO    :chapi:PGCH:.*: Result from Resolve: {'output': "\[ARGUMENT\] ARGUMENT_E
 INFO    :chapi:SPEAKSFOR: 'urn:publicid:IDN+ch.*+authority+portal' is speaking for 'urn:publicid:IDN+ch.*+user+
 ERROR   :amsoil:\[sav1\] \[ARGUMENT\] ARGUMENT_ERROR (Unknown sliver urns
 INFO    :chapi:SA:.*: Result from update_sliver_info: {'output': "\[ARGUMENT\] ARGUMENT_ERROR (Unknown sliver urns
+INFO    :chapi:SA: .*: Created slice
+INFO    :chapi:SA: .*: .* Added member .* in role .* to slice
+ERROR   :amsoil:\[sav1\] \[ARGUMENT\] ARGUMENT_ERROR (Can't get slice credential on expired or non-existent slice
+INFO    :chapi:SA: .*: Result from get_credentials: {'output': "\[ARGUMENT\] ARGUMENT_ERROR (Can't get slice credential on expired or non-existent slice
+INFO    :chapi:MA: .*: .* registering SSH key
+INFO    :chapi:SA: .*: Created project
+INFO    :chapi:MA: .*: Activated GENI user :
+INFO    :chapi:MA: .*: Authorizing client urn:publicid:IDN+ch.geni.net+authority+portal for member
+INFO    :chapi:SA: Deleting .* expired sliver_info records
+ERROR   :amsoil:\[sav1\] \[DUPLICATE\] DUPLICATE_ERROR (There already exists a slice named 
+INFO    :chapi:SA: .*: Result from create_slice: {'output': '\[DUPLICATE\] DUPLICATE_ERROR (There already exists a slice named 
+ERROR   :amsoil:\[sav1\] \[ARGUMENT\] ARGUMENT_ERROR (Cannot shorten slice lifetime 
+INFO    :chapi:SA: .*: Result from update_slice: {'output': '\[ARGUMENT\] ARGUMENT_ERROR (Cannot shorten slice lifetime
+INFO    :chapi:SA: .*: Result from get_credentials: {'output': "\[ARGUMENT\] ARGUMENT_ERROR (Unknown slice urns: \[\['urn:publicid:IDN+ch
+INFO    :chapi:SA: .*: .* Added member .* in role .* to project
+INFO    :chapi:SA: Expiring project invitation ID
+INFO    :chapi:SA: .*: .* accepted an invitation to join project
+INFO    :chapi:SA: .*: .* accepted an invitation to join slice
