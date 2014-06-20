@@ -464,7 +464,8 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
 #            options['fields']['_GENI_SLICE_EMAIL'] = \
 #                'slice-%s@example.com' % name
 
-        options['fields']['_GENI_SLICE_EMAIL'] = None
+        # If a slice email is provided, use it. 
+#        options['fields']['_GENI_SLICE_EMAIL'] = None
 
         # fill in the fields of the object
         slice = Slice()
