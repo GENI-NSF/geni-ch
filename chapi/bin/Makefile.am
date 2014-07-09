@@ -37,4 +37,8 @@ dist_pkgdata_DATA = \
 	ch-error-log-out.txt \
 	chapi-log-out.txt
 
-dist_sbin_SCRIPTS = geni-check-errors geni-sign-tool-csr geni-expiring-certs
+dist_sbin_SCRIPTS = \
+	geni-check-errors \
+	geni-expiring-certs \
+	geni-list-member-projects \
+	geni-sign-tool-csr

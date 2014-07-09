@@ -11,4 +11,8 @@ geni-check-errors.1: Makefile
 
 geni-check-errors.1: $(srcdir)/geni-check-errors.1.in
 
-dist_man_MANS = geni-sign-tool-csr.1 geni-check-errors.1 geni-expiring-certs.1
+dist_man_MANS = \
+	geni-check-errors.1 \
+	geni-expiring-certs.1 \
+	geni-list-member-projects.1 \
+	geni-sign-tool-csr.1
