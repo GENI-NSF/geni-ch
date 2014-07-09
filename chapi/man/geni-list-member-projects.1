@@ -1,0 +1,81 @@
+.\"                                      Hey, EMACS: -*- nroff -*-
+.\" First parameter, NAME, should be all caps
+.\" Second parameter, SECTION, should be 1-8, maybe w/ subsection
+.\" other parameters are allowed: see man(7), man(1)
+.TH GENI-LIST-MEMBER-PROJECTS 1 "July 9, 2014"
+.\" Please adjust this date whenever revising the manpage.
+.\"
+.\" Some roff macros, for reference:
+.\" .nh        disable hyphenation
+.\" .hy        enable hyphenation
+.\" .ad l      left justify
+.\" .ad b      justify to both left and right margins
+.\" .nf        disable filling
+.\" .fi        enable filling
+.\" .br        insert line break
+.\" .sp <n>    insert n+1 empty lines
+.\" for manpage-specific macros, see man(7)
+.SH NAME
+geni-list-member-projects \- list project names and roles for a member
+.SH SYNOPSIS
+.B geni-list-member-projects
+.IR -k \  KEY
+.IR -c \  CERT
+.IR -u \  URL
+.IR -m \  MEMBER
+.IR [--expired]
+.
+.
+.SH DESCRIPTION
+.B geni-list-member-projects
+lists role and project name for each active (not expired) project of which
+.B MEMBER
+is a member. Optionally,
+.B geni-list-member-projects
+will also list expired projects of which
+.B MEMBER
+is a member.
+.
+.
+.SH OPTIONS
+.B geni-list-member-projects
+follows the usual GNU command line syntax, with long
+options starting with two dashes (`-').
+A summary of options is included below.
+.TP
+.B \-c <certificate file>, \-\-certfile <certificate file>
+The signing certificate.
+.TP
+.B \-e, \-\-expired
+Display expired projects in addition to active projects.
+.TP
+.B \-h, \-\-help
+Show summary of options.
+.TP
+.B \-k <key file>, \-\-keyfile <key file>
+The private key matching the signing certificate.
+.TP
+.B \-m <UUID or username>, \-\-member <UUID or username>
+Specifies the user whose projects will be listed. Users can be
+specified by their UUID or by their username.
+.TP
+.B \-u <base URL>, \-\-url <base URL>
+Specify the base URL of the service endpoints. Specific services like
+MA and SA are derived from this endpoint.
+.
+.
+.SH EXAMPLES
+Display projects for the user with username `scott':
+
+    geni-list-member-projects -k key.pem -c cert.pem \\
+          -u https://ch.example.com -m scott
+
+
+Include expired projects for the user with username `scott':
+
+    geni-list-member-projects -k key.pem -c cert.pem \\
+          -u https://ch.example.com -e -m scott
+.
+.
+.SH AUTHOR
+geni-list-member-projects was written by Raytheon BBN Technologies.
