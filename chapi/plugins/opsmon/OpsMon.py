@@ -102,9 +102,10 @@ class OpsMonHandler:
     # and adding the prefix
     # Assumes ID is of form <auth>_<project>_slice_<slice>
     def slice_id_to_urn(self, slice_id):
-        parts = slice_id.split(self._authority)[1].split('_')
-        slice_name = parts[3]
-        project_name = parts[1]
+        slice_parts = slice_id.split('_slice_')
+        slice_name = slice_parts[1]
+        project_parts = slice_parts[0].split(self._authority + '_')
+        project_name = project_parts[1]
         return "urn:publicid:IDN+%s:%s+slice+%s" % (self._authority, 
                                                     project_name, slice_name)
 
@@ -163,6 +164,7 @@ class OpsMonHandler:
                           self._db.MEMBER_ATTRIBUTE_TABLE.c.value)
         q = q.filter(self._db.MEMBER_ATTRIBUTE_TABLE.c.name == 'urn')
         q = q.filter(self._db.MEMBER_ATTRIBUTE_TABLE.c.member_id == self._db.SLICE_TABLE.c.owner_id)
+        q = q.filter(self._db.SLICE_TABLE.c.expired == 'f')
         q = q.filter(self._db.SLICE_TABLE.c.slice_urn == slice_urn)
 
         rows = q.all()

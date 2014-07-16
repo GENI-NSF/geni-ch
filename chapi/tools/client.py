@@ -24,10 +24,10 @@
 import os, os.path, sys
 import json
 import optparse
-from omnilib.util.dossl import _do_ssl
+from gcf.omnilib.util.dossl import _do_ssl
 import xmlrpclib
 import logging
-from omnilib.frameworks.framework_base import Framework_Base
+from gcf.omnilib.frameworks.framework_base import Framework_Base
 from portal_client import *
 from geni_constants import *
 
