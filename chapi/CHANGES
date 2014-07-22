@@ -5,6 +5,9 @@
 = GENI Clearinghouse Release Notes =
 
 == 1.15 ==
+ * Avoid exception doing `Resolve` on user without an outside cert.
+   Also fix `Resolve` return for user to return `username` as `uid` and
+   a pretty display name as `name`. (#305)
 
 == 1.14 ==
  * Use MA field_mapping when adding and removing member attributes. (#309)
