@@ -9,6 +9,8 @@
    Also fix `Resolve` return for user to return `username` as `uid` and
    a pretty display name as `name`. (#305)
  * Check for empty search lists in MA to avoid SQLAlchemy warnings. (#272)
+ * Check for empty search lists searching SR attributes too. Plus 
+   one spot in OpsMon. (#318)
 
 == 1.14 ==
  * Use MA field_mapping when adding and removing member attributes. (#309)

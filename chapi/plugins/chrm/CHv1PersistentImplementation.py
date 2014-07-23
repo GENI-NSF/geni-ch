@@ -66,7 +66,10 @@ class CHv1PersistentImplementation(CHv1Implementation):
         q = session.query(self.db.SERVICES_TABLE)
         if service_type is not None:
             if isinstance(service_type, list):
-                q = q.filter(self.db.SERVICES_TABLE.c.service_type.in_(service_type))
+                if len(service_type) > 0:
+                    q = q.filter(self.db.SERVICES_TABLE.c.service_type.in_(service_type))
+                else:
+                    q = q.filter(self.db.SERVICES_TABLE.c.service_type == None)
             else:
                 q = q.filter(self.db.SERVICES_TABLE.c.service_type == service_type)
         q = add_filters(q,  match_criteria, self.db.SERVICES_TABLE, 
@@ -131,8 +134,12 @@ class CHv1PersistentImplementation(CHv1Implementation):
 
         # Query for all attributes of services in given ID list
         q = session.query(self.db.SERVICE_ATTRIBUTE_TABLE)
-        q = \
-            q.filter(self.db.SERVICE_ATTRIBUTE_TABLE.c.service_id.in_(service_ids))
+        if len(service_ids) > 0:
+            q = \
+                q.filter(self.db.SERVICE_ATTRIBUTE_TABLE.c.service_id.in_(service_ids))
+        else:
+            q = \
+                q.filter(self.db.SERVICE_ATTRIBUTE_TABLE.c.service_id == None)
         attrib_rows = q.all()
 
         # Add each attribute to proper service
