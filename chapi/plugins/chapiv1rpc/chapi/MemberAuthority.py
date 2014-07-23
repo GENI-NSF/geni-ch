@@ -84,6 +84,8 @@ class MAv1Handler(HandlerBase):
         return result
             
     def lookup(self, type, credentials, options):
+        if not isinstance(options, dict):
+            return self._errorReturn(CHAPIv1ArgumentError("Options argument must be dictionary"))
         if type == "MEMBER":
             result = \
                 self.lookup_allowed_member_info(credentials, options)

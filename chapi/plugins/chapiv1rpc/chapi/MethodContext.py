@@ -160,6 +160,9 @@ class MethodContext:
     # This method is called prior to the 'with MethodContext' block
     def __enter__(self):
         try:
+            if not isinstance(self._options, dict):
+                raise CHAPIv1ArgumentError("Options argument must be dictionary")
+
             # Handle speaks-for authorization
             self._adjustIdentity()
             # Log the invocation - after identity has been adjusted
