@@ -446,6 +446,8 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
             elif isinstance(v, types.StringType):
                 ret[k] = getattr(object, v)
         session.add(object)
+        # Force a flush of the session so that adding project/slice members works
+        session.flush()
         return self._successReturn(ret)
 
     # create a new slice
@@ -540,32 +542,36 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
             email = slice.slice_email, uuidarg=slice.slice_id)
         slice.certificate = cert.save_to_string()
 
-        # Add slice lead member
-        ins = self.db.SLICE_MEMBER_TABLE.insert().values(slice_id=slice.slice_id, member_id = client_uuid, role = LEAD_ATTRIBUTE) 
-        result = session.execute(ins)
+        proj_members = self.lookup_project_members(client_cert,project_urn, credentials,{}, session)
+        if proj_members['code'] != NO_ERROR:
+            raise CHAPIv1ArgumentError('No members found for project ' + project_urn)
 
-        # Keep assertions synchronized with membership
-        add_attribute(self.db, session, client_uuid, client_uuid, \
-                          LEAD_ATTRIBUTE, SLICE_CONTEXT, slice.slice_id)
+        # do the database write
+        result = self.finish_create(session, slice, SA.slice_field_mapping)
+
+        # Add slice lead member
+        leadMember = SliceMember()
+        leadMember.slice_id = slice.slice_id
+        leadMember.member_id = client_uuid
+        leadMember.role = LEAD_ATTRIBUTE
+#        ins = self.db.SLICE_MEMBER_TABLE.insert().values(slice_id=slice.slice_id, member_id = client_uuid, role = LEAD_ATTRIBUTE) 
+#        result = session.execute(ins)
+        session.add(leadMember)
 
         # Add project lead and project admins as admin (if not same)
         admins_to_add = []
-        members = self.lookup_project_members(client_cert,project_urn, credentials,{}, session)
-        if members['code'] != NO_ERROR:
-            raise CHAPIv1ArgumentError('No members found for project ' + project_urn)
-        for member in members['value']:
+        for member in proj_members['value']:
             if member['PROJECT_ROLE'] == 'ADMIN' or member['PROJECT_ROLE'] == 'LEAD':
                 if member['PROJECT_MEMBER_UID'] != client_uuid:
                     admins_to_add.append(member['PROJECT_MEMBER_UID'])
         for admin_uid in admins_to_add:
-            ins = self.db.SLICE_MEMBER_TABLE.insert().values(slice_id=slice.slice_id, member_id = admin_uid, role=ADMIN_ATTRIBUTE)
-            result = session.execute(ins)
-            # Keep assertions synchronized with membership
-            add_attribute(self.db, session, client_uuid, admin_uid, \
-                              ADMIN_ATTRIBUTE, SLICE_CONTEXT, slice.slice_id)
-
-        # do the database write
-        result = self.finish_create(session, slice, SA.slice_field_mapping)
+            adminMember = SliceMember()
+            adminMember.slice_id = slice.slice_id
+            adminMember.member_id = admin_uid
+            adminMember.role = ADMIN_ATTRIBUTE
+            session.add(adminMember)
+#            ins = self.db.SLICE_MEMBER_TABLE.insert().values(slice_id=slice.slice_id, member_id = admin_uid, role=ADMIN_ATTRIBUTE)
+#            result = session.execute(ins)
 
         # Log the slice create event
         attribs = {"SLICE" : slice.slice_id, "PROJECT" : slice.project_id}
@@ -732,23 +738,21 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         if not hasattr(project, 'lead_id') or not project.lead_id:
             setattr(project, 'lead_id', client_uuid)
 
-        # Add project lead member to member table and assertion table
-        ins = self.db.PROJECT_MEMBER_TABLE.insert().values(\
-            project_id=project.project_id, \
-                member_id = client_uuid, \
-                role = LEAD_ATTRIBUTE) 
-        result = session.execute(ins)
-
-        # Keep assertions synchronized with membership
-        add_attribute(self.db, session, client_uuid, client_uuid, \
-                          LEAD_ATTRIBUTE, \
-                          PROJECT_CONTEXT, project.project_id)
-
-        attribs = {"PROJECT" : project.project_id, "MEMBER" : project.lead_id}
-
         # do the database write
         result = self.finish_create(session, project,  SA.project_field_mapping, \
                                         {"PROJECT_URN": row_to_project_urn(project)})
+
+        # Add project lead member to member table
+        leadMember = ProjectMember()
+        leadMember.project_id = project.project_id
+        leadMember.member_id = client_uuid
+        leadMember.role = LEAD_ATTRIBUTE
+        session.add(leadMember)
+#        ins = self.db.PROJECT_MEMBER_TABLE.insert().values(\
+#            project_id=project.project_id, \
+#                member_id = client_uuid, \
+#                role = LEAD_ATTRIBUTE) 
+#        result = session.execute(ins)
 
         # get name of project lead
         ma_options = {'match' : {'MEMBER_UID' : project.lead_id },'filter': ['_GENI_MEMBER_DISPLAYNAME','MEMBER_FIRSTNAME','MEMBER_LASTNAME','MEMBER_EMAIL']}  
@@ -760,6 +764,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                 leadname = get_member_display_name(info[row],row)
 
         log_options = {}
+        attribs = {"PROJECT" : project.project_id, "MEMBER" : project.lead_id}
         self.logging_service.log_event("Created project " + name + " with lead " + leadname, 
                                        attribs, credentials, log_options,
                                        session=session)

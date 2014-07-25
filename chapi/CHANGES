@@ -12,6 +12,9 @@
  * Check for empty search lists searching SR attributes too. Plus 
    one spot in OpsMon. (#318)
  * Catch bad `options`, particularly to `lookup` in the MA. (#281)
+ * Changes related to making `slice_id` unique and other columns
+   a foreign key that references this. Specifically, create slices
+   and projects before adding members to them. (#174)
 
 == 1.14 ==
  * Use MA field_mapping when adding and removing member attributes. (#309)
