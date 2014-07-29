@@ -15,6 +15,7 @@
  * Changes related to making `slice_id` unique and other columns
    a foreign key that references this. Specifically, create slices
    and projects before adding members to them. (#174)
+ * Filter out opsmon queries from log file error search. (#319)
 
 == 1.14 ==
  * Use MA field_mapping when adding and removing member attributes. (#309)
