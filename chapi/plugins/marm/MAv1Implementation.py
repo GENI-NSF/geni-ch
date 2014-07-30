@@ -218,7 +218,11 @@ class MAv1Implementation(MAv1DelegateBase):
 
         if attr=="MEMBER_EMAIL":
             if isinstance(value, types.ListType):
-                q = q.filter(func.lower(MemberAttribute.value).in_(value))
+                if len(value) == 0:
+                    # Do you mean any? (no additional filter)? Or no rows?
+                    q = q.filter(MemberAttribute.value == None)
+                else:
+                    q = q.filter(func.lower(MemberAttribute.value).in_(value))
             else:
                 q = q.filter(func.lower(MemberAttribute.value) == value)
         elif isinstance(value, types.ListType):
@@ -878,13 +882,13 @@ class MAv1Implementation(MAv1DelegateBase):
                 q = q.filter(self.db.MEMBER_ATTRIBUTE_TABLE.c.value == None)
                 #  chapi_debug(MA_LOG_PREFIX, "lookup_keys had empty list of urns")
             else:
-                    q = q.filter(self.db.MEMBER_ATTRIBUTE_TABLE.c.value.in_(member_urns))
-                    enabled, disabled = check_disabled_users(self.db, member_urns, session)
-                    member_urns = enabled
-                    if len(disabled) > 0:
-                        chapi_info(MA_LOG_PREFIX, 
-                                   "Attempt to access SSH keys of disabled users %s" % 
-                                   disabled)
+                q = q.filter(self.db.MEMBER_ATTRIBUTE_TABLE.c.value.in_(member_urns))
+                enabled, disabled = check_disabled_users(self.db, member_urns, session)
+                member_urns = enabled
+                if len(disabled) > 0:
+                    chapi_info(MA_LOG_PREFIX, 
+                               "Attempt to access SSH keys of disabled users %s" % 
+                               disabled)
             del match_criteria['KEY_MEMBER']
 
         q = add_filters(q, match_criteria, self.db.SSH_KEY_TABLE, 
@@ -1538,6 +1542,9 @@ class MAv1Implementation(MAv1DelegateBase):
             else:
                 return field
 
+        if m_ids is None or (isinstance(m_ids, types.ListType) and len(m_ids) == 0):
+            return result
+
         # Always include the MEMBER_URN, we need it for the result
         if 'MEMBER_URN' not in fields:
             fields.add('MEMBER_URN')
@@ -1582,7 +1589,7 @@ class MAv1Implementation(MAv1DelegateBase):
         fields = [f for f in fields if f in MA.field_mapping]
 
         # If no members or no fields (after filtering), do nothing
-        if not m_ids or not fields:
+        if not m_ids or not fields or (isinstance(m_ids, types.ListType) and len(m_ids) == 0):
             return result
 
         # Always fetch expiration to renew expiring certificates
@@ -1687,7 +1694,7 @@ class MAv1Implementation(MAv1DelegateBase):
         fields = [f for f in fields if f in MA.field_mapping]
 
         # If no members or no fields (after filtering), do nothing
-        if not m_ids or not fields:
+        if not m_ids or not fields or (isinstance(m_ids, types.ListType) and len(m_ids) == 0):
             return result
 
         columns = set([OutsideCert.member_id])

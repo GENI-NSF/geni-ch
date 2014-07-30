@@ -132,7 +132,10 @@ class OpsMonHandler:
         lead_uuids = [row.owner_id for row in rows]
         q = session.query(self._db.MEMBER_ATTRIBUTE_TABLE.c.value)
         q = q.filter(self._db.MEMBER_ATTRIBUTE_TABLE.c.name == 'urn')
-        q = q.filter(self._db.MEMBER_ATTRIBUTE_TABLE.c.member_id.in_(lead_uuids))
+        if len(lead_uuids) > 0:
+            q = q.filter(self._db.MEMBER_ATTRIBUTE_TABLE.c.member_id.in_(lead_uuids))
+        else:
+            q = q.filter(self._db.MEMBER_ATTRIBUTE_TABLE.c.member_id == None)
         rows = q.all()
         users_info = [self.compute_reference_info(row.value, 'user', 
                                                   row.value.split('+')[-1]) \

@@ -32,6 +32,7 @@ from chapi.MethodContext import *
 from tools.cert_utils import get_uuid_from_cert, get_urn_from_cert, get_email_from_cert
 from tools.chapi_log import *
 from tools.chapi_utils import *
+from tools.geni_utils import get_member_display_name
 import gcf.sfa.trust.gid as gid
 import gcf.geni.util.urn_util as urn_util
 
@@ -343,7 +344,8 @@ class PGCHv1Delegate(DelegateBase):
             this_urn = public_info.keys()[0]
             public_info = public_info[this_urn]
 
-            identifying_filter_clause = ['MEMBER_EMAIL']
+            # to get a proper display name we need the following
+            identifying_filter_clause = ['MEMBER_EMAIL', '_GENI_MEMBER_DISPLAYNAME', 'MEMBER_FIRSTNAME', 'MEMBER_LASTNAME']
             identifying_options = {'match' : match_clause,
                                    'filter' : identifying_filter_clause }
             lookup_identifying_return = \
@@ -354,12 +356,14 @@ class PGCHv1Delegate(DelegateBase):
             identifying_info = lookup_identifying_return['value']
             identifying_info = identifying_info[this_urn]
 
-            member_uuid = public_info['MEMBER_UID']
+            member_uid = public_info['MEMBER_USERNAME']
             member_hrn = gcf.sfa.util.xrn.urn_to_hrn(public_info['MEMBER_URN'])[0]
             member_uuid = public_info['MEMBER_UID']
             member_email = identifying_info['MEMBER_EMAIL']
-            member_gid = public_info['_GENI_MEMBER_SSL_CERTIFICATE']
-            member_name = public_info['MEMBER_USERNAME']
+            member_gid = None
+            if public_info.has_key('_GENI_MEMBER_SSL_CERTIFICATE'):
+                member_gid = public_info['_GENI_MEMBER_SSL_CERTIFICATE']
+            member_name = get_member_display_name(identifying_info, public_info['MEMBER_URN'])
 
             # Slices
             sa = self._sa_handler
@@ -374,12 +378,12 @@ class PGCHv1Delegate(DelegateBase):
                     continue
                 slices.append(s['SLICE_URN'])
 
-            resolve = {'uid' : member_uuid,  # login(Emulab) ID of user \
+            resolve = {'uid' : member_uid,  # login(Emulab) ID of user \
                            'hrn' : member_hrn, \
                            'uuid' : member_uuid, \
                            'email' : member_email, \
                            'gid' : member_gid,
-                           'name' : member_name,  # Common Name
+                       'name' : member_name,  # Common Name
                        'slices' : slices
                        }
         else:
