@@ -4,6 +4,8 @@
 
 = GENI Clearinghouse Release Notes =
 
+== 1.16 ==
+
 == 1.15 ==
  * Avoid exception doing `Resolve` on user without an outside cert.
    Also fix `Resolve` return for user to return `username` as `uid` and
