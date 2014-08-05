@@ -6,6 +6,8 @@
 
 == 1.16 ==
 
+ * Return _GENI_MEMBER_ENABLED for all member queries as public info (#322)
+
 == 1.15 ==
  * Avoid exception doing `Resolve` on user without an outside cert.
    Also fix `Resolve` return for user to return `username` as `uid` and
