@@ -79,6 +79,7 @@ def chapi_logging_basic_config(level=logging.INFO):
 # Generic call for logging CHAPI messages at different levels
 def chapi_log(prefix, msg, logging_level, extra=None):
     chapi_logger = chapi_get_logger()
+    if isinstance(msg, unicode): msg = msg.encode('utf-8')
     if extra is not None and extra.has_key('user') and extra['user'] is not None and extra['user'].strip() != '':
         msg = "%s: %s" % (extra['user'].strip(), msg)
     chapi_logger.log(logging_level, "%s: %s" % (prefix, msg))
@@ -86,6 +87,7 @@ def chapi_log(prefix, msg, logging_level, extra=None):
 # Log a potentially auditable event
 def chapi_audit(prefix, msg, lvl=logging.INFO, extra=None):
     chapi_audit_logger = chapi_get_audit_logger()
+    if isinstance(msg, unicode): msg = msg.encode('utf-8')
     if extra is not None and extra.has_key('user') and extra['user'] is not None and extra['user'].strip() != '':
         msg = "%s: %s" % (extra['user'].strip(), msg)
     chapi_audit_logger.log(lvl, "%s: %s" % (prefix, msg), extra=extra)
