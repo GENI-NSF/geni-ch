@@ -5,6 +5,7 @@
 = GENI Clearinghouse Release Notes =
 
 == 1.16 ==
+ * Add support for get_credentails calls in chapi client.py
 
 == 1.15 ==
  * Avoid exception doing `Resolve` on user without an outside cert.
