@@ -1564,6 +1564,11 @@ class MAv1Implementation(MAv1DelegateBase):
             #chapi_info(MA_LOG_PREFIX, "M_A Row: %r" % (row,))
             tmp_result[row.member_id][row.name] = row.value
 
+        # Set the member_enabled flag to 'True' if there is no entry in table
+        for member_id, attrs in tmp_result.items():
+            if 'member_enabled' not in attrs: attrs['member_enabled'] = True
+            attrs['member_enabled'] = (attrs['member_enabled'] != 'n')
+
         # Now build the result structure using field names instead of
         # db_names for the keys of the inner dictionaries.
         for uid in m_ids:

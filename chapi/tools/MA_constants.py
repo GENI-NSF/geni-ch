@@ -65,7 +65,8 @@ optional_fields = {
                                 "UPDATE" : False, "PROTECT" : "IDENTIFYING"},
     "_GENI_WIMAX_USERNAME" : {"OBJECT" : "MEMBER", "TYPE" : "STRING", \
                                 "UPDATE" : False, "PROTECT" : "IDENTIFYING"},
-    # TODO: perhaps allow _GENI_MEMBER_ENABLED?
+    "_GENI_MEMBER_ENABLED" : {"OBJECT" : "MEMBER", "TYPE" : "BOOLEAN",
+                              "UPDATE" : False, "PROTECT" : "PUBLIC"}
 }
 
 standard_plus_optional = dict(standard_fields.items() + optional_fields.items())
@@ -85,8 +86,8 @@ optional_key_fields = {
             "UPDATE" : True, "CREATE" : "ALLOWED"},
     "_GENI_KEY_MEMBER_UID" : {"OBJECT" : "KEY", "TYPE" : "UID"}
 }
-    
-    # Mapping from external to internal data schema
+
+# Mapping from external to internal data schema
 field_mapping = {
     "MEMBER_URN": "urn",
     "MEMBER_UID": "member_id",
@@ -146,13 +147,11 @@ attributes = [
     "_GENI_ENABLE_IRODS", "_GENI_IRODS_USERNAME", "_GENI_WIMAX_USERNAME"
 ]
 
-# TODO: _GENI_MEMBER_ENABLED is special - can it be searched?
-
 public_fields = [
     "MEMBER_URN", "MEMBER_UID", "MEMBER_USERNAME",
     "_GENI_MEMBER_SSL_CERTIFICATE",
     "_GENI_MEMBER_SSL_EXPIRATION",
-    "_GENI_MEMBER_INSIDE_CERTIFICATE",
+    "_GENI_MEMBER_INSIDE_CERTIFICATE", "_GENI_MEMBER_ENABLED",
     "_GENI_ENABLE_WIMAX", "_GENI_ENABLE_WIMAX_BUTTON", "_GENI_ENABLE_IRODS"
 ]
 
