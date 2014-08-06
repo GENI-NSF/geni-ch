@@ -4,11 +4,32 @@
 
 = GENI Clearinghouse Release Notes =
 
+== 1.16 ==
+ * Add support for get_credentails calls in chapi client.py
+
+ * Return `_GENI_MEMBER_ENABLED` (boolean) for all member queries as public info (#322)
+
+== 1.15 ==
+ * Avoid exception doing `Resolve` on user without an outside cert.
+   Also fix `Resolve` return for user to return `username` as `uid` and
+   a pretty display name as `name`. (#305)
+ * Check for empty search lists in MA to avoid SQLAlchemy warnings. (#272)
+ * Check for empty search lists searching SR attributes too. Plus 
+   one spot in OpsMon. (#318)
+ * Catch bad `options`, particularly to `lookup` in the MA. (#281)
+ * Changes related to making `slice_id` unique and other columns
+   a foreign key that references this. Specifically, create slices
+   and projects before adding members to them. (#174)
+ * Filter out opsmon queries from log file error search. (#319)
+
 == 1.14 ==
  * Use MA field_mapping when adding and removing member attributes. (#309)
  * Filter out more harmless logs in `geni-check-errors`. (#313)
  * Use slice email if provided to create_slice (#312)
  * Support project names and only non-expired projects for opsmon slices (#314)
+ * Update to omni/gcf 2.6 (proto-ch ticket 1078)
+ * Added script geni-list-member-projects (part of #263)
+ * Change client.py and portal_client.py to use gcf.omnilib not omnilib (#316)
 
 == 1.13.1 ==
  * Close sessions on REST calls in OpsMon (#308)

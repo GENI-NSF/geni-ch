@@ -104,7 +104,10 @@ def add_filters(query, match_criteria, table, mapping, session):
             else:
                 column = table.c[internal_match_field]
             if isinstance(match_value, types.ListType):
-                query = query.filter(column.in_(match_value))
+                if len(match_value) > 0:
+                    query = query.filter(column.in_(match_value))
+                else:
+                    query = query.filter(column == None)
             else:
                 query = query.filter(column == match_value)
     return query
@@ -150,6 +153,8 @@ def unpack_query_options(options, mapping):
 
 # Split the set of member urns into enabled and disabled member urns
 def check_disabled_users(db, member_urns, session):
+    if member_urns is None or (isinstance(member_urns, types.ListType) and len(member_urns) == 0):
+        return [], []
     ma1 = aliased(db.MEMBER_ATTRIBUTE_TABLE)
     ma2 = aliased(db.MEMBER_ATTRIBUTE_TABLE)
     q = session.query(ma1.c.value)

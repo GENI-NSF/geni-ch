@@ -49,3 +49,4 @@ INFO    :chapi:SA: .*: .* Added member .* in role .* to project
 INFO    :chapi:SA: Expiring project invitation ID
 INFO    :chapi:SA: .*: .* accepted an invitation to join project
 INFO    :chapi:SA: .*: .* accepted an invitation to join slice
+INFO    :amsoil:\[opsmon\] Requested opsmon info for slice

@@ -21,9 +21,9 @@
 # IN THE WORK.
 #----------------------------------------------------------------------
 
-from omnilib.util.dossl import _do_ssl
+from gcf.omnilib.util.dossl import _do_ssl
 import xmlrpclib
-from omnilib.frameworks.framework_base import Framework_Base
+from gcf.omnilib.frameworks.framework_base import Framework_Base
 
 # Emulate CHAPI traffic supporting specific portal pages: 
 # e.g. home, projects, slices

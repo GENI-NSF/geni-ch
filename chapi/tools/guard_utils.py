@@ -589,6 +589,8 @@ def parse_method_policies(filename):
 # Return those members of member2_urns that share membership 
 # in a project with member1_urn
 def shares_project(member1_urn, member2_urns, session, project_uid = None):
+    if member2_urns is None or len(member2_urns) == 0:
+        return []
     db = pm.getService("chdbengine")
     pm1 = aliased(db.PROJECT_MEMBER_TABLE)
     pm2 = aliased(db.PROJECT_MEMBER_TABLE)
@@ -615,6 +617,8 @@ def shares_project(member1_urn, member2_urns, session, project_uid = None):
 
 # Return those members of member2_urns who share a slice with member1_urn
 def shares_slice(member1_urn, member2_urns, session, slice_uid = None):
+    if member2_urns is None or len(member2_urns) == 0:
+        return []
     db = pm.getService("chdbengine")
     sm1 = aliased(db.SLICE_MEMBER_TABLE)
     sm2 = aliased(db.SLICE_MEMBER_TABLE)
@@ -641,6 +645,8 @@ def shares_slice(member1_urn, member2_urns, session, slice_uid = None):
 
 # Return those members of member_urns that have a given role on some object
 def has_role_on_some_project(member_urns, role, session):
+    if member_urns is None or len(member_urns) == 0:
+        return []
     db = pm.getService("chdbengine")
     q = session.query(db.PROJECT_MEMBER_TABLE.c.member_id, \
                           db.PROJECT_MEMBER_TABLE.c.role, \
@@ -667,6 +673,8 @@ def has_role_on_some_project(member_urns, role, session):
 def has_pending_request_on_project_lead_by(lead_urns, requestor_urns, 
                                            subject_is_lead, 
                                            session):
+    if lead_urns is None or len(lead_urns) == 0 or requestor_urns is None or len(requestor_urns) == 0:
+        return []
     db = pm.getService("chdbengine")
     pm1 = aliased(db.PROJECT_MEMBER_TABLE)
     pm2 = aliased(db.PROJECT_MEMBER_TABLE)

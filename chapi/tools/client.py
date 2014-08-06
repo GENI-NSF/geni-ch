@@ -24,10 +24,10 @@
 import os, os.path, sys
 import json
 import optparse
-from omnilib.util.dossl import _do_ssl
+from gcf.omnilib.util.dossl import _do_ssl
 import xmlrpclib
 import logging
-from omnilib.frameworks.framework_base import Framework_Base
+from gcf.omnilib.frameworks.framework_base import Framework_Base
 from portal_client import *
 from geni_constants import *
 
@@ -299,6 +299,14 @@ def main(args = sys.argv, do_print=True):
             _do_ssl(framework, suppress_errors, reason, fcn, opts.uuid_arg, \
                         opts.string_arg, \
                         opts.credentials, options)
+
+    # Methods that take urn, credentials, options
+    elif opts.method in ['get_credentials']:
+        options = {}
+        (result, msg) = \
+            _do_ssl(framework, suppress_errors, reason, fcn, opts.urn, \
+                        opts.credentials, options)
+        
 
     # Generic Federation v2 API methods
     elif opts.method in ['lookup', 'create']:
