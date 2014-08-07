@@ -41,4 +41,5 @@ dist_sbin_SCRIPTS = \
 	geni-check-errors \
 	geni-expiring-certs \
 	geni-list-member-projects \
+	geni-revoke-member-certificate \
 	geni-sign-tool-csr
