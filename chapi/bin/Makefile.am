@@ -39,6 +39,7 @@ dist_pkgdata_DATA = \
 
 dist_sbin_SCRIPTS = \
 	geni-check-errors \
+	geni-create-ma-crl \
 	geni-expiring-certs \
 	geni-list-member-projects \
 	geni-revoke-member-certificate \
