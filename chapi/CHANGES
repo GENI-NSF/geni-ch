@@ -5,6 +5,7 @@
 = GENI Clearinghouse Release Notes =
 
 == 1.16 ==
+ * Support Unicode/International strings in CHAPI (#310)
  * Add support for get_credentails calls in chapi client.py
 
  * Return `_GENI_MEMBER_ENABLED` (boolean) for all member queries as public info (#322)
