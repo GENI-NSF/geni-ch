@@ -5,6 +5,7 @@
 = GENI Clearinghouse Release Notes =
 
 == 1.16 ==
+ * Tools to support revoking certificates and adding to CRL (#117).
  * Support Unicode/International strings in CHAPI (#310)
  * Add support for get_credentails calls in chapi client.py
 
