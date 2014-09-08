@@ -26,8 +26,22 @@
 # Create an MA CRL file in /usr/share/geni-ch/chapi/ma
 # Should be called only once on a given clearinghouse instance
 
-echo "1000" > /tmp/crlnumber
-sudo chown www-data.www-data /tmp/crlnumber
-sudo mv /tmp/crlnumber /usr/share/geni-ch/CA
-sudo openssl ca -keyfile /usr/share/geni-ch/ma/ma-key.pem -cert /usr/share/geni-ch/ma/ma-cert.pem -config /usr/share/geni-ch/CA/openssl.cnf -gencrl -out /usr/share/geni-ch/ma/ma-crl.pem
-echo "MA CRL File created"
+CRLNUM=/usr/share/geni-ch/CA/crlnumber
+TMP_CRLNUM=/tmp/crlnumber
+
+if [ ! -e "${CRLNUM}" ]; then
+  echo "1000" > "${TMP_CRLNUM}"
+  chown www-data.www-data "${TMP_CRLNUM}"
+  mv "${TMP_CRLNUM}" "${CRLNUM}"
+fi
+openssl ca -keyfile /usr/share/geni-ch/ma/ma-key.pem \
+           -cert /usr/share/geni-ch/ma/ma-cert.pem \
+           -config /usr/share/geni-ch/CA/openssl.cnf \
+           -gencrl \
+           -out /usr/share/geni-ch/ma/ma-crl.pem
+rc=$?
+if [[ $rc != 0 ]]; then
+  printf "Error creating CRL file.\n" 1>&2
+  exit $rc
+fi
+exit 0
