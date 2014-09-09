@@ -24,7 +24,6 @@
 #----------------------------------------------------------------------
 
 # Create an MA CRL file in /usr/share/geni-ch/chapi/ma
-# Should be called only once on a given clearinghouse instance
 
 CRLNUM=/usr/share/geni-ch/CA/crlnumber
 TMP_CRLNUM=/tmp/crlnumber
