@@ -4,6 +4,13 @@
 
 = GENI Clearinghouse Release Notes =
 
+== 1.16 ==
+ * Tools to support revoking certificates and adding to CRL (#171).
+ * Support Unicode/International strings in CHAPI (#310)
+ * Return `_GENI_MEMBER_ENABLED` (boolean) for all member queries as
+   public info (#322)
+ * Add support for get_credentails calls in chapi client.py (#323)
+
 == 1.15 ==
  * Avoid exception doing `Resolve` on user without an outside cert.
    Also fix `Resolve` return for user to return `username` as `uid` and

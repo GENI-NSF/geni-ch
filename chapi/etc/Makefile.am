@@ -2,6 +2,7 @@ pkgsysconfdir = $(sysconfdir)/$(PACKAGE)
 
 dist_pkgsysconf_DATA = \
 	example-chapi.ini \
+	chapi-centos.ini \
         logging_config.conf \
         geni-chapi-githash \
 	credential_store_policy.json \

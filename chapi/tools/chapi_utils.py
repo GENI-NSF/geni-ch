@@ -25,6 +25,7 @@
 
 import smtplib
 from email.mime.text import MIMEText
+from email.header import Header
 import os.path
 import datetime
 from chapi_log import *
@@ -34,10 +35,10 @@ def send_email(to_list,fromaddr,replyaddr,subject,msgbody,cc_list=None):
 # "%s <%s>" % (pretty_name, email_address"
     if msgbody is None:
         msgbody = ""
-    msg = MIMEText(msgbody)
+    msg = MIMEText(msgbody.encode('utf-8'), 'plain', 'utf-8')
     if subject is None:
         subject = ""
-    msg['Subject'] = subject
+    msg['Subject'] = Header(subject, 'utf-8')
     if not to_list or len(to_list) == 0 or to_list[0].strip() == "":
         chapi_warn("SENDMAIL", "No to address for message with subject '%s'" % subject)
         return
@@ -49,15 +50,15 @@ def send_email(to_list,fromaddr,replyaddr,subject,msgbody,cc_list=None):
         if to.strip() == "":
             continue
         to_hdr += to + ", "
-    msg['To'] = to_hdr[:-2]
-    msg['Reply-To'] = replyaddr
+    msg['To'] = Header(to_hdr[:-2], 'utf-8')
+    msg['Reply-To'] = Header(replyaddr, 'utf-8')
     if cc_list != None and len(cc_list) != 0 and cc_list[0].strip() != "":
         cc_hdr = ""
         for cc in cc_list:
             if cc.strip() == "":
                 continue
             cc_hdr += cc + ", "
-        msg['Cc'] = cc_hdr[:-2]
+        msg['Cc'] = Header(cc_hdr[:-2], 'utf-8')
         toaddrs = to_list + cc_list 
     else:
         toaddrs = to_list
