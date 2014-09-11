@@ -575,7 +575,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
 
         # Log the slice create event
         attribs = {"SLICE" : slice.slice_id, "PROJECT" : slice.project_id}
-        log_options = {}
+        log_options = self.subcall_options(options)
         self.logging_service.log_event("Created slice " + name, 
                                        attribs, credentials, log_options,
                                        session=session)
@@ -680,7 +680,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         # Log the update slice
         client_uuid = get_uuid_from_cert(client_cert)
         attribs = {"PROJECT" : project_uuid, "SLICE" : slice_uuid}
-        log_options = {}
+        log_options = self.subcall_options(options)
         if "SLICE_EXPIRATION" in options['fields']: 
             # FIXME: Format in RFC3339 format not iso
             self.logging_service.log_event("Renewed slice %s until %s" % \
@@ -763,7 +763,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
             for row in info:
                 leadname = get_member_display_name(info[row],row)
 
-        log_options = {}
+        log_options = self.subcall_options(options)
         attribs = {"PROJECT" : project.project_id, "MEMBER" : project.lead_id}
         self.logging_service.log_event("Created project " + name + " with lead " + leadname, 
                                        attribs, credentials, log_options,
@@ -832,7 +832,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         client_uuid = get_uuid_from_cert(client_cert)
         attribs = {"PROJECT" : project_uuid}
 
-        log_options = {}
+        log_options = self.subcall_options(options)
         self.logging_service.log_event("Updated project " + name + change, 
                                        attribs, credentials, log_options,
                                        session=session)
@@ -1292,7 +1292,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
             for member_to_remove in members_to_remove:
                 member_name = urn_to_display_name[member_to_remove]
                 attribs["MEMBER"] = urn_to_id[member_to_remove]
-                log_options = {}
+                log_options = self.subcall_options(options)
                 self.logging_service.log_event(
                     "Removed member %s from %s %s" % \
                         (member_name, text_str, label), \
@@ -1386,7 +1386,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                 member_name = urn_to_display_name[member_urn]
                 member_role = member_to_add[role_str]
                 attribs["MEMBER"] = urn_to_id[member_urn]
-                log_options = {}
+                log_options = self.subcall_options(options)
                 if caller_urn == member_urn:
                     self.logging_service.log_event(
                         "%s accepted an invitation to join %s %s in role %s" % \
@@ -1423,7 +1423,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                 member_name = urn_to_display_name[member_urn]
                 member_role = member_to_change[role_str]
                 attribs["MEMBER"] = urn_to_id[member_urn]
-                log_options = {}
+                log_options = self.subcall_options(options)
                 self.logging_service.log_event(
                     "Changed member %s to role %s in %s %s" % \
                         (member_name, member_role, text_str, label), 
