@@ -87,3 +87,13 @@ class DelegateBase(object):
         """Assembles a GENI compliant return result for successful methods."""
         return { 'code' :  0 , 'value' : result, 'output' : '' }
 
+    def subcall_options(self, options):
+        """Generate options dictionary for subordinate calls to other
+        clearinghouse services.
+
+        """
+        sopt = dict()
+        sfkey = 'speaking_for'
+        if sfkey in options:
+            sopt[sfkey] = options[sfkey]
+        return sopt
