@@ -1,0 +1,68 @@
+-- -----------------------------------------------------------------
+-- Create the entry for CENIC InstaGENI aggregate:
+--
+-- Execute as:
+--
+--    psql -U portal -h localhost -f add-cenic-ig.sql portal
+--
+-- -----------------------------------------------------------------
+
+insert into service_registry
+    (service_type, service_url, service_cert, service_name,
+     service_description, service_urn)
+  values
+    ( -- TYPE: zero = aggregate
+      0,
+      -- URL
+      'https://instageni.cenic.net:12369/protogeni/xmlrpc/am/2.0',
+      -- CERT
+     '@srcertsdir@/cenic-ig-cm.pem',
+      -- NAME
+     'CENIC InstaGENI',
+      -- DESCRIPTION
+     'CENIC InstaGENI Rack',
+      -- URN
+     'urn:publicid:IDN+instageni.cenic.net+authority+cm'
+    );
+
+insert into service_registry
+    (service_type, service_url, service_cert, service_name,
+     service_description, service_urn)
+  values
+    ( -- TYPE: 7 = CA
+      7,
+      -- URL
+     '',
+      -- CERT (self signed)
+     '@srcertsdir@/cenic-ig-boss.pem',
+      -- NAME
+     '',
+      -- DESCRIPTION
+     'CENIC InstaGENI CA',
+      -- URN
+     ''
+    );
+
+-- Add service AM type
+insert into service_registry_attribute
+    (service_id, name, value)
+  values
+    (
+      (select id from service_registry
+        where service_urn
+          = 'urn:publicid:IDN+instageni.cenic.net+authority+cm'),
+      'UI_AM_TYPE',
+      'ui_instageni_am'
+    );
+
+-- Add service AM categories
+insert into service_registry_attribute
+    (service_id, name, value)
+  values
+    (
+     (select id from service_registry
+       where service_urn
+         = 'urn:publicid:IDN+instageni.cenic.net+authority+cm'),
+     'UI_AM_CAT',
+     'ui_prod_cat ui_compute_cat'
+    );
