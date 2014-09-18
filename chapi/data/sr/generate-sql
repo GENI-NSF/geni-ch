@@ -4,7 +4,9 @@
 import argparse
 import csv
 import os
+import subprocess
 import sys
+import urlparse
 
 
 header_template = """-- -----------------------------------------------------------------
@@ -130,6 +132,40 @@ class Aggregate(object):
     def emit_speaksfor_sql(self, out):
         pass
 
+    def get_ca_cert(self, certdir):
+        """Get the CA cert by establishing an SSL connection to the host/port
+        specified in the URL. Use the last cert printed by s_client as
+        the CA.
+
+        """
+        url = urlparse.urlparse(self.url)
+        cmd = ['openssl','s_client', '-prexit', '-showcerts',
+               '-connect', url.netloc]
+        proc = subprocess.Popen(cmd,
+                                stdin=subprocess.PIPE,
+                                stdout=subprocess.PIPE,
+                                stderr=subprocess.PIPE)
+        (pout, perr) = proc.communicate()
+        status = proc.wait()
+        print 'status = %d' % (status)
+        # x = the output, which has 1 or more ----- BEGIN/----- END
+        # blocks delimiting certificates. We want the last one,
+        # including the delimiters.
+        cert = []
+        recording = False
+        for line in pout.split("\n"):
+            if line.startswith('-----BEGIN CERTIFICATE-----'):
+                recording = True
+                cert = [line]
+            elif line.startswith('-----END CERTIFICATE-----'):
+                recording = False
+                cert.append(line)
+            elif recording:
+                cert.append(line)
+        cert.append('')
+        certfile = os.path.join(certdir, self.cacert)
+        with open(certfile, 'wb') as certout:
+            certout.write("\n".join(cert))
 
 def parse_args(argv):
     parser = argparse.ArgumentParser(description='Process some integers.')
@@ -142,6 +178,8 @@ def parse_args(argv):
                         help='A CSV file of aggregate data')
     parser.add_argument('-o', '--outdir', default='.',
                        help='output directory')
+    parser.add_argument('--certdir', default=None,
+                       help='ca certificte output directory')
 
     args = parser.parse_args(argv)
     return args
@@ -151,22 +189,21 @@ def create_outdir(directory):
     if not os.path.isdir(directory):
         os.makedirs(directory)
 
-def generate(infile, outdir):
+def generate(infile, outdir, certdir):
     with open(infile, 'rU') as csvfile:
         aggreader = csv.DictReader(csvfile)
         for row in aggreader:
             agg = Aggregate(row)
             fname = "%s/add-%s.sql.in" % (outdir, agg.shortname)
             with open(fname, 'wb') as aggfile:
+                if certdir:
+                    agg.get_ca_cert(certdir)
                 agg.emit(aggfile)
 
 def main(argv=None):
     args = parse_args(argv)
-    print "%r" % (args)
-    print args.infile
-    print args.outdir
     create_outdir(args.outdir)
-    generate(args.infile, args.outdir)
+    generate(args.infile, args.outdir, args.certdir)
 
 if __name__ == "__main__":
     sys.exit(main())
