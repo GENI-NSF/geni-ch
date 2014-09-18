@@ -1,7 +1,10 @@
 #!/usr/bin/env python
 # -*- Mode: Python -*-
 
+import argparse
 import csv
+import os
+import sys
 
 
 header_template = """-- -----------------------------------------------------------------
@@ -128,10 +131,42 @@ class Aggregate(object):
         pass
 
 
-with open('aggdata.csv', 'rU') as csvfile:
-    aggreader = csv.DictReader(csvfile)
-    for row in aggreader:
-        agg = Aggregate(row)
-        fname = "add-%s.sql.in" % (agg.shortname)
-        with open(fname, 'wb') as aggfile:
-            agg.emit(aggfile)
+def parse_args(argv):
+    parser = argparse.ArgumentParser(description='Process some integers.')
+    # parser.add_argument('integers', metavar='N', type=int, nargs='+',
+    #                    help='an integer for the accumulator')
+    # parser.add_argument('--sum', dest='accumulate', action='store_const',
+    #                    const=sum, default=max,
+    #                    help='sum the integers (default: find the max)')
+    parser.add_argument('infile', metavar='CSV_FILE',
+                        help='A CSV file of aggregate data')
+    parser.add_argument('-o', '--outdir', default='.',
+                       help='output directory')
+
+    args = parser.parse_args(argv)
+    return args
+
+def create_outdir(directory):
+    # dir exists OR mkdir
+    if not os.path.isdir(directory):
+        os.makedirs(directory)
+
+def generate(infile, outdir):
+    with open(infile, 'rU') as csvfile:
+        aggreader = csv.DictReader(csvfile)
+        for row in aggreader:
+            agg = Aggregate(row)
+            fname = "%s/add-%s.sql.in" % (outdir, agg.shortname)
+            with open(fname, 'wb') as aggfile:
+                agg.emit(aggfile)
+
+def main(argv=None):
+    args = parse_args(argv)
+    print "%r" % (args)
+    print args.infile
+    print args.outdir
+    create_outdir(args.outdir)
+    generate(args.infile, args.outdir)
+
+if __name__ == "__main__":
+    sys.exit(main())
