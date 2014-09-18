@@ -8,17 +8,23 @@ edit = sed \
 	-e 's|@srcertsdir[@]|$(srcertsdir)|g' \
 	-e 's|@pkgdatadir[@]|$(pkgdatadir)|g'
 
-ADD_AM_SQL = \
+AM_SQL = \
 	sr/sql/add-cenic-ig.sql \
 	sr/sql/add-cenic-ig-of.sql
 
-$(ADD_AM_SQL): Makefile
+AM_SQL_IN = $(AM_SQL:.sql=.sql.in)
+
+$(AM_SQL): Makefile
 	rm -f $@ $@.tmp
 	srcdir=''; \
 	  test -f ./$@.in || srcdir=$(srcdir)/; \
 	  $(edit) $${srcdir}$@.in >$@.tmp
 	chmod a-w $@.tmp
 	mv $@.tmp $@
+
+$(AM_SQL_IN): sr/generate-sql sr/aggdata.csv Makefile
+	rm -f $@
+	sr/generate-sql -o sr/sql sr/aggdata.csv
 
 sr/sql/add-cenic-ig.sql: $(srcdir)/sr/sql/add-cenic-ig.sql.in
 sr/sql/add-cenic-ig-of.sql: $(srcdir)/sr/sql/add-cenic-ig-of.sql.in
