@@ -1,0 +1,7 @@
+shortname,url,amcert,longname,description,urn,cacert,type,category,speaksfor
+NOT LISTED AT UTAH,,,,,,,,,
+ohmetrodc-ig,https://instageni.metrodatacenter.com:12369/protogeni/xmlrpc/am/2.0,ohmetrodc-ig-cm.pem,Ohio Metro Data Center InstaGENI,Ohio Metro Data Center InstaGENI Rack,urn:publicid:IDN+instageni.metrodatacenter.com+authority+cm,ohmetrodc-ig-boss.pem,ui_instageni_am,ui_prod_cat ui_compute_cat,Y
+ohmetrodc-ig-of,https://foam.instageni.metrodatacenter.com:3626/foam/gapi/2,ohmetrodc-ig-of.pem,Ohio Metro Data Center InstaGENI OpenFlow,Ohio Metro Data Center InstaGENI Rack OpenFlow,urn:publicid:IDN+openflow:foam:foam.instageni.metrodatacenter.com+authority+am,ohmetrodc-ig-of.pem,ui_foam_am,ui_prod_cat ui_network_cat,N
+NOT RESPONDING,,,,,,,,,
+nps-ig,https://instageni.nps.edu:12369/protogeni/xmlrpc/am/2.0,nps-ig-cm.pem,NPS InstaGENI,NPS InstaGENI Rack,urn:publicid:IDN+instageni.nps.edu+authority+cm,nps-ig-boss.pem,ui_instageni_am,ui_prod_cat ui_compute_cat,Y
+nps-ig-of,https://foam.instageni.nps.edu:3626/foam/gapi/2,nps-ig-of.pem,NPS InstaGENI OpenFlow,NPS InstaGENI Rack OpenFlow,urn:publicid:IDN+openflow:foam:foam.instageni.nps.edu+authority+am,nps-ig-of.pem,ui_foam_am,ui_prod_cat ui_network_cat,N
