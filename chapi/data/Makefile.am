@@ -31,6 +31,15 @@ $(AM_SQL_IN): sr/generate-sql sr/aggdata.csv Makefile
 	rm -f $@
 	sr/generate-sql -o sr/sql sr/aggdata.csv
 
+sr/sql/add-cenic-ig-of.sql: $(srcdir)/sr/sql/add-cenic-ig-of.sql.in
+sr/sql/add-cenic-ig.sql: $(srcdir)/sr/sql/add-cenic-ig.sql.in
+sr/sql/add-clemson-og.sql: $(srcdir)/sr/sql/add-clemson-og.sql.in
+sr/sql/add-osf-eg-of.sql: $(srcdir)/sr/sql/add-osf-eg-of.sql.in
+sr/sql/add-osf-eg.sql: $(srcdir)/sr/sql/add-osf-eg.sql.in
+sr/sql/add-princeton-ig-of.sql: $(srcdir)/sr/sql/add-princeton-ig-of.sql.in
+sr/sql/add-princeton-ig.sql: $(srcdir)/sr/sql/add-princeton-ig.sql.in
+
+
 dist_srsql_DATA = $(AM_SQL)
 
 dist_srcerts_DATA = \
