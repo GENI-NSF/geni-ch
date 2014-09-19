@@ -9,10 +9,15 @@ edit = sed \
 	-e 's|@pkgdatadir[@]|$(pkgdatadir)|g'
 
 AM_SQL = \
-	sr/sql/add-cenic-ig.sql \
 	sr/sql/add-cenic-ig-of.sql \
-	sr/sql/add-princeton-ig.sql \
-	sr/sql/add-princeton-ig-of.sql
+	sr/sql/add-cenic-ig.sql \
+	sr/sql/add-clemson-og.sql \
+	sr/sql/add-moxi-ig-of.sql \
+	sr/sql/add-moxi-ig.sql \
+	sr/sql/add-osf-eg-of.sql \
+	sr/sql/add-osf-eg.sql \
+	sr/sql/add-princeton-ig-of.sql \
+	sr/sql/add-princeton-ig.sql
 
 AM_SQL_IN = $(AM_SQL:.sql=.sql.in)
 
@@ -28,15 +33,18 @@ $(AM_SQL_IN): sr/generate-sql sr/aggdata.csv Makefile
 	rm -f $@
 	sr/generate-sql -o sr/sql sr/aggdata.csv
 
-sr/sql/add-cenic-ig.sql: $(srcdir)/sr/sql/add-cenic-ig.sql.in
-sr/sql/add-cenic-ig-of.sql: $(srcdir)/sr/sql/add-cenic-ig-of.sql.in
-
 dist_srsql_DATA = $(AM_SQL)
 
 dist_srcerts_DATA = \
 	sr/certs/cenic-ig-boss.pem \
 	sr/certs/cenic-ig-cm.pem \
 	sr/certs/cenic-ig-of.pem \
+	sr/certs/clemson-og.pem \
+	sr/certs/moxi-ig-boss.pem \
+	sr/certs/moxi-ig-cm.pem \
+	sr/certs/moxi-ig-of.pem \
+	sr/certs/osf-eg-of.pem \
+	sr/certs/osf-eg.pem \
 	sr/certs/princeton-ig-boss.pem \
 	sr/certs/princeton-ig-cm.pem \
 	sr/certs/princeton-ig-of.pem
