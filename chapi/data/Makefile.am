@@ -15,7 +15,11 @@ AM_SQL = \
 	sr/sql/add-osf-eg-of.sql \
 	sr/sql/add-osf-eg.sql \
 	sr/sql/add-princeton-ig-of.sql \
-	sr/sql/add-princeton-ig.sql
+	sr/sql/add-princeton-ig.sql \
+	sr/sql/add-sl-eg-of.sql \
+	sr/sql/add-sl-eg.sql \
+	sr/sql/add-ufl-eg-of.sql \
+	sr/sql/add-ufl-eg.sql
 
 AM_SQL_IN = $(AM_SQL:.sql=.sql.in)
 
@@ -38,6 +42,10 @@ sr/sql/add-osf-eg-of.sql: $(srcdir)/sr/sql/add-osf-eg-of.sql.in
 sr/sql/add-osf-eg.sql: $(srcdir)/sr/sql/add-osf-eg.sql.in
 sr/sql/add-princeton-ig-of.sql: $(srcdir)/sr/sql/add-princeton-ig-of.sql.in
 sr/sql/add-princeton-ig.sql: $(srcdir)/sr/sql/add-princeton-ig.sql.in
+sr/sql/add-sl-eg-of.sql: $(srcdir)/sr/sql/add-sl-eg-of.sql.in
+sr/sql/add-sl-eg.sql: $(srcdir)/sr/sql/add-sl-eg.sql.in
+sr/sql/add-ufl-eg-of.sql: $(srcdir)/sr/sql/add-ufl-eg-of.sql.in
+sr/sql/add-ufl-eg.sql: $(srcdir)/sr/sql/add-ufl-eg.sql.in
 
 
 dist_srsql_DATA = $(AM_SQL)
@@ -51,4 +59,8 @@ dist_srcerts_DATA = \
 	sr/certs/osf-eg.pem \
 	sr/certs/princeton-ig-boss.pem \
 	sr/certs/princeton-ig-cm.pem \
-	sr/certs/princeton-ig-of.pem
+	sr/certs/princeton-ig-of.pem \
+	sr/certs/sl-eg-of.pem \
+	sr/certs/sl-eg.pem \
+	sr/certs/ufl-eg-of.pem \
+	sr/certs/ufl-eg.pem
