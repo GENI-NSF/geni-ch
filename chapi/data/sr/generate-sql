@@ -87,6 +87,20 @@ insert into service_registry_attribute
     );
 """
 
+speaksfor_template = """
+-- Add service AM categories
+insert into service_registry_attribute
+    (service_id, name, value)
+  values
+    (
+     (select id from service_registry
+       where service_urn
+         = '%s'),
+     'SPEAKS_FOR',
+     '%s'
+    );
+"""
+
 class Aggregate(object):
     def __init__(self, values):
         self.shortname = values['shortname']
@@ -130,7 +144,11 @@ class Aggregate(object):
         out.write(sql)
 
     def emit_speaksfor_sql(self, out):
-        pass
+        sf_val = 'f'
+        if self.speaksfor == 'Y' or self.speaksfor == 'y':
+            sf_val = 't'
+        sql = speaksfor_template % (self.urn, sf_val)
+        out.write(sql)
 
     def get_ca_cert(self, certdir):
         """Get the CA cert by establishing an SSL connection to the host/port
