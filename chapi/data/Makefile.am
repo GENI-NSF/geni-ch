@@ -12,8 +12,6 @@ AM_SQL = \
 	sr/sql/add-cenic-ig-of.sql \
 	sr/sql/add-cenic-ig.sql \
 	sr/sql/add-clemson-og.sql \
-	sr/sql/add-moxi-ig-of.sql \
-	sr/sql/add-moxi-ig.sql \
 	sr/sql/add-osf-eg-of.sql \
 	sr/sql/add-osf-eg.sql \
 	sr/sql/add-princeton-ig-of.sql \
@@ -40,9 +38,6 @@ dist_srcerts_DATA = \
 	sr/certs/cenic-ig-cm.pem \
 	sr/certs/cenic-ig-of.pem \
 	sr/certs/clemson-og.pem \
-	sr/certs/moxi-ig-boss.pem \
-	sr/certs/moxi-ig-cm.pem \
-	sr/certs/moxi-ig-of.pem \
 	sr/certs/osf-eg-of.pem \
 	sr/certs/osf-eg.pem \
 	sr/certs/princeton-ig-boss.pem \
