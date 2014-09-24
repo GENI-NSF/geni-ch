@@ -4,6 +4,9 @@
 
 = GENI Clearinghouse Release Notes =
 
+== 1.17 ==
+ * Call log service with speaking_for option (#325)
+
 == 1.16 ==
  * Tools to support revoking certificates and adding to CRL (#171).
  * Support Unicode/International strings in CHAPI (#310)

@@ -1,0 +1,225 @@
+#!/usr/bin/env python
+# -*- Mode: Python -*-
+
+import optparse
+import csv
+import os
+import subprocess
+import sys
+import urlparse
+
+
+header_template = """-- -----------------------------------------------------------------
+-- Create the service registry entry for %s
+--
+-- Execute as:
+--
+--    psql -U portal -h localhost -f add-%s.sql portal
+--
+-- -----------------------------------------------------------------
+"""
+
+agg_template = """
+insert into service_registry
+    (service_type, service_url, service_cert, service_name,
+     service_description, service_urn)
+  values
+    ( -- TYPE: zero = aggregate
+      0,
+      -- URL
+      '%s',
+      -- CERT
+     '@srcertsdir@/%s',
+      -- NAME
+     '%s',
+      -- DESCRIPTION
+     '%s',
+      -- URN
+     '%s'
+    );
+"""
+
+ca_template = """
+insert into service_registry
+    (service_type, service_url, service_cert, service_name,
+     service_description, service_urn)
+  values
+    ( -- TYPE: 7 = CA
+      7,
+      -- URL
+     '',
+      -- CERT (self signed)
+     '@srcertsdir@/%s',
+      -- NAME
+     '',
+      -- DESCRIPTION
+     '%s',
+      -- URN
+     ''
+    );
+"""
+
+type_template = """
+-- Add service AM type
+insert into service_registry_attribute
+    (service_id, name, value)
+  values
+    (
+      (select id from service_registry
+        where service_urn
+          = '%s'),
+      'UI_AM_TYPE',
+      '%s'
+    );
+"""
+
+category_template = """
+-- Add service AM categories
+insert into service_registry_attribute
+    (service_id, name, value)
+  values
+    (
+     (select id from service_registry
+       where service_urn
+         = '%s'),
+     'UI_AM_CAT',
+     '%s'
+    );
+"""
+
+speaksfor_template = """
+-- Add service AM categories
+insert into service_registry_attribute
+    (service_id, name, value)
+  values
+    (
+     (select id from service_registry
+       where service_urn
+         = '%s'),
+     'SPEAKS_FOR',
+     '%s'
+    );
+"""
+
+class Aggregate(object):
+    def __init__(self, values):
+        self.shortname = values['shortname']
+        self.longname = values['longname']
+        self.description = values['description']
+        self.url = values['url']
+        self.urn = values['urn']
+        self.amcert = values['amcert']
+        self.cacert = values['cacert']
+        self.amtype = values['type']
+        self.category = values['category']
+        self.speaksfor = values['speaksfor']
+
+    def emit(self, out):
+        self.emit_header(out)
+        self.emit_agg_sql(out)
+        self.emit_ca_sql(out)
+        self.emit_type_sql(out)
+        self.emit_category_sql(out)
+        self.emit_speaksfor_sql(out)
+
+    def emit_header(self, out):
+        out.write(header_template % (self.longname, self.shortname))
+
+    def emit_agg_sql(self, out):
+        sql = agg_template % (self.url, self.amcert, self.longname,
+                              self.description, self.urn)
+        out.write(sql)
+
+    def emit_ca_sql(self, out):
+        ca_desc = '%s CA' % (self.longname)
+        sql = ca_template % (self.cacert, ca_desc)
+        out.write(sql)
+
+    def emit_type_sql(self, out):
+        sql = type_template % (self.urn, self.amtype)
+        out.write(sql)
+
+    def emit_category_sql(self, out):
+        sql = category_template % (self.urn, self.category)
+        out.write(sql)
+
+    def emit_speaksfor_sql(self, out):
+        sf_val = 'f'
+        if self.speaksfor == 'Y' or self.speaksfor == 'y':
+            sf_val = 't'
+        sql = speaksfor_template % (self.urn, sf_val)
+        out.write(sql)
+
+    def get_ca_cert(self, certdir):
+        """Get the CA cert by establishing an SSL connection to the host/port
+        specified in the URL. Use the last cert printed by s_client as
+        the CA.
+
+        """
+        url = urlparse.urlparse(self.url)
+        cmd = ['openssl','s_client', '-prexit', '-showcerts',
+               '-connect', url.netloc]
+        sys.stdout.write('Fetching certificate for %s ...' % (self.longname))
+        sys.stdout.flush()
+        proc = subprocess.Popen(cmd,
+                                stdin=subprocess.PIPE,
+                                stdout=subprocess.PIPE,
+                                stderr=subprocess.PIPE)
+        (pout, perr) = proc.communicate()
+        status = proc.wait()
+        if status != 0:
+            sys.stdout.write(' FAILED\n')
+            return
+        else:
+            sys.stdout.write(' DONE\n')
+
+        # x = the output, which has 1 or more ----- BEGIN/----- END
+        # blocks delimiting certificates. We want the last one,
+        # including the delimiters.
+        cert = []
+        recording = False
+        for line in pout.split("\n"):
+            if line.startswith('-----BEGIN CERTIFICATE-----'):
+                recording = True
+                cert = [line]
+            elif line.startswith('-----END CERTIFICATE-----'):
+                recording = False
+                cert.append(line)
+            elif recording:
+                cert.append(line)
+        cert.append('')
+        certfile = os.path.join(certdir, self.cacert)
+        with open(certfile, 'wb') as certout:
+            certout.write("\n".join(cert))
+
+def parse_args(argv):
+    parser = optparse.OptionParser()
+    parser.add_option('-o', '--outdir', default='.',
+                      help='output directory')
+    parser.add_option('--certdir', default=None,
+                      help='ca certificte output directory')
+    return parser.parse_args(argv)
+
+def create_outdir(directory):
+    # dir exists OR mkdir
+    if not os.path.isdir(directory):
+        os.makedirs(directory)
+
+def generate(infile, outdir, certdir):
+    with open(infile, 'rU') as csvfile:
+        aggreader = csv.DictReader(csvfile)
+        for row in aggreader:
+            agg = Aggregate(row)
+            fname = "%s/add-%s.sql.in" % (outdir, agg.shortname)
+            with open(fname, 'wb') as aggfile:
+                if certdir:
+                    agg.get_ca_cert(certdir)
+                agg.emit(aggfile)
+
+def main(argv=None):
+    (opts, args) = parse_args(argv)
+    create_outdir(opts.outdir)
+    generate(args[0], opts.outdir, opts.certdir)
+
+if __name__ == "__main__":
+    sys.exit(main())
