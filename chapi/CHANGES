@@ -4,6 +4,8 @@
 
 = GENI Clearinghouse Release Notes =
 
+== 1.18 ==
+
 == 1.17 ==
  * Call log service with speaking_for option (#325)
 
