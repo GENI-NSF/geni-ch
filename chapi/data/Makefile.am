@@ -12,12 +12,16 @@ AM_SQL = \
 	sr/sql/add-cenic-ig-of.sql \
 	sr/sql/add-cenic-ig.sql \
 	sr/sql/add-clemson-og.sql \
+	sr/sql/add-nps-ig-of.sql \
+	sr/sql/add-nps-ig.sql \
 	sr/sql/add-osf-eg-of.sql \
 	sr/sql/add-osf-eg.sql \
 	sr/sql/add-princeton-ig-of.sql \
 	sr/sql/add-princeton-ig.sql \
 	sr/sql/add-sl-eg-of.sql \
 	sr/sql/add-sl-eg.sql \
+	sr/sql/add-ucdavis-eg-of.sql \
+	sr/sql/add-ucdavis-eg.sql \
 	sr/sql/add-ufl-eg-of.sql \
 	sr/sql/add-ufl-eg.sql
 
@@ -38,12 +42,16 @@ $(AM_SQL_IN): sr/generate-sql sr/aggdata.csv Makefile
 sr/sql/add-cenic-ig-of.sql: $(srcdir)/sr/sql/add-cenic-ig-of.sql.in
 sr/sql/add-cenic-ig.sql: $(srcdir)/sr/sql/add-cenic-ig.sql.in
 sr/sql/add-clemson-og.sql: $(srcdir)/sr/sql/add-clemson-og.sql.in
+sr/sql/add-nps-ig-of.sql: $(srcdir)/sr/sql/add-princeton-ig-of.sql.in
+sr/sql/add-nps-ig.sql: $(srcdir)/sr/sql/add-princeton-ig.sql.in
 sr/sql/add-osf-eg-of.sql: $(srcdir)/sr/sql/add-osf-eg-of.sql.in
 sr/sql/add-osf-eg.sql: $(srcdir)/sr/sql/add-osf-eg.sql.in
 sr/sql/add-princeton-ig-of.sql: $(srcdir)/sr/sql/add-princeton-ig-of.sql.in
 sr/sql/add-princeton-ig.sql: $(srcdir)/sr/sql/add-princeton-ig.sql.in
 sr/sql/add-sl-eg-of.sql: $(srcdir)/sr/sql/add-sl-eg-of.sql.in
 sr/sql/add-sl-eg.sql: $(srcdir)/sr/sql/add-sl-eg.sql.in
+sr/sql/add-ucdavis-eg-of.sql: $(srcdir)/sr/sql/add-sl-eg-of.sql.in
+sr/sql/add-ucdavis-eg.sql: $(srcdir)/sr/sql/add-sl-eg.sql.in
 sr/sql/add-ufl-eg-of.sql: $(srcdir)/sr/sql/add-ufl-eg-of.sql.in
 sr/sql/add-ufl-eg.sql: $(srcdir)/sr/sql/add-ufl-eg.sql.in
 
@@ -55,6 +63,9 @@ dist_srcerts_DATA = \
 	sr/certs/cenic-ig-cm.pem \
 	sr/certs/cenic-ig-of.pem \
 	sr/certs/clemson-og.pem \
+	sr/certs/nps-ig-boss.pem \
+	sr/certs/nps-ig-cm.pem \
+	sr/certs/nps-ig-of.pem \
 	sr/certs/osf-eg-of.pem \
 	sr/certs/osf-eg.pem \
 	sr/certs/princeton-ig-boss.pem \
@@ -62,5 +73,7 @@ dist_srcerts_DATA = \
 	sr/certs/princeton-ig-of.pem \
 	sr/certs/sl-eg-of.pem \
 	sr/certs/sl-eg.pem \
+	sr/certs/ucdavis-eg-of.pem \
+	sr/certs/ucdavis-eg.pem \
 	sr/certs/ufl-eg-of.pem \
 	sr/certs/ufl-eg.pem
