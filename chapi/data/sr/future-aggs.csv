@@ -5,12 +5,3 @@ ohmetrodc-ig-of,https://foam.instageni.metrodatacenter.com:3626/foam/gapi/2,ohme
 NOT LISTED AT UTAH,,,,,,,,,
 moxi-ig,https://instageni.iu.edu:12369/protogeni/xmlrpc/am/2.0,moxi-ig-cm.pem,MOXI InstaGENI,MOXI InstaGENI Rack,urn:publicid:IDN+instageni.iu.edu+authority+cm,moxi-ig-boss.pem,ui_instageni_am,ui_prod_cat ui_compute_cat,Y
 moxi-ig-of,https://foam.instageni.iu.edu:3626/foam/gapi/2,moxi-ig-of.pem,MOXI InstaGENI OpenFlow,MOXI InstaGENI Rack OpenFlow,urn:publicid:IDN+openflow:foam:foam.instageni.iu.edu+authority+am,moxi-ig-of.pem,ui_foam_am,ui_prod_cat ui_network_cat,N
-NOT LISTED AT UTAH,,,,,,,,,
-rutgers-ig,https://instageni.rutgers.edu:12369/protogeni/xmlrpc/am/2.0,rutgers-ig-cm.pem,Rutgers InstaGENI,Rutgers InstaGENI Rack,urn:publicid:IDN+instageni.rutgers.edu+authority+cm,rutgers-ig-boss.pem,ui_instageni_am,ui_prod_cat ui_compute_cat,Y
-rutgers-ig-of,https://foam.instageni.rutgers.edu:3626/foam/gapi/2,rutgers-ig-of.pem,Rutgers InstaGENI OpenFlow,Rutgers InstaGENI Rack OpenFlow,urn:publicid:IDN+openflow:foam:foam.instageni.rutgers.edu+authority+am,rutgers-ig-of.pem,ui_foam_am,ui_prod_cat ui_network_cat,N
-NOT LISTED AT UTAH,,,,,,,,,
-ukypks2-ig,https://pks2.sdn.uky.edu:12369/protogeni/xmlrpc/am/2.0,ukypks2-ig-cm.pem,Kentucky PKS2 InstaGENI,Kentucky PKS2 InstaGENI Rack,urn:publicid:IDN+pks2.sdn.uky.edu+authority+cm,ukypks2-ig-boss.pem,ui_instageni_am,ui_prod_cat ui_compute_cat,Y
-ukypks2-ig-of,https://foam.pks2.sdn.uky.edu:3626/foam/gapi/2,ukypks2-ig-of.pem,Kentucky PKS2 InstaGENI OpenFlow,Kentucky PKS2 InstaGENI Rack OpenFlow,urn:publicid:IDN+openflow:foam:foam.pks2.sdn.uky.edu+authority+am,ukypks2-ig-of.pem,ui_foam_am,ui_prod_cat ui_network_cat,N
-NOT LISTED AT UTAH,,,,,,,,,
-ucla-ig,https://instageni.idre.ucla.edu:12369/protogeni/xmlrpc/am/2.0,ucla-ig-cm.pem,UCLA InstaGENI,UCLA InstaGENI Rack,urn:publicid:IDN+instageni.idre.ucla.edu+authority+cm,ucla-ig-boss.pem,ui_instageni_am,ui_prod_cat ui_compute_cat,Y
-ucla-ig-of,https://foam.instageni.idre.ucla.edu:3626/foam/gapi/2,ucla-ig-of.pem,UCLA InstaGENI OpenFlow,UCLA InstaGENI Rack OpenFlow,urn:publicid:IDN+openflow:foam:foam.instageni.idre.ucla.edu+authority+am,ucla-ig-of.pem,ui_foam_am,ui_prod_cat ui_network_cat,N

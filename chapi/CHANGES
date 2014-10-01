@@ -4,6 +4,11 @@
 
 = GENI Clearinghouse Release Notes =
 
+== 1.18 ==
+ * Add NPS IG rack to service registry (#326)
+ * Add Rutgers IG rack to service registry (#327)
+ * Add UKY PKS2 IG rack to service registry (#328)
+
 == 1.17 ==
  * Call log service with speaking_for option (#325)
 
