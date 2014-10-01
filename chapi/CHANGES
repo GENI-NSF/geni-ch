@@ -4,6 +4,8 @@
 
 = GENI Clearinghouse Release Notes =
 
+== 1.19 ==
+
 == 1.18 ==
  * Add NPS IG rack to service registry (#326)
  * Add Rutgers IG rack to service registry (#327)
