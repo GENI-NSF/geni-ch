@@ -50,3 +50,4 @@ INFO    :chapi:SA: Expiring project invitation ID
 INFO    :chapi:SA: .*: .* accepted an invitation to join project
 INFO    :chapi:SA: .*: .* accepted an invitation to join slice
 INFO    :amsoil:\[opsmon\] Requested opsmon info for slice
+INFO    :chapi:SPEAKSFOR: 'urn:publicid:IDN+ch.geni.net+tool+genidesktop-uky'

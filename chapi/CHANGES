@@ -5,6 +5,7 @@
 = GENI Clearinghouse Release Notes =
 
 == 1.19 ==
+ * Filter out messages when GENI Desktop uses Speaks For. (#330)
 
 == 1.18 ==
  * Add NPS IG rack to service registry (#326)
