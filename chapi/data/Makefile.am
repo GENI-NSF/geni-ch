@@ -12,6 +12,7 @@ AM_SQL = \
 	sr/sql/add-cenic-ig-of.sql \
 	sr/sql/add-cenic-ig.sql \
 	sr/sql/add-clemson-og.sql \
+	sr/sql/add-gpo-og.sql \
 	sr/sql/add-nps-ig-of.sql \
 	sr/sql/add-nps-ig.sql \
 	sr/sql/add-osf-eg-of.sql \
@@ -48,6 +49,7 @@ $(AM_SQL_IN): sr/generate-sql sr/aggdata.csv Makefile
 sr/sql/add-cenic-ig-of.sql: $(srcdir)/sr/sql/add-cenic-ig-of.sql.in
 sr/sql/add-cenic-ig.sql: $(srcdir)/sr/sql/add-cenic-ig.sql.in
 sr/sql/add-clemson-og.sql: $(srcdir)/sr/sql/add-clemson-og.sql.in
+sr/sql/add-gpo-og.sql: $(srcdir)/sr/sql/add-gpo-og.sql.in
 sr/sql/add-nps-ig-of.sql: $(srcdir)/sr/sql/add-nps-ig-of.sql.in
 sr/sql/add-nps-ig.sql: $(srcdir)/sr/sql/add-nps-ig.sql.in
 sr/sql/add-osf-eg-of.sql: $(srcdir)/sr/sql/add-osf-eg-of.sql.in
@@ -75,6 +77,7 @@ dist_srcerts_DATA = \
 	sr/certs/cenic-ig-cm.pem \
 	sr/certs/cenic-ig-of.pem \
 	sr/certs/clemson-og.pem \
+	sr/certs/gpo-og.pem \
 	sr/certs/nps-ig-boss.pem \
 	sr/certs/nps-ig-cm.pem \
 	sr/certs/nps-ig-of.pem \
