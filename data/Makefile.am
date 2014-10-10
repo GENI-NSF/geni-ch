@@ -22,6 +22,8 @@ AM_SQL = \
 	sr/sql/add-osf-eg.sql \
 	sr/sql/add-princeton-ig-of.sql \
 	sr/sql/add-princeton-ig.sql \
+	sr/sql/add-renci-eg-of.sql \
+	sr/sql/add-renci-eg.sql \
 	sr/sql/add-rutgers-ig-of.sql \
 	sr/sql/add-rutgers-ig.sql \
 	sr/sql/add-sl-eg-of.sql \
@@ -62,6 +64,8 @@ sr/sql/add-osf-eg-of.sql: $(srcdir)/sr/sql/add-osf-eg-of.sql.in
 sr/sql/add-osf-eg.sql: $(srcdir)/sr/sql/add-osf-eg.sql.in
 sr/sql/add-princeton-ig-of.sql: $(srcdir)/sr/sql/add-princeton-ig-of.sql.in
 sr/sql/add-princeton-ig.sql: $(srcdir)/sr/sql/add-princeton-ig.sql.in
+sr/sql/add-renci-eg-of.sql: $(srcdir)/sr/sql/add-renci-eg-of.sql.in
+sr/sql/add-renci-eg.sql: $(srcdir)/sr/sql/add-renci-eg.sql.in
 sr/sql/add-rutgers-ig-of.sql: $(srcdir)/sr/sql/add-rutgers-ig-of.sql.in
 sr/sql/add-rutgers-ig.sql: $(srcdir)/sr/sql/add-rutgers-ig.sql.in
 sr/sql/add-sl-eg-of.sql: $(srcdir)/sr/sql/add-sl-eg-of.sql.in
@@ -95,6 +99,8 @@ dist_srcerts_DATA = \
 	sr/certs/princeton-ig-boss.pem \
 	sr/certs/princeton-ig-cm.pem \
 	sr/certs/princeton-ig-of.pem \
+	sr/certs/renci-eg-of.pem \
+	sr/certs/renci-eg.pem \
 	sr/certs/rutgers-ig-boss.pem \
 	sr/certs/rutgers-ig-cm.pem \
 	sr/certs/rutgers-ig-of.pem \
