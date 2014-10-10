@@ -18,7 +18,7 @@ GITHASH = etc/geni-chapi-githash
 default:
 	echo "Choose a specific sync target."
 
-$(GITHASH): ../.git
+$(GITHASH): .git
 	git rev-parse HEAD > $@
 
 synca: $(GITHASH)
