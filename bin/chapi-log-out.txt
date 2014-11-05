@@ -52,3 +52,4 @@ INFO    :chapi:SA: .*: .* accepted an invitation to join slice
 INFO    :amsoil:\[opsmon\] Requested opsmon info for slice
 INFO    :amsoil:\[opsmon\] Requested opsmon info for user
 INFO    :chapi:SPEAKSFOR: 'urn:publicid:IDN+ch.geni.net+tool+genidesktop-uky'
+INFO    :chapi:SPEAKSFOR: 'urn:publicid:IDN+ch.geni.net+tool+slice_service.* is speaking for
