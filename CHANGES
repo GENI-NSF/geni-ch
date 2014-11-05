@@ -8,6 +8,7 @@
  * Filter out messages when GENI Desktop uses Speaks For. (#330)
  * Remove extra chapi directory (#333)
  * Filter out messages when there's an opsmon request for user info. (#336)
+ * Filter out messages from the LabWiki slice service doing speaks for. (#335)
 
 == 1.18 ==
  * Add NPS IG rack to service registry (#326)
