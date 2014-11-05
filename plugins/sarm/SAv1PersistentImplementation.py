@@ -773,8 +773,8 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         # Email the admins that the project was created
         subject = "New GENI CH project created"
         msgbody = "Created project: %s with lead %s on CH %s" %(name, leadname, self.config.get("chrm.authority"))
-        tolist = [self.portal_admin_email]
-        send_email(tolist, self.ch_from_email, self.portal_help_email,subject,msgbody)
+        tolist = [unicode(self.portal_admin_email)]
+        send_email(tolist, unicode(self.ch_from_email), unicode(self.portal_help_email),subject,msgbody)
 
         return result
 
@@ -1412,8 +1412,8 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                     else:
                         msgbody = "%s added member %s in role %s to project %s on CH %s" % \
                             (caller_name, member_name, member_role, label, self.config.get("chrm.authority"))
-                    to_list = [self.portal_admin_email]
-                    send_email(to_list, self.ch_from_email, self.portal_admin_email, subject, msgbody)
+                    to_list = [unicode(self.portal_admin_email)]
+                    send_email(to_list, unicode(self.ch_from_email), unicode(self.portal_admin_email), subject, msgbody)
 
         # Log all changes
         if 'members_to_change' in options:

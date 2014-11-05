@@ -9,6 +9,7 @@
  * Remove extra chapi directory (#333)
  * Filter out messages when there's an opsmon request for user info. (#336)
  * Filter out messages from the LabWiki slice service doing speaks for. (#335)
+ * Clean up email headers when UTF8 encoding them. (#331)
 
 == 1.18 ==
  * Add NPS IG rack to service registry (#326)

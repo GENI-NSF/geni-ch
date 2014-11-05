@@ -754,9 +754,9 @@ class MAv1Implementation(MAv1DelegateBase):
         for key in atmap.keys():
             msgbody += "\n%s: %s" %  (key, atmap[key]['value'])
 
-        tolist = [self.portal_admin_email]
+        tolist = [unicode(self.portal_admin_email)]
         subject = "New GENI CH account registered"
-        send_email(tolist, self.ch_from_email, self.portal_help_email,subject,msgbody)
+        send_email(tolist, unicode(self.ch_from_email), unicode(self.portal_help_email),subject,msgbody)
 
         result = self._successReturn(atmap.values())
 
@@ -1128,8 +1128,8 @@ class MAv1Implementation(MAv1DelegateBase):
 
     def mail_enable_user(self, msg, subject):
         msgbody = msg + " on " + self.config.get("chrm.authority")
-        tolist = [self.portal_admin_email]
-        send_email(tolist, self.ch_from_email,self.portal_admin_email,subject,msgbody)
+        tolist = [unicode(self.portal_admin_email)]
+        send_email(tolist, unicode(self.ch_from_email), unicode(self.portal_admin_email),subject,msgbody)
 
     def is_enabled(self, member_id, session):
         q = session.query(MemberAttribute.value).\
@@ -1229,8 +1229,8 @@ class MAv1Implementation(MAv1DelegateBase):
         msgbody += "GENI Clearinghouse operations\n"
 
         tolist = [member_email]
-        cclist = [self.portal_admin_email]
-        send_email(tolist, self.ch_from_email,self.portal_help_email,subject,msgbody,cclist)
+        cclist = [unicode(self.portal_admin_email)]
+        send_email(tolist, unicode(self.ch_from_email),unicode(self.portal_help_email),subject,msgbody,cclist)
 
     #  member_privilege (private)
     def add_member_privilege(self, client_cert, member_uid, privilege, 

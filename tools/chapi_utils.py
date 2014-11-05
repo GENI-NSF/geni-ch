@@ -35,9 +35,13 @@ def send_email(to_list,fromaddr,replyaddr,subject,msgbody,cc_list=None):
 # "%s <%s>" % (pretty_name, email_address"
     if msgbody is None:
         msgbody = ""
+    if not isinstance(msgbody, unicode):
+        msgbody = unicode(msgbody)
     msg = MIMEText(msgbody.encode('utf-8'), 'plain', 'utf-8')
     if subject is None:
         subject = ""
+    if not isinstance(subject, unicode):
+        subject = unicode(subject)
     msg['Subject'] = Header(subject, 'utf-8')
     if not to_list or len(to_list) == 0 or to_list[0].strip() == "":
         chapi_warn("SENDMAIL", "No to address for message with subject '%s'" % subject)
