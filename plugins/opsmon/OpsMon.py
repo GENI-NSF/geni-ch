@@ -50,11 +50,11 @@ class OpsMonHandler:
 
     # Schemas for different types of entries provided by this server
     _authority_schema = \
-        "http://www.gpolab.bbn.com/monitoring/schema/20140501/authority#"
+        "http://www.gpolab.bbn.com/monitoring/schema/20140828/authority#"
     _slice_schema = \
-        "http://www.gpolab.bbn.com/monitoring/schema/20140501/slice#"
+        "http://www.gpolab.bbn.com/monitoring/schema/20140828/slice#"
     _user_schema = \
-        "http://www.gpolab.bbn.com/monitoring/schema/20140501/user#"
+        "http://www.gpolab.bbn.com/monitoring/schema/20140828/user#"
 
     # class variables
     _instance = None # Singleton instance
