@@ -4,6 +4,8 @@
 
 = GENI Clearinghouse Release Notes =
 
+== 1.20 ==
+
 == 1.19 ==
  * Filter out messages when GENI Desktop uses Speaks For. (#330)
  * Remove extra chapi directory (#333)
