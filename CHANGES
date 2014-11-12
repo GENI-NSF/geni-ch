@@ -5,6 +5,7 @@
 = GENI Clearinghouse Release Notes =
 
 == 1.20 ==
+ * Update OpsMon code to V2 schema (#339)
 
 == 1.19 ==
  * Filter out messages when GENI Desktop uses Speaks For. (#330)
