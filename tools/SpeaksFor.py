@@ -65,13 +65,28 @@ def determine_speaks_for(client_cert, credentials, options, trusted_roots=None):
     if options.has_key(OPTION_SPEAKING_FOR):
         speaking_for = options[OPTION_SPEAKING_FOR]
 
+    # Grab client URN out of client cert
+    client_urn = get_urn_from_cert(client_cert)
+
     # If no speaking_for option, this is not speaks-for. Return the
     # cert and options as given
     if not speaking_for:
-        return client_cert, options
-
-    # Grab client URN out of client cert
-    client_urn = get_urn_from_cert(client_cert)
+        if trusted_roots:
+            client_gid = gcf.sfa.trust.gid.GID(string=client_cert)
+            try :
+                client_gid.verify_chain(trusted_roots)
+            except Exception, e:
+                chapi_info("SPEAKSFOR", "Client %s: certificate not trusted"
+                           % (client_urn))
+                msg = "Client %s is not authorized to make API calls."
+                raise CHAPIv1AuthorizationError(msg % (client_urn))
+            return client_cert, options
+        else:
+            # This is probably a configuration error. There should
+            # always be trusted roots.
+            chapi_warn("SPEAKSFOR",
+                       "No trusted roots in determine_speaks_for.")
+            return client_cert, options
 
     # Loop over all ABAC credentials and see if any prove 
     # AGENT.speaks_for(AGENT)<-CLIENT
