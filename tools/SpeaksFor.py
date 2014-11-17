@@ -57,7 +57,7 @@ from chapi.Exceptions import *
 #        client_cert if not.
 #   revised_options : Original options with 
 #       {'speaking_as' : original_client_cert} added if 'speaks for'
-def determine_speaks_for(client_cert, credentials, options, trusted_roots=None): 
+def determine_speaks_for(client_cert, credentials, options, trusted_roots=None):
 
     # Pull out speaking_for option
     OPTION_SPEAKING_FOR = 'speaking_for'
@@ -65,13 +65,28 @@ def determine_speaks_for(client_cert, credentials, options, trusted_roots=None):
     if options.has_key(OPTION_SPEAKING_FOR):
         speaking_for = options[OPTION_SPEAKING_FOR]
 
+    # Grab client URN out of client cert
+    client_urn = get_urn_from_cert(client_cert)
+
     # If no speaking_for option, this is not speaks-for. Return the
     # cert and options as given
     if not speaking_for:
-        return client_cert, options
-
-    # Grab client URN out of client cert
-    client_urn = get_urn_from_cert(client_cert)
+        if trusted_roots:
+            client_gid = gcf.sfa.trust.gid.GID(string=client_cert)
+            try :
+                client_gid.verify_chain(trusted_roots)
+            except Exception, e:
+                chapi_info("SPEAKSFOR", "Client %s: certificate not trusted"
+                           % (client_urn))
+                msg = "Client %s is not authorized to make API calls."
+                raise CHAPIv1AuthorizationError(msg % (client_urn))
+            return client_cert, options
+        else:
+            # This is probably a configuration error. There should
+            # always be trusted roots.
+            chapi_warn("SPEAKSFOR",
+                       "No trusted roots in determine_speaks_for.")
+            return client_cert, options
 
     # Loop over all ABAC credentials and see if any prove 
     # AGENT.speaks_for(AGENT)<-CLIENT
@@ -88,8 +103,8 @@ def determine_speaks_for(client_cert, credentials, options, trusted_roots=None):
             try :
                 agent_gid.verify_chain(trusted_roots)
             except Exception, e:
-                chapi_info("SPEAKSFOR", "Agent certificate not trusted %s" % \
-                               agent_urn)
+                chapi_info("SPEAKSFOR", "Agent certificate not trusted %s"
+                           % (agent_urn))
 
         # The agent_urn must match the speaking_for option
         if agent_urn != speaking_for:
@@ -111,7 +126,8 @@ def determine_speaks_for(client_cert, credentials, options, trusted_roots=None):
         msg = "No speaks-for credential but %r passed option speaking_for = %r"
         msg = msg % (client_urn, speaking_for)
         chapi_error('SPEAKSFOR', msg)
-        raise CHAPIv1AuthorizationError("Missing credential allowing %s to speak-for  %s." % (client_urn, speaking_for))
+        msg = "Missing credential allowing %s to speak-for  %s."
+        raise CHAPIv1AuthorizationError(msg % (client_urn, speaking_for))
 
     # Success: add the speaking_as option and return the agent_cert
     msg = "%r is speaking for %r" % (client_urn, agent_urn)
@@ -131,14 +147,14 @@ def parseOptions():
     home = os.getenv('HOME')
     gcf_home = os.path.join(home, '.gcf')
 
-    parser.add_option("--speaks_for_cred", \
-                          help="Location of speaks-for credential", \
+    parser.add_option("--speaks_for_cred",
+                          help="Location of speaks-for credential",
                           default=None)
-    parser.add_option("--speaker_cert", help="Location of speaker cert", \
+    parser.add_option("--speaker_cert", help="Location of speaker cert",
                           default=os.path.join(gcf_home, 'alice-cert.pem'))
-    parser.add_option("--agent_cert", help="Location of spoken-for cert", \
+    parser.add_option("--agent_cert", help="Location of spoken-for cert",
                           default=None)
-    parser.add_option("--agent_urn", help="URN of (spoken-for) agent", \
+    parser.add_option("--agent_urn", help="URN of (spoken-for) agent",
                           default=None)
 
     [opts, args] = parser.parse_args(sys.argv)
@@ -155,7 +171,9 @@ if __name__ == "__main__":
     if opts.speaks_for_cred:
         filename = opts.speaks_for_cred
         sf_cred = open(filename).read()
-        credentials.append({'geni_type' : 'ABAC', 'geni_value' : sf_cred, 'geni_version' : '1'})
+        credentials.append({'geni_type' : 'ABAC',
+                            'geni_value' : sf_cred,
+                            'geni_version' : '1'})
 
     # Set agent_urn
     agent_urn = None
@@ -176,9 +194,7 @@ if __name__ == "__main__":
         if agent_cert == client_cert:
             print "Direct (not speaks-for): Agent = %s" % agent_urn
         else:
-            print "Speaking for: Client = %s Agent = %s Options = %s" \
-                % (client_urn, agent_urn, options)
+            print ("Speaking for: Client = %s Agent = %s Options = %s"
+                   % (client_urn, agent_urn, options))
     except Exception as e:
         print "Error: " + str(e)
-
-                      
