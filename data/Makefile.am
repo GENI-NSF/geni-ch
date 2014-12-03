@@ -18,6 +18,8 @@ AM_SQL = \
 	sr/sql/add-gpo-og.sql \
 	sr/sql/add-nps-ig-of.sql \
 	sr/sql/add-nps-ig.sql \
+	sr/sql/add-ohmetrodc-ig-of.sql \
+	sr/sql/add-ohmetrodc-ig.sql \
 	sr/sql/add-osf-eg-of.sql \
 	sr/sql/add-osf-eg.sql \
 	sr/sql/add-princeton-ig-of.sql \
@@ -60,6 +62,8 @@ sr/sql/add-gpo-eg.sql: $(srcdir)/sr/sql/add-gpo-eg.sql.in
 sr/sql/add-gpo-og.sql: $(srcdir)/sr/sql/add-gpo-og.sql.in
 sr/sql/add-nps-ig-of.sql: $(srcdir)/sr/sql/add-nps-ig-of.sql.in
 sr/sql/add-nps-ig.sql: $(srcdir)/sr/sql/add-nps-ig.sql.in
+sr/sql/add-ohmetrodc-ig-of.sql: $(srcdir)/sr/sql/add-ohmetrodc-ig-of.sql.in
+sr/sql/add-ohmetrodc-ig.sql: $(srcdir)/sr/sql/add-ohmetrodc-ig.sql.in
 sr/sql/add-osf-eg-of.sql: $(srcdir)/sr/sql/add-osf-eg-of.sql.in
 sr/sql/add-osf-eg.sql: $(srcdir)/sr/sql/add-osf-eg.sql.in
 sr/sql/add-princeton-ig-of.sql: $(srcdir)/sr/sql/add-princeton-ig-of.sql.in
@@ -94,6 +98,9 @@ dist_srcerts_DATA = \
 	sr/certs/nps-ig-boss.pem \
 	sr/certs/nps-ig-cm.pem \
 	sr/certs/nps-ig-of.pem \
+	sr/certs/ohmetrodc-ig-boss.pem \
+	sr/certs/ohmetrodc-ig-cm.pem \
+	sr/certs/ohmetrodc-ig-of.pem \
 	sr/certs/osf-eg-of.pem \
 	sr/certs/osf-eg.pem \
 	sr/certs/princeton-ig-boss.pem \
