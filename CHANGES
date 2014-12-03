@@ -4,6 +4,8 @@
 
 = GENI Clearinghouse Release Notes =
 
+== 1.21 ==
+
 == 1.20 ==
  * Update OpsMon code to V2 schema (#339)
  * Allow speaks-for from foreign CAs (#334)
