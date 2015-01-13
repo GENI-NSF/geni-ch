@@ -25,7 +25,7 @@ fi
 # Find out where this script lives. It should be in the
 # "tools" directory of a chapi tree.
 TOOLS_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-CHAPI_DIR="${TOOLS_DIR}"/../../chapi
+CHAPI_DIR="${TOOLS_DIR}"/..
 
 SHARE_DIR=/usr/share/geni-ch
 
@@ -36,8 +36,8 @@ fi
 
 mkdir "${TMP_DIR}"
 cd "${TMP_DIR}"
-mkdir chapi
-cp -r "${CHAPI_DIR}" chapi
+mkdir -p chapi/chapi
+cp -r "${CHAPI_DIR}" chapi/chapi
 # Clean up any git cruft that got copied
 find chapi -name '.git*' -delete
 cd chapi
