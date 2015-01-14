@@ -4,6 +4,8 @@
 
 = GENI Clearinghouse Release Notes =
 
+== 1.22 ==
+
 == 1.21 ==
  * Update copyrights for 2015 (#341)
  * Add experimental aggregates (#342)
