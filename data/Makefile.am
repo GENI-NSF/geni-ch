@@ -30,6 +30,8 @@ AM_SQL = \
 	sr/sql/add-rutgers-ig.sql \
 	sr/sql/add-sl-eg-of.sql \
 	sr/sql/add-sl-eg.sql \
+	sr/sql/add-tamu-eg-of.sql \
+	sr/sql/add-tamu-eg.sql \
 	sr/sql/add-ucdavis-eg-of.sql \
 	sr/sql/add-ucdavis-eg.sql \
 	sr/sql/add-ucla-ig-of.sql \
@@ -37,7 +39,9 @@ AM_SQL = \
 	sr/sql/add-ufl-eg-of.sql \
 	sr/sql/add-ufl-eg.sql \
 	sr/sql/add-ukypks2-ig-of.sql \
-	sr/sql/add-ukypks2-ig.sql
+	sr/sql/add-ukypks2-ig.sql \
+	sr/sql/add-wsu-eg-of.sql \
+	sr/sql/add-wsu-eg.sql
 
 AM_SQL_IN = $(AM_SQL:.sql=.sql.in)
 
@@ -74,6 +78,8 @@ sr/sql/add-rutgers-ig-of.sql: $(srcdir)/sr/sql/add-rutgers-ig-of.sql.in
 sr/sql/add-rutgers-ig.sql: $(srcdir)/sr/sql/add-rutgers-ig.sql.in
 sr/sql/add-sl-eg-of.sql: $(srcdir)/sr/sql/add-sl-eg-of.sql.in
 sr/sql/add-sl-eg.sql: $(srcdir)/sr/sql/add-sl-eg.sql.in
+sr/sql/add-tamu-eg-of.sql: $(srcdir)/sr/sql/add-tamu-eg-of.sql.in
+sr/sql/add-tamu-eg.sql: $(srcdir)/sr/sql/add-tamu-eg.sql.in
 sr/sql/add-ucdavis-eg-of.sql: $(srcdir)/sr/sql/add-ucdavis-eg-of.sql.in
 sr/sql/add-ucdavis-eg.sql: $(srcdir)/sr/sql/add-ucdavis-eg.sql.in
 sr/sql/add-ucla-ig-of.sql: $(srcdir)/sr/sql/add-ucla-ig-of.sql.in
@@ -82,6 +88,8 @@ sr/sql/add-ufl-eg-of.sql: $(srcdir)/sr/sql/add-ufl-eg-of.sql.in
 sr/sql/add-ufl-eg.sql: $(srcdir)/sr/sql/add-ufl-eg.sql.in
 sr/sql/add-ukypks2-ig-of.sql: $(srcdir)/sr/sql/add-ukypks2-ig-of.sql.in
 sr/sql/add-ukypks2-ig.sql: $(srcdir)/sr/sql/add-ukypks2-ig.sql.in
+sr/sql/add-wsu-eg-of.sql: $(srcdir)/sr/sql/add-wsu-eg-of.sql.in
+sr/sql/add-wsu-eg.sql: $(srcdir)/sr/sql/add-wsu-eg.sql.in
 
 
 dist_srsql_DATA = $(AM_SQL)
@@ -113,6 +121,8 @@ dist_srcerts_DATA = \
 	sr/certs/rutgers-ig-of.pem \
 	sr/certs/sl-eg-of.pem \
 	sr/certs/sl-eg.pem \
+	sr/certs/tamu-eg-of.pem \
+	sr/certs/tamu-eg.pem \
 	sr/certs/ucdavis-eg-of.pem \
 	sr/certs/ucdavis-eg.pem \
 	sr/certs/ucla-ig-boss.pem \
@@ -122,4 +132,6 @@ dist_srcerts_DATA = \
 	sr/certs/ufl-eg.pem \
 	sr/certs/ukypks2-ig-boss.pem \
 	sr/certs/ukypks2-ig-cm.pem \
-	sr/certs/ukypks2-ig-of.pem
+	sr/certs/ukypks2-ig-of.pem \
+	sr/certs/wsu-eg-of.pem \
+	sr/certs/wsu-eg.pem
