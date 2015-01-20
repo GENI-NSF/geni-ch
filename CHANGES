@@ -5,7 +5,7 @@
 = GENI Clearinghouse Release Notes =
 
 == 1.22 ==
- * Add Apt as a federated aggregate (#343)
+ * Add Apt and Utah CloudLab as a federated aggregates (#343)
 
 == 1.21 ==
  * Update copyrights for 2015 (#341)
