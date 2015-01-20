@@ -9,6 +9,7 @@ edit = sed \
 	-e 's|@pkgdatadir[@]|$(pkgdatadir)|g'
 
 AM_SQL = \
+	sr/sql/add-apt.sql \
 	sr/sql/add-cenic-ig-of.sql \
 	sr/sql/add-cenic-ig.sql \
 	sr/sql/add-clemson-og.sql \
@@ -57,6 +58,7 @@ $(AM_SQL_IN): sr/generate-sql sr/aggdata.csv Makefile
 	rm -f $@
 	sr/generate-sql -o sr/sql sr/aggdata.csv
 
+sr/sql/add-apt.sql: $(srcdir)/sr/sql/add-apt.sql.in
 sr/sql/add-cenic-ig-of.sql: $(srcdir)/sr/sql/add-cenic-ig-of.sql.in
 sr/sql/add-cenic-ig.sql: $(srcdir)/sr/sql/add-cenic-ig.sql.in
 sr/sql/add-clemson-og.sql: $(srcdir)/sr/sql/add-clemson-og.sql.in
@@ -95,6 +97,8 @@ sr/sql/add-wsu-eg.sql: $(srcdir)/sr/sql/add-wsu-eg.sql.in
 dist_srsql_DATA = $(AM_SQL)
 
 dist_srcerts_DATA = \
+	sr/certs/apt-boss.pem \
+	sr/certs/apt-cm.pem \
 	sr/certs/cenic-ig-boss.pem \
 	sr/certs/cenic-ig-cm.pem \
 	sr/certs/cenic-ig-of.pem \
