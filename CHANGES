@@ -4,6 +4,9 @@
 
 = GENI Clearinghouse Release Notes =
 
+== 1.23
+ * Add sliver creators to the slice opsmon members response (#344).
+
 == 1.22 ==
  * Add Apt and Utah CloudLab as a federated aggregates (#343)
 
