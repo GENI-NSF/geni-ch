@@ -42,6 +42,7 @@ AM_SQL = \
 	sr/sql/add-ukypks2-ig-of.sql \
 	sr/sql/add-ukypks2-ig.sql \
 	sr/sql/add-utah-clab.sql \
+	sr/sql/add-wall2.sql \
 	sr/sql/add-wsu-eg-of.sql \
 	sr/sql/add-wsu-eg.sql
 
@@ -92,6 +93,7 @@ sr/sql/add-ufl-eg.sql: $(srcdir)/sr/sql/add-ufl-eg.sql.in
 sr/sql/add-ukypks2-ig-of.sql: $(srcdir)/sr/sql/add-ukypks2-ig-of.sql.in
 sr/sql/add-ukypks2-ig.sql: $(srcdir)/sr/sql/add-ukypks2-ig.sql.in
 sr/sql/add-utah-clab.sql: $(srcdir)/sr/sql/add-utah-clab.sql.in
+sr/sql/add-wall2.sql: $(srcdir)/sr/sql/add-wall2.sql.in
 sr/sql/add-wsu-eg-of.sql: $(srcdir)/sr/sql/add-wsu-eg-of.sql.in
 sr/sql/add-wsu-eg.sql: $(srcdir)/sr/sql/add-wsu-eg.sql.in
 
@@ -141,5 +143,7 @@ dist_srcerts_DATA = \
 	sr/certs/ukypks2-ig-of.pem \
 	sr/certs/utah-clab-boss.pem \
 	sr/certs/utah-clab-cm.pem \
+	sr/certs/wall2-ca.pem \
+	sr/certs/wall2-cm.pem \
 	sr/certs/wsu-eg-of.pem \
 	sr/certs/wsu-eg.pem
