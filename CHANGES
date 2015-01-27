@@ -7,6 +7,7 @@
 == 1.23
  * Add sliver creators to the slice opsmon members response (#344).
  * Add iMinds wall2 federated aggregate (#342)
+ * Add Internet2 AL2S production aggregate (#345)
 
 == 1.22 ==
  * Add Apt and Utah CloudLab as a federated aggregates (#343)
