@@ -9,6 +9,7 @@ edit = sed \
 	-e 's|@pkgdatadir[@]|$(pkgdatadir)|g'
 
 AM_SQL = \
+	sr/sql/add-al2s.sql \
 	sr/sql/add-apt.sql \
 	sr/sql/add-cenic-ig-of.sql \
 	sr/sql/add-cenic-ig.sql \
