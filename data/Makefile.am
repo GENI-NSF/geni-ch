@@ -108,6 +108,8 @@ dist_srcerts_DATA = \
 	sr/certs/cenic-ig-of.pem \
 	sr/certs/clemson-og.pem \
 	sr/certs/exosm.pem \
+	sr/certs/geni-al2s_net_internet2_edu_cert.cer \
+	sr/certs/geni-al2s_net_internet2_edu_interm.cer \
 	sr/certs/gpo-eg-of.pem \
 	sr/certs/gpo-eg.pem \
 	sr/certs/gpo-og.pem \
