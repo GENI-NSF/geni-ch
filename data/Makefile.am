@@ -19,6 +19,7 @@ AM_SQL = \
 	sr/sql/add-gpo-og.sql \
 	sr/sql/add-moxi-ig-of.sql \
 	sr/sql/add-moxi-ig.sql \
+	sr/sql/add-nicta-eg.sql \
 	sr/sql/add-nps-ig-of.sql \
 	sr/sql/add-nps-ig.sql \
 	sr/sql/add-ohmetrodc-ig-of.sql \
@@ -46,7 +47,9 @@ AM_SQL = \
 	sr/sql/add-utah-clab.sql \
 	sr/sql/add-wall2.sql \
 	sr/sql/add-wsu-eg-of.sql \
-	sr/sql/add-wsu-eg.sql
+	sr/sql/add-wsu-eg.sql \
+	sr/sql/add-wvn-eg-of.sql \
+	sr/sql/add-wvn-eg.sql
 
 AM_SQL_IN = $(AM_SQL:.sql=.sql.in)
 
@@ -72,6 +75,7 @@ sr/sql/add-gpo-eg.sql: $(srcdir)/sr/sql/add-gpo-eg.sql.in
 sr/sql/add-gpo-og.sql: $(srcdir)/sr/sql/add-gpo-og.sql.in
 sr/sql/add-moxi-ig-of.sql: $(srcdir)/sr/sql/add-moxi-ig-of.sql.in
 sr/sql/add-moxi-ig.sql: $(srcdir)/sr/sql/add-moxi-ig.sql.in
+sr/sql/add-nicta-eg.sql: $(srcdir)/sr/sql/add-nicta-eg.sql.in
 sr/sql/add-nps-ig-of.sql: $(srcdir)/sr/sql/add-nps-ig-of.sql.in
 sr/sql/add-nps-ig.sql: $(srcdir)/sr/sql/add-nps-ig.sql.in
 sr/sql/add-ohmetrodc-ig-of.sql: $(srcdir)/sr/sql/add-ohmetrodc-ig-of.sql.in
@@ -100,6 +104,8 @@ sr/sql/add-utah-clab.sql: $(srcdir)/sr/sql/add-utah-clab.sql.in
 sr/sql/add-wall2.sql: $(srcdir)/sr/sql/add-wall2.sql.in
 sr/sql/add-wsu-eg-of.sql: $(srcdir)/sr/sql/add-wsu-eg-of.sql.in
 sr/sql/add-wsu-eg.sql: $(srcdir)/sr/sql/add-wsu-eg.sql.in
+sr/sql/add-wvn-eg-of.sql: $(srcdir)/sr/sql/add-wvn-eg-of.sql.in
+sr/sql/add-wvn-eg.sql: $(srcdir)/sr/sql/add-wvn-eg.sql.in
 
 
 dist_srsql_DATA = $(AM_SQL)
@@ -118,6 +124,7 @@ dist_srcerts_DATA = \
 	sr/certs/moxi-ig-boss.pem \
 	sr/certs/moxi-ig-cm.pem \
 	sr/certs/moxi-ig-of.pem \
+	sr/certs/nicta-eg.pem \
 	sr/certs/nps-ig-boss.pem \
 	sr/certs/nps-ig-cm.pem \
 	sr/certs/nps-ig-of.pem \
@@ -153,4 +160,6 @@ dist_srcerts_DATA = \
 	sr/certs/wall2-ca.pem \
 	sr/certs/wall2-cm.pem \
 	sr/certs/wsu-eg-of.pem \
-	sr/certs/wsu-eg.pem
+	sr/certs/wsu-eg.pem \
+	sr/certs/wvn-eg-of.pem \
+	sr/certs/wvn-eg.pem
