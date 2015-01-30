@@ -66,6 +66,7 @@ $(AM_SQL_IN): sr/generate-sql sr/aggdata.csv Makefile
 	rm -f $@
 	sr/generate-sql -o sr/sql sr/aggdata.csv
 
+sr/sql/add-al2s.sql: $(srcdir)/sr/sql/add-al2s.sql.in
 sr/sql/add-apt.sql: $(srcdir)/sr/sql/add-apt.sql.in
 sr/sql/add-cenic-ig-of.sql: $(srcdir)/sr/sql/add-cenic-ig-of.sql.in
 sr/sql/add-cenic-ig.sql: $(srcdir)/sr/sql/add-cenic-ig.sql.in
@@ -112,6 +113,8 @@ sr/sql/add-wvn-eg.sql: $(srcdir)/sr/sql/add-wvn-eg.sql.in
 dist_srsql_DATA = $(AM_SQL)
 
 dist_srcerts_DATA = \
+	sr/certs/al2s.pem \
+	sr/certs/al2s-ca.pem \
 	sr/certs/apt-boss.pem \
 	sr/certs/apt-cm.pem \
 	sr/certs/cenic-ig-boss.pem \
@@ -119,8 +122,6 @@ dist_srcerts_DATA = \
 	sr/certs/cenic-ig-of.pem \
 	sr/certs/clemson-og.pem \
 	sr/certs/exosm.pem \
-	sr/certs/geni-al2s_net_internet2_edu_cert.cer \
-	sr/certs/geni-al2s_net_internet2_edu_interm.cer \
 	sr/certs/gpo-eg-of.pem \
 	sr/certs/gpo-eg.pem \
 	sr/certs/gpo-og.pem \
