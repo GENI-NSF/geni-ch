@@ -10,6 +10,7 @@
  * Add Apt and Utah CloudLab as a federated aggregates (#343)
  * Add sliver creators to the slice opsmon members response (#344).
  * Add Internet2 AL2S production aggregate (#345)
+ * Add URL, Reason, and Reference as user attributes (#346)
 
 == 1.21 ==
  * Update copyrights for 2015 (#341)
