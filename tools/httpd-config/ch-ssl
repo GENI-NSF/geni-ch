@@ -246,43 +246,6 @@ NameVirtualHost 128.89.96.48:443
 </VirtualHost>
 
 
-# CHAPI clearinghouses use a second virtualhost on port 8443 for the
-# PGCH service, for backwards compatibility
-<VirtualHost 128.89.96.48:8443>
-        ServerAdmin portal-sandbox-admin@gpolab.bbn.com
-        ServerName  fields.bbn.com
-
-        Include /usr/share/geni-ch/ch/apache2.conf
-
-        ErrorLog /var/log/httpd/ch_error_8443.log
-        CustomLog /var/log/httpd/ch_ssl_access_8443.log combined
-
-        LogLevel warn
-
-        SSLEngine on
-
-        # These SSL parameters should match the ones used on port 443
-        SSLCertificateFile    /etc/pki/tls/certs/ch-fields.crt
-        SSLCertificateKeyFile /etc/pki/tls/private/ch-fields.key
-
-	#SSLCertificateFile    /etc/ssl/certs/ch-ph.gpolab.bbn.com.pem
-	#SSLCertificateKeyFile /etc/ssl/certs/ch-ph.gpolab.bbn.com.pem
-	#SSLCertificateChainFile /etc/ssl/certs/ca-gpolab.crt
-
-        BrowserMatch "MSIE [2-6]" \
-                nokeepalive ssl-unclean-shutdown \
-                downgrade-1.0 force-response-1.0
-        BrowserMatch "MSIE [17-9]" ssl-unclean-shutdown
-
-        SSLOptions +ExportCertData
-        SSLCACertificateFile /usr/share/geni-ch/CA/cacert.pem
-        SSLVerifyClient require
-        SSLVerifyDepth 3
-
-        DocumentRoot /usr/share/geni-ch/ch/www
-        ScriptAlias / /usr/share/geni-ch/chapi/AMsoil/src/main.py
-</VirtualHost>
-
 # CHAPI clearinghouses which verify client SSL certificates use a
 # virtualhost on port 8444 for the small number of services which do
 # not require client certificates
