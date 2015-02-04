@@ -4,6 +4,8 @@
 
 = GENI Clearinghouse Release Notes =
 
+== 1.23 ==
+
 == 1.22 ==
  * Add iMinds wall2 federated aggregate (#342)
  * Add MOXI InstaGENI aggregate (#342)
