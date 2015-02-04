@@ -66,7 +66,13 @@ optional_fields = {
     "_GENI_WIMAX_USERNAME" : {"OBJECT" : "MEMBER", "TYPE" : "STRING", \
                                 "UPDATE" : False, "PROTECT" : "IDENTIFYING"},
     "_GENI_MEMBER_ENABLED" : {"OBJECT" : "MEMBER", "TYPE" : "BOOLEAN",
-                              "UPDATE" : False, "PROTECT" : "PUBLIC"}
+                              "UPDATE" : False, "PROTECT" : "PUBLIC"},
+    "_GENI_MEMBER_URL" : {"OBJECT" : "MEMBER", "TYPE" : "STRING",
+                              "UPDATE" : True, "PROTECT" : "IDENTIFYING"},
+    "_GENI_MEMBER_REASON" : {"OBJECT" : "MEMBER", "TYPE" : "STRING",
+                              "UPDATE" : True, "PROTECT" : "IDENTIFYING"},
+    "_GENI_MEMBER_REFERENCE" : {"OBJECT" : "MEMBER", "TYPE" : "STRING",
+                              "UPDATE" : True, "PROTECT" : "IDENTIFYING"}
 }
 
 standard_plus_optional = dict(standard_fields.items() + optional_fields.items())
@@ -112,6 +118,9 @@ field_mapping = {
     "_GENI_IRODS_USERNAME" : "irods_username",
     "_GENI_WIMAX_USERNAME" : "wimax_username",
     "_GENI_MEMBER_ENABLED" : "member_enabled",
+    "_GENI_MEMBER_URL": "url",
+    "_GENI_MEMBER_REASON": "reason",
+    "_GENI_MEMBER_REFERENCE": "reference",
 
     # these are special - used in the database but not fields specifiable in the API
     "PROJECT_LEAD": "PROJECT_LEAD",
@@ -144,7 +153,8 @@ attributes = [
     "KEY_PUBLIC", "KEY_PRIVATE", "KEY_TYPE",
     "KEY_DESCRIPTION", "_GENI_KEY_MEMBER_UID", "_GENI_KEY_FILENAME",
     "_GENI_MEMBER_ENABLED", "_GENI_ENABLE_WIMAX", "_GENI_ENABLE_WIMAX_BUTTON", 
-    "_GENI_ENABLE_IRODS", "_GENI_IRODS_USERNAME", "_GENI_WIMAX_USERNAME"
+    "_GENI_ENABLE_IRODS", "_GENI_IRODS_USERNAME", "_GENI_WIMAX_USERNAME",
+    "_GENI_MEMBER_URL", "_GENI_MEMBER_REASON", "_GENI_MEMBER_REFERENCE"
 ]
 
 public_fields = [
@@ -160,7 +170,8 @@ identifying_fields = [
     "_GENI_MEMBER_DISPLAYNAME", "_GENI_MEMBER_PHONE_NUMBER",
     "_GENI_MEMBER_AFFILIATION", "_GENI_MEMBER_EPPN",
     "_GENI_IDENTIFYING_MEMBER_UID",
-    "_GENI_IRODS_USERNAME", "_GENI_WIMAX_USERNAME"
+    "_GENI_IRODS_USERNAME", "_GENI_WIMAX_USERNAME",
+    "_GENI_MEMBER_URL", "_GENI_MEMBER_REASON", "_GENI_MEMBER_REFERENCE"
 ]
 
 private_fields = [

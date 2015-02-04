@@ -9,6 +9,8 @@ edit = sed \
 	-e 's|@pkgdatadir[@]|$(pkgdatadir)|g'
 
 AM_SQL = \
+	sr/sql/add-al2s.sql \
+	sr/sql/add-apt.sql \
 	sr/sql/add-cenic-ig-of.sql \
 	sr/sql/add-cenic-ig.sql \
 	sr/sql/add-clemson-og.sql \
@@ -16,6 +18,9 @@ AM_SQL = \
 	sr/sql/add-gpo-eg-of.sql \
 	sr/sql/add-gpo-eg.sql \
 	sr/sql/add-gpo-og.sql \
+	sr/sql/add-moxi-ig-of.sql \
+	sr/sql/add-moxi-ig.sql \
+	sr/sql/add-nicta-eg.sql \
 	sr/sql/add-nps-ig-of.sql \
 	sr/sql/add-nps-ig.sql \
 	sr/sql/add-ohmetrodc-ig-of.sql \
@@ -40,8 +45,12 @@ AM_SQL = \
 	sr/sql/add-ufl-eg.sql \
 	sr/sql/add-ukypks2-ig-of.sql \
 	sr/sql/add-ukypks2-ig.sql \
+	sr/sql/add-utah-clab.sql \
+	sr/sql/add-wall2.sql \
 	sr/sql/add-wsu-eg-of.sql \
-	sr/sql/add-wsu-eg.sql
+	sr/sql/add-wsu-eg.sql \
+	sr/sql/add-wvn-eg-of.sql \
+	sr/sql/add-wvn-eg.sql
 
 AM_SQL_IN = $(AM_SQL:.sql=.sql.in)
 
@@ -57,6 +66,8 @@ $(AM_SQL_IN): sr/generate-sql sr/aggdata.csv Makefile
 	rm -f $@
 	sr/generate-sql -o sr/sql sr/aggdata.csv
 
+sr/sql/add-al2s.sql: $(srcdir)/sr/sql/add-al2s.sql.in
+sr/sql/add-apt.sql: $(srcdir)/sr/sql/add-apt.sql.in
 sr/sql/add-cenic-ig-of.sql: $(srcdir)/sr/sql/add-cenic-ig-of.sql.in
 sr/sql/add-cenic-ig.sql: $(srcdir)/sr/sql/add-cenic-ig.sql.in
 sr/sql/add-clemson-og.sql: $(srcdir)/sr/sql/add-clemson-og.sql.in
@@ -64,6 +75,9 @@ sr/sql/add-exosm.sql: $(srcdir)/sr/sql/add-exosm.sql.in
 sr/sql/add-gpo-eg-of.sql: $(srcdir)/sr/sql/add-gpo-eg-of.sql.in
 sr/sql/add-gpo-eg.sql: $(srcdir)/sr/sql/add-gpo-eg.sql.in
 sr/sql/add-gpo-og.sql: $(srcdir)/sr/sql/add-gpo-og.sql.in
+sr/sql/add-moxi-ig-of.sql: $(srcdir)/sr/sql/add-moxi-ig-of.sql.in
+sr/sql/add-moxi-ig.sql: $(srcdir)/sr/sql/add-moxi-ig.sql.in
+sr/sql/add-nicta-eg.sql: $(srcdir)/sr/sql/add-nicta-eg.sql.in
 sr/sql/add-nps-ig-of.sql: $(srcdir)/sr/sql/add-nps-ig-of.sql.in
 sr/sql/add-nps-ig.sql: $(srcdir)/sr/sql/add-nps-ig.sql.in
 sr/sql/add-ohmetrodc-ig-of.sql: $(srcdir)/sr/sql/add-ohmetrodc-ig-of.sql.in
@@ -88,13 +102,21 @@ sr/sql/add-ufl-eg-of.sql: $(srcdir)/sr/sql/add-ufl-eg-of.sql.in
 sr/sql/add-ufl-eg.sql: $(srcdir)/sr/sql/add-ufl-eg.sql.in
 sr/sql/add-ukypks2-ig-of.sql: $(srcdir)/sr/sql/add-ukypks2-ig-of.sql.in
 sr/sql/add-ukypks2-ig.sql: $(srcdir)/sr/sql/add-ukypks2-ig.sql.in
+sr/sql/add-utah-clab.sql: $(srcdir)/sr/sql/add-utah-clab.sql.in
+sr/sql/add-wall2.sql: $(srcdir)/sr/sql/add-wall2.sql.in
 sr/sql/add-wsu-eg-of.sql: $(srcdir)/sr/sql/add-wsu-eg-of.sql.in
 sr/sql/add-wsu-eg.sql: $(srcdir)/sr/sql/add-wsu-eg.sql.in
+sr/sql/add-wvn-eg-of.sql: $(srcdir)/sr/sql/add-wvn-eg-of.sql.in
+sr/sql/add-wvn-eg.sql: $(srcdir)/sr/sql/add-wvn-eg.sql.in
 
 
 dist_srsql_DATA = $(AM_SQL)
 
 dist_srcerts_DATA = \
+	sr/certs/al2s.pem \
+	sr/certs/al2s-ca.pem \
+	sr/certs/apt-boss.pem \
+	sr/certs/apt-cm.pem \
 	sr/certs/cenic-ig-boss.pem \
 	sr/certs/cenic-ig-cm.pem \
 	sr/certs/cenic-ig-of.pem \
@@ -103,6 +125,10 @@ dist_srcerts_DATA = \
 	sr/certs/gpo-eg-of.pem \
 	sr/certs/gpo-eg.pem \
 	sr/certs/gpo-og.pem \
+	sr/certs/moxi-ig-boss.pem \
+	sr/certs/moxi-ig-cm.pem \
+	sr/certs/moxi-ig-of.pem \
+	sr/certs/nicta-eg.pem \
 	sr/certs/nps-ig-boss.pem \
 	sr/certs/nps-ig-cm.pem \
 	sr/certs/nps-ig-of.pem \
@@ -133,5 +159,11 @@ dist_srcerts_DATA = \
 	sr/certs/ukypks2-ig-boss.pem \
 	sr/certs/ukypks2-ig-cm.pem \
 	sr/certs/ukypks2-ig-of.pem \
+	sr/certs/utah-clab-boss.pem \
+	sr/certs/utah-clab-cm.pem \
+	sr/certs/wall2-ca.pem \
+	sr/certs/wall2-cm.pem \
 	sr/certs/wsu-eg-of.pem \
-	sr/certs/wsu-eg.pem
+	sr/certs/wsu-eg.pem \
+	sr/certs/wvn-eg-of.pem \
+	sr/certs/wvn-eg.pem

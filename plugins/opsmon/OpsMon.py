@@ -180,6 +180,20 @@ class OpsMonHandler:
             self.compute_reference_info(lead_urn, 'user', lead_id)
         lead_info['role'] = 'lead'
 
+        members = [lead_info]
+
+        # As for all creators of current slivers in this slice
+        q = session.query(self._db.SLIVER_INFO_TABLE.c.creator_urn).distinct()
+        q = q.filter(self._db.SLIVER_INFO_TABLE.c.slice_urn == slice_urn)
+        q = q.filter(self._db.SLIVER_INFO_TABLE.c.creator_urn != lead_urn)
+        sliv_rows = q.all()
+        for sliv_row in sliv_rows:
+            member_urn = sliv_row.creator_urn
+            member_id = extract_name_from_urn(member_urn)
+            member_info = self.compute_reference_info(member_urn, 'user', member_id)
+            member_info['role'] = 'member'
+            members.append(member_info)
+
         slice_data = {
             '$schema' : self._slice_schema,
             'id' : self.slice_urn_to_id(slice_urn),
@@ -192,7 +206,7 @@ class OpsMonHandler:
                                                       self._authority),
             'created' : self.to_timestamp(row.creation),
             'expires' : self.to_timestamp(row.expiration),
-            'members' : [lead_info]
+            'members' : members
             }
         return slice_data
 
