@@ -11,7 +11,6 @@ GCFDIR=$(readlink /usr/share/geni-ch/portal/gcf)
 if [ ! -h /usr/share/geni-ch/gcf ]; then
   sudo ln -s $GCFDIR /usr/share/geni-ch/gcf
 fi
-sudo cp /usr/share/geni-ch/chapi/chapi/tools/.bashrc /usr/share/geni-ch/
 
 # allow www-data to write to some AMsoil directories
 sudo chown www-data.www-data /usr/share/geni-ch/chapi/AMsoil/deploy

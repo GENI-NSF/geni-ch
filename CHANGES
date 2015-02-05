@@ -6,6 +6,7 @@
 
 == 1.23 ==
  * Add University of Chicago InstaGENI
+ * Remove example bashrc (#31)
 
 == 1.22 ==
  * Add iMinds wall2 federated aggregate (#342)
