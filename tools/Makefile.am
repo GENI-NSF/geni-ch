@@ -3,9 +3,6 @@
 #       /usr/share/geni-chapi or similar
 tooldir = $(pkgdatadir)/../geni-ch/chapi/chapi/tools
 
-# Destination of example files
-exampledir = $(pkgdatadir)/../geni-ch/
-
 # TODO: Weed out unnecessary files from install.
 #       Candidates include any file that doesn't end
 #       in '.py'
@@ -37,12 +34,8 @@ dist_tool_DATA = \
 	portal_client.py
 
 dist_tool_SCRIPTS = \
-	.bashrc \
 	install_ch \
 	install_chapi \
 	install_db \
 	pgch_testall.sh \
 	testall.sh
-
-dist_example_SCRIPTS = \
-	.bashrc
