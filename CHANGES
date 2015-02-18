@@ -4,6 +4,8 @@
 
 = GENI Clearinghouse Release Notes =
 
+== 1.24 ==
+
 == 1.23 ==
  * Add University of Chicago InstaGENI
  * Remove example bashrc (#31)
