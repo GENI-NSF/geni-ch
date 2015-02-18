@@ -39,6 +39,8 @@ AM_SQL = \
 	sr/sql/add-tamu-eg.sql \
 	sr/sql/add-ucdavis-eg-of.sql \
 	sr/sql/add-ucdavis-eg.sql \
+	sr/sql/add-uchicago-ig-of.sql \
+	sr/sql/add-uchicago-ig.sql \
 	sr/sql/add-ucla-ig-of.sql \
 	sr/sql/add-ucla-ig.sql \
 	sr/sql/add-ufl-eg-of.sql \
@@ -96,6 +98,8 @@ sr/sql/add-tamu-eg-of.sql: $(srcdir)/sr/sql/add-tamu-eg-of.sql.in
 sr/sql/add-tamu-eg.sql: $(srcdir)/sr/sql/add-tamu-eg.sql.in
 sr/sql/add-ucdavis-eg-of.sql: $(srcdir)/sr/sql/add-ucdavis-eg-of.sql.in
 sr/sql/add-ucdavis-eg.sql: $(srcdir)/sr/sql/add-ucdavis-eg.sql.in
+sr/sql/add-uchicago-ig-of.sql: $(srcdir)/sr/sql/add-uchicago-ig-of.sql.in
+sr/sql/add-uchicago-ig.sql: $(srcdir)/sr/sql/add-uchicago-ig.sql.in
 sr/sql/add-ucla-ig-of.sql: $(srcdir)/sr/sql/add-ucla-ig-of.sql.in
 sr/sql/add-ucla-ig.sql: $(srcdir)/sr/sql/add-ucla-ig.sql.in
 sr/sql/add-ufl-eg-of.sql: $(srcdir)/sr/sql/add-ufl-eg-of.sql.in
@@ -151,6 +155,9 @@ dist_srcerts_DATA = \
 	sr/certs/tamu-eg.pem \
 	sr/certs/ucdavis-eg-of.pem \
 	sr/certs/ucdavis-eg.pem \
+	sr/certs/uchicago-ig-boss.pem \
+	sr/certs/uchicago-ig-cm.pem \
+	sr/certs/uchicago-ig-of.pem \
 	sr/certs/ucla-ig-boss.pem \
 	sr/certs/ucla-ig-cm.pem \
 	sr/certs/ucla-ig-of.pem \
