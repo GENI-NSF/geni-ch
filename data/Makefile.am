@@ -14,6 +14,7 @@ AM_SQL = \
 	sr/sql/add-cenic-ig-of.sql \
 	sr/sql/add-cenic-ig.sql \
 	sr/sql/add-clemson-og.sql \
+	sr/sql/add-colorado-ig-of.sql \
 	sr/sql/add-cwru-ig.sql \
 	sr/sql/add-exosm.sql \
 	sr/sql/add-gpo-eg-of.sql \
@@ -52,6 +53,8 @@ AM_SQL = \
 	sr/sql/add-umkc-ig-of.sql \
 	sr/sql/add-umkc-ig.sql \
 	sr/sql/add-utah-clab.sql \
+	sr/sql/add-utc-ig-of.sql \
+	sr/sql/add-uwashington-ig-of.sql \
 	sr/sql/add-wall2.sql \
 	sr/sql/add-wsu-eg-of.sql \
 	sr/sql/add-wsu-eg.sql \
@@ -77,6 +80,7 @@ sr/sql/add-apt.sql: $(srcdir)/sr/sql/add-apt.sql.in
 sr/sql/add-cenic-ig-of.sql: $(srcdir)/sr/sql/add-cenic-ig-of.sql.in
 sr/sql/add-cenic-ig.sql: $(srcdir)/sr/sql/add-cenic-ig.sql.in
 sr/sql/add-clemson-og.sql: $(srcdir)/sr/sql/add-clemson-og.sql.in
+sr/sql/add-colorado-ig-of.sql: $(srcdir)/sr/sql/add-colorado-ig-of.sql.in
 sr/sql/add-cwru-ig.sql: $(srcdir)/sr/sql/add-cwru-ig.sql.in
 sr/sql/add-exosm.sql: $(srcdir)/sr/sql/add-exosm.sql.in
 sr/sql/add-gpo-eg-of.sql: $(srcdir)/sr/sql/add-gpo-eg-of.sql.in
@@ -115,6 +119,8 @@ sr/sql/add-ukypks2-ig.sql: $(srcdir)/sr/sql/add-ukypks2-ig.sql.in
 sr/sql/add-umkc-ig-of.sql: $(srcdir)/sr/sql/add-umkc-ig-of.sql.in
 sr/sql/add-umkc-ig.sql: $(srcdir)/sr/sql/add-umkc-ig.sql.in
 sr/sql/add-utah-clab.sql: $(srcdir)/sr/sql/add-utah-clab.sql.in
+sr/sql/add-utc-ig-of.sql: $(srcdir)/sr/sql/add-utc-ig-of.sql.in
+sr/sql/add-uwashington-ig-of.sql: $(srcdir)/sr/sql/add-uwashington-ig-of.sql.in
 sr/sql/add-wall2.sql: $(srcdir)/sr/sql/add-wall2.sql.in
 sr/sql/add-wsu-eg-of.sql: $(srcdir)/sr/sql/add-wsu-eg-of.sql.in
 sr/sql/add-wsu-eg.sql: $(srcdir)/sr/sql/add-wsu-eg.sql.in
@@ -133,6 +139,7 @@ dist_srcerts_DATA = \
 	sr/certs/cenic-ig-cm.pem \
 	sr/certs/cenic-ig-of.pem \
 	sr/certs/clemson-og.pem \
+	sr/certs/colorado-ig-of.pem \
 	sr/certs/cwru-ig-boss.pem \
 	sr/certs/cwru-ig-cm.pem \
 	sr/certs/exosm.pem \
@@ -182,6 +189,8 @@ dist_srcerts_DATA = \
 	sr/certs/umkc-ig-of.pem \
 	sr/certs/utah-clab-boss.pem \
 	sr/certs/utah-clab-cm.pem \
+	sr/certs/utc-ig-of.pem \
+	sr/certs/uwashington-ig-of.pem \
 	sr/certs/wall2-ca.pem \
 	sr/certs/wall2-cm.pem \
 	sr/certs/wsu-eg-of.pem \
