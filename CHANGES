@@ -5,6 +5,8 @@
 = GENI Clearinghouse Release Notes =
 
 == 1.24 ==
+ * Add new production aggregates
+ * Change some aggregates from experimental to production
 
 == 1.23 ==
  * Add University of Chicago InstaGENI
