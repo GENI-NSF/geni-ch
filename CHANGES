@@ -6,7 +6,10 @@
 
 == 1.24 ==
  * Add new production aggregates
+  * colorado-ig, utc-ig, uwashington-ig, umkc-ig (and -of versions), plus cwru-ig, moxi-of
  * Change some aggregates from experimental to production
+  * osf-eg, sl-eg, tamu-eg, ucdavis-eg, wsu-eg, ohmetrodc-ig, ohmetrodc-ig-of, moxi-ig, moxi-ig-of, gpo-og
+ * Fix typo in get_services_of_type (#350)
 
 == 1.23 ==
  * Add University of Chicago InstaGENI
