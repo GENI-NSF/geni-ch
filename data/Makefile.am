@@ -14,12 +14,16 @@ AM_SQL = \
 	sr/sql/add-cenic-ig-of.sql \
 	sr/sql/add-cenic-ig.sql \
 	sr/sql/add-clemson-og.sql \
+	sr/sql/add-colorado-ig-of.sql \
+	sr/sql/add-colorado-ig.sql \
+	sr/sql/add-cwru-ig.sql \
 	sr/sql/add-exosm.sql \
 	sr/sql/add-gpo-eg-of.sql \
 	sr/sql/add-gpo-eg.sql \
 	sr/sql/add-gpo-og.sql \
 	sr/sql/add-moxi-ig-of.sql \
 	sr/sql/add-moxi-ig.sql \
+	sr/sql/add-moxi-of.sql \
 	sr/sql/add-nicta-eg.sql \
 	sr/sql/add-nps-ig-of.sql \
 	sr/sql/add-nps-ig.sql \
@@ -47,7 +51,13 @@ AM_SQL = \
 	sr/sql/add-ufl-eg.sql \
 	sr/sql/add-ukypks2-ig-of.sql \
 	sr/sql/add-ukypks2-ig.sql \
+	sr/sql/add-umkc-ig-of.sql \
+	sr/sql/add-umkc-ig.sql \
 	sr/sql/add-utah-clab.sql \
+	sr/sql/add-utc-ig-of.sql \
+	sr/sql/add-utc-ig.sql \
+	sr/sql/add-uwashington-ig-of.sql \
+	sr/sql/add-uwashington-ig.sql \
 	sr/sql/add-wall2.sql \
 	sr/sql/add-wsu-eg-of.sql \
 	sr/sql/add-wsu-eg.sql \
@@ -73,12 +83,16 @@ sr/sql/add-apt.sql: $(srcdir)/sr/sql/add-apt.sql.in
 sr/sql/add-cenic-ig-of.sql: $(srcdir)/sr/sql/add-cenic-ig-of.sql.in
 sr/sql/add-cenic-ig.sql: $(srcdir)/sr/sql/add-cenic-ig.sql.in
 sr/sql/add-clemson-og.sql: $(srcdir)/sr/sql/add-clemson-og.sql.in
+sr/sql/add-colorado-ig-of.sql: $(srcdir)/sr/sql/add-colorado-ig-of.sql.in
+sr/sql/add-colorado-ig.sql: $(srcdir)/sr/sql/add-colorado-ig.sql.in
+sr/sql/add-cwru-ig.sql: $(srcdir)/sr/sql/add-cwru-ig.sql.in
 sr/sql/add-exosm.sql: $(srcdir)/sr/sql/add-exosm.sql.in
 sr/sql/add-gpo-eg-of.sql: $(srcdir)/sr/sql/add-gpo-eg-of.sql.in
 sr/sql/add-gpo-eg.sql: $(srcdir)/sr/sql/add-gpo-eg.sql.in
 sr/sql/add-gpo-og.sql: $(srcdir)/sr/sql/add-gpo-og.sql.in
 sr/sql/add-moxi-ig-of.sql: $(srcdir)/sr/sql/add-moxi-ig-of.sql.in
 sr/sql/add-moxi-ig.sql: $(srcdir)/sr/sql/add-moxi-ig.sql.in
+sr/sql/add-moxi-of.sql: $(srcdir)/sr/sql/add-moxi-of.sql.in
 sr/sql/add-nicta-eg.sql: $(srcdir)/sr/sql/add-nicta-eg.sql.in
 sr/sql/add-nps-ig-of.sql: $(srcdir)/sr/sql/add-nps-ig-of.sql.in
 sr/sql/add-nps-ig.sql: $(srcdir)/sr/sql/add-nps-ig.sql.in
@@ -106,7 +120,13 @@ sr/sql/add-ufl-eg-of.sql: $(srcdir)/sr/sql/add-ufl-eg-of.sql.in
 sr/sql/add-ufl-eg.sql: $(srcdir)/sr/sql/add-ufl-eg.sql.in
 sr/sql/add-ukypks2-ig-of.sql: $(srcdir)/sr/sql/add-ukypks2-ig-of.sql.in
 sr/sql/add-ukypks2-ig.sql: $(srcdir)/sr/sql/add-ukypks2-ig.sql.in
+sr/sql/add-umkc-ig-of.sql: $(srcdir)/sr/sql/add-umkc-ig-of.sql.in
+sr/sql/add-umkc-ig.sql: $(srcdir)/sr/sql/add-umkc-ig.sql.in
 sr/sql/add-utah-clab.sql: $(srcdir)/sr/sql/add-utah-clab.sql.in
+sr/sql/add-utc-ig-of.sql: $(srcdir)/sr/sql/add-utc-ig-of.sql.in
+sr/sql/add-utc-ig.sql: $(srcdir)/sr/sql/add-utc-ig.sql.in
+sr/sql/add-uwashington-ig-of.sql: $(srcdir)/sr/sql/add-uwashington-ig-of.sql.in
+sr/sql/add-uwashington-ig.sql: $(srcdir)/sr/sql/add-uwashington-ig.sql.in
 sr/sql/add-wall2.sql: $(srcdir)/sr/sql/add-wall2.sql.in
 sr/sql/add-wsu-eg-of.sql: $(srcdir)/sr/sql/add-wsu-eg-of.sql.in
 sr/sql/add-wsu-eg.sql: $(srcdir)/sr/sql/add-wsu-eg.sql.in
@@ -125,6 +145,11 @@ dist_srcerts_DATA = \
 	sr/certs/cenic-ig-cm.pem \
 	sr/certs/cenic-ig-of.pem \
 	sr/certs/clemson-og.pem \
+	sr/certs/colorado-ig-boss.pem \
+	sr/certs/colorado-ig-cm.pem \
+	sr/certs/colorado-ig-of.pem \
+	sr/certs/cwru-ig-boss.pem \
+	sr/certs/cwru-ig-cm.pem \
 	sr/certs/exosm.pem \
 	sr/certs/gpo-eg-of.pem \
 	sr/certs/gpo-eg.pem \
@@ -132,6 +157,7 @@ dist_srcerts_DATA = \
 	sr/certs/moxi-ig-boss.pem \
 	sr/certs/moxi-ig-cm.pem \
 	sr/certs/moxi-ig-of.pem \
+	sr/certs/moxi-of.pem \
 	sr/certs/nicta-eg.pem \
 	sr/certs/nps-ig-boss.pem \
 	sr/certs/nps-ig-cm.pem \
@@ -166,8 +192,17 @@ dist_srcerts_DATA = \
 	sr/certs/ukypks2-ig-boss.pem \
 	sr/certs/ukypks2-ig-cm.pem \
 	sr/certs/ukypks2-ig-of.pem \
+	sr/certs/umkc-ig-boss.pem \
+	sr/certs/umkc-ig-cm.pem \
+	sr/certs/umkc-ig-of.pem \
 	sr/certs/utah-clab-boss.pem \
 	sr/certs/utah-clab-cm.pem \
+	sr/certs/utc-ig-boss.pem \
+	sr/certs/utc-ig-cm.pem \
+	sr/certs/utc-ig-of.pem \
+	sr/certs/uwashington-ig-boss.pem \
+	sr/certs/uwashington-ig-cm.pem \
+	sr/certs/uwashington-ig-of.pem \
 	sr/certs/wall2-ca.pem \
 	sr/certs/wall2-cm.pem \
 	sr/certs/wsu-eg-of.pem \
