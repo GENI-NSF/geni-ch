@@ -1,4 +1,4 @@
-AC_INIT([geni-chapi], [1.24], [portal-help@geni.net])
+AC_INIT([geni-chapi], [1.25], [portal-help@geni.net])
 AM_INIT_AUTOMAKE([foreign -Wall -Werror])
 AC_PROG_MKDIR_P
 AC_PROG_INSTALL
