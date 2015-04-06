@@ -38,9 +38,20 @@ dist_pkgdata_DATA = \
 	chapi-log-out.txt
 
 dist_sbin_SCRIPTS = \
+	geni-add-member-privilege \
 	geni-check-errors \
 	geni-create-ma-crl \
 	geni-expiring-certs \
 	geni-list-member-projects \
 	geni-revoke-member-certificate \
+	geni-revoke-member-privilege \
 	geni-sign-tool-csr
+
+# GPO Lab
+# Install in /usr/local/lib, not /usr/lib
+localpythondir = $(subst /usr/lib,/usr/local/lib,$(pythondir))
+if GPO_LAB
+  nobase_dist_localpython_DATA = chapiclient/__init__.py chapiclient/chapi.py
+else
+  nobase_dist_python_DATA = chapiclient/__init__.py chapiclient/chapi.py
+endif

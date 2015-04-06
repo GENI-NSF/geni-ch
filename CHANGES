@@ -5,6 +5,7 @@
 = GENI Clearinghouse Release Notes =
 
 == 1.25 ==
+ * Migrate some scripts to chapi (#101)
  * Made opsmon slice UUID return true UUID and not URN (#351).
 
 == 1.24 ==
