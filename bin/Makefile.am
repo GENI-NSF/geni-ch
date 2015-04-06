@@ -31,6 +31,22 @@ geni-check-errors: $(srcdir)/geni-check-errors.in
 geni-sign-tool-csr: $(srcdir)/geni-sign-tool-csr.in
 geni-expiring-certs: $(srcdir)/geni-expiring-certs.in
 
+# Distribute but do not install
+EXTRA_DIST =  \
+	geni-check-errors.in \
+	geni-sign-tool-csr.in \
+	geni-expiring-certs.in
+
+CLEANFILES =  \
+	geni-check-errors \
+	geni-sign-tool-csr \
+	geni-expiring-certs
+
+sbin_SCRIPTS = \
+	geni-check-errors \
+	geni-sign-tool-csr \
+	geni-expiring-certs
+
 dist_pkgdata_DATA = \
 	amsoil-log-out.txt \
 	apache-error-log-out.txt \
@@ -39,13 +55,10 @@ dist_pkgdata_DATA = \
 
 dist_sbin_SCRIPTS = \
 	geni-add-member-privilege \
-	geni-check-errors \
 	geni-create-ma-crl \
-	geni-expiring-certs \
 	geni-list-member-projects \
 	geni-revoke-member-certificate \
-	geni-revoke-member-privilege \
-	geni-sign-tool-csr
+	geni-revoke-member-privilege
 
 # GPO Lab
 # Install in /usr/local/lib, not /usr/lib
