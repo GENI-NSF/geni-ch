@@ -620,16 +620,19 @@ def shares_slice(member1_urn, member2_urns, session, slice_uid = None):
     if member2_urns is None or len(member2_urns) == 0:
         return []
     db = pm.getService("chdbengine")
+    st = aliased(db.SLICE_TABLE)
     sm1 = aliased(db.SLICE_MEMBER_TABLE)
     sm2 = aliased(db.SLICE_MEMBER_TABLE)
     ma1 = aliased(db.MEMBER_ATTRIBUTE_TABLE)
     ma2 = aliased(db.MEMBER_ATTRIBUTE_TABLE)
 
-    q = session.query(sm1.c.slice_id, sm2.c.slice_id, 
+    q = session.query(st.c.expired, sm1.c.slice_id, sm2.c.slice_id, 
                       ma1.c.value.label('member1'), 
                       ma2.c.value.label('member2'))
     if slice_uid is not None:
         q = q.filter(sm1.c.slice_id == slice_uid)
+    q = q.filter(st.c.slice_id == sm1.c.slice_id)
+    q = q.filter(st.c.expired == False)
     q = q.filter(sm1.c.slice_id == sm2.c.slice_id)
     q = q.filter(sm1.c.member_id == ma1.c.member_id)
     q = q.filter(sm2.c.member_id == ma2.c.member_id)
