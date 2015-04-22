@@ -9,7 +9,7 @@
  * Migrate some scripts to chapi (#101)
  * Made opsmon slice UUID return true UUID and not URN (#351).
  * Make shares_slice exclude expired slices (#349)
- * Make bin/geni-ch-githash an optional file (#353)
+ * Make bin/geni-chapi-githash an optional file (#353)
 
 == 1.24 ==
  * Add new production aggregates
