@@ -11,8 +11,19 @@ geni-check-errors.1: Makefile
 
 geni-check-errors.1: $(srcdir)/geni-check-errors.1.in
 
+# Distribute but do not install
+EXTRA_DIST = \
+	geni-check-errors.1.in
+
+CLEANFILES = \
+	geni-check-errors.1
+
+man_MANS = \
+	geni-check-errors.1
+
 dist_man_MANS = \
-	geni-check-errors.1 \
+	geni-add-member-privilege.1 \
 	geni-expiring-certs.1 \
 	geni-list-member-projects.1 \
+	geni-revoke-member-privilege.1 \
 	geni-sign-tool-csr.1

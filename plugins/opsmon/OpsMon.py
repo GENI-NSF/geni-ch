@@ -164,6 +164,7 @@ class OpsMonHandler:
         q = session.query(self._db.SLICE_TABLE.c.creation,
                           self._db.SLICE_TABLE.c.expiration,
                           self._db.SLICE_TABLE.c.owner_id,
+                          self._db.SLICE_TABLE.c.slice_id,
                           self._db.MEMBER_ATTRIBUTE_TABLE.c.value)
         q = q.filter(self._db.MEMBER_ATTRIBUTE_TABLE.c.name == 'urn')
         q = q.filter(self._db.MEMBER_ATTRIBUTE_TABLE.c.member_id == self._db.SLICE_TABLE.c.owner_id)
@@ -173,6 +174,7 @@ class OpsMonHandler:
         rows = q.all()
         if len(rows) == 0: return ""
         row = rows[0]
+        slice_uuid = row.slice_id;
 
         lead_urn = row.value
         lead_id = extract_name_from_urn(lead_urn)
@@ -199,7 +201,7 @@ class OpsMonHandler:
             'id' : self.slice_urn_to_id(slice_urn),
             'selfRef' : self.generate_href('slice', slice_id),
             'urn' : slice_urn,
-            'uuid' : slice_id,
+            'uuid' : slice_uuid,
             'ts' : ts,
             'authority' : self.compute_reference_info(self._authority_urn, 
                                                       'authority',

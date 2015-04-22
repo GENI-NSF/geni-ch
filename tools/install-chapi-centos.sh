@@ -42,7 +42,7 @@ cd chapi
 
 echo `pwd`
 # Get GPO version of AMsoil from local web site
-AMSOIL_VERSION=AMsoil-gpo-0.3.2
+AMSOIL_VERSION=AMsoil-gpo-0.3.3
 AMSOIL_FILE=${AMSOIL_VERSION}.tar.gz
 #wget http://www.gpolab.bbn.com/internal/projects/chapi/${AMSOIL_FILE}
 sudo cp /tmp/${AMSOIL_FILE} .

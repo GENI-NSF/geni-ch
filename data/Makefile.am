@@ -78,6 +78,15 @@ $(AM_SQL_IN): sr/generate-sql sr/aggdata.csv Makefile
 	rm -f $@
 	sr/generate-sql -o sr/sql sr/aggdata.csv
 
+# Distribute but do not install
+EXTRA_DIST = \
+	sr/generate-sql \
+	sr/aggdata.csv \
+	$(AM_SQL_IN)
+
+CLEANFILES =  \
+	$(AM_SQL)
+
 sr/sql/add-al2s.sql: $(srcdir)/sr/sql/add-al2s.sql.in
 sr/sql/add-apt.sql: $(srcdir)/sr/sql/add-apt.sql.in
 sr/sql/add-cenic-ig-of.sql: $(srcdir)/sr/sql/add-cenic-ig-of.sql.in
@@ -134,7 +143,7 @@ sr/sql/add-wvn-eg-of.sql: $(srcdir)/sr/sql/add-wvn-eg-of.sql.in
 sr/sql/add-wvn-eg.sql: $(srcdir)/sr/sql/add-wvn-eg.sql.in
 
 
-dist_srsql_DATA = $(AM_SQL)
+srsql_DATA = $(AM_SQL)
 
 dist_srcerts_DATA = \
 	sr/certs/al2s.pem \
