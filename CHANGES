@@ -6,6 +6,9 @@
 = GENI Clearinghouse Release Notes =
 
 == 1.26 ==
+ * Update install scripts to not turn on unused AMsoil plugins
+   dhcprm, dhcpgeni3, mailer, worker, geniv3rpc. (#354)
+   * Remember to sudo rm $amsoil/src/plugins/<those>
 
 == 1.25 ==
  * Migrate some scripts to chapi (#101)
