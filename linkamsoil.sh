@@ -30,3 +30,9 @@ if [ ! -d $AMSOIL/src/tools ]; then
     ln -s $CHAPI/tools $AMSOIL/src/tools
 fi
 echo tools > $AMSOIL/src/.gitignore
+
+# Remove unused AMsoil plugins
+for pl in dhcprm dhcpgeni3 mailer worker geniv3rpc
+do
+    sudo rm $AMSOIL/src/plugins/$pl
+done
