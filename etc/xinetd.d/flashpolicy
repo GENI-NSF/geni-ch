@@ -1,0 +1,12 @@
+# The flashpolicy service allows connections to ports 443 (HTTPS) and
+# 8443 (geni-pgch).
+service flashpolicy
+{
+        disable         = no
+        id              = flashpolicy
+        protocol        = tcp
+        user            = root
+        wait            = no
+        server          = /bin/echo
+        server_args     = <cross-domain-policy><site-control permitted-cross-domain-policies="master-only"/><allow-access-from domain="*" to-ports="443,8443"/></cross-domain-policy>
+}

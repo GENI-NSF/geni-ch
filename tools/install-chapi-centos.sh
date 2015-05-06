@@ -55,6 +55,12 @@ for pl in chrm chapiv1rpc sarm marm csrm logging opsmon flaskrest pgch
 do
     sudo ln -s ../../../chapi/plugins/$pl src/plugins/$pl
 done
+# Remove unused AMsoil plugins
+for pl in dhcprm dhcpgeni3 mailer worker geniv3rpc
+do
+    sudo rm src/plugins/$pl
+done
+
 sudo chown apache deploy log
 
 # tar up chapi and then the whole package
