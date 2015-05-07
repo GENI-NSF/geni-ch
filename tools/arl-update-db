@@ -1,0 +1,31 @@
+#!/bin/sh
+
+#----------------------------------------------------------------------
+# A script to automate the process of updating the database at ARL
+#----------------------------------------------------------------------
+
+set -x
+set -e
+
+# Make copy of database
+/usr/bin/pg_dump -U portal -h localhost portal > ./portal.sql
+
+# See the original database as SQL_ASCII
+/usr/bin/sudo -u postgres /usr/bin/psql -l
+
+# Stop apache
+/usr/bin/sudo service httpd stop
+
+# Drop the portal database
+/usr/bin/sudo -u postgres /usr/bin/dropdb portal
+
+# Create the portal database
+/usr/bin/sudo -u postgres /usr/bin/createdb -E UTF8 -T template0 portal
+
+# Verify the database change
+/usr/bin/sudo -u postgres /usr/bin/psql -l
+
+# Restore the database
+/usr/bin/psql -U portal -h localhost portal < ./portal.sql
+
+/usr/bin/sudo service httpd start

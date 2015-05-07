@@ -2,6 +2,8 @@
 
 CHAPI_LOG_DIR=/var/log/geni-chapi
 
+echoerr() { echo "$@" 1>&2; }
+
 # Exit on error
 set -e
 # Echo commands with variables expanded
@@ -15,7 +17,7 @@ fi
 
 TMP_DIR=/tmp/chapi-install
 if [ -x "${TMP_DIR}" ]; then
-  echoerr "Temporary build directory '${TMP_DIR}' exists."
+  echoerr "Temporary build directory ${TMP_DIR} exists."
   echoerr "Please remove it and run this script again."
   exit 1
 fi
@@ -23,7 +25,7 @@ fi
 # Find out where this script lives. It should be in the
 # "tools" directory of a chapi tree.
 TOOLS_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-CHAPI_DIR="${TOOLS_DIR}"/../../chapi
+CHAPI_DIR="${TOOLS_DIR}"/..
 
 SHARE_DIR=/usr/share/geni-ch
 
@@ -34,8 +36,8 @@ fi
 
 mkdir "${TMP_DIR}"
 cd "${TMP_DIR}"
-mkdir chapi
-cp -r "${CHAPI_DIR}" chapi
+mkdir -p chapi/chapi
+cp -r "${CHAPI_DIR}" chapi/chapi
 # Clean up any git cruft that got copied
 find chapi -name '.git*' -delete
 cd chapi
