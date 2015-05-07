@@ -1,5 +1,5 @@
 #----------------------------------------------------------------------
-# Copyright (c) 2011-2014 Raytheon BBN Technologies
+# Copyright (c) 2011-2015 Raytheon BBN Technologies
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and/or hardware specification (the "Work") to
@@ -155,7 +155,7 @@ def main(args = sys.argv, do_print=True):
     elif opts.method in ['register_aggregate', 'remove_aggregate'] and opts.agg_url:
         (result, msg) = _do_ssl(framework, suppress_errors, reason, fcn, \
                                     opts.urn, opts.agg_url, opts.credentials, client_options)
-    elif opts.int_arg and opts.method in ['get_services_of_type', 'get_first_service_of_type', 'get_service_by_id']:
+    elif opts.int_arg is not None and opts.method in ['get_services_of_type', 'get_first_service_of_type', 'get_service_by_id']:
         (result, msg) = _do_ssl(framework, suppress_errors, reason, fcn, \
                                     int(opts.int_arg))
     elif opts.method in ['get_services']:

@@ -31,6 +31,22 @@ geni-check-errors: $(srcdir)/geni-check-errors.in
 geni-sign-tool-csr: $(srcdir)/geni-sign-tool-csr.in
 geni-expiring-certs: $(srcdir)/geni-expiring-certs.in
 
+# Distribute but do not install
+EXTRA_DIST =  \
+	geni-check-errors.in \
+	geni-sign-tool-csr.in \
+	geni-expiring-certs.in
+
+CLEANFILES =  \
+	geni-check-errors \
+	geni-sign-tool-csr \
+	geni-expiring-certs
+
+sbin_SCRIPTS = \
+	geni-check-errors \
+	geni-sign-tool-csr \
+	geni-expiring-certs
+
 dist_pkgdata_DATA = \
 	amsoil-log-out.txt \
 	apache-error-log-out.txt \
@@ -38,9 +54,17 @@ dist_pkgdata_DATA = \
 	chapi-log-out.txt
 
 dist_sbin_SCRIPTS = \
-	geni-check-errors \
+	geni-add-member-privilege \
 	geni-create-ma-crl \
-	geni-expiring-certs \
 	geni-list-member-projects \
 	geni-revoke-member-certificate \
-	geni-sign-tool-csr
+	geni-revoke-member-privilege
+
+# GPO Lab
+# Install in /usr/local/lib, not /usr/lib
+localpythondir = $(subst /usr/lib,/usr/local/lib,$(pythondir))
+if GPO_LAB
+  nobase_dist_localpython_DATA = chapiclient/__init__.py chapiclient/chapi.py
+else
+  nobase_dist_python_DATA = chapiclient/__init__.py chapiclient/chapi.py
+endif

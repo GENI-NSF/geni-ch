@@ -44,7 +44,7 @@ cd chapi
 
 echo `pwd`
 # Get GPO version of AMsoil from local web site
-AMSOIL_VERSION=AMsoil-gpo-0.3.2
+AMSOIL_VERSION=AMsoil-gpo-0.3.3
 AMSOIL_FILE=${AMSOIL_VERSION}.tar.gz
 #wget http://www.gpolab.bbn.com/internal/projects/chapi/${AMSOIL_FILE}
 sudo cp /tmp/${AMSOIL_FILE} .
@@ -57,6 +57,12 @@ for pl in chrm chapiv1rpc sarm marm csrm logging opsmon flaskrest pgch
 do
     sudo ln -s ../../../chapi/plugins/$pl src/plugins/$pl
 done
+# Remove unused AMsoil plugins
+for pl in dhcprm dhcpgeni3 mailer worker geniv3rpc
+do
+    sudo rm src/plugins/$pl
+done
+
 sudo chown apache deploy log
 
 # tar up chapi and then the whole package
@@ -70,7 +76,6 @@ GCFDIR=$(readlink /usr/share/geni-ch/gcf)
 if [ ! -h /usr/share/geni-ch/gcf ]; then
   ln -s $GCFDIR /usr/share/geni-ch/gcf
 fi
-sudo cp /usr/share/geni-ch/chapi/chapi/tools/.bashrc /usr/share/geni-ch/
 
 # allow www-data to write to some AMsoil directories
 sudo chown apache.apache /usr/share/geni-ch/chapi/AMsoil/deploy

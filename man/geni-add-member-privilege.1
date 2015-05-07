@@ -1,0 +1,104 @@
+.\"                                      Hey, EMACS: -*- nroff -*-
+.\" First parameter, NAME, should be all caps
+.\" Second parameter, SECTION, should be 1-8, maybe w/ subsection
+.\" other parameters are allowed: see man(7), man(1)
+.TH GENI-ADD-MEMBER-PRIVILEGE 1 "February 27, 2014"
+.\" Please adjust this date whenever revising the manpage.
+.\"
+.\" Some roff macros, for reference:
+.\" .nh        disable hyphenation
+.\" .hy        enable hyphenation
+.\" .ad l      left justify
+.\" .ad b      justify to both left and right margins
+.\" .nf        disable filling
+.\" .fi        enable filling
+.\" .br        insert line break
+.\" .sp <n>    insert n+1 empty lines
+.\" for manpage-specific macros, see man(7)
+.SH NAME
+geni-add-member-privilege \- elevate privileges for a GENI user
+.SH SYNOPSIS
+.B geni-add-member-privilege
+.IR -k \  KEY
+.IR -c \  CERT
+.IR -u \  URL
+.IR -m \  MEMBER
+.I \-\-lead
+.br
+.B geni-add-member-privilege
+.IR -k \  KEY
+.IR -c \  CERT
+.IR -u \  URL
+.IR -m \  MEMBER
+.I \-\-operator
+.SH DESCRIPTION
+.B geni-add-member-privilege
+grants privileges to GENI users. The first
+form adds the
+.I LEAD
+(project lead) privilege to a user. This is the most
+common use of the
+.B geni-add-member-privilege
+command.
+
+The second form grants
+.I OPERATOR
+privileges to the user.
+.\" TeX users may be more comfortable with the \fB<whatever>\fP and
+.\" \fI<whatever>\fP escape sequences to invode bold face and italics,
+.\" respectively.
+.SH OPTIONS
+These programs follow the usual GNU command line syntax, with long
+options starting with two dashes (`-').
+A summary of options is included below.
+For a complete description, see the Info files.
+.TP
+.B \-c <certificate file>, \-\-certfile <certificate file>
+The certificate of the invoking user
+.TP
+.B \-h, \-\-help
+Show summary of options.
+.TP
+.B \-k <key file>, \-\-keyfile <key file>
+The private key of the invoking user.
+.TP
+.B \-l, \-\-lead
+Add the LEAD privilege to the specified user.
+.TP
+.B \-m <UUID or username>, \-\-member <UUID or username>
+Specifies the user whose privileges will be elevated. Users can be
+specified by their UUID or by their username.
+.TP
+.B \-o, \-\-operator
+Add the OPERATOR privilege to the specified user.
+.TP
+.B \-u <base URL>, \-\-url <base URL>
+Specify the base URL of the service endpoints. Specific services like
+MA and SA are derived from this endpoint.
+.SH EXAMPLES
+Grant LEAD privilege to the user with username 'scott':
+
+    geni-add-member-privilege -k key.pem -c cert.pem \\
+          -u https://ch.example.com -m scott --lead
+
+
+Grant LEAD privilege to the user identified by UUID:
+
+    geni-add-member-privilege -k key.pem -c cert.pem \\
+          -u https://ch.example.com \\
+          -m 73d76c16-9231-58e8-9118-4d8f50676b37 --lead
+
+
+Grant OPERATOR privilege to the user with username 'scott':
+
+    geni-add-member-privilege -k key.pem -c cert.pem \\
+          -u https://ch.example.com -m scott --operator
+
+.SH BUGS
+The use of a single base URL should be replaced by URLs for specific
+services. The derivation of URLs is specific to the deployment of the
+services, so may not work if admins deploy the services differently.
+.SH SEE ALSO
+.BR geni-revoke-member-privilege (1).
+.SH AUTHOR
+geni-add-member-privilege was written by Raytheon BBN Technologies.

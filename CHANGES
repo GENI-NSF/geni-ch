@@ -2,7 +2,45 @@
 # Note: keep milestone bullets in ticket numerical order for easier
 #       reconciliation at release time
 
+
 = GENI Clearinghouse Release Notes =
+
+== 1.27 ==
+
+
+== 1.26 ==
+ * Update install scripts to not turn on unused AMsoil plugins
+   dhcprm, dhcpgeni3, mailer, worker, geniv3rpc. (#354)
+   * Remember to sudo rm $amsoil/src/plugins/<those>
+
+== 1.25 ==
+ * Migrate some scripts to chapi (#101)
+ * Made opsmon slice UUID return true UUID and not URN (#351).
+ * Make shares_slice exclude expired slices (#349)
+ * Make bin/geni-chapi-githash an optional file (#353)
+
+== 1.24 ==
+ * Add new production aggregates
+  * colorado-ig, utc-ig, uwashington-ig, umkc-ig (and -of versions), plus cwru-ig, moxi-of
+ * Change some aggregates from experimental to production
+  * osf-eg, sl-eg, tamu-eg, ucdavis-eg, wsu-eg, ohmetrodc-ig, ohmetrodc-ig-of, moxi-ig, moxi-ig-of, gpo-og
+ * Fix typo in get_services_of_type (#350)
+
+== 1.23 ==
+ * Add University of Chicago InstaGENI
+ * Remove example bashrc (#31)
+
+== 1.22 ==
+ * Add iMinds wall2 federated aggregate (#342)
+ * Add MOXI InstaGENI aggregate (#342)
+ * Add Apt and Utah CloudLab as a federated aggregates (#343)
+ * Add sliver creators to the slice opsmon members response (#344).
+ * Add Internet2 AL2S production aggregate (#345)
+ * Add URL, Reason, and Reference as user attributes (#346)
+
+== 1.21 ==
+ * Update copyrights for 2015 (#341)
+ * Add experimental aggregates (#342)
 
 == 1.20 ==
  * Update OpsMon code to V2 schema (#339)

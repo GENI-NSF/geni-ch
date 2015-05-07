@@ -15,11 +15,26 @@ class LogChecker(object):
         sys.stdout.flush()
         os.system('grep -v -f %s %s' % (self.grepv, self.fname))
 
-checks = [LogChecker('/var/log/apache2/ch_error.log',
+def apacheLogPath(fname):
+    """Determine the correct path to the apache log file with the given
+    name. Try paths from a set of possible places, returning the first
+    that exists. Return none if no path with the given name exists.
+
+    """
+    apache_log_dirs = ['/var/log/httpd', # CentOS/RedHat
+                       '/var/log/apache2' # Ubuntu/Debian
+    ]
+    for d in apache_log_dirs:
+        p = os.path.join(d, fname)
+        if os.path.exists(p):
+            return p
+    return fname
+
+checks = [LogChecker(apacheLogPath('ch_error.log'),
                      '@pkgdatadir@/ch-error-log-out.txt'),
           LogChecker('/usr/share/geni-ch/chapi/AMsoil/log/amsoil.log',
                      '@pkgdatadir@/amsoil-log-out.txt'),
-          LogChecker('/var/log/apache2/error.log',
+          LogChecker(apacheLogPath('error.log'),
                      '@pkgdatadir@/apache-error-log-out.txt'),
           LogChecker('/var/log/geni-chapi/chapi.log',
                      '@pkgdatadir@/chapi-log-out.txt')]

@@ -1,5 +1,5 @@
 #----------------------------------------------------------------------
-# Copyright (c) 2011-2014 Raytheon BBN Technologies
+# Copyright (c) 2011-2015 Raytheon BBN Technologies
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and/or hardware specification (the "Work") to
@@ -55,7 +55,7 @@ class SRv1Handler(CHv1Handler):
 
     # Return list of all services of given type registed in SR
     def get_services_of_type(self, service_type):
-        with MethodContext(self, SR_LOG_PREFIX, 'get_vservices_of_type',
+        with MethodContext(self, SR_LOG_PREFIX, 'get_services_of_type',
                            {'service_type' : service_type}, 
                            [], {}, read_only=True, cert_required=False) as mc:
             if not mc._error:
@@ -140,13 +140,14 @@ class SRv1Delegate(CHv1PersistentImplementation):
         pems = [open(os.path.join(trust_roots, pem_file)).read() for pem_file in pem_files if pem_file != 'CATedCACerts.pem']
         return self._successReturn(pems)
 
-    def get_services_of_type(self, client_cert, service_type, session):
+    def get_services_of_type(self, service_type, session):
 
         options = {'match' : {}, 'filter' : CH.field_mapping.keys()}
 
         services = self.get_services(session)
         if services['code'] != NO_ERROR:
             return services
+
         result = [s for s in services['value'] \
                                  if s['SERVICE_TYPE'] == service_type] 
 

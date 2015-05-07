@@ -1,5 +1,5 @@
 #----------------------------------------------------------------------
-# Copyright (c) 2011-2014 Raytheon BBN Technologies
+# Copyright (c) 2011-2015 Raytheon BBN Technologies
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and/or hardware specification (the "Work") to
@@ -164,6 +164,7 @@ class OpsMonHandler:
         q = session.query(self._db.SLICE_TABLE.c.creation,
                           self._db.SLICE_TABLE.c.expiration,
                           self._db.SLICE_TABLE.c.owner_id,
+                          self._db.SLICE_TABLE.c.slice_id,
                           self._db.MEMBER_ATTRIBUTE_TABLE.c.value)
         q = q.filter(self._db.MEMBER_ATTRIBUTE_TABLE.c.name == 'urn')
         q = q.filter(self._db.MEMBER_ATTRIBUTE_TABLE.c.member_id == self._db.SLICE_TABLE.c.owner_id)
@@ -173,6 +174,7 @@ class OpsMonHandler:
         rows = q.all()
         if len(rows) == 0: return ""
         row = rows[0]
+        slice_uuid = row.slice_id;
 
         lead_urn = row.value
         lead_id = extract_name_from_urn(lead_urn)
@@ -180,19 +182,33 @@ class OpsMonHandler:
             self.compute_reference_info(lead_urn, 'user', lead_id)
         lead_info['role'] = 'lead'
 
+        members = [lead_info]
+
+        # As for all creators of current slivers in this slice
+        q = session.query(self._db.SLIVER_INFO_TABLE.c.creator_urn).distinct()
+        q = q.filter(self._db.SLIVER_INFO_TABLE.c.slice_urn == slice_urn)
+        q = q.filter(self._db.SLIVER_INFO_TABLE.c.creator_urn != lead_urn)
+        sliv_rows = q.all()
+        for sliv_row in sliv_rows:
+            member_urn = sliv_row.creator_urn
+            member_id = extract_name_from_urn(member_urn)
+            member_info = self.compute_reference_info(member_urn, 'user', member_id)
+            member_info['role'] = 'member'
+            members.append(member_info)
+
         slice_data = {
             '$schema' : self._slice_schema,
             'id' : self.slice_urn_to_id(slice_urn),
             'selfRef' : self.generate_href('slice', slice_id),
             'urn' : slice_urn,
-            'uuid' : slice_id,
+            'uuid' : slice_uuid,
             'ts' : ts,
             'authority' : self.compute_reference_info(self._authority_urn, 
                                                       'authority',
                                                       self._authority),
             'created' : self.to_timestamp(row.creation),
             'expires' : self.to_timestamp(row.expiration),
-            'members' : [lead_info]
+            'members' : members
             }
         return slice_data
 
