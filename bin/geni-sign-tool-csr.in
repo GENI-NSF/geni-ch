@@ -58,6 +58,9 @@ def parse_args(argv):
                       help="CSR file to sign")
     parser.add_option("-o", "--output", metavar="FILE",
                       help="Destination file for certificate (default: stdout)")
+    parser.add_option("--use-csr-subject",
+                      action="store_true", default=False,
+                      help="Use subject provided by CSR")
     options,args = parser.parse_args()
     if not (options.keyfile and options.certfile and options.email
             and options.id and options.authority and options.csr):
@@ -112,7 +115,8 @@ def main(argv=None):
     tool_urn = 'urn:publicid:IDN+%s+tool+%s' % (options.authority, options.id)
     tool_uuid = uuid.uuid4()
     cert = cu.make_cert(tool_uuid, options.email, tool_urn, options.certfile,
-                        options.keyfile, options.csr, options.days)
+                        options.keyfile, options.csr, options.days,
+                        options.use_csr_subject)
     chain = cert + signer_chain
     if options.output:
         # Write cert to file

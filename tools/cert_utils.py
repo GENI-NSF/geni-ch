@@ -155,7 +155,7 @@ def make_csr_from_key(private_key):
 # Generate an X509 cert and private key
 # Return cert
 def make_cert(uuid, email, urn, signer_cert_file, signer_key_file, csr_file,
-              days=365):
+              days=365, use_csr_subject=False):
     # Check validity of args (weak, I know)
     # Ensure days is an integer, raise exception otherwise
     days = int(days)
@@ -185,19 +185,22 @@ def make_cert(uuid, email, urn, signer_cert_file, signer_key_file, csr_file,
     (cert_fd, cert_file) = tempfile.mkstemp()
     os.close(cert_fd)
 
-    sign_csr_args = ['/usr/bin/openssl', 'ca', \
-                         '-config', '/usr/share/geni-ch/CA/openssl.cnf', \
-                         '-extfile', ext_file, \
-                         '-policy', 'policy_anything', \
-                         '-out', cert_file, \
-                         '-in', csr_file, \
-                         '-extensions', extname, \
-                         '-batch', \
-                         '-notext', \
-                         '-cert', signer_cert_file,\
-                         '-keyfile', signer_key_file, \
-                         '-subj', subject,
+    sign_csr_args = ['/usr/bin/openssl', 'ca',
+                     '-config', '/usr/share/geni-ch/CA/openssl.cnf',
+                     '-extfile', ext_file,
+                     '-policy', 'policy_anything',
+                     '-out', cert_file,
+                     '-in', csr_file,
+                     '-extensions', extname,
+                     '-batch',
+                     '-notext',
+                     '-cert', signer_cert_file,
+                     '-keyfile', signer_key_file,
                      '-days', str(days)]
+
+    if not use_csr_subject:
+        sign_csr_args.extend(['-subj', subject])
+
     #chapi_debug("UTILS", "CERT args: "+" ".join(sign_csr_args))
     os.system(" ".join(sign_csr_args))
 

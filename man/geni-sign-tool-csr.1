@@ -70,6 +70,12 @@ The private key matching the signing certificate.
 .TP
 .B \-o, \-\-output
 Add the OPERATOR privilege to the specified user.
+.TP
+.B \-\-use-csr-subject
+.I Advanced use only.
+Use the subject as it appears in the CSR instead of overwriting it
+with the UUID and email address. This is rarely what you want, so be
+sure before using this option.
 .
 .
 .SH EXAMPLES
