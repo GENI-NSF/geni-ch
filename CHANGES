@@ -6,7 +6,7 @@
 = GENI Clearinghouse Release Notes =
 
 == 1.27 ==
- * Allow geni-sign-tool-csr to use the subject in the CSR (#)
+ * Allow `geni-sign-tool-csr` to use the subject in the CSR (#356)
 
 == 1.26 ==
  * Update install scripts to not turn on unused AMsoil plugins
