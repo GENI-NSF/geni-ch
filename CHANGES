@@ -5,6 +5,8 @@
 
 = GENI Clearinghouse Release Notes =
 
+== 1.28 ==
+
 == 1.27 ==
  * Allow `geni-sign-tool-csr` to use the subject in the CSR (#356)
 
