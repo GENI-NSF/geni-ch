@@ -13,6 +13,8 @@ AM_SQL = \
 	sr/sql/add-apt.sql \
 	sr/sql/add-cenic-ig-of.sql \
 	sr/sql/add-cenic-ig.sql \
+	sr/sql/add-clemson-ig-of.sql \
+	sr/sql/add-clemson-ig.sql \
 	sr/sql/add-clemson-og.sql \
 	sr/sql/add-colorado-ig-of.sql \
 	sr/sql/add-colorado-ig.sql \
@@ -91,6 +93,8 @@ sr/sql/add-al2s.sql: $(srcdir)/sr/sql/add-al2s.sql.in
 sr/sql/add-apt.sql: $(srcdir)/sr/sql/add-apt.sql.in
 sr/sql/add-cenic-ig-of.sql: $(srcdir)/sr/sql/add-cenic-ig-of.sql.in
 sr/sql/add-cenic-ig.sql: $(srcdir)/sr/sql/add-cenic-ig.sql.in
+sr/sql/add-clemson-ig-of.sql: $(srcdir)/sr/sql/add-clemson-ig-of.sql.in
+sr/sql/add-clemson-ig.sql: $(srcdir)/sr/sql/add-clemson-ig.sql.in
 sr/sql/add-clemson-og.sql: $(srcdir)/sr/sql/add-clemson-og.sql.in
 sr/sql/add-colorado-ig-of.sql: $(srcdir)/sr/sql/add-colorado-ig-of.sql.in
 sr/sql/add-colorado-ig.sql: $(srcdir)/sr/sql/add-colorado-ig.sql.in
@@ -153,6 +157,9 @@ dist_srcerts_DATA = \
 	sr/certs/cenic-ig-boss.pem \
 	sr/certs/cenic-ig-cm.pem \
 	sr/certs/cenic-ig-of.pem \
+	sr/certs/clemson-ig-boss.pem \
+	sr/certs/clemson-ig-cm.pem \
+	sr/certs/clemson-ig-of.pem \
 	sr/certs/clemson-og.pem \
 	sr/certs/colorado-ig-boss.pem \
 	sr/certs/colorado-ig-cm.pem \
