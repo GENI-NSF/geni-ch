@@ -1,4 +1,4 @@
-# Contributing to geni-tools
+# Contributing to geni-ch
 
 The GENI-NSF repositories are very much a community driven effort, and
 your contributions are critical. A big thank you to all our contributors!
