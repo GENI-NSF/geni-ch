@@ -41,6 +41,8 @@ AM_SQL = \
 	sr/sql/add-rutgers-ig.sql \
 	sr/sql/add-sl-eg-of.sql \
 	sr/sql/add-sl-eg.sql \
+	sr/sql/add-sox-ig-of.sql \
+	sr/sql/add-sox-ig.sql \
 	sr/sql/add-tamu-eg-of.sql \
 	sr/sql/add-tamu-eg.sql \
 	sr/sql/add-ucdavis-eg-of.sql \
@@ -121,6 +123,8 @@ sr/sql/add-rutgers-ig-of.sql: $(srcdir)/sr/sql/add-rutgers-ig-of.sql.in
 sr/sql/add-rutgers-ig.sql: $(srcdir)/sr/sql/add-rutgers-ig.sql.in
 sr/sql/add-sl-eg-of.sql: $(srcdir)/sr/sql/add-sl-eg-of.sql.in
 sr/sql/add-sl-eg.sql: $(srcdir)/sr/sql/add-sl-eg.sql.in
+sr/sql/add-sox-ig-of.sql: $(srcdir)/sr/sql/add-sox-ig-of.sql.in
+sr/sql/add-sox-ig.sql: $(srcdir)/sr/sql/add-sox-ig.sql.in
 sr/sql/add-tamu-eg-of.sql: $(srcdir)/sr/sql/add-tamu-eg-of.sql.in
 sr/sql/add-tamu-eg.sql: $(srcdir)/sr/sql/add-tamu-eg.sql.in
 sr/sql/add-ucdavis-eg-of.sql: $(srcdir)/sr/sql/add-ucdavis-eg-of.sql.in
@@ -193,6 +197,9 @@ dist_srcerts_DATA = \
 	sr/certs/rutgers-ig-of.pem \
 	sr/certs/sl-eg-of.pem \
 	sr/certs/sl-eg.pem \
+	sr/certs/sox-ig-boss.pem \
+	sr/certs/sox-ig-cm.pem \
+	sr/certs/sox-ig-of.pem \
 	sr/certs/tamu-eg-of.pem \
 	sr/certs/tamu-eg.pem \
 	sr/certs/ucdavis-eg-of.pem \
