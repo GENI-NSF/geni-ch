@@ -20,6 +20,8 @@ AM_SQL = \
 	sr/sql/add-colorado-ig.sql \
 	sr/sql/add-cwru-ig.sql \
 	sr/sql/add-exosm.sql \
+	sr/sql/add-gatech-ig-of.sql \
+	sr/sql/add-gatech-ig.sql \
 	sr/sql/add-gpo-eg-of.sql \
 	sr/sql/add-gpo-eg.sql \
 	sr/sql/add-gpo-og.sql \
@@ -102,6 +104,8 @@ sr/sql/add-colorado-ig-of.sql: $(srcdir)/sr/sql/add-colorado-ig-of.sql.in
 sr/sql/add-colorado-ig.sql: $(srcdir)/sr/sql/add-colorado-ig.sql.in
 sr/sql/add-cwru-ig.sql: $(srcdir)/sr/sql/add-cwru-ig.sql.in
 sr/sql/add-exosm.sql: $(srcdir)/sr/sql/add-exosm.sql.in
+sr/sql/add-gatech-ig-of.sql: $(srcdir)/sr/sql/add-colorado-ig-of.sql.in
+sr/sql/add-gatech-ig.sql: $(srcdir)/sr/sql/add-colorado-ig.sql.in
 sr/sql/add-gpo-eg-of.sql: $(srcdir)/sr/sql/add-gpo-eg-of.sql.in
 sr/sql/add-gpo-eg.sql: $(srcdir)/sr/sql/add-gpo-eg.sql.in
 sr/sql/add-gpo-og.sql: $(srcdir)/sr/sql/add-gpo-og.sql.in
@@ -171,6 +175,9 @@ dist_srcerts_DATA = \
 	sr/certs/cwru-ig-boss.pem \
 	sr/certs/cwru-ig-cm.pem \
 	sr/certs/exosm.pem \
+	sr/certs/gatech-ig-boss.pem \
+	sr/certs/gatech-ig-cm.pem \
+	sr/certs/gatech-ig-of.pem \
 	sr/certs/gpo-eg-of.pem \
 	sr/certs/gpo-eg.pem \
 	sr/certs/gpo-og.pem \
