@@ -57,6 +57,8 @@ AM_SQL = \
 	sr/sql/add-ufl-eg.sql \
 	sr/sql/add-ukypks2-ig-of.sql \
 	sr/sql/add-ukypks2-ig.sql \
+	sr/sql/add-uky-ig-of.sql \
+	sr/sql/add-uky-ig.sql \
 	sr/sql/add-umkc-ig-of.sql \
 	sr/sql/add-umkc-ig.sql \
 	sr/sql/add-utah-clab.sql \
@@ -139,6 +141,8 @@ sr/sql/add-ucla-ig-of.sql: $(srcdir)/sr/sql/add-ucla-ig-of.sql.in
 sr/sql/add-ucla-ig.sql: $(srcdir)/sr/sql/add-ucla-ig.sql.in
 sr/sql/add-ufl-eg-of.sql: $(srcdir)/sr/sql/add-ufl-eg-of.sql.in
 sr/sql/add-ufl-eg.sql: $(srcdir)/sr/sql/add-ufl-eg.sql.in
+sr/sql/add-uky-ig-of.sql: $(srcdir)/sr/sql/add-uky-ig-of.sql.in
+sr/sql/add-uky-ig.sql: $(srcdir)/sr/sql/add-uky-ig.sql.in
 sr/sql/add-ukypks2-ig-of.sql: $(srcdir)/sr/sql/add-ukypks2-ig-of.sql.in
 sr/sql/add-ukypks2-ig.sql: $(srcdir)/sr/sql/add-ukypks2-ig.sql.in
 sr/sql/add-umkc-ig-of.sql: $(srcdir)/sr/sql/add-umkc-ig-of.sql.in
@@ -219,6 +223,9 @@ dist_srcerts_DATA = \
 	sr/certs/ucla-ig-of.pem \
 	sr/certs/ufl-eg-of.pem \
 	sr/certs/ufl-eg.pem \
+	sr/certs/uky-ig-boss.pem \
+	sr/certs/uky-ig-cm.pem \
+	sr/certs/uky-ig-of.pem \
 	sr/certs/ukypks2-ig-boss.pem \
 	sr/certs/ukypks2-ig-cm.pem \
 	sr/certs/ukypks2-ig-of.pem \
