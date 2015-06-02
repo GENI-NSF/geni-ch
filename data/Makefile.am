@@ -62,6 +62,7 @@ AM_SQL = \
 	sr/sql/add-umkc-ig-of.sql \
 	sr/sql/add-umkc-ig.sql \
 	sr/sql/add-utah-clab.sql \
+	sr/sql/add-utah-stitch.sql \
 	sr/sql/add-utc-ig-of.sql \
 	sr/sql/add-utc-ig.sql \
 	sr/sql/add-uwashington-ig-of.sql \
@@ -148,6 +149,7 @@ sr/sql/add-ukypks2-ig.sql: $(srcdir)/sr/sql/add-ukypks2-ig.sql.in
 sr/sql/add-umkc-ig-of.sql: $(srcdir)/sr/sql/add-umkc-ig-of.sql.in
 sr/sql/add-umkc-ig.sql: $(srcdir)/sr/sql/add-umkc-ig.sql.in
 sr/sql/add-utah-clab.sql: $(srcdir)/sr/sql/add-utah-clab.sql.in
+sr/sql/add-utah-stitch.sql: $(srcdir)/sr/sql/add-utah-stitch.sql.in
 sr/sql/add-utc-ig-of.sql: $(srcdir)/sr/sql/add-utc-ig-of.sql.in
 sr/sql/add-utc-ig.sql: $(srcdir)/sr/sql/add-utc-ig.sql.in
 sr/sql/add-uwashington-ig-of.sql: $(srcdir)/sr/sql/add-uwashington-ig-of.sql.in
@@ -234,6 +236,8 @@ dist_srcerts_DATA = \
 	sr/certs/umkc-ig-of.pem \
 	sr/certs/utah-clab-boss.pem \
 	sr/certs/utah-clab-cm.pem \
+	sr/certs/utah-stitch-boss.pem \
+	sr/certs/utah-stitch-cm.pem \
 	sr/certs/utc-ig-boss.pem \
 	sr/certs/utc-ig-cm.pem \
 	sr/certs/utc-ig-of.pem \
