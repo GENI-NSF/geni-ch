@@ -5,6 +5,8 @@
 
 = GENI Clearinghouse Release Notes =
 
+== 1.29 ==
+
 == 1.28 ==
  * Update aggregate info for some stitchable aggregates
  * Add utah-stitch aggregate data (#359)
