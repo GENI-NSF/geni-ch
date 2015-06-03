@@ -13,11 +13,15 @@ AM_SQL = \
 	sr/sql/add-apt.sql \
 	sr/sql/add-cenic-ig-of.sql \
 	sr/sql/add-cenic-ig.sql \
+	sr/sql/add-clemson-ig-of.sql \
+	sr/sql/add-clemson-ig.sql \
 	sr/sql/add-clemson-og.sql \
 	sr/sql/add-colorado-ig-of.sql \
 	sr/sql/add-colorado-ig.sql \
 	sr/sql/add-cwru-ig.sql \
 	sr/sql/add-exosm.sql \
+	sr/sql/add-gatech-ig-of.sql \
+	sr/sql/add-gatech-ig.sql \
 	sr/sql/add-gpo-eg-of.sql \
 	sr/sql/add-gpo-eg.sql \
 	sr/sql/add-gpo-og.sql \
@@ -39,6 +43,8 @@ AM_SQL = \
 	sr/sql/add-rutgers-ig.sql \
 	sr/sql/add-sl-eg-of.sql \
 	sr/sql/add-sl-eg.sql \
+	sr/sql/add-sox-ig-of.sql \
+	sr/sql/add-sox-ig.sql \
 	sr/sql/add-tamu-eg-of.sql \
 	sr/sql/add-tamu-eg.sql \
 	sr/sql/add-ucdavis-eg-of.sql \
@@ -51,9 +57,12 @@ AM_SQL = \
 	sr/sql/add-ufl-eg.sql \
 	sr/sql/add-ukypks2-ig-of.sql \
 	sr/sql/add-ukypks2-ig.sql \
+	sr/sql/add-uky-ig-of.sql \
+	sr/sql/add-uky-ig.sql \
 	sr/sql/add-umkc-ig-of.sql \
 	sr/sql/add-umkc-ig.sql \
 	sr/sql/add-utah-clab.sql \
+	sr/sql/add-utah-stitch.sql \
 	sr/sql/add-utc-ig-of.sql \
 	sr/sql/add-utc-ig.sql \
 	sr/sql/add-uwashington-ig-of.sql \
@@ -91,11 +100,15 @@ sr/sql/add-al2s.sql: $(srcdir)/sr/sql/add-al2s.sql.in
 sr/sql/add-apt.sql: $(srcdir)/sr/sql/add-apt.sql.in
 sr/sql/add-cenic-ig-of.sql: $(srcdir)/sr/sql/add-cenic-ig-of.sql.in
 sr/sql/add-cenic-ig.sql: $(srcdir)/sr/sql/add-cenic-ig.sql.in
+sr/sql/add-clemson-ig-of.sql: $(srcdir)/sr/sql/add-clemson-ig-of.sql.in
+sr/sql/add-clemson-ig.sql: $(srcdir)/sr/sql/add-clemson-ig.sql.in
 sr/sql/add-clemson-og.sql: $(srcdir)/sr/sql/add-clemson-og.sql.in
 sr/sql/add-colorado-ig-of.sql: $(srcdir)/sr/sql/add-colorado-ig-of.sql.in
 sr/sql/add-colorado-ig.sql: $(srcdir)/sr/sql/add-colorado-ig.sql.in
 sr/sql/add-cwru-ig.sql: $(srcdir)/sr/sql/add-cwru-ig.sql.in
 sr/sql/add-exosm.sql: $(srcdir)/sr/sql/add-exosm.sql.in
+sr/sql/add-gatech-ig-of.sql: $(srcdir)/sr/sql/add-colorado-ig-of.sql.in
+sr/sql/add-gatech-ig.sql: $(srcdir)/sr/sql/add-colorado-ig.sql.in
 sr/sql/add-gpo-eg-of.sql: $(srcdir)/sr/sql/add-gpo-eg-of.sql.in
 sr/sql/add-gpo-eg.sql: $(srcdir)/sr/sql/add-gpo-eg.sql.in
 sr/sql/add-gpo-og.sql: $(srcdir)/sr/sql/add-gpo-og.sql.in
@@ -117,6 +130,8 @@ sr/sql/add-rutgers-ig-of.sql: $(srcdir)/sr/sql/add-rutgers-ig-of.sql.in
 sr/sql/add-rutgers-ig.sql: $(srcdir)/sr/sql/add-rutgers-ig.sql.in
 sr/sql/add-sl-eg-of.sql: $(srcdir)/sr/sql/add-sl-eg-of.sql.in
 sr/sql/add-sl-eg.sql: $(srcdir)/sr/sql/add-sl-eg.sql.in
+sr/sql/add-sox-ig-of.sql: $(srcdir)/sr/sql/add-sox-ig-of.sql.in
+sr/sql/add-sox-ig.sql: $(srcdir)/sr/sql/add-sox-ig.sql.in
 sr/sql/add-tamu-eg-of.sql: $(srcdir)/sr/sql/add-tamu-eg-of.sql.in
 sr/sql/add-tamu-eg.sql: $(srcdir)/sr/sql/add-tamu-eg.sql.in
 sr/sql/add-ucdavis-eg-of.sql: $(srcdir)/sr/sql/add-ucdavis-eg-of.sql.in
@@ -127,11 +142,14 @@ sr/sql/add-ucla-ig-of.sql: $(srcdir)/sr/sql/add-ucla-ig-of.sql.in
 sr/sql/add-ucla-ig.sql: $(srcdir)/sr/sql/add-ucla-ig.sql.in
 sr/sql/add-ufl-eg-of.sql: $(srcdir)/sr/sql/add-ufl-eg-of.sql.in
 sr/sql/add-ufl-eg.sql: $(srcdir)/sr/sql/add-ufl-eg.sql.in
+sr/sql/add-uky-ig-of.sql: $(srcdir)/sr/sql/add-uky-ig-of.sql.in
+sr/sql/add-uky-ig.sql: $(srcdir)/sr/sql/add-uky-ig.sql.in
 sr/sql/add-ukypks2-ig-of.sql: $(srcdir)/sr/sql/add-ukypks2-ig-of.sql.in
 sr/sql/add-ukypks2-ig.sql: $(srcdir)/sr/sql/add-ukypks2-ig.sql.in
 sr/sql/add-umkc-ig-of.sql: $(srcdir)/sr/sql/add-umkc-ig-of.sql.in
 sr/sql/add-umkc-ig.sql: $(srcdir)/sr/sql/add-umkc-ig.sql.in
 sr/sql/add-utah-clab.sql: $(srcdir)/sr/sql/add-utah-clab.sql.in
+sr/sql/add-utah-stitch.sql: $(srcdir)/sr/sql/add-utah-stitch.sql.in
 sr/sql/add-utc-ig-of.sql: $(srcdir)/sr/sql/add-utc-ig-of.sql.in
 sr/sql/add-utc-ig.sql: $(srcdir)/sr/sql/add-utc-ig.sql.in
 sr/sql/add-uwashington-ig-of.sql: $(srcdir)/sr/sql/add-uwashington-ig-of.sql.in
@@ -153,6 +171,9 @@ dist_srcerts_DATA = \
 	sr/certs/cenic-ig-boss.pem \
 	sr/certs/cenic-ig-cm.pem \
 	sr/certs/cenic-ig-of.pem \
+	sr/certs/clemson-ig-boss.pem \
+	sr/certs/clemson-ig-cm.pem \
+	sr/certs/clemson-ig-of.pem \
 	sr/certs/clemson-og.pem \
 	sr/certs/colorado-ig-boss.pem \
 	sr/certs/colorado-ig-cm.pem \
@@ -160,6 +181,9 @@ dist_srcerts_DATA = \
 	sr/certs/cwru-ig-boss.pem \
 	sr/certs/cwru-ig-cm.pem \
 	sr/certs/exosm.pem \
+	sr/certs/gatech-ig-boss.pem \
+	sr/certs/gatech-ig-cm.pem \
+	sr/certs/gatech-ig-of.pem \
 	sr/certs/gpo-eg-of.pem \
 	sr/certs/gpo-eg.pem \
 	sr/certs/gpo-og.pem \
@@ -186,6 +210,9 @@ dist_srcerts_DATA = \
 	sr/certs/rutgers-ig-of.pem \
 	sr/certs/sl-eg-of.pem \
 	sr/certs/sl-eg.pem \
+	sr/certs/sox-ig-boss.pem \
+	sr/certs/sox-ig-cm.pem \
+	sr/certs/sox-ig-of.pem \
 	sr/certs/tamu-eg-of.pem \
 	sr/certs/tamu-eg.pem \
 	sr/certs/ucdavis-eg-of.pem \
@@ -198,6 +225,9 @@ dist_srcerts_DATA = \
 	sr/certs/ucla-ig-of.pem \
 	sr/certs/ufl-eg-of.pem \
 	sr/certs/ufl-eg.pem \
+	sr/certs/uky-ig-boss.pem \
+	sr/certs/uky-ig-cm.pem \
+	sr/certs/uky-ig-of.pem \
 	sr/certs/ukypks2-ig-boss.pem \
 	sr/certs/ukypks2-ig-cm.pem \
 	sr/certs/ukypks2-ig-of.pem \
@@ -206,6 +236,8 @@ dist_srcerts_DATA = \
 	sr/certs/umkc-ig-of.pem \
 	sr/certs/utah-clab-boss.pem \
 	sr/certs/utah-clab-cm.pem \
+	sr/certs/utah-stitch-boss.pem \
+	sr/certs/utah-stitch-cm.pem \
 	sr/certs/utc-ig-boss.pem \
 	sr/certs/utc-ig-cm.pem \
 	sr/certs/utc-ig-of.pem \
