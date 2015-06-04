@@ -6,6 +6,12 @@
 = GENI Clearinghouse Release Notes =
 
 == 1.29 ==
+ * `geni-check-errors` now suppresses certificate generation output, 
+   Certificate Verification errors from apache when someone accesses ch.geni.net
+   (like PG AMs), messages about users creating or renewing certs, messages
+   about members setting their own attributes or their irods_username,
+   and messages about failing to access the system during maintenance.
+   It also looks at the older `chapi.log.1` and `error.log.1`. (#360)
 
 == 1.28 ==
  * Update aggregate info for some stitchable aggregates

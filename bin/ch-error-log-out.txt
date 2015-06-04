@@ -1,1 +1,2 @@
 favicon
+Certificate Verification: Error \(20\): unable to get local issuer certificate
