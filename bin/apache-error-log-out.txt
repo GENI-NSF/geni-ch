@@ -6,5 +6,35 @@ INFO     root: Had no handler for chapi yet
 INFO     chapi: PARAMETERS: Setting
 INFO     chapi: LOGGING: CHAPI log level is INFO
 INFO     root: About to configure logging
-mod_fastcgi/2.4.6 PHP/5.3.2-1ubuntu4.21 with Suhosin-Patch mod_ssl/2.2.14 OpenSSL/0.9.8k configured
-PHP/5.3.2-1ubuntu4.21 with Suhosin-Patch mod_ssl/2.2.14 OpenSSL/0.9.8k configured
+Apache.* configured
+^Using configuration from 
+^Check that the request matches the signature
+^Signature ok
+^Certificate Details:
+^        Serial Number: 
+^        Validity
+^            Not Before: 
+^            Not After : 
+^        Subject:
+^            commonName                = 
+^            emailAddress              = 
+^        X509v3 extensions:
+^            X509v3 Subject Key Identifier:
+^                ([A-F0-9]{2}\:){19}[A-F0-9]{2}
+^            X509v3 Authority Key Identifier:
+^                keyid:
+^                DirName:/CN=
+^                serial:
+^\s*$
+^            X509v3 Basic Constraints:
+^                CA:FALSE
+^            X509v3 Subject Alternative Name:
+^                email:.+, URI:urn:publicid:IDN+.+, URI:.+
+^Certificate is to be certified until 
+^Write out database with 1 new entries
+^Data Base Updated
+^unable to write 'random state'
+Generating a [0-9]+ bit RSA private key
+^writing new private key to
+^[\s\.\+\-]+
+^Enter passphrase to load key:

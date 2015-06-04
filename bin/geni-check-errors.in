@@ -13,7 +13,10 @@ class LogChecker(object):
         # Flush the output before calling system otherwise
         # they appear out of order.
         sys.stdout.flush()
-        os.system('grep -v -f %s %s' % (self.grepv, self.fname))
+        if self.fname.endswith(".gz"):
+            os.system('zcat %s | grep -v -E -f %s -' % (self.fname, self.grepv))
+        else:
+            os.system('grep -v -E -f %s %s' % (self.grepv, self.fname))
 
 def apacheLogPath(fname):
     """Determine the correct path to the apache log file with the given
@@ -34,8 +37,12 @@ checks = [LogChecker(apacheLogPath('ch_error.log'),
                      '@pkgdatadir@/ch-error-log-out.txt'),
           LogChecker('/usr/share/geni-ch/chapi/AMsoil/log/amsoil.log',
                      '@pkgdatadir@/amsoil-log-out.txt'),
+          LogChecker(apacheLogPath('error.log.1'),
+                     '/home/ahelsing/chapi/bin/apache-error-log-out.txt'),
           LogChecker(apacheLogPath('error.log'),
                      '@pkgdatadir@/apache-error-log-out.txt'),
+          LogChecker('/var/log/geni-chapi/chapi.log.1',
+                     '/home/ahelsing/chapi/bin/chapi-log-out.txt'),
           LogChecker('/var/log/geni-chapi/chapi.log',
                      '@pkgdatadir@/chapi-log-out.txt')]
 
