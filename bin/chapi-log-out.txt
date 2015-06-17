@@ -55,6 +55,7 @@ INFO    :amsoil:\[opsmon\] Requested opsmon info for authority ch.geni.net
 INFO    :chapi:SPEAKSFOR: 'urn:publicid:IDN\+ch.geni.net\+tool\+genidesktop\-uky'
 INFO    :chapi:SPEAKSFOR: 'urn:publicid:IDN\+ch.geni.net\+tool\+slice_service.* is speaking for
 INFO    :chapi:SPEAKSFOR: 'urn:publicid:IDN\+emulab.net\+authority\+sa' is speaking for
+INFO    :chapi:SPEAKSFOR: 'urn:publicid:IDN\+ch.geni.net\+tool\+collector.*' is speaking for 
 denied access during maintenance outage
 Cannot access GENI Clearinghouse during maintenance outage.
 INFO    :chapi:MA: Renewing inside cert for 

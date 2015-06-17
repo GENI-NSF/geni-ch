@@ -12,6 +12,7 @@
    about members setting their own attributes or their irods_username,
    and messages about failing to access the system during maintenance.
    It also looks at the older `chapi.log.1` and `error.log.1`. (#360)
+ * `geni-check-errors` now also ignores collector tool speaksfor. (#361)
 
 == 1.28 ==
  * Update aggregate info for some stitchable aggregates
