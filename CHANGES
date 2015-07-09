@@ -15,6 +15,8 @@
  * `geni-check-errors` now also ignores collector tool speaksfor. (#361)
  * remove hard-coded names in SAv1Implementation.py, 
    MAv1Implementation.py and cert-utils.py (#25)
+ * Add geni-list-idp-members query script to print the number of
+   users per IDP (by eppn suffix). (#364).
 
 == 1.28 ==
  * Update aggregate info for some stitchable aggregates
