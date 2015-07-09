@@ -156,6 +156,11 @@ def make_csr_from_key(private_key):
 # Return cert
 def make_cert(uuid, email, urn, signer_cert_file, signer_key_file, csr_file,
               days=365, use_csr_subject=False):
+
+    import amsoil.core.pluginmanager as pm
+    config = pm.getService('config')
+    ssl_config_file = config.get("chapi.ssl_config_file")
+
     # Check validity of args (weak, I know)
     # Ensure days is an integer, raise exception otherwise
     days = int(days)
@@ -186,7 +191,7 @@ def make_cert(uuid, email, urn, signer_cert_file, signer_key_file, csr_file,
     os.close(cert_fd)
 
     sign_csr_args = ['/usr/bin/openssl', 'ca',
-                     '-config', '/usr/share/geni-ch/CA/openssl.cnf',
+                     '-config', ssl_config_file,
                      '-extfile', ext_file,
                      '-policy', 'policy_anything',
                      '-out', cert_file,

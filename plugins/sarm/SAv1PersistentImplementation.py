@@ -83,6 +83,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         self.db = pm.getService('chdbengine')
         self.config = pm.getService('config')
         self.cert = self.config.get('chapi.sa_cert')
+        self.ma_cert = self.config.get('chapi.ma_cert')
         self.key = self.config.get('chapi.sa_key')
         self.urn = get_urn_from_cert(open(self.cert).read())
 
@@ -344,7 +345,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         row = rows[0]
         expiration = row.expiration
         # Temporary fix, see ticket #84.
-        with open('/usr/share/geni-ch/ma/ma-cert.pem', 'r') as f:
+        with open(self.ma_cert, 'r') as f:
             ma_cert = f.read()
         client_chain = client_cert + ma_cert
         user_gid = gid.GID(string=client_chain)

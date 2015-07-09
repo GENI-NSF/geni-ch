@@ -173,11 +173,6 @@ class MAv1Implementation(MAv1DelegateBase):
             for f in os.listdir(trusted_root) if not f.startswith('CAT')]
 
         self.logging_service = pm.getService('loggingv1handler')
-        # FIXME: Parametrize path to these certs
-        # init for ClientAuth
-        self.kmcert = '/usr/share/geni-ch/km/km-cert.pem'
-        self.kmkey = '/usr/share/geni-ch/km/km-key.pem'
-
 
     # This call is unprotected: no checking of credentials
     def get_version(self, session):
