@@ -17,6 +17,8 @@
    MAv1Implementation.py and cert-utils.py (#25)
  * Add geni-list-idp-members query script to print the number of
    users per IDP (by eppn suffix). (#364).
+ * Add geni-list-pending-requests query script to print all pending
+   project join requests (project_name, requestor username and request time)
 
 == 1.28 ==
  * Update aggregate info for some stitchable aggregates
