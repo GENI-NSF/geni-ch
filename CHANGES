@@ -13,6 +13,8 @@
    and messages about failing to access the system during maintenance.
    It also looks at the older `chapi.log.1` and `error.log.1`. (#360)
  * `geni-check-errors` now also ignores collector tool speaksfor. (#361)
+ * remove hard-coded names in SAv1Implementation.py, 
+   MAv1Implementation.py and cert-utils.py (#25)
 
 == 1.28 ==
  * Update aggregate info for some stitchable aggregates
