@@ -186,6 +186,9 @@ dist_srcerts_DATA = \
 	sr/certs/gatech-ig-of.pem \
 	sr/certs/gpo-eg-of.pem \
 	sr/certs/gpo-eg.pem \
+	sr/certs/gpo-ig-boss.pem \
+	sr/certs/gpo-ig-cm.pem \
+	sr/certs/gpo-ig-of.pem \
 	sr/certs/gpo-og.pem \
 	sr/certs/moxi-ig-boss.pem \
 	sr/certs/moxi-ig-cm.pem \
@@ -228,14 +231,19 @@ dist_srcerts_DATA = \
 	sr/certs/uky-ig-boss.pem \
 	sr/certs/uky-ig-cm.pem \
 	sr/certs/uky-ig-of.pem \
+	sr/certs/uky-pg.pem \
 	sr/certs/ukypks2-ig-boss.pem \
 	sr/certs/ukypks2-ig-cm.pem \
 	sr/certs/ukypks2-ig-of.pem \
 	sr/certs/umkc-ig-boss.pem \
 	sr/certs/umkc-ig-cm.pem \
 	sr/certs/umkc-ig-of.pem \
+	sr/certs/utah-ig-boss.pem \
+	sr/certs/utah-ig-cm.pem \
+	sr/certs/utah-ig-of.pem \
 	sr/certs/utah-clab-boss.pem \
 	sr/certs/utah-clab-cm.pem \
+	sr/certs/utah-pg.pem \
 	sr/certs/utah-stitch-boss.pem \
 	sr/certs/utah-stitch-cm.pem \
 	sr/certs/utc-ig-boss.pem \
