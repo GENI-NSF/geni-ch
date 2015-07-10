@@ -1,0 +1,22 @@
+.TH geni-list-pending-requests 1 "July 10, 2015"
+.SH NAME
+geni-list-pending-requests \- list the pending project join requests
+.SH SYNOPSIS
+.B geni-list-pending-requests
+[\-c CONFIG]
+.SH DESCRIPTION
+List all pending project join requests. Includes the project name, requester,
+and the date and time of the request.
+.SH OPTIONS
+.TP
+\-c <config file>, \-\-config <config file>
+Supply a configuration file. The default is /etc/geni-chapi/chapi.ini
+.TP
+\-h, \-\-help
+Show summary of options.
+.SH EXAMPLES
+.TP
+List all pending project join requests:
+.B geni-list-pending-requests
+.SH AUTHOR
+geni-list-pending-requests was written by Raytheon BBN Technologies.
