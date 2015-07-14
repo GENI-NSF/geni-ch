@@ -1,0 +1,132 @@
+#!/usr/bin/env python
+# -*- Mode: python -*-
+#
+#----------------------------------------------------------------------
+# Copyright (c) 2013-2015 Raytheon BBN Technologies
+#
+# Permission is hereby granted, free of charge, to any person obtaining
+# a copy of this software and/or hardware specification (the "Work") to
+# deal in the Work without restriction, including without limitation the
+# rights to use, copy, modify, merge, publish, distribute, sublicense,
+# and/or sell copies of the Work, and to permit persons to whom the Work
+# is furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be
+# included in all copies or substantial portions of the Work.
+#
+# THE WORK IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+# MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+# NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+# HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+# WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE WORK OR THE USE OR OTHER DEALINGS
+# IN THE WORK.
+#----------------------------------------------------------------------
+
+#----------------------------------------------------------------------
+#
+# Re enable a disabled GENI user
+#
+# Communicates with a GENI Member Authority via its public API
+#
+#----------------------------------------------------------------------
+
+import sys
+import logging
+import optparse
+import psycopg2
+import psycopg2.extras
+from urlparse import urlparse
+import uuid
+from chapiclient import chapi
+
+def init_logging(options):
+    level = logging.INFO
+    if options.debug:
+        level = logging.DEBUG
+    logging.basicConfig(level=level)
+
+def parse_args(argv):
+    parser = optparse.OptionParser(usage="Re enable the given member")
+    parser.add_option("--debug", action="store_true", default=False,
+                       help="enable debugging output")
+    parser.add_option("-k", "--keyfile", metavar="FILE",
+                      help="Invoker's private key")
+    parser.add_option("-c", "--certfile", metavar="FILE",
+                      help="Invoker's GENI certificate")
+    parser.add_option("-u", "--url", help="base authority URL (https://chSOMETHING)")
+    parser.add_option("-m", "--member", help="member id (a UUID or username)")
+    options,args = parser.parse_args()
+    if not (options.keyfile and options.certfile and options.url
+            and options.member):
+        parser.print_usage()
+        raise Exception("Missing some required arguments")
+    return options,args
+
+def verify_url(url):
+    parsed = urlparse(url)
+    if (parsed.scheme in ('http', 'https')
+        and parsed.netloc
+        and parsed.path):
+        return parsed.geturl()
+    else:
+        raise Exception("Invalid url %r" % (url))
+
+def load_cert(certfile):
+    f = open(certfile)
+    cert = f.read()
+    f.close()
+    # Can we do additional tests to verify that this is an x509 cert?
+    # Or will that be taken care of downstream, by the ch_interface?
+    return cert
+
+def load_private_key(certfile):
+    f = open(certfile)
+    key = f.read()
+    f.close()
+    # Can we do additional tests to verify that this is a private key?
+    # Or will that be taken care of downstream, by the ch_interface?
+    return key
+
+def main(argv=None):
+    if argv is None:
+        argv = sys.argv
+    try:
+        options,args = parse_args(argv)
+        init_logging(options)
+        url = verify_url(chapi.service_url(options.url, 'MA'))
+        cert = load_cert(options.certfile)
+        pkey = load_private_key(options.keyfile)
+    except Exception as e:
+        sys.stderr.write(str(e) + "\n")
+        return 1
+
+    logger = logging.getLogger()
+    member_urn = chapi.find_member_urn(options.member, url, cert, pkey)
+    if member_urn is None:
+        print "ERROR: Member %s not found" % options.member
+        return 1
+
+    proxy = chapi.make_proxy(url, cert, pkey)
+    result = proxy.enable_user(member_urn, True, [], dict())
+
+    if not 'code' in result:
+        raise Exception("Could not enable user %s. Result: %s" %
+                        (options.member, result))
+    status = result['code']
+    if not status == 0:
+        if result.has_key('value'):
+            raise Exception("Could not enable user %s. Error %d: %s" %
+                            (options.member, result['code'], result['output']))
+        else:
+            raise Exception("Could not enable user %s" % options.member)
+    was = result['value']
+    if was:
+        sys.stderr.write("User %s already enabled\n" % options.member)
+    else:
+        sys.stderr.write("Re-enabled user %s\n" % options.member)
+    return 0
+
+if __name__ == "__main__":
+    sys.exit(main())
