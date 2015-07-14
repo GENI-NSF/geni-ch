@@ -20,6 +20,7 @@
  * Add geni-list-pending-requests query script to print all pending
    project join requests (project_name, requestor username and request time)
  * Add iMinds w-iLab.t and Virtual Wall 1 aggregates (#367)
+ * Migrate management scripts from geni-portal to geni-ch (#101)
 
 == 1.28 ==
  * Update aggregate info for some stitchable aggregates
