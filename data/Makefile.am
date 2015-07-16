@@ -195,6 +195,7 @@ dist_srcerts_DATA = \
 	sr/certs/im-wilab-ssl.pem \
 	sr/certs/im-vw1-cm.pem \
 	sr/certs/im-vw1-ssl.pem \
+	sr/certs/kaiserslautern-og.pem \
 	sr/certs/moxi-ig-boss.pem \
 	sr/certs/moxi-ig-cm.pem \
 	sr/certs/moxi-ig-of.pem \
