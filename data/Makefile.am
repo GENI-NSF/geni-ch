@@ -27,6 +27,7 @@ AM_SQL = \
 	sr/sql/add-gpo-og.sql \
 	sr/sql/add-im-wilab.sql \
 	sr/sql/add-im-vw1.sql \
+	sr/sql/add-kaiserslautern-og.sql \
 	sr/sql/add-moxi-ig-of.sql \
 	sr/sql/add-moxi-ig.sql \
 	sr/sql/add-moxi-of.sql \
@@ -116,6 +117,7 @@ sr/sql/add-gpo-eg.sql: $(srcdir)/sr/sql/add-gpo-eg.sql.in
 sr/sql/add-gpo-og.sql: $(srcdir)/sr/sql/add-gpo-og.sql.in
 sr/sql/add-im-wilab.sql: $(srcdir)/sr/sql/add-im-wilab.sql.in
 sr/sql/add-im-vw1.sql: $(srcdir)/sr/sql/add-im-vw1.sql.in
+sr/sql/add-kaiserslautern-og.sql: $(srcdir)/sr/sql/add-kaiserslautern-og.sql.in
 sr/sql/add-moxi-ig-of.sql: $(srcdir)/sr/sql/add-moxi-ig-of.sql.in
 sr/sql/add-moxi-ig.sql: $(srcdir)/sr/sql/add-moxi-ig.sql.in
 sr/sql/add-moxi-of.sql: $(srcdir)/sr/sql/add-moxi-of.sql.in
