@@ -16,9 +16,10 @@
  * remove hard-coded names in SAv1Implementation.py, 
    MAv1Implementation.py and cert-utils.py (#25)
  * Add geni-list-idp-members query script to print the number of
-   users per IDP (by eppn suffix). (#364).
+   users per IDP (by eppn suffix). (#263).
  * Add geni-list-pending-requests query script to print all pending
-   project join requests (project_name, requestor username and request time)
+   project join requests (project_name, requestor username and request
+   time) (#263)
  * Add iMinds w-iLab.t and Virtual Wall 1 aggregates (#367)
 
 == 1.28 ==
