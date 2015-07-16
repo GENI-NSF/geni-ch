@@ -182,9 +182,12 @@ dist_srcerts_DATA = \
 	sr/certs/colorado-ig-boss.pem \
 	sr/certs/colorado-ig-cm.pem \
 	sr/certs/colorado-ig-of.pem \
+	sr/certs/cornell-ig-cm.pem \
+	sr/certs/cornell-ig-of.pem \
 	sr/certs/cwru-ig-boss.pem \
 	sr/certs/cwru-ig-cm.pem \
 	sr/certs/exosm.pem \
+	sr/certs/fiu-eg.pem \
 	sr/certs/gatech-ig-boss.pem \
 	sr/certs/gatech-ig-cm.pem \
 	sr/certs/gatech-ig-of.pem \
@@ -194,18 +197,44 @@ dist_srcerts_DATA = \
 	sr/certs/gpo-ig-cm.pem \
 	sr/certs/gpo-ig-of.pem \
 	sr/certs/gpo-og.pem \
+	sr/certs/illinois-ig-boss.pem \
+	sr/certs/illinois-ig-cm.pem \
+	sr/certs/illinois-ig-of.pem \
 	sr/certs/im-wilab-cm.pem \
 	sr/certs/im-wilab-ssl.pem \
 	sr/certs/im-vw1-cm.pem \
 	sr/certs/im-vw1-ssl.pem \
+	sr/certs/kansas-ig-boss.pem \
+	sr/certs/kansas-ig-cm.pem \
+	sr/certs/kansas-ig-of.pem \
+	sr/certs/kettering-ig-boss.pem \
+	sr/certs/kettering-ig-cm.pem \
+	sr/certs/kettering-ig-of.pem \
+	sr/certs/max-ig-boss.pem \
+	sr/certs/max-ig-cm.pem \
+	sr/certs/max-ig-of.pem \
+	sr/certs/max.pem \
+	sr/certs/missouri-ig-boss.pem \
+	sr/certs/missouri-ig-cm.pem \
+	sr/certs/missouri-ig-of.pem \
 	sr/certs/moxi-ig-boss.pem \
 	sr/certs/moxi-ig-cm.pem \
 	sr/certs/moxi-ig-of.pem \
 	sr/certs/moxi-of.pem \
 	sr/certs/nicta-eg.pem \
+	sr/certs/northwestern-ig-boss.pem \
+	sr/certs/northwestern-ig-cm.pem \
+	sr/certs/northwestern-ig-of.pem \
 	sr/certs/nps-ig-boss.pem \
 	sr/certs/nps-ig-cm.pem \
 	sr/certs/nps-ig-of.pem \
+	sr/certs/nysernet-ig-boss.pem \
+	sr/certs/nysernet-ig-cm.pem \
+	sr/certs/nysernet-ig-of.pem \
+	sr/certs/nysernet-of.pem \
+	sr/certs/nyu-ig-boss.pem \
+	sr/certs/nyu-ig-cm.pem \
+	sr/certs/nyu-ig-of.pem \
 	sr/certs/ohmetrodc-ig-boss.pem \
 	sr/certs/ohmetrodc-ig-cm.pem \
 	sr/certs/ohmetrodc-ig-of.pem \
@@ -219,11 +248,16 @@ dist_srcerts_DATA = \
 	sr/certs/rutgers-ig-boss.pem \
 	sr/certs/rutgers-ig-cm.pem \
 	sr/certs/rutgers-ig-of.pem \
+	sr/certs/sl-of.pem \
 	sr/certs/sl-eg-of.pem \
 	sr/certs/sl-eg.pem \
 	sr/certs/sox-ig-boss.pem \
 	sr/certs/sox-ig-cm.pem \
 	sr/certs/sox-ig-of.pem \
+	sr/certs/sox-of.pem \
+	sr/certs/stanford-ig-boss.pem \
+	sr/certs/stanford-ig-cm.pem \
+	sr/certs/stanford-ig-of.pem \
 	sr/certs/tamu-eg-of.pem \
 	sr/certs/tamu-eg.pem \
 	sr/certs/ucdavis-eg-of.pem \
@@ -236,24 +270,29 @@ dist_srcerts_DATA = \
 	sr/certs/ucla-ig-of.pem \
 	sr/certs/ufl-eg-of.pem \
 	sr/certs/ufl-eg.pem \
+	sr/certs/uh-eg.pem \
 	sr/certs/uky-ig-boss.pem \
 	sr/certs/uky-ig-cm.pem \
 	sr/certs/uky-ig-of.pem \
 	sr/certs/uky-pg.pem \
+	sr/certs/uky-pg-boss.pem \
 	sr/certs/ukypks2-ig-boss.pem \
 	sr/certs/ukypks2-ig-cm.pem \
 	sr/certs/ukypks2-ig-of.pem \
 	sr/certs/umkc-ig-boss.pem \
 	sr/certs/umkc-ig-cm.pem \
 	sr/certs/umkc-ig-of.pem \
+	sr/certs/utah-clab-boss.pem \
+	sr/certs/utah-clab-cm.pem \
 	sr/certs/utah-ig-boss.pem \
 	sr/certs/utah-ig-cm.pem \
 	sr/certs/utah-ig-of.pem \
-	sr/certs/utah-clab-boss.pem \
-	sr/certs/utah-clab-cm.pem \
 	sr/certs/utah-pg.pem \
 	sr/certs/utah-stitch-boss.pem \
 	sr/certs/utah-stitch-cm.pem \
+	sr/certs/utahddc-ig-boss.pem \
+	sr/certs/utahddc-ig-cm.pem \
+	sr/certs/utahddc-ig-of.pem \
 	sr/certs/utc-ig-boss.pem \
 	sr/certs/utc-ig-cm.pem \
 	sr/certs/utc-ig-of.pem \
@@ -262,7 +301,11 @@ dist_srcerts_DATA = \
 	sr/certs/uwashington-ig-of.pem \
 	sr/certs/wall2-ca.pem \
 	sr/certs/wall2-cm.pem \
+	sr/certs/wisconsin-ig-boss.pem \
+	sr/certs/wisconsin-ig-cm.pem \
+	sr/certs/wisconsin-ig-of.pem \
 	sr/certs/wsu-eg-of.pem \
 	sr/certs/wsu-eg.pem \
 	sr/certs/wvn-eg-of.pem \
 	sr/certs/wvn-eg.pem
+
