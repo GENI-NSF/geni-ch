@@ -23,33 +23,56 @@ INFO    :chapi:MA: lookup_member_info: no member_urn row
 INFO    :chapi:SA: Returning empty list of slices
 INFO    :chapi:LOG:.*Result from 
 INFO    :chapi:SA:.*Result from get_requests_by_user
-INFO    :chapi:PGCH:.*: No slice found URN urn:publicid:IDN+ch
-INFO    :chapi:PGCH:.*: Result from Resolve: {'output': 'No slice found URN urn:publicid:IDN+ch.*'.*}
-ERROR   :amsoil:\[sav1\] \[ARGUMENT\] ARGUMENT_ERROR (Unknown slice urns: \[\['urn:publicid:IDN+ch.*'\]\])
-INFO    :chapi:SA:.*: Result from lookup_slices: {'output': "\[ARGUMENT\] ARGUMENT_ERROR (Unknown slice urns: \[\['urn:publicid:IDN+ch.*'\]\])".*}
-INFO    :chapi:PGCH:.*: Result from Resolve: {'output': "\[ARGUMENT\] ARGUMENT_ERROR (Unknown slice urns: \[\['urn:publicid:IDN+ch.*'\]\])".*}
-INFO    :chapi:SPEAKSFOR: 'urn:publicid:IDN+ch.*+authority+portal' is speaking for 'urn:publicid:IDN+ch.*+user+
-ERROR   :amsoil:\[sav1\] \[ARGUMENT\] ARGUMENT_ERROR (Unknown sliver urns
-INFO    :chapi:SA:.*: Result from update_sliver_info: {'output': "\[ARGUMENT\] ARGUMENT_ERROR (Unknown sliver urns
+INFO    :chapi:PGCH:.*: No slice found URN urn:publicid:IDN\+ch
+INFO    :chapi:PGCH:.*: Result from Resolve: \{'output': 'No slice found URN urn:publicid:IDN\+ch.*'.*\}
+ERROR   :amsoil:\[sav1\] \[ARGUMENT\] ARGUMENT_ERROR \(Unknown slice urns: \[\['urn:publicid:IDN\+ch.*'\]\]\)
+INFO    :chapi:SA:.*: Result from lookup_slices: \{'output': "\[ARGUMENT\] ARGUMENT_ERROR \(Unknown slice urns: \[\['urn:publicid:IDN\+ch.*'\]\]\)".*\}
+INFO    :chapi:PGCH:.*: Result from Resolve: \{'output': "\[ARGUMENT\] ARGUMENT_ERROR \(Unknown slice urns: \[\['urn:publicid:IDN\+ch.*'\]\]\)".*\}
+INFO    :chapi:SPEAKSFOR: 'urn:publicid:IDN\+ch.*\+authority\+portal' is speaking for 'urn:publicid:IDN\+ch.*\+user\+
+ERROR   :amsoil:\[sav1\] \[ARGUMENT\] ARGUMENT_ERROR \(Unknown sliver urns.*\)
+INFO    :chapi:SA:.*: Result from update_sliver_info: \{'output': "\[ARGUMENT\] ARGUMENT_ERROR \(Unknown sliver urns.*\).*\}
 INFO    :chapi:SA: .*: Created slice
 INFO    :chapi:SA: .*: .* Added member .* in role .* to slice
-ERROR   :amsoil:\[sav1\] \[ARGUMENT\] ARGUMENT_ERROR (Can't get slice credential on expired or non-existent slice
-INFO    :chapi:SA: .*: Result from get_credentials: {'output': "\[ARGUMENT\] ARGUMENT_ERROR (Can't get slice credential on expired or non-existent slice
+ERROR   :amsoil:\[sav1\] \[ARGUMENT\] ARGUMENT_ERROR \(Can't get slice credential on expired or non-existent slice.*\)
+INFO    :chapi:SA: .*: Result from get_credentials: \{'output': "\[ARGUMENT\] ARGUMENT_ERROR \(Can't get slice credential on expired or non-existent slice.*\).*\}
 INFO    :chapi:MA: .*: .* registering SSH key
 INFO    :chapi:SA: .*: Created project
 INFO    :chapi:MA: .*: Activated GENI user :
-INFO    :chapi:MA: .*: Authorizing client urn:publicid:IDN+ch.geni.net+authority+portal for member
+INFO    :chapi:MA: .*: Authorizing client urn:publicid:IDN\+ch.geni.net\+authority\+portal for member
 INFO    :chapi:SA: Deleting .* expired sliver_info records
-ERROR   :amsoil:\[sav1\] \[DUPLICATE\] DUPLICATE_ERROR (There already exists a slice named 
-INFO    :chapi:SA: .*: Result from create_slice: {'output': '\[DUPLICATE\] DUPLICATE_ERROR (There already exists a slice named 
-ERROR   :amsoil:\[sav1\] \[ARGUMENT\] ARGUMENT_ERROR (Cannot shorten slice lifetime 
-INFO    :chapi:SA: .*: Result from update_slice: {'output': '\[ARGUMENT\] ARGUMENT_ERROR (Cannot shorten slice lifetime
-INFO    :chapi:SA: .*: Result from get_credentials: {'output': "\[ARGUMENT\] ARGUMENT_ERROR (Unknown slice urns: \[\['urn:publicid:IDN+ch
+ERROR   :amsoil:\[sav1\] \[DUPLICATE\] DUPLICATE_ERROR \(There already exists a slice named .*\)
+INFO    :chapi:SA: .*: Result from create_slice: \{'output': '\[DUPLICATE\] DUPLICATE_ERROR \(There already exists a slice named .*\).*\}
+ERROR   :amsoil:\[sav1\] \[ARGUMENT\] ARGUMENT_ERROR \(Cannot shorten slice lifetime .*\)
+INFO    :chapi:SA: .*: Result from update_slice: \{'output': '\[ARGUMENT\] ARGUMENT_ERROR \(Cannot shorten slice lifetime.*\).*\}
+INFO    :chapi:SA: .*: Result from get_credentials: \{'output': "\[ARGUMENT\] ARGUMENT_ERROR \(Unknown slice urns: \[\['urn:publicid:IDN\+ch.*\).*\}
 INFO    :chapi:SA: .*: .* Added member .* in role .* to project
 INFO    :chapi:SA: Expiring project invitation ID
 INFO    :chapi:SA: .*: .* accepted an invitation to join project
 INFO    :chapi:SA: .*: .* accepted an invitation to join slice
 INFO    :amsoil:\[opsmon\] Requested opsmon info for slice
 INFO    :amsoil:\[opsmon\] Requested opsmon info for user
-INFO    :chapi:SPEAKSFOR: 'urn:publicid:IDN+ch.geni.net+tool+genidesktop-uky'
-INFO    :chapi:SPEAKSFOR: 'urn:publicid:IDN+ch.geni.net+tool+slice_service.* is speaking for
+INFO    :amsoil:\[opsmon\] Requested opsmon info for authority ch.geni.net
+INFO    :chapi:SPEAKSFOR: 'urn:publicid:IDN\+ch.geni.net\+tool\+genidesktop\-uky'
+INFO    :chapi:SPEAKSFOR: 'urn:publicid:IDN\+ch.geni.net\+tool\+slice_service.* is speaking for
+INFO    :chapi:SPEAKSFOR: 'urn:publicid:IDN\+emulab.net\+authority\+sa' is speaking for
+INFO    :chapi:SPEAKSFOR: 'urn:publicid:IDN\+ch.geni.net\+tool\+collector.*' is speaking for 
+denied access during maintenance outage
+Cannot access GENI Clearinghouse during maintenance outage.
+INFO    :chapi:MA: Renewing inside cert for 
+INFO    :chapi:MA: Updated inside certificate for 
+INFO    :chapi:MA: Reusing private key for member 
+INFO    :chapi:MA: Updated certificate for 
+INFO    :chapi:MA: .*: Created certificate for 
+INFO    :chapi:MA: Creating new private key for member 
+INFO    :chapi:MA: Inserted new certificate for 
+ARGUMENT_ERROR \(Request [0-9]+ is no longer pending\)
+INFO    :chapi:MA: .*: Removed member .* attribute irods_username
+INFO    :chapi:MA: .*: Set member .* attribute irods_username to geni-
+Unknown sliver urn .+ - cannot delete sliver info record
+Result from delete_sliver_info: \{'output': "\[ARGUMENT\] ARGUMENT_ERROR \(Unknown sliver urns.*\)\".*\}
+INFO    :chapi:MA: .+: Set member .+ attribute telephone_number to 
+INFO    :chapi:MA: .+: Set member .+ attribute url to 
+INFO    :chapi:MA: .+: Set member .+ attribute reason to 
+DUPLICATE_ERROR \(Member urn:publicid:IDN\+ch.* already in slice\)
+INFO    :chapi:MA: .*: Set member .* attribute displayName to
+INFO    :chapi:SA: .*: Ignoring duplicate project join request to join 

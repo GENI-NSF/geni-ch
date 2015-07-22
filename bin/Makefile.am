@@ -19,7 +19,7 @@ edit = sed \
 	-e 's|@tooldir[@]|$(tooldir)|g' \
 	-e 's|@gcfdir[@]|$(gcfdir)|g'
 
-geni-check-errors geni-sign-tool-csr geni-expiring-certs: Makefile
+geni-check-errors geni-list-idp-members geni-list-pending-requests geni-sign-tool-csr geni-expiring-certs: Makefile
 	rm -f $@ $@.tmp
 	srcdir=''; \
 	  test -f ./$@.in || srcdir=$(srcdir)/; \
@@ -28,22 +28,30 @@ geni-check-errors geni-sign-tool-csr geni-expiring-certs: Makefile
 	mv $@.tmp $@
 
 geni-check-errors: $(srcdir)/geni-check-errors.in
+geni-list-idp-members: $(srcdir)/geni-list-idp-members.in
+geni-list-pending-requests: $(srcdir)/geni-list-pending-requests.in
 geni-sign-tool-csr: $(srcdir)/geni-sign-tool-csr.in
 geni-expiring-certs: $(srcdir)/geni-expiring-certs.in
 
 # Distribute but do not install
 EXTRA_DIST =  \
 	geni-check-errors.in \
+	geni-list-idp-members.in \
+	geni-list-pending-requests.in \
 	geni-sign-tool-csr.in \
 	geni-expiring-certs.in
 
 CLEANFILES =  \
 	geni-check-errors \
+	geni-list-idp-members \
+	geni-list-pending-requests \
 	geni-sign-tool-csr \
 	geni-expiring-certs
 
 sbin_SCRIPTS = \
 	geni-check-errors \
+	geni-list-idp-members \
+	geni-list-pending-requests \
 	geni-sign-tool-csr \
 	geni-expiring-certs
 
@@ -57,6 +65,7 @@ dist_sbin_SCRIPTS = \
 	geni-add-member-privilege \
 	geni-create-ma-crl \
 	geni-list-member-projects \
+	geni-list-pending-requests \
 	geni-revoke-member-certificate \
 	geni-revoke-member-privilege
 

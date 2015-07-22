@@ -96,6 +96,11 @@ default_parameters = [
         DESC_KEY: "Location of CHAPI's logging configuration file"
     },
     {
+        NAME_KEY: "chapi.ssl_config_file",
+        VALUE_KEY: os.path.join(CA_DIR, 'openssl.cnf'),
+        DESC_KEY: "Location of CHAPI's SSL configuration file"
+    },
+    {
         NAME_KEY: "chapi.log_verbose",
         VALUE_KEY: False,
         DESC_KEY: "Set true to enable verbose debug logging in CHAPI."

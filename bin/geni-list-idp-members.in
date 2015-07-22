@@ -1,0 +1,90 @@
+#!/usr/bin/env python
+# -*- Mode: python -*-
+#
+#----------------------------------------------------------------------
+# Copyright (c) 2014-2015 Raytheon BBN Technologies
+#
+# Permission is hereby granted, free of charge, to any person obtaining
+# a copy of this software and/or hardware specification (the "Work") to
+# deal in the Work without restriction, including without limitation the
+# rights to use, copy, modify, merge, publish, distribute, sublicense,
+# and/or sell copies of the Work, and to permit persons to whom the Work
+# is furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be
+# included in all copies or substantial portions of the Work.
+#
+# THE WORK IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+# MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+# NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+# HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+# WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE WORK OR THE USE OR OTHER DEALINGS
+# IN THE WORK.
+#----------------------------------------------------------------------
+
+#----------------------------------------------------------------------
+#
+# List number of users at each IdP institution
+# Based on eppn suffix
+#
+#----------------------------------------------------------------------
+
+import ConfigParser
+import optparse
+import psycopg2
+import psycopg2.extras
+import sys
+import urlparse
+
+def list_idp_counts(conn):
+    cursor = conn.cursor()
+    sql = "select substring(value from 1+position('@' in  value)) a" +\
+    ", count(*) b from ma_member_attribute" +\
+    " where name = 'eppn' group by a order by b desc"
+    cursor.execute(sql)
+    rows = cursor.fetchall()
+    for row in rows:
+        print"%s: %s" % (row[0], row[1])
+
+def db_connect(uri):
+    result = urlparse.urlparse(uri)
+    username = result.username
+    password = result.password
+    database = result.path[1:]
+    hostname = result.hostname
+    connection = psycopg2.connect(database = database, user = username,
+                                  password = password, host = hostname)
+    return connection
+
+def parse_args(argv):
+    parser = optparse.OptionParser()
+    default_conf = '@pkgsysconfdir@/chapi.ini'
+    parser.add_option("-c", "--conf", default=default_conf,
+                      help='chapi config file (default:%s)' % (default_conf))
+    options,args = parser.parse_args()
+    return options,args
+
+def main(argv=None):
+    if argv is None:
+        argv = sys.argv
+    try:
+        options,args = parse_args(argv)
+    except Exception as e:
+        sys.stderr.write(str(e) + "\n")
+        return 1
+
+    config = ConfigParser.RawConfigParser()
+    config.read(options.conf)
+    db_url = config.get('chrm', 'db_url')
+
+    conn = db_connect(db_url)
+    try:
+        list_idp_counts(conn)
+    finally:
+        conn.close()
+    return 0
+
+if __name__ == "__main__":
+    sys.exit(main())
