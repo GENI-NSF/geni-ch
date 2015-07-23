@@ -1,0 +1,233 @@
+#!/usr/bin/env python
+# -*- Mode: python -*-
+#
+#----------------------------------------------------------------------
+# Copyright (c) 2013-2015 Raytheon BBN Technologies
+#
+# Permission is hereby granted, free of charge, to any person obtaining
+# a copy of this software and/or hardware specification (the "Work") to
+# deal in the Work without restriction, including without limitation the
+# rights to use, copy, modify, merge, publish, distribute, sublicense,
+# and/or sell copies of the Work, and to permit persons to whom the Work
+# is furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be
+# included in all copies or substantial portions of the Work.
+#
+# THE WORK IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+# MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+# NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+# HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+# WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE WORK OR THE USE OR OTHER DEALINGS
+# IN THE WORK.
+#----------------------------------------------------------------------
+
+#----------------------------------------------------------------------
+# Script to 
+#    Copy records older than LIVE_WINDOW days from 'live' 
+#       database tables to 'archive' tables
+#    Copy records older than ARCHIVE_WINDOW days from 'archive'
+#       database tables to dump files
+#    Delete dump files older than DUMP_WINDOW days
+# 
+#----------------------------------------------------------------------
+
+
+import datetime
+import json
+import optparse
+import os
+import sys
+import tempfile
+
+
+# Parse arguments with defaults
+def parse_args(argv):
+    parser = optparse.OptionParser(usage="Archive database records")
+    parser.add_option("--hostname", default="localhost",
+                      help="Database hostname")
+    parser.add_option("--user", default="portal",
+                      help="Database user")
+    parser.add_option("--database", default="portal",
+                      help="Database name")
+    parser.add_option("--tables", default="/tmp/archive_tables.json",
+                     help="Name of JSON file with information about data tables to archive")
+    parser.add_option("--dumpdir", default="/tmp/archive_dumps",
+                     help="Directory into which to dump archive files")
+    parser.add_option("--live-window", default=30,
+                     help="Number of days to keep table data 'live' (in original tables)")
+    parser.add_option("--archive-window", default=180,
+                     help="Number of days to keep table data 'archived' (in archive tables)")
+    parser.add_option("--dump-window", default=720,
+                      help="Number of days to keep files in dump directory")
+
+    options,args = parser.parse_args()
+    return options, args
+
+# Class to archive and dump data tables based on configured time windows
+class ArchiveSQLGenerator:
+    def __init__(self, options):
+        self._options = options
+
+        # Create temp files for sql commands and shell commands 
+        # Shell commands include command to run sql commands
+        shell_file, shell_filename = tempfile.mkstemp()
+        os.close(shell_file)
+        self._shell_filename = shell_filename
+
+        sql_file, sql_filename = tempfile.mkstemp()
+        os.close(sql_file)
+        self._sql_filename = sql_filename
+
+        # Parse json file with table information
+        data = open(self._options.tables).read()
+        self._table_info = json.loads(data)
+
+        # Hold onto current date for tagging dump files
+        self._now_label = \
+            datetime.datetime.today().strftime('%Y-%m-%d-%0H%0M%0S')
+
+    # Top level method
+    # Generate the SQL script
+    # Generate the shell script to run SQL script and run it
+    # Then delete both scripts
+    def generate(self):
+        
+        # Make sure archive directory exists
+        self.addLine("mkdir -p %s" % self._options.dumpdir, 
+                     self._shell_filename)
+
+        # Generate sql for each table in configuration table info
+        for table in self._table_info:
+            table_name = table['name']
+            time_clause = table['time_clause']
+            dependencies = []
+            if 'dependencies' in table: dependencies = table['dependencies']
+            self.generate_sql(table_name, time_clause, dependencies)
+
+        # Generate shell command to execute the SQL script
+        self.addLine("psql -U %s -h %s %s -f %s" %
+                     (self._options.user, self._options.hostname,
+                      self._options.database, self._sql_filename), 
+                     self._shell_filename)
+
+        # tar all the TABLE files into a single DUMP file
+        # zip and delete TABLE files
+        self.addLine("cd %s" % self._options.dumpdir, self._shell_filename);
+        self.addLine("tar cfz DUMP-%s.tar.gz `ls -1 TABLE-*-%s`" % \
+                         (self._now_label, self._now_label),
+                     self._shell_filename)
+        self.addLine("rm TABLE-*-%s" % self._now_label, self._shell_filename)
+
+        # Delete old files from dump directory
+        self.addLine("find %s -name 'DUMP-*.tar.gz' -mtime %s -exec rm {} \;" \
+                         % (self._options.dumpdir, self._options.dump_window),
+                     self._shell_filename)
+
+
+        # Execute the shell script
+        os.system("bash %s" % self._shell_filename)
+
+        # Remove the shell and SQL files
+        os.system("rm -f %s" % self._shell_filename)
+        os.system("rm -f %s" % self._sql_filename)
+
+    # Generate SQL commands for handling archiving and dumping
+    # of a particular table
+    def generate_sql(self, table_name, time_clause, dependencies):
+
+        live_window_clause = \
+            self.generate_window_clause(time_clause, 
+                                        self._options.live_window,
+                                        dependencies,
+                                        False)
+
+
+        # Replace all dependencies X in time clause with X_ARCHIVE
+        # archive_window_clause needs to be based on X_archive tables
+        # not the X tables. That is, sa_slice_member_archive
+        # needs to be based on entries in sa_slice_archive,  not sa_slice
+        archive_window_clause = \
+            self.generate_window_clause(time_clause, 
+                                        self._options.archive_window,
+                                        dependencies, True)
+
+        # Begin transaction
+        self.addLine("begin;", self._sql_filename);
+
+        # Create X_ARCHIVE table
+        sql = "create table if not exists %s_ARCHIVE (like %s);" % \
+            (table_name, table_name)
+        self.addLine(sql, self._sql_filename)
+
+        # Copy records older than LIVE_WINDOW from X to X_ARCHIVE
+        sql = "insert into %s_ARCHIVE select * from %s where %s;" % \
+            (table_name, table_name, live_window_clause)
+        self.addLine(sql, self._sql_filename)
+
+        # Drop X_DUMP table if exists
+        sql = "drop table if exists %s_DUMP;" % table_name
+        self.addLine(sql, self._sql_filename)
+
+        # Copy records older than ARCHIVE_WINDOW from X_ARCHIVE to X_DUMP
+        sql = "select * into %s_DUMP from %s_ARCHIVE where %s;" % \
+            (table_name, table_name, archive_window_clause)
+        self.addLine(sql, self._sql_filename)
+
+        # Dump X_DUMP to dump file
+        sql = "\copy %s_DUMP to %s/TABLE-%s-%s" % \
+            (table_name, self._options.dumpdir, table_name, self._now_label)
+        self.addLine(sql, self._sql_filename)
+
+        # Drop X_DUMP
+        sql = "drop table if exists %s_DUMP;" % table_name
+        self.addLine(sql, self._sql_filename)
+
+        # Delete records from X_ARCHIVE
+        sql = "delete from %s_ARCHIVE where %s;" % \
+            (table_name, archive_window_clause)
+        self.addLine(sql, self._sql_filename)
+
+        # Delete records from X
+        sql = "delete from %s where %s;" % (table_name, live_window_clause)
+        self.addLine(sql, self._sql_filename)
+
+        # End transaction
+        self.addLine("commit;", self._sql_filename);
+
+
+    # Append a line to a given file
+    def addLine(self, line, filename):
+        f = open(filename, 'a')
+        f.write(line + '\n')
+        f.close()
+
+    # Generate time window clause for given clause template and length (days)
+    def generate_window_clause(self, time_clause, window_length, dependencies,
+                               archiving):
+        # If archive, replace dependency X with dependency X_archive
+        if archiving:
+            for dep in dependencies:
+                time_clause = time_clause.replace(dep, dep + "_ARCHIVE")
+
+        today = datetime.datetime.today()
+        delta = datetime.timedelta(days=window_length)
+        window_start = today - delta
+        window_start_text = window_start.strftime('%Y-%m-%d')
+        return time_clause % window_start_text
+
+
+def main(argv=None):
+    if argv is None:
+        argv = sys.argv
+
+    options,args = parse_args(argv)
+    generator = ArchiveSQLGenerator(options)
+    generator.generate()
+
+
+if __name__ == "__main__":
+    sys.exit(main())
+
