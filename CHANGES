@@ -6,6 +6,7 @@
 = GENI Clearinghouse Release Notes =
 
 == 1.30 ==
+ * Add procedure to add new aggregate (#383).
 
  * geni-archive-data-tables script for archiving databaes tables (#282).
 
