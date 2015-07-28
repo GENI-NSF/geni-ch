@@ -7,6 +7,8 @@
 
 == 1.30 ==
 
+ * geni-archive-data-tables script for archiving databaes tables (#282).
+
 == 1.29 ==
  * remove hard-coded names in SAv1Implementation.py, 
    MAv1Implementation.py and cert-utils.py (#25)
