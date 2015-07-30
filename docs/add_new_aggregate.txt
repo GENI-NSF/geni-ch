@@ -1,0 +1,164 @@
+Instructions for installing a new aggreate
+
+This note describes the steps to add a new aggregate to the GENI 
+clearinghouse Service Registry.
+
+1. Gather the required information
+
+   cert: The x509 certificate of the aggregate (the server end of the
+      AM API presented by the aggregate)
+   cacert: The SSL cert (or signer of the SSL cert). Used for Flack to allow
+      flash to connect. This is really a misnomer: it is not a cacert.
+      May be the same as CERT for some aggregates; typically the
+      IG has X-cm.pm as the CERT and X-boss.pm as the CACERT.
+   shortname: Short name of the aggregate, matches the nickname used by omni
+   longname: Long/complete name of the aggregate
+   description: Text description of the aggregate
+   URN: URN of aggregate. Must satisfy the requirements described in
+      http://groups.geni.net/geni/wiki/GeniApiIdentifiers
+   URL: URL of the AM. For some aggregates, there may be two:
+      one for V2 AM, one for V3 AM.
+   Type of aggregate:
+    InstaGENI: ui_instageni_am
+    ExoGENI: ui_exogeni_am
+    FOAM: ui_foam_am
+    Other (including OpenGENI): ui_other_am  
+   Category
+    ui_compute_cat: Is this aggregate a compute aggregate (provides PCs / VMs)
+    ui_network_cat : Is this aggregate a network aggregate 
+        (provides paths / flows)
+    ui_prod_cat: Is this aggreate deemed to be 'production' 
+       i.e. the aggregate is stable and running according to documented
+       procedures in the aggregate-providers agreement.
+    ui_dev_cat : Is this aggregate deemed to be 'development' 
+       i.e. the aggregate is under development and isn't considered
+       to be stable (could come down at any time, may have bugs or 
+       new untested features)
+    ui_experimental_cat: Is this aggregate deemed to be 'experimental'
+        i.e. the aggregate provides new experimental capabilities to
+        ressearchers, and is, like 'development', provided without
+        stability assurances. 
+    ui_stitchable_cat: Is this aggregate stitchable (listed in SCS, connected
+        to a switch configured with stitching VLANs etc.)
+    ui_federated_cat : Is this agggregate a member of a different (non-GENI)
+        federation, and is federated by mutual agreement between GENI and
+        the aggregate's federation?
+    Note: Every aggregate must have one and only one of 
+        ui_prod_cat, ui_dev_cat, ui_experimental_cat. Likewise, every aggregate
+        gets one and only one of ui_compute_cat and ui_network_cat. 
+        ui_stitchable_cat and ui_federated_cat are optional attributes.
+
+   Speaks-for: Y if the aggregate handles speaks-for credentials, N if not
+
+There are instructions for gathering the relevant data for FOAM and 
+InstaGENI/ProtoGENI on the syseng wiki 
+(http://groups.geni.net/syseng/wiki/SwClearinghouse/Federation/FOAM, 
+http://groups.geni.net/syseng/wiki/SwClearinghouse/Federation/ProtoGENI). 
+These explain, for instance, how to get the misnamed ‘cacert’ and how to 
+get the CM cert (ProtoGENI-only).
+
+2. Test the UI
+
+Use omni to test adherence to AM API:
+
+   V2
+      getversion
+      listresources
+      createsliver SLICENAME (RSPEC WITH two slivers with a single link)
+      ... login and ping between two slivers
+     listresources SLICENAME
+      sliverstatus SLICENAME
+      renewsliver SLICENAME new-renew-time
+      deletesliver SLICENAME
+
+   V3
+      getversion
+      listresources
+      allocate SLICENAME (RSPEC with two slivers and a single link)
+      provision SLICENAME
+      ... login and ping between two slivers
+      describe SLICENAME
+      status SLICENAME
+      renew SLICENAME new-renew-time
+      delete SLICENAME
+
+    Verify that the returns from getversion and listresources (advertisement)
+    are consistent with the expected values gathered in #1.
+
+    Verify that the advertisement returned from listresources is 
+    well-formatted (passes rspec-lint).
+    Verify that the manifest returned from listresources/describe
+    well-formatted (passes rspec-lint).
+
+    If aggreagte is stitchable , do stitch testing as well. 
+    [Out of scope of this document.]
+
+3. Gain approval for adding aggregate
+
+Adding the new aggregate to  the GENI Clearinghouse Service Registry 
+reguires proper approval that:
+1) GENI wants to add this aggregate to its service registry and 
+2) the aggregate passes tests and requirements set for GENI aggregates of 
+different categories.
+
+Currently, the GPO infra group has approval authority for production 
+aggregates and the GPO software group has approval authority for federated and
+experimental aggregates.
+
+This approval process will surely change as management of the GENI 
+Clearinghouse transitions to the GENI community. 
+
+4. Update geni-ch/data/sr/aggdata.csv
+
+Add entry for agg:
+shortname,url,amcert,longname,description,urn,cacert,type,category,speaksfor
+
+Note: For 'category', list all categories that apply, separated by a space, 
+e.g. "ui_prod_cat ui_network_cat"
+
+If there are two urls (V2 and V3), add two different lines, making sure
+they have different short-names, url, longname, description.
+
+5. Update geni-ch/data/Makefile.am
+
+Add entry for agg to these Make targets:
+
+- AM_SQL
+- sr/sql/add-<agg>.sql: $(srcdir)/sr/sql/add-<agg>.sql.in
+- dist_srcerts_DATA
+
+6. Update Jacks Context
+
+Add the aggregate to the  Jacks-GENI/jacks-context portal.sh file.
+These are the geni-lib names (which are often reversed relative to omni
+short names) and may require making a pull request to geni-lib as well.
+
+geni-lib is maintained at https://bitbucket.org/barnstorm/geni-lib.
+jacks-context is maintained in https://github.com/Jacks-GENI/jacks-context.
+
+
+7. Update Portal Map
+
+Once the new aggregate is in the service registry, new map data should 
+be generated. There are two scripts for this: 
+geni-get-ad-rspecs and geni-parse-map-data.
+
+8. Edit syseng ticket for release.
+
+Edit the syseng ticket for the clearinghouse update event at which this
+aggregate will be added to production Service Registry (SR):
+
+Indicate:
+ * Add <agg> aggregate to Service Registry
+ {{{
+ psql -U portal -h localhost -f /usr/shre/geni-chapi/sr/sql/add-<agg>.sql
+ }}}
+
+
+9. Post install testing
+
+After install, validate that aggregate appears in Portal list on 
+jacks-app, jacks-editor-app and slice aggregate view page. Allocate resources
+from Portal and make sure you can SSH from portal, resources turn green, etc.
+
+
