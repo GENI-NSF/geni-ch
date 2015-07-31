@@ -1,0 +1,22 @@
+[
+	{ 
+	"name" : "sa_slice_member",
+	"time_clause" : 
+	"slice_id in (select slice_id from sa_slice where expired = 't' and expiration < '%s')",
+	"dependencies": ["sa_slice"]
+	},
+	{ 
+	"name" : "sa_slice",
+	"time_clause" : "expiration < '%s'"
+	},
+	{ 
+	"name" : "logging_entry_attribute",
+	"time_clause" : 
+	"event_id in (select id from logging_entry where event_time < '%s')",
+	"dependencies": ["logging_entry"]
+	},
+	{
+	"name" : "logging_entry",
+	"time_clause" : "event_time < '%s'"
+	}
+]

@@ -63,6 +63,7 @@ dist_pkgdata_DATA = \
 
 dist_sbin_SCRIPTS = \
 	geni-add-member-privilege \
+	geni-archive-data-tables \
 	geni-create-ma-crl \
 	geni-list-member-projects \
 	geni-list-pending-requests \

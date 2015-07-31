@@ -1,0 +1,43 @@
+.TH geni-archive-data-tables 1 "July 10, 2015"
+.SH NAME
+geni-archive-data-tables \- list the identity providers and a count of their
+users
+.SH SYNOPSIS
+.B geni-archive-data-tables [\--hostname=localhost] [\-\-user=portal] [\-\-database=portal] [\-\-tables=/etc/geni-chapi/archive_tables.json] [\-\-dumpdir=/tmp/archive_dumps] [\-\-live-window=30\ [\-\-archive-window=180] [-\-\dump-window=720]
+.SH DESCRIPTION
+Archive selected GENI Clearinghouse database tables: copying older records
+to archive tables, older records to SQL dump files, and deleting oldest dump files.
+.SH OPTIONS
+.TP
+\-\-hostname
+Database host (default=localhost)
+.TP
+\-\-user 
+Database user (default=portal)
+.TP
+\-\-database
+Database name (default=portal)
+.TP
+\-\-tables
+Name of JSON file with information about data tables to archive (default=/etc/geni-chapi/archive_tables.json)
+.TP
+\-\-dumpdir
+Directory into which to keep table data (default=/tmp/archive_dumps)
+.TP
+\-\-live-window
+Number of days to keep table data 'live' (in original tables)
+.TP
+\-\-archive-window
+Number of days to keep table data 'archived' (in archive tables)
+.TP
+\-\-dump-window
+Number of days to keep dump files in dump directory
+.TP
+\-h, \-\-help
+Show summary of options.
+.SH EXAMPLES
+.TP
+Run the archiving process, moving old records to archive tables, then dump files, then removed:
+.B geni-archive-data-tables
+.SH AUTHOR
+geni-archive-data-tables was written by Raytheon BBN Technologies.

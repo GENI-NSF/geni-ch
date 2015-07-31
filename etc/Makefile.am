@@ -4,6 +4,7 @@ dist_pkgsysconf_DATA = \
 	example-chapi.ini \
 	chapi-centos.ini \
         logging_config.conf \
+	archive_tables.json \
 	credential_store_policy.json \
 	logging_policy.json \
 	member_authority_policy.json \
