@@ -139,19 +139,15 @@ Add entry for agg to these Make targets:
 
 Add the aggregate to the  Jacks-GENI/jacks-context portal.sh file.
 These are the geni-lib names (which are often reversed relative to omni
-short names) and may require making a pull request to geni-lib as well.
+short names) and may require adding the aggregate to geni-lib as well.
 
 geni-lib is maintained at https://bitbucket.org/barnstorm/geni-lib.
 jacks-context is maintained in https://github.com/Jacks-GENI/jacks-context.
 
 
-7. Update Portal Map
+7. Edit syseng ticket for release.
 
-Once the new aggregate is in the service registry, new map data should 
-be generated. There are two scripts for this: 
-geni-get-ad-rspecs and geni-parse-map-data.
-
-8. Edit syseng ticket for release.
+[Note: This step is part of GPO-internal process.]
 
 Edit the syseng ticket for the clearinghouse update event at which this
 aggregate will be added to production Service Registry (SR):
@@ -163,10 +159,16 @@ Indicate:
  }}}
 
 
-9. Post install testing
+8. Post install testing
 
 After install, validate that aggregate appears in Portal list on 
 jacks-app, jacks-editor-app and slice aggregate view page. Allocate resources
 from Portal and make sure you can SSH from portal, resources turn green, etc.
 
+
+9. Update Portal Map
+
+After the installation and the new aggregate is in the service registry, 
+new map data should be generated. There are two scripts for this: 
+geni-get-ad-rspecs and geni-parse-map-data.
 
