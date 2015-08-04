@@ -5,7 +5,7 @@
 
 = GENI Clearinghouse Release Notes =
 
-== 1.30 ==
+== 2.0 ==
  * Add procedure to add new aggregate (#383).
  * Minor tweaks to `portal_stats.sql`
 
