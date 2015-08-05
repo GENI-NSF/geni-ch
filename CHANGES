@@ -5,6 +5,10 @@
 
 = GENI Clearinghouse Release Notes =
 
+== 2.0 ==
+ * Add procedure to add new aggregate (#383).
+ * Minor tweaks to `portal_stats.sql`
+
 == 1.29 ==
  * remove hard-coded names in SAv1Implementation.py, 
    MAv1Implementation.py and cert-utils.py (#25)
