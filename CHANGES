@@ -5,9 +5,12 @@
 
 = GENI Clearinghouse Release Notes =
 
-== 1.30 ==
- * Add procedure to add new aggregate (#383).
+== 2.1 ==
  * Migrate CH tables from geni-portal to geni-ch (#103).
+
+== 2.0 ==
+ * Add procedure to add new aggregate (#383).
+ * Minor tweaks to `portal_stats.sql`
 
 == 1.29 ==
  * remove hard-coded names in SAv1Implementation.py, 
