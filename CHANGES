@@ -6,6 +6,7 @@
 = GENI Clearinghouse Release Notes =
 
 == 2.1 ==
+ * Migrate CH tables from geni-portal to geni-ch (#103).
 
 == 2.0 ==
  * Add procedure to add new aggregate (#383).
