@@ -27,6 +27,7 @@ AM_SQL = \
 	sr/sql/add-gpo-og.sql \
 	sr/sql/add-im-wilab.sql \
 	sr/sql/add-im-vw1.sql \
+	sr/sql/add-ukl-og.sql \
 	sr/sql/add-moxi-ig-of.sql \
 	sr/sql/add-moxi-ig.sql \
 	sr/sql/add-moxi-of.sql \
@@ -116,6 +117,7 @@ sr/sql/add-gpo-eg.sql: $(srcdir)/sr/sql/add-gpo-eg.sql.in
 sr/sql/add-gpo-og.sql: $(srcdir)/sr/sql/add-gpo-og.sql.in
 sr/sql/add-im-wilab.sql: $(srcdir)/sr/sql/add-im-wilab.sql.in
 sr/sql/add-im-vw1.sql: $(srcdir)/sr/sql/add-im-vw1.sql.in
+sr/sql/add-ukl-og.sql: $(srcdir)/sr/sql/add-ukl-og.sql.in
 sr/sql/add-moxi-ig-of.sql: $(srcdir)/sr/sql/add-moxi-ig-of.sql.in
 sr/sql/add-moxi-ig.sql: $(srcdir)/sr/sql/add-moxi-ig.sql.in
 sr/sql/add-moxi-of.sql: $(srcdir)/sr/sql/add-moxi-of.sql.in
@@ -217,6 +219,7 @@ dist_srcerts_DATA = \
 	sr/certs/missouri-ig-boss.pem \
 	sr/certs/missouri-ig-cm.pem \
 	sr/certs/missouri-ig-of.pem \
+	sr/certs/ukl-og.pem \
 	sr/certs/moxi-ig-boss.pem \
 	sr/certs/moxi-ig-cm.pem \
 	sr/certs/moxi-ig-of.pem \

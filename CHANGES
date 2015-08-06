@@ -5,22 +5,31 @@
 
 = GENI Clearinghouse Release Notes =
 
+== 2.1 ==
+ * Migrate CH tables from geni-portal to geni-ch (#103).
+ * Migrate SR certs from geni-portal to geni-ch (#102).
+
+== 2.0 ==
+ * Add procedure to add new aggregate (#383).
+ * Minor tweaks to `portal_stats.sql`
+
 == 1.29 ==
- * `geni-check-errors` now suppresses certificate generation output, 
+ * remove hard-coded names in SAv1Implementation.py, 
+   MAv1Implementation.py and cert-utils.py (#25)
+ * Add geni-list-idp-members query script to print the number of
+   users per IDP (by eppn suffix). (#263).
+ * Add geni-list-pending-requests query script to print all pending
+   project join requests (project_name, requestor username and request
+   time) (#263)
+ * `geni-check-errors` now suppresses certificate generation output,
    Certificate Verification errors from apache when someone accesses ch.geni.net
    (like PG AMs), messages about users creating or renewing certs, messages
    about members setting their own attributes or their irods_username,
    and messages about failing to access the system during maintenance.
    It also looks at the older `chapi.log.1` and `error.log.1`. (#360)
  * `geni-check-errors` now also ignores collector tool speaksfor. (#361)
- * remove hard-coded names in SAv1Implementation.py, 
-   MAv1Implementation.py and cert-utils.py (#25)
- * Add geni-list-idp-members query script to print the number of
-   users per IDP (by eppn suffix). (#364).
- * Add geni-list-pending-requests query script to print all pending
-   project join requests (project_name, requestor username and request time)
  * Add iMinds w-iLab.t and Virtual Wall 1 aggregates (#367)
- * Migrate SR certs from geni-portal to geni-ch (#102).
+ * Add Kaiserslautern OpenGENI aggreate (#374)
 
 == 1.28 ==
  * Update aggregate info for some stitchable aggregates
