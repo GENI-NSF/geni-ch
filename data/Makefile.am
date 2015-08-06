@@ -177,6 +177,7 @@ dist_srcerts_DATA = \
 	sr/certs/cenic-ig-boss.pem \
 	sr/certs/cenic-ig-cm.pem \
 	sr/certs/cenic-ig-of.pem \
+	sr/certs/cenic-of.pem \
 	sr/certs/clemson-ig-boss.pem \
 	sr/certs/clemson-ig-cm.pem \
 	sr/certs/clemson-ig-of.pem \
