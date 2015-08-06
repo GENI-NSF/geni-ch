@@ -355,7 +355,7 @@ dist_srcerts_DATA = \
 	sr/certs/uky-ig-boss.pem \
 	sr/certs/uky-ig-cm.pem \
 	sr/certs/uky-ig-of.pem \
-	sr/certs/uky-pg.pem \
+	sr/certs/uky-pg-cm.pem \
 	sr/certs/uky-pg-boss.pem \
 	sr/certs/ukypks2-ig-boss.pem \
 	sr/certs/ukypks2-ig-cm.pem \
