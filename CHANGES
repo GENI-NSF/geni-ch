@@ -8,6 +8,7 @@
 == 2.1 ==
  * Migrate CH tables from geni-portal to geni-ch (#103).
  * Migrate SR certs from geni-portal to geni-ch (#102).
+ * Support lists of project_ids in option for lookup_project_attributes (#391).
 
 == 2.0 ==
  * Add procedure to add new aggregate (#383).
