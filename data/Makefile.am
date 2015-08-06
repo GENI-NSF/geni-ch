@@ -261,6 +261,7 @@ dist_srcerts_DATA = \
 	sr/certs/colorado-ig-boss.pem \
 	sr/certs/colorado-ig-cm.pem \
 	sr/certs/colorado-ig-of.pem \
+	sr/certs/cornell-ig-boss.pem \
 	sr/certs/cornell-ig-cm.pem \
 	sr/certs/cornell-ig-of.pem \
 	sr/certs/cwru-ig-boss.pem \
