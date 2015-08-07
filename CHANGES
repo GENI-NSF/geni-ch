@@ -8,6 +8,7 @@
 == 2.1 ==
  * Migrate CH tables from geni-portal to geni-ch (#103).
  * Support lists of project_ids in option for lookup_project_attributes (#391).
+ * Allow JSON booleans for boolean type arguments to API calls (#394)
 
 == 2.0 ==
  * Add procedure to add new aggregate (#383).
