@@ -226,6 +226,10 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
 
         q = add_filters(q, match_criteria, self.db.SLICE_TABLE, SA.slice_field_mapping, session)
 
+        # Order by expiration to get the active one or the most recently
+        # expired instance and to provide deterministic behavior
+        q = q.order_by(self.db.SLICE_TABLE.c.expiration)
+
         rows = q.all()
 
         # in python 2.7, could do dictionary comprehension !!!!!!!!
