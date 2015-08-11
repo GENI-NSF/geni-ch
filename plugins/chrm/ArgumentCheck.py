@@ -220,7 +220,8 @@ class FieldsArgumentCheck(ArgumentCheck):
         elif field_type == "KEY":
             pass # *** No standard format
         elif field_type == "BOOLEAN":
-            properly_formed = value.lower() in ['t', 'f', 'true', 'false']
+            properly_formed = (type(value) is bool or
+                               value.lower() in ['t', 'f', 'true', 'false'])
         elif field_type == "CREDENTIALS":
             try:
                 Credential(string=value)
