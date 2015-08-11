@@ -22,10 +22,10 @@ select count(*) as "Active International Members" from ma_member_attribute where
 
 -- Most popular institutions (using EPPN)
 
-select trim(leading '@' from substring(value from '@.*$')) as "Most common member institutions", count(*) as members from ma_member_attribute where name = 'eppn' group by "Most common member institutions" order by members desc limit 30;
+select trim(leading '@' from substring(lower(value) from '@.*$')) as "Most common member institutions", count(*) as members from ma_member_attribute where name = 'eppn' group by "Most common member institutions" order by members desc limit 30;
 
 -- Most popular institutions using email, non tutorial
-select trim(leading '@' from substring(value from '@.*$')) as "Most common member institutions by email", count(*) as members from ma_member_attribute where name = 'email_address' and value not like '%gpolab.bbn.com' group by "Most common member institutions" order by members desc limit 100;
+select trim(leading '@' from substring(lower(value) from '@.*$')) as "Most common member institutions by email", count(*) as members from ma_member_attribute where name = 'email_address' and value not like '%gpolab.bbn.com' group by "Most common member institutions by email" order by members descq limit 100;
 
 -- Most popular countries / top level domains
 select distinct substring(lower(value) from '%.#"_+#"' for '#') as "Most common TLDs", count(*) as members from ma_member_attribute where name = 'email_address' group by substring(lower(value) from '%.#"_+#"' for '#') order by members desc limit 25;

@@ -226,6 +226,10 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
 
         q = add_filters(q, match_criteria, self.db.SLICE_TABLE, SA.slice_field_mapping, session)
 
+        # Order by expiration to get the active one or the most recently
+        # expired instance and to provide deterministic behavior
+        q = q.order_by(self.db.SLICE_TABLE.c.expiration)
+
         rows = q.all()
 
         # in python 2.7, could do dictionary comprehension !!!!!!!!
@@ -1480,16 +1484,23 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         client_uuid = get_uuid_from_cert(client_cert)
         self.update_project_expirations(client_uuid, session)
 
-        name = from_project_urn(project_urn)
-        project_id = self.get_project_id(session, "project_name", name)
+        if "match" in options and "PROJECT_UID" in options["match"]:
+            project_ids = options["match"]["PROJECT_UID"]
+        else:
+            name = from_project_urn(project_urn)
+            project_id = self.get_project_id(session, "project_name", name)
+            project_ids = [project_id]
+
         q = session.query(self.db.PROJECT_ATTRIBUTE_TABLE )
-        q = q.filter(self.db.PROJECT_ATTRIBUTE_TABLE.c.project_id==project_id)
+        q = q.filter(self.db.PROJECT_ATTRIBUTE_TABLE.c.project_id.in_(project_ids))
         rows = q.all()
         attribs = []
         for row in rows:
+            attrib_project_id = row.project_id
             attrib_name = row.name
             attrib_value = row.value
-            attrib = {'name' : attrib_name, 'value' : attrib_value}
+            attrib = {'project_id' : attrib_project_id, 
+                      'name' : attrib_name, 'value' : attrib_value}
             attribs.append(attrib)
         result = self._successReturn(attribs)
         return result
