@@ -5,6 +5,8 @@
 
 = GENI Clearinghouse Release Notes =
 
+== 2.2 ==
+
 == 2.1 ==
  * Migrate CH tables from geni-portal to geni-ch (#103).
  * Support lists of project_ids in option for lookup_project_attributes (#391).
