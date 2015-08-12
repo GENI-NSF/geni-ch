@@ -14,5 +14,3 @@ chapidir = $(pkgdatadir)/../geni-ch/chapi/chapi
 dist_chapi_SCRIPTS = linkamsoil.sh
 
 dist_pkgdata_DATA = apache2.conf fastcgi.conf
-
-doc_DATA = INSTALL
