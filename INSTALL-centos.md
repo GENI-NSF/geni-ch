@@ -29,3 +29,17 @@ install the geni clearinghouse package:
 ```
 yum install geni-chapi
 ```
+
+Other installation notes
+------------------------
+
+# Install the EPEL repository
+sudo yum install epel-release
+
+yum install httpd mod_ssl mod_fcgid
+
+yum install python-flask python-sqlalchemy python-lxml python-psycopg2 \
+         python-flup python-flask-xml-rpc
+
+# Note: omitted python-pip until we need it
+# Note: omitted postgresql-client-common until we need it
