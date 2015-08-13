@@ -17,6 +17,8 @@ AC_ARG_ENABLE([gpo_lab],
 esac],[gpo_lab=false])
 AM_CONDITIONAL([GPO_LAB], [test x$gpo_lab = xtrue])
 
+AM_CONDITIONAL(INSTALL_GITHASH, [test -f etc/geni-chapi-githash])
+
 AC_CONFIG_FILES([Makefile plugins/Makefile tools/Makefile etc/Makefile])
 AC_CONFIG_FILES([bin/Makefile man/Makefile data/Makefile db/Makefile])
 AC_OUTPUT

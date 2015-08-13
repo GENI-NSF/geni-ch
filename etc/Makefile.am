@@ -8,3 +8,7 @@ dist_pkgsysconf_DATA = \
 	logging_policy.json \
 	member_authority_policy.json \
 	slice_authority_policy.json 
+
+if INSTALL_GITHASH
+pkgsysconf_DATA = geni-chapi-githash
+endif
