@@ -21,3 +21,6 @@ delete from service_registry
   where service_type = 7
     and service_cert like '/usr/share/geni-chapi/sr/certs/%.pem';
 
+-- Add the short_name column to the service registry
+ALTER TABLE service_registry ADD COLUMN
+  short_name VARCHAR;
