@@ -5,6 +5,9 @@
 
 = GENI Clearinghouse Release Notes =
 
+== 2.2 ==
+ * Migrate SR certs from geni-portal to geni-ch (#102).
+
 == 2.1 ==
  * Migrate CH tables from geni-portal to geni-ch (#103).
  * Support lists of project_ids in option for lookup_project_attributes (#391).
@@ -31,7 +34,6 @@
    It also looks at the older `chapi.log.1` and `error.log.1`. (#360)
  * `geni-check-errors` now also ignores collector tool speaksfor. (#361)
  * Add iMinds w-iLab.t and Virtual Wall 1 aggregates (#367)
- * Migrate SR certs from geni-portal to geni-ch (#102).
  * Add Kaiserslautern OpenGENI aggreate (#374)
 
 == 1.28 ==
