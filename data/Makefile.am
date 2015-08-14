@@ -17,8 +17,6 @@ AM_SQL = \
 	sr/sql/add-clemson-ig-of.sql \
 	sr/sql/add-clemson-ig.sql \
 	sr/sql/add-clemson-og.sql \
-	sr/sql/add-colorado-ig-of.sql \
-	sr/sql/add-colorado-ig.sql \
 	sr/sql/add-cornell-ig-of.sql \
 	sr/sql/add-cornell-ig.sql \
 	sr/sql/add-cwru-ig.sql \
@@ -61,8 +59,6 @@ AM_SQL = \
 	sr/sql/add-ohmetrodc-ig.sql \
 	sr/sql/add-osf-eg-of.sql \
 	sr/sql/add-osf-eg.sql \
-	sr/sql/add-princeton-ig-of.sql \
-	sr/sql/add-princeton-ig.sql \
 	sr/sql/add-renci-eg-of.sql \
 	sr/sql/add-renci-eg.sql \
 	sr/sql/add-rutgers-ig-of.sql \
@@ -103,8 +99,6 @@ AM_SQL = \
 	sr/sql/add-utahddc-ig.sql \
 	sr/sql/add-utc-ig-of.sql \
 	sr/sql/add-utc-ig.sql \
-	sr/sql/add-uwashington-ig-of.sql \
-	sr/sql/add-uwashington-ig.sql \
 	sr/sql/add-wall2.sql \
 	sr/sql/add-wisconsin-ig-of.sql \
 	sr/sql/add-wisconsin-ig.sql \
@@ -144,8 +138,6 @@ sr/sql/add-cenic-of.sql: $(srcdir)/sr/sql/add-cenic-of.sql.in
 sr/sql/add-clemson-ig-of.sql: $(srcdir)/sr/sql/add-clemson-ig-of.sql.in
 sr/sql/add-clemson-ig.sql: $(srcdir)/sr/sql/add-clemson-ig.sql.in
 sr/sql/add-clemson-og.sql: $(srcdir)/sr/sql/add-clemson-og.sql.in
-sr/sql/add-colorado-ig-of.sql: $(srcdir)/sr/sql/add-colorado-ig-of.sql.in
-sr/sql/add-colorado-ig.sql: $(srcdir)/sr/sql/add-colorado-ig.sql.in
 sr/sql/add-cornell-ig-of.sql: $(srcdir)/sr/sql/add-cornell-ig-of.sql.in
 sr/sql/add-cornell-ig.sql: $(srcdir)/sr/sql/add-cornell-ig.sql.in
 sr/sql/add-cwru-ig.sql: $(srcdir)/sr/sql/add-cwru-ig.sql.in
@@ -190,8 +182,6 @@ sr/sql/add-ohmetrodc-ig-of.sql: $(srcdir)/sr/sql/add-ohmetrodc-ig-of.sql.in
 sr/sql/add-ohmetrodc-ig.sql: $(srcdir)/sr/sql/add-ohmetrodc-ig.sql.in
 sr/sql/add-osf-eg-of.sql: $(srcdir)/sr/sql/add-osf-eg-of.sql.in
 sr/sql/add-osf-eg.sql: $(srcdir)/sr/sql/add-osf-eg.sql.in
-sr/sql/add-princeton-ig-of.sql: $(srcdir)/sr/sql/add-princeton-ig-of.sql.in
-sr/sql/add-princeton-ig.sql: $(srcdir)/sr/sql/add-princeton-ig.sql.in
 sr/sql/add-renci-eg-of.sql: $(srcdir)/sr/sql/add-renci-eg-of.sql.in
 sr/sql/add-renci-eg.sql: $(srcdir)/sr/sql/add-renci-eg.sql.in
 sr/sql/add-rutgers-ig-of.sql: $(srcdir)/sr/sql/add-rutgers-ig-of.sql.in
@@ -232,8 +222,6 @@ sr/sql/add-utahddc-ig-of.sql: $(srcdir)/sr/sql/add-utahddc-ig-of.sql.in
 sr/sql/add-utahddc-ig.sql: $(srcdir)/sr/sql/add-utahddc-ig.sql.in
 sr/sql/add-utc-ig-of.sql: $(srcdir)/sr/sql/add-utc-ig-of.sql.in
 sr/sql/add-utc-ig.sql: $(srcdir)/sr/sql/add-utc-ig.sql.in
-sr/sql/add-uwashington-ig-of.sql: $(srcdir)/sr/sql/add-uwashington-ig-of.sql.in
-sr/sql/add-uwashington-ig.sql: $(srcdir)/sr/sql/add-uwashington-ig.sql.in
 sr/sql/add-wall2.sql: $(srcdir)/sr/sql/add-wall2.sql.in
 sr/sql/add-wisconsin-ig-of.sql: $(srcdir)/sr/sql/add-wisconsin-ig-of.sql.in
 sr/sql/add-wisconsin-ig.sql: $(srcdir)/sr/sql/add-wisconsin-ig.sql.in
