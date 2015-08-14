@@ -69,7 +69,7 @@ AM_SQL = \
 	sr/sql/add-sox-ig-of.sql \
 	sr/sql/add-sox-ig.sql \
 	sr/sql/add-sox-of.sql \
-	sr/sql/add-stanford-ig-cm.sql \
+	sr/sql/add-stanford-ig.sql \
 	sr/sql/add-stanford-ig-of.sql \
 	sr/sql/add-tamu-eg-of.sql \
 	sr/sql/add-tamu-eg.sql \
@@ -192,7 +192,7 @@ sr/sql/add-sl-of.sql: $(srcdir)/sr/sql/add-sl-of.sql.in
 sr/sql/add-sox-ig-of.sql: $(srcdir)/sr/sql/add-sox-ig-of.sql.in
 sr/sql/add-sox-ig.sql: $(srcdir)/sr/sql/add-sox-ig.sql.in
 sr/sql/add-sox-of.sql: $(srcdir)/sr/sql/add-sox-of.sql.in
-sr/sql/add-stanford-ig-cm.sql: $(srcdir)/sr/sql/add-stanford-ig-cm.sql.in
+sr/sql/add-stanford-ig.sql: $(srcdir)/sr/sql/add-stanford-ig.sql.in
 sr/sql/add-stanford-ig-of.sql: $(srcdir)/sr/sql/add-stanford-ig-of.sql.in
 sr/sql/add-tamu-eg-of.sql: $(srcdir)/sr/sql/add-tamu-eg-of.sql.in
 sr/sql/add-tamu-eg.sql: $(srcdir)/sr/sql/add-tamu-eg.sql.in
