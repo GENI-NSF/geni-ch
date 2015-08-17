@@ -8,6 +8,10 @@
 == 2.2 ==
  * Migrate SR certs from geni-portal to geni-ch (#102).
 
+== 2.1.1 ==
+ * Fix a bug in lookup_project_attributes where the PROJECT_UID option was
+   required to be a list. Allow it to be a single UID. (#400)
+
 == 2.1 ==
  * Migrate CH tables from geni-portal to geni-ch (#103).
  * Support lists of project_ids in option for lookup_project_attributes (#391).
