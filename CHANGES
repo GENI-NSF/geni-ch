@@ -5,6 +5,8 @@
 
 = GENI Clearinghouse Release Notes =
 
+== 2.3 ==
+
 == 2.2 ==
  * Migrate SR certs from geni-portal to geni-ch (#102).
 
