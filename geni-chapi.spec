@@ -5,7 +5,7 @@ Summary:        GENI clearinghouse
 BuildArch:      noarch
 License:        GENI Public License
 URL:            https://github.com/GENI-NSF/geni-ch
-Source0:        https://github.com/GENI-NSF/geni-ch/releases/download/v2.2/geni-chapi-2.2.tar.gz
+Source:         %{name}-%{version}.tar.gz
 Group:          Applications/Internet
 Requires:       m2crypto
 Requires:       python-dateutil
