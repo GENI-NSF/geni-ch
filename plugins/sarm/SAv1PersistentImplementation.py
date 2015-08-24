@@ -1485,10 +1485,15 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         self.update_project_expirations(client_uuid, session)
 
         if "match" in options and "PROJECT_UID" in options["match"]:
-            project_ids = options["match"]["PROJECT_UID"]
+            project_id = options["match"]["PROJECT_UID"]
         else:
             name = from_project_urn(project_urn)
             project_id = self.get_project_id(session, "project_name", name)
+
+        # Ensure we have a list of project IDs for the "IN" db clause
+        if isinstance(project_id, list):
+            project_ids = project_id
+        else:
             project_ids = [project_id]
 
         q = session.query(self.db.PROJECT_ATTRIBUTE_TABLE )
