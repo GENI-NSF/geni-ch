@@ -1,0 +1,72 @@
+{
+	"__doc__" : [
+	   "This file contains a list of parameters to be substituted into",
+	   "template files by the geni-install-templates program.", 
+	   "Each parameter has a name (to be matched against @X@ in the ",
+	   "template file). A default may be provided, in which case ",
+	   "the value is optional. Otherwise the value is required."
+	], 
+	"__parameters__" : [
+	   {
+	      "name" : "ch_admin_email",
+	      "default" : "ch-admins@geni.net",
+	      "doc" : "Name of email address to configure in service certs"
+	   },
+	   {
+	      "name" : "ch_authority",
+	      "default" : "@ch_host@",
+	      "doc" : "Name of clearinghouse authority"
+	   },
+	   {
+	      "name" : "ch_cert_name",
+	      "default" : "ch-@ch_host@-cert.pem",
+	      "doc" : "SSL certificate file for Apache to front CH host"
+	   },
+	   {
+	      "name" : "ch_key_name",
+	      "default" : "ch-@ch_host@-key.pem",
+	      "doc" : "SSL private key file for Apache to front CH host"
+	   },
+	   {
+	      "name" : "ch_host",
+	      "value" : "ch-mb.gpolab.bbn.com",
+	      "doc" : "SSL private key file for Apache to front CH host"
+	   },
+	   {
+	      "name" : "db_host",
+	      "default" : "localhost",
+	      "doc" : "Nost of CH database instance"
+	   },
+	   {
+	      "name" : "db_name",
+	      "default" : "portal",
+	      "doc" : "Name of CH database instance"
+	   },
+	   {
+	      "name" : "db_pass",
+	      "value" : "portal",
+	      "doc" : "Password of CH database user"
+	   },
+	   {
+	      "name" : "db_user",
+	      "default" : "portal",
+	      "doc" : "Name of CH database user"
+	   },
+	   {
+	      "name" : "pkglogdir",
+	      "default" : "/var/log/geni-chapi",
+	      "doc" : "Directory into which CH writes log files"
+	   },
+	   {
+	      "name" : "pkgdatadir",
+	      "default" : "/usr/share/geni-ch",
+	      "doc" : "Directory root in which CH data files are installed"
+	   },
+	   {
+	      "name" : "pkgsysconfdir",
+	      "default" : "/etc/geni-chapi",
+	      "doc" : "Name of location of system config files"
+	   }
+
+	]
+}

@@ -1,0 +1,52 @@
+<Directory @pkgdatadir@/chapi/AMsoil/src>
+   AllowOverride None
+   Require all granted
+</Directory>
+
+<VirtualHost @ch_host@:443>
+    ErrorLog /var/log/httpd/ch_error_log
+    CustomLog /var/log/httpd/ch_access_log combined
+    LogLevel warn
+
+    SSLEngine on
+    SSLCertificateFile /etc/geni-chapi/ch-@ch_host@-cert.pem
+    SSLCertificateKeyFile /etc/geni-chapi/ch-@ch_host@-key.pem
+
+    SSLOptions +ExportCertData
+    SSLCACertificateFile @pkgdatadir@/CA/cacert.pem
+    SSLVerifyClient optional
+    SSLVerifyDepth 3
+
+    FcgidInitialEnv PYTHONPATH @pkgdatadir@/gcf/src:@pkgdatadir@/chapi/chapi:@pkgdatadir@/chapi/chapi/tools
+    ScriptAlias /SA @pkgdatadir@/chapi/AMsoil/src/main.fcgi
+    ScriptAlias /MA @pkgdatadir@/chapi/AMsoil/src/main.fcgi
+    ScriptAlias /CS @pkgdatadir@/chapi/AMsoil/src/main.fcgi
+    ScriptAlias /LOG @pkgdatadir@/chapi/AMsoil/src/main.fcgi
+    ScriptAlias /PGCH @pkgdatadir@/chapi/AMsoil/src/main.fcgi
+    ScriptAlias /info/*/* @pkgdatadir@/chapi/AMsoil/src/main.fcgi
+
+
+</VirtualHost>
+
+Listen 8444
+<VirtualHost @ch_host@:8444>
+
+    ErrorLog /var/log/httpd/ch_error_8444_log
+    CustomLog /var/log/httpd/ch_access_8444_log combined
+    LogLevel warn
+
+    SSLEngine on
+    SSLCertificateFile /etc/geni-chapi/ch-@ch_host@-cert.pem
+    SSLCertificateKeyFile /etc/geni-chapi/ch-@ch_host@-key.pem
+
+    SSLOptions +ExportCertData
+    SSLCACertificateFile @pkgdatadir@/CA/cacert.pem
+    SSLVerifyClient optional_no_ca
+    SSLVerifyDepth 3
+
+    FcgidInitialEnv PYTHONPATH @pkgdatadir@/gcf/src:@pkgdatadir@/chapi/chapi:@pkgdatadir@/chapi/chapi/tools
+    ScriptAlias /CH @pkgdatadir@/chapi/AMsoil/src/main.fcgi
+    ScriptAlias /SR @pkgdatadir@/chapi/AMsoil/src/main.fcgi
+
+</VirtualHost>
+

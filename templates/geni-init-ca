@@ -1,0 +1,162 @@
+#!/usr/bin/env python
+# -*- Mode: python -*-
+
+#----------------------------------------------------------------------
+# Copyright (c) 2013-2015 Raytheon BBN Technologies
+#
+# Permission is hereby granted, free of charge, to any person obtaining
+# a copy of this software and/or hardware specification (the "Work") to
+# deal in the Work without restriction, including without limitation the
+# rights to use, copy, modify, merge, publish, distribute, sublicense,
+# and/or sell copies of the Work, and to permit persons to whom the Work
+# is furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be
+# included in all copies or substantial portions of the Work.
+#
+# THE WORK IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+# MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+# NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+# HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+# WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE WORK OR THE USE OR OTHER DEALINGS
+# IN THE WORK.
+#----------------------------------------------------------------------
+
+import optparse
+import os.path
+import subprocess
+import sys
+import tempfile
+import ConfigParser
+
+# Constants
+EXT_NAME = 'v3_geni_ca'
+
+
+class Config(object):
+    pass
+
+def parse_ini_config(parser):
+    SECTION_CA = 'ca'
+    OPTION_CONF = 'conf'
+    OPTION_CERT = 'cert'
+    OPTION_KEY = 'key'
+    OPTION_AUTHORITY = 'authority'
+    if not parser.has_section(SECTION_CA):
+        msg = 'No section "%s" found. Exiting.\n' % (SECTION_CA)
+        sys.stderr.write(msg)
+        return None
+    config = Config()
+    for opt in (OPTION_CONF, OPTION_CERT, OPTION_KEY, OPTION_AUTHORITY):
+        if not parser.has_option(SECTION_CA, opt):
+            msg = 'Section "%s" is missing option "%s". Exiting.\n'
+            msg = msg % (SECTION_CA, opt)
+            sys.stderr.write(msg)
+            return None
+        setattr(config, opt, parser.get(SECTION_CA, opt))
+    return config
+
+def load_ini_config(fname):
+    parser = ConfigParser.SafeConfigParser()
+    result = parser.read(fname)
+    config = parse_ini_config(parser)
+    return config
+
+def parse_args(argv):
+    usage = "usage: %prog [options] config.ini"
+    parser = optparse.OptionParser(usage=usage)
+    parser.add_option("--force", action="store_true", default=False,
+                      help="Force creation of CA certificate and key")
+    parser.add_option("--debug", action="store_true", default=False,
+                      help="Enable debugging information")
+    (options, args) = parser.parse_args(argv)
+    if len(args) < 1:
+        parser.print_help()
+        raise Exception()
+    return (options, args)
+
+def mk_openssl_conf(urn, config):
+    extension_template = """[%s]
+subjectKeyIdentifier=hash
+authorityKeyIdentifier=keyid:always,issuer:always
+subjectAltName=email:copy,%s
+basicConstraints = CA:true
+"""
+    extension = extension_template % (EXT_NAME, urn)
+
+    # Copy the conf file's contents into memory
+    with open(config.conf, 'r') as f:
+        conf_data = f.read()
+    # Substitute the right path in the template
+    # configuration file
+    conf_data = conf_data.replace('/usr/share/geni-ch/CA', config.conf)
+
+    # open a temp file
+    (fd, ca_conf) = tempfile.mkstemp()
+    f = os.fdopen(fd, 'w')
+    # write the conf file contents
+    f.write(conf_data)
+    # write the extension contents
+    f.write('\n');
+    f.write(extension)
+    f.close()
+    return ca_conf
+
+
+def init_ca(config, options):
+    if os.path.exists(config.cert) and not options.force:
+        msg = "Cowardly refusing to overwrite %s.\n" % (config.cert)
+        sys.stderr.write(msg)
+        return False
+    if os.path.exists(config.key) and not options.force:
+        msg = "Cowardly refusing to overwrite %s.\n" % (config.key)
+        sys.stderr.write(msg)
+        return False
+    # Construct the URN
+    urn_template = "URI:urn:publicid:IDN+%s+authority+ca"
+    urn = urn_template % (config.authority)
+
+    ca_conf = mk_openssl_conf(urn, config)
+
+    # Use the file (via subprocess)
+    cmd = ['/usr/bin/openssl', 'req', '-x509', '-nodes',
+           '-days', '1825',
+           '-subj', '/CN=%s' % (config.authority),
+           '-newkey', 'rsa:1024',
+           '-keyout', config.key,
+           '-out', config.cert,
+           '-config', ca_conf,
+           '-extensions', EXT_NAME]
+    # I would prefer subprocess.check_output but it is not
+    # available in Python 2.6, which is the version on Ubuntu 10.04.
+    returncode = subprocess.call(cmd)
+
+    if options.debug:
+        print "openssl conf data is in %s" % (ca_conf)
+    else:
+        os.unlink(ca_conf)
+
+    return returncode == 0
+
+def main(argv=None):
+    # do initial setup & process the user's call
+    if argv is None:
+        argv = sys.argv[1:]
+    options, args = parse_args(argv)
+    config_fname = args[0]
+    config = load_ini_config(config_fname)
+    if not config:
+        raise Exception("Invalid configuration")
+    if init_ca(config, options):
+        return 0
+    return 1
+
+if __name__ == "__main__":
+    try:
+        sys.exit(main())
+    except Exception as e:
+        # print stack trace
+        print e
+        sys.exit(1)
