@@ -154,3 +154,10 @@ exit
 
 # *** Need to check in ch-ssl.conf httpd.conf ***
 
+CHAPI Tests:
+cd ~geni-ch/tools
+export PYTHONPATH=/usr/share/geni-ch/gcf/src
+python client.py --cert /usr/share/geni-ch/ma/ma-cert.pem  --key /usr/share/geni-ch/ma/ma-key.pem  \
+       --url https://mbrinn.foo17.bar/SA --method get_version
+python client.py --cert /usr/share/geni-ch/ma/ma-cert.pem  --key /usr/share/geni-ch/ma/ma-key.pem  \
+       --url https://mbrinn.foo17.bar:8444/SR --method lookup_aggregates

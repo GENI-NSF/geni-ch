@@ -42,14 +42,10 @@ cp -r "${CHAPI_DIR}" chapi/chapi
 find chapi -name '.git*' -delete
 cd chapi
 
-echo `pwd`
-# Get GPO version of AMsoil from local web site
-AMSOIL_VERSION=AMsoil-gpo-0.3.3
-AMSOIL_FILE=${AMSOIL_VERSION}.tar.gz
-#wget http://www.gpolab.bbn.com/internal/projects/chapi/${AMSOIL_FILE}
-sudo cp /tmp/${AMSOIL_FILE} .
-sudo tar zxf "${AMSOIL_FILE}"
-sudo ln -s "${AMSOIL_VERSION}" AMsoil
+# At this point, I'm in /tmp/chapi-install/chapi
+
+git clone https://github.com/GENI-NSF/geni-soil.git
+ln -s geni-soil AMsoil
 cd AMsoil
 
 # fix up the amsoil directory
@@ -60,10 +56,8 @@ done
 # Remove unused AMsoil plugins
 for pl in dhcprm dhcpgeni3 mailer worker geniv3rpc
 do
-    sudo rm src/plugins/$pl
+    sudo rm -f src/plugins/$pl
 done
-
-sudo chown apache deploy log
 
 # tar up chapi and then the whole package
 cd ../..
@@ -81,7 +75,7 @@ fi
 sudo chown apache.apache /usr/share/geni-ch/chapi/AMsoil/deploy
 sudo chown apache.apache /usr/share/geni-ch/chapi/AMsoil/log
 
-sudo chmod +w /etc/geni-ch/settings.php
+# sudo chmod +w /etc/geni-ch/settings.php
 
 # return home, we're in TMP_DIR and it's about to be deleted
 cd
@@ -95,5 +89,5 @@ autoreconf --install
 make
 sudo make install
 
-sudo service httpd restart
+
 
