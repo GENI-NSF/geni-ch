@@ -22,7 +22,7 @@ header_template = """-- --------------------------------------------------------
 agg_template = """
 insert into service_registry
     (service_type, service_url, service_cert, service_name,
-     service_description, service_urn)
+     service_description, service_urn, short_name)
   values
     ( -- TYPE: zero = aggregate
       0,
@@ -35,6 +35,8 @@ insert into service_registry
       -- DESCRIPTION
      '%s',
       -- URN
+     '%s',
+      -- SHORT NAME
      '%s'
     );
 """
@@ -42,7 +44,7 @@ insert into service_registry
 ca_template = """
 insert into service_registry
     (service_type, service_url, service_cert, service_name,
-     service_description, service_urn)
+     service_description, service_urn, short_name)
   values
     ( -- TYPE: 7 = CA
       7,
@@ -55,7 +57,9 @@ insert into service_registry
       -- DESCRIPTION
      '%s',
       -- URN
-     ''
+     '',
+      -- SHORT NAME
+     '%s'
     );
 """
 
@@ -127,12 +131,12 @@ class Aggregate(object):
 
     def emit_agg_sql(self, out):
         sql = agg_template % (self.url, self.amcert, self.longname,
-                              self.description, self.urn)
+                              self.description, self.urn, self.shortname)
         out.write(sql)
 
     def emit_ca_sql(self, out):
         ca_desc = '%s CA' % (self.longname)
-        sql = ca_template % (self.cacert, ca_desc)
+        sql = ca_template % (self.cacert, ca_desc, self.shortname)
         out.write(sql)
 
     def emit_type_sql(self, out):

@@ -47,4 +47,5 @@ nobase_dist_db_DATA = \
 	sr/postgresql/update-1.sql \
 	sr/postgresql/update-2.sql \
 	sr/postgresql/update-3.sql \
-	sr/postgresql/update-4.sql
+	sr/postgresql/update-4.sql \
+	sr/postgresql/update-5.sql
