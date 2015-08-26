@@ -161,3 +161,12 @@ python client.py --cert /usr/share/geni-ch/ma/ma-cert.pem  --key /usr/share/geni
        --url https://mbrinn.foo17.bar/SA --method get_version
 python client.py --cert /usr/share/geni-ch/ma/ma-cert.pem  --key /usr/share/geni-ch/ma/ma-key.pem  \
        --url https://mbrinn.foo17.bar:8444/SR --method lookup_aggregates
+
+Notes:
+In ch-ssl.conf, 
+   Haven't put in the MSIE stuff. Not clear what versions we need to support, or if this is still  valid.
+   Haven't put in the stuff to print "YOu have reached a GENI page for a domain which is not in use...". This is really portal stuff. Not clear
+       we should be doing this for CH.
+
+
+	
