@@ -1,0 +1,52 @@
+#!/bin/sh
+
+#To run sync-gram-rack IPADDR_of_GRAM_Rack
+#A script that copies all the root trusted certificates to a GRAM rack specified by IP addr
+#But even then - you still have to login to the machine to copy the certs into the right directory
+#and then restart the gram-am service, also need to check that for Flack to run we need
+#the flash security policy installed
+
+if [ "$#" -ne 1 ];then
+  echo "Usage: $0 IPADDR_of_GRAM_RACK" >&2
+  exit 1
+fi
+
+HOSTADDR=$1
+
+echo "gram rack address is $HOSTADDR"
+TMPDIR=${HOME}/tmp/gram-rack-root-certs
+
+if [ -e $TMPDIR ]; then
+  echo "Temporary directory $TMPDIR already exists - bailing"
+  exit 1
+fi
+
+mkdir -p $TMPDIR
+if [ ! -d $TMPDIR ]; then
+  echo "Failed to create temporary directory $TMPDIR - bailing"
+  exit 1
+fi
+cd $TMPDIR
+
+#------------------------------------------------------------
+# ch1   = cascade
+# ch5   = tau-ceti
+# ch-bu = bigslide
+#------------------------------------------------------------
+
+for h in dagoola illyrica marilac sergyar ch1 ch5 ch-bu ch-dm ch-ph; do
+  echo "Pulling from ${h}"
+  scp "${h}.gpolab.bbn.com:/usr/share/geni-ch/CA/cacert.pem" ${h}-cacert.pem
+done
+
+#cat *.pem > extracerts.bundle
+scp *.pem gram@${HOSTADDR}:~/certs
+
+echo "Log in to $HOSTADDR"
+echo "Move files from ~ to /etc/gram/certs/trusted_roots"
+echo "Restart gram aggregate manager - sudo service gram-am restart"
+echo "Check that the flash security policy is installed on the gram rack - telnet $HOSTADDR 843"
+#ssh gram@128.89.72.107 sudo service gram-am restart
+
+cd
+rm -rf $TMPDIR

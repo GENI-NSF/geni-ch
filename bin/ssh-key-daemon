@@ -1,0 +1,16 @@
+#!/bin/sh
+# -*- Mode: sh -*-
+
+KEYFILE=~/Downloads/id_geni_ssh_rsa
+
+# Infinite while loop to chmod the private key file
+while :
+do
+    sleep 10
+    if [ -f "${KEYFILE}" ]
+    then
+        chmod 600 "${KEYFILE}"
+        echo chmodded "${KEYFILE}"
+    fi
+    echo looping
+done
