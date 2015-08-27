@@ -1,0 +1,411 @@
+#!/usr/bin/env python
+# -*- Mode: python -*-
+
+#----------------------------------------------------------------------
+# Copyright (c) 2013-2015 Raytheon BBN Technologies
+#
+# Permission is hereby granted, free of charge, to any person obtaining
+# a copy of this software and/or hardware specification (the "Work") to
+# deal in the Work without restriction, including without limitation the
+# rights to use, copy, modify, merge, publish, distribute, sublicense,
+# and/or sell copies of the Work, and to permit persons to whom the Work
+# is furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be
+# included in all copies or substantial portions of the Work.
+#
+# THE WORK IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+# MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+# NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+# HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+# WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE WORK OR THE USE OR OTHER DEALINGS
+# IN THE WORK.
+#----------------------------------------------------------------------
+
+import optparse
+import os.path
+import subprocess
+import sys
+import tempfile
+import uuid
+import ConfigParser
+
+# Constants
+EXT_NAME = 'v3_geni_ca'
+
+# INI file constants
+SECTION_CA = 'ca'
+SECTION_SERVICES = 'services'
+OPTION_CONF = 'conf'
+OPTION_CERT = 'cert'
+OPTION_KEY = 'key'
+OPTION_AUTHORITY = 'authority'
+OPTION_EMAIL = 'email'
+OPTION_SERVICES = 'services'
+OPTION_CA = 'ca'
+OPTION_URL = 'url'
+OPTION_TYPE = 'type'
+
+
+class Service(object):
+    def __init__(self):
+        self.name = 'Unknown'
+        self.cert_file = None
+        self.key_file = None
+        self.ca = False
+        self.url = None
+        self.type = 0
+        self.authority = None
+        self.email = None
+        self.urn = None
+
+    def parse_from_ini(self, parser, name):
+        """Parse a service record from an ini file. A service record
+        has 5 fields: cert, key, ca, url, type. All are optional.
+          cert: location of the service's certificate in the file
+                system.
+            Default: None (do not create a certificate)
+          key: location of the service's private key in the file
+               system. Ignored if 'cert' is missing.
+            Default: value of 'cert' (put key in same file as cert)
+          ca: Indicates whether the service's certificate is a
+              certificate authority (CA). Ignored if 'cert' is
+              missing.
+            Default: False (service's certificate is not a CA)
+          url: The service's URL. Used when generating the SQL
+               record.
+            Default: None (service does not have a URL).
+          type: The integer type for this service. The types are
+                derived from the database code.
+            Default: 0 (service is not one of the known types.
+        """
+        self.name = name
+        if parser.has_option(name, OPTION_CERT):
+            if not parser.has_option(name, OPTION_AUTHORITY):
+                msg = "No authority option found for service %s." % (name)
+                sys.stderr.write(msg)
+                return False
+            self.authority = parser.get(name, OPTION_AUTHORITY)
+            if not parser.has_option(name, OPTION_EMAIL):
+                msg = "No email option found for service %s." % (name)
+                sys.stderr.write(msg)
+                return False
+            self.email = parser.get(name, OPTION_EMAIL)
+            self.cert_file = parser.get(name, OPTION_CERT)
+            self.key_file = self.cert_file
+            if parser.has_option(name, OPTION_KEY):
+                self.key_file = parser.get(name, OPTION_KEY)
+            if parser.has_option(name, OPTION_CA):
+                self.ca = parser.getboolean(name, OPTION_CA)
+        if parser.has_option(name, OPTION_URL):
+            self.url = parser.get(name, OPTION_URL)
+        if parser.has_option(name, OPTION_TYPE):
+            self.type = parser.getint(name, OPTION_TYPE)
+        # Establish URN and UUID as well.
+        if self.authority:
+            self.urn = "URI:urn:publicid:IDN+%s+authority+%s" % (self.authority,
+                                                                 self.name)
+        self.uuid = uuid.uuid4()
+        return True
+
+class Config(object):
+    pass
+
+def parse_ca_ini_config(parser):
+    if not parser.has_section(SECTION_CA):
+        msg = 'No section "%s" found. Exiting.\n' % (SECTION_CA)
+        sys.stderr.write(msg)
+        return None
+    config = Config()
+    for opt in (OPTION_CONF, OPTION_CERT, OPTION_KEY, OPTION_AUTHORITY):
+        if not parser.has_option(SECTION_CA, opt):
+            msg = 'Section "%s" is missing option "%s". Exiting.\n'
+            msg = msg % (SECTION_CA, opt)
+            sys.stderr.write(msg)
+            return None
+        setattr(config, opt, parser.get(SECTION_CA, opt))
+    return config
+
+def load_ca_ini_config(fname):
+    parser = ConfigParser.SafeConfigParser()
+    result = parser.read(fname)
+    config = parse_ca_ini_config(parser)
+    return config
+
+def parse_service_ini_config(parser, name):
+    if not parser.has_section(name):
+        msg = 'No service section "%s" found. Exiting.\n' % (name)
+        sys.stderr.write(msg)
+        return None
+    service = Service()
+    if service.parse_from_ini(parser, name):
+        return service
+    else:
+        return None
+
+def parse_svc_ini_config(parser):
+    if not parser.has_section(SECTION_SERVICES):
+        msg = 'No section "%s" found. Exiting.\n' % (SECTION_SERVICES)
+        sys.stderr.write(msg)
+        return None
+    if not parser.has_option(SECTION_SERVICES, OPTION_SERVICES):
+        msg = 'Section "%s" is missing option "%s". Exiting.\n'
+        msg = msg % (SECTION_SERVICES, OPTION_SERVICES)
+        sys.stderr.write(msg)
+        return None
+    service_names = parser.get(SECTION_SERVICES, OPTION_SERVICES)
+    service_names = [s.strip() for s in service_names.split(',')]
+    services = []
+    for name in service_names:
+        service = parse_service_ini_config(parser, name)
+        if not service:
+            # An error has occurred. Stop.
+            return None
+        services.append(service)
+    config = Config()
+    setattr(config, 'services', services)
+    return config
+
+def load_svc_ini_config(fname):
+    parser = ConfigParser.SafeConfigParser()
+    result = parser.read(fname)
+    config = parse_svc_ini_config(parser)
+    return config
+
+def parse_args(argv):
+    usage = "usage: %prog [options] config.ini"
+    parser = optparse.OptionParser(usage=usage)
+    parser.add_option("--force", action="store_true", default=False,
+                      help="Force creation of CA certificate and key")
+    parser.add_option("-s", "--sql", default=None,
+                      help="Write SQL to FILE")
+    parser.add_option("--debug", action="store_true", default=False,
+                      help="Enable debugging information")
+    (options, args) = parser.parse_args(argv)
+    if len(args) < 1:
+        parser.print_help()
+        raise Exception()
+    return (options, args)
+
+def mk_openssl_conf(urn, config):
+    extension_template = """[%s]
+subjectKeyIdentifier=hash
+authorityKeyIdentifier=keyid:always,issuer:always
+subjectAltName=email:copy,%s
+basicConstraints = CA:true
+"""
+    extension = extension_template % (EXT_NAME, urn)
+
+    # Copy the conf file's contents into memory
+    with open(config.conf, 'r') as f:
+        conf_data = f.read()
+    # Substitute the right path in the template
+    # configuration file
+    conf_data = conf_data.replace('/usr/share/geni-ch/CA', config.conf)
+
+    # open a temp file
+    (fd, ca_conf) = tempfile.mkstemp()
+    f = os.fdopen(fd, 'w')
+    # write the conf file contents
+    f.write(conf_data)
+    # write the extension contents
+    f.write('\n');
+    f.write(extension)
+    f.close()
+    return ca_conf
+
+
+def init_ca(config, options):
+    if os.path.exists(config.cert) and not options.force:
+        msg = "Cowardly refusing to overwrite %s.\n" % (config.cert)
+        sys.stderr.write(msg)
+        return False
+    if os.path.exists(config.key) and not options.force:
+        msg = "Cowardly refusing to overwrite %s.\n" % (config.key)
+        sys.stderr.write(msg)
+        return False
+    # Construct the URN
+    urn_template = "URI:urn:publicid:IDN+%s+authority+ca"
+    urn = urn_template % (config.authority)
+
+    ca_conf = mk_openssl_conf(urn, config)
+
+    # Use the file (via subprocess)
+    cmd = ['/usr/bin/openssl', 'req', '-x509', '-nodes',
+           '-days', '1825',
+           '-subj', '/CN=%s' % (config.authority),
+           '-newkey', 'rsa:1024',
+           '-keyout', config.key,
+           '-out', config.cert,
+           '-config', ca_conf,
+           '-extensions', EXT_NAME]
+    # I would prefer subprocess.check_output but it is not
+    # available in Python 2.6, which is the version on Ubuntu 10.04.
+    returncode = subprocess.call(cmd)
+
+    if options.debug:
+        print "openssl conf data is in %s" % (ca_conf)
+    else:
+        os.unlink(ca_conf)
+
+    return returncode == 0
+
+def create_req(req_file, key_file, subject, options):
+    # Use the file (via subprocess)
+    cmd = ['/usr/bin/openssl', 'req', '-new', '-nodes',
+           '-newkey', 'rsa:1024',
+           '-subj', subject,
+           '-keyout', key_file,
+           '-out', req_file]
+    # I would prefer subprocess.check_output but it is not
+    # available in Python 2.6, which is the version on Ubuntu 10.04.
+    returncode = subprocess.call(cmd)
+    return returncode == 0
+
+def sign_service_req(req_file, service, ca_config, options):
+    # The authority URL for more info about the CA, I suppose.
+    auth_url_tmpl = 'https://%s/cainfo.html'
+    auth_url = auth_url_tmpl % (service.authority)
+    uuid_tmpl = 'URI:urn:uuid:%s'
+    uuid = uuid_tmpl % (service.uuid)
+    ext_name = 'v3_auth'
+    (ext_fd, ext_file) = tempfile.mkstemp()
+    f = os.fdopen(ext_fd, 'w')
+    f.write('[%s]\n' % (ext_name))
+    f.write('subjectKeyIdentifier=hash\n')
+    f.write('authorityKeyIdentifier=keyid:always,issuer:always\n')
+    f.write('authorityInfoAccess=2.25.305821105408246119474742976030998643995')
+    f.write(';URI:%s\n' % (auth_url))
+    f.write('subjectAltName=email:copy,%s,%s\n' % (service.urn, uuid))
+    f.write('basicConstraints=CA:%s' % (str(bool(service.ca)).lower()))
+    f.close()
+
+    ca_conf = ca_config.conf
+    ca_cert_file = ca_config.cert
+    ca_key_file = ca_config.key
+    cmd = ['/usr/bin/openssl', 'ca',
+           '-config', ca_conf,
+           '-policy', 'policy_anything',
+           '-batch',
+           '-notext',
+           '-extfile', ext_file,
+           '-extensions', ext_name,
+           '-days', '1825',
+           '-in', req_file,
+           '-out', service.cert_file,
+           '-cert', ca_cert_file,
+           '-keyfile', ca_key_file]
+    # I would prefer subprocess.check_output but it is not
+    # available in Python 2.6, which is the version on Ubuntu 10.04.
+    returncode = subprocess.call(cmd)
+    # Done with ext file
+    os.unlink(ext_file)
+    return returncode == 0
+
+
+def create_service_cert(service, ca_config, options):
+    subject_tmpl = '/O=%s/OU=authority/OU=%s/CN=%s/emailAddress=%s'
+    subject = subject_tmpl % (service.authority, service.name,
+                              str(service.uuid), service.email)
+    (fd, req_file) = tempfile.mkstemp()
+    os.close(fd)
+    if not create_req(req_file, service.key_file, subject, options):
+        msg = 'Failed to create certificate request for service %s'
+        msg = msg % (service.name)
+        sys.stderr.write(msg)
+        return False
+    if options.debug:
+        print "Created req file %s" % (req_file)
+
+    sign_result = sign_service_req(req_file, service, ca_config, options)
+    if not sign_result:
+        msg = 'Failed to sign certificate request for service %s'
+        msg = msg % (service.name)
+        sys.stderr.write(msg)
+        return False
+
+    # Remove the req file
+    os.unlink(req_file)
+    return True
+
+def init_services(svc_config, ca_config, options):
+    for svc in svc_config.services:
+        if not svc.cert_file:
+            continue
+        if os.path.isfile(svc.cert_file) and not options.force:
+            if options.debug:
+                sys.stderr.write("Skipping service %s: certificate exists.\n"
+                                 % svc.name)
+            continue
+        if not create_service_cert(svc, ca_config, options):
+            # A message has already been printed by the lower layer(s)
+            # Stop here, do not continue
+            return False
+    return True
+
+def sql_string_or_null(s):
+    if s is None:
+        return 'NULL'
+    else:
+        return "%r" % (str(s))
+
+def sql_service_insert(service):
+    if service.type is 0:
+        return ''
+    insert_tmpl = 'insert into service_registry'
+    insert_tmpl += ' (service_type, service_url, service_urn, service_cert'
+    insert_tmpl += ', service_name) values'
+    insert_tmpl += ' (%d, %s, %s, %s, %s);\n'
+    insert_stmt = insert_tmpl % (service.type,
+                                 # URL cannot be NULL, so use empty string
+                                 sql_string_or_null(service.url or ''),
+                                 sql_string_or_null(service.urn),
+                                 sql_string_or_null(service.cert_file),
+                                 sql_string_or_null(service.name))
+    return insert_stmt
+
+def generate_sql(sql_filename, svc_config, ca_config, options):
+    setattr(ca_config, 'url', None)
+    setattr(ca_config, 'urn', None)
+    setattr(ca_config, 'type', 7)
+    setattr(ca_config, 'cert_file', ca_config.cert)
+    setattr(ca_config, 'name', 'ca')
+    sql_services = list(svc_config.services)
+    sql_services.append(ca_config)
+    with open(sql_filename, 'w') as f:
+        for svc in sql_services:
+            stmt = sql_service_insert(svc)
+            f.write(stmt)
+
+def main(argv=None):
+    # do initial setup & process the user's call
+    if argv is None:
+        argv = sys.argv[1:]
+    options, args = parse_args(argv)
+    config_fname = args[0]
+    ca_config = load_ca_ini_config(config_fname)
+    if not ca_config:
+        raise Exception("Invalid configuration")
+#    if not init_ca(ca_config, options):
+        # init_ca has failed. Stop and return an error.
+#        return 1
+    svc_config = load_svc_ini_config(config_fname)
+    if not svc_config:
+        raise Exception("Invalid configuration")
+    if not init_services(svc_config, ca_config, options):
+        # init_services has failed. Stop and return an error.
+        return 1
+    # Everything succeeded, so return success.
+    if options.sql:
+        generate_sql(options.sql, svc_config, ca_config, options)
+    return 0
+
+if __name__ == "__main__":
+    try:
+        sys.exit(main())
+    except Exception as e:
+        # print stack trace
+        print e
+        sys.exit(1)

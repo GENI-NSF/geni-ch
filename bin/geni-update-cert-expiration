@@ -1,0 +1,130 @@
+#!/usr/bin/env python
+# -*- Mode: python -*-
+#
+#----------------------------------------------------------------------
+# Copyright (c) 2014-2015 Raytheon BBN Technologies
+#
+# Permission is hereby granted, free of charge, to any person obtaining
+# a copy of this software and/or hardware specification (the "Work") to
+# deal in the Work without restriction, including without limitation the
+# rights to use, copy, modify, merge, publish, distribute, sublicense,
+# and/or sell copies of the Work, and to permit persons to whom the Work
+# is furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be
+# included in all copies or substantial portions of the Work.
+#
+# THE WORK IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+# MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+# NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+# HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+# WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE WORK OR THE USE OR OTHER DEALINGS
+# IN THE WORK.
+#----------------------------------------------------------------------
+
+#----------------------------------------------------------------------
+#
+# Set the expiration column to the certificate expiration.
+#
+#----------------------------------------------------------------------
+
+import datetime
+import logging
+import optparse
+import psycopg2
+import psycopg2.extras
+import sys
+import time
+import OpenSSL
+
+tables = dict(inside='ma_inside_key', outside='ma_outside_cert')
+
+def init_logging(options):
+    level = logging.INFO
+    if options.debug:
+        level = logging.DEBUG
+    logging.basicConfig(level=level)
+
+def parse_args(argv):
+    usage = '%s [options] --table TABLE' % (argv[0])
+    parser = optparse.OptionParser(usage=usage)
+    parser.add_option("--debug", action="store_true", default=False,
+                       help="enable debugging output")
+    parser.add_option("-d", "--database", default='portal',
+                      help="database name")
+    parser.add_option("--host", default='localhost',
+                      help="database host")
+    parser.add_option("-u", "--user", default='portal',
+                      help="database user")
+    parser.add_option("-t", "--table",
+                      type='choice',
+                      choices=tables.keys(),
+                      help='database certificate table')
+    parser.add_option("--delay", default=5, type=int,
+                      help='delay between updates')
+    options,args = parser.parse_args()
+    if not options.table:
+        print 'Table must be one of %r' % (tables.keys())
+        parser.print_usage()
+        raise Exception("Missing some required arguments")
+    return options,args
+
+
+def main(argv=None):
+    if argv is None:
+        argv = sys.argv
+    try:
+        options,args = parse_args(argv)
+        init_logging(options)
+    except Exception as e:
+        sys.stderr.write(str(e) + "\n")
+        return 1
+    logger = logging.getLogger()
+    if options.table in tables:
+        table = tables[options.table]
+    else:
+        msg = 'Unknown table %s: must be one of %r\n' % (options.table,
+                                                         tables.keys())
+        sys.stderr.write(msg)
+        return 1
+
+    conn = psycopg2.connect(database=options.database,
+                            user=options.user,
+                            host=options.host)
+    cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+    select_sql = ('SELECT id, certificate FROM ' + table
+                  + ' WHERE expiration IS NULL LIMIT 1')
+    update_sql = 'UPDATE ' + table + ' SET expiration = %s WHERE id = %s'
+    try:
+        while True:
+            cur.execute(select_sql)
+            #logger.debug("Ran: %s" % (cur.query))
+            row = cur.fetchone()
+            if row is None:
+                return 0
+            row_id = row['id']
+            chain = row['certificate']
+            logger.debug("Processing row %d" % (row_id))
+            cert = OpenSSL.crypto.load_certificate(OpenSSL.crypto.FILETYPE_PEM,
+                                                   chain)
+            not_after = cert.get_notAfter()
+            expires = datetime.datetime.strptime(not_after, '%Y%m%d%H%M%SZ')
+            cur.execute(update_sql, (expires, row['id']))
+            logger.info("Updated row %d with expiration %s"
+                         % (row_id, expires))
+            conn.commit()
+            logger.debug('Sleeping for %d seconds' % (options.delay))
+            time.sleep(options.delay)
+    except psycopg2.Error, e:
+        print cur.query
+        print "Doing  %s: Got %s: %s" % (select_sql, e.pgcode, e.pgerror)
+        return 1
+    finally:
+        cur.close()
+        conn.close()
+    return 0
+
+if __name__ == "__main__":
+    sys.exit(main())

@@ -6,7 +6,7 @@
 = GENI Clearinghouse Release Notes =
 
 == 2.4 ==
-
+ * Migrate management scripts from geni-portal to geni-ch (#101)
 
 == 2.3 ==
  * Add geni-revoke-member-certificate man page
