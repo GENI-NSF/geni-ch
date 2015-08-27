@@ -1,0 +1,36 @@
+.TH geni-revoke-member-certificate 1 "August 25, 2015"
+.SH NAME
+geni-revoke-member-certificate \- revoke a GENI user's certificate
+.SH SYNOPSIS
+.B geni-revoke-member-certificate
+\--revoke pem-file
+[\-c signer-cert]
+[\-k signer-key]
+[\--conf config-file]
+[\--crl crl-file]
+.SH DESCRIPTION
+Revoke a GENI user's certificate. If a private key has been compromised
+or a user is no longer trusted, use this program to revoke their certificate.
+.SH OPTIONS
+.TP
+\-c <signer certificate>, \-\-certfile <signer certificate>
+The certificate to sign the CRL
+.TP
+\-\-conf <openssl config file>
+.TP
+\-\-crl <crl file>
+.TP
+\-h, \-\-help
+Show summary of options.
+.TP
+\-k <key file>, \-\-keyfile <key file>
+The private key of the CRL signer.
+.TP
+\-\-revoke <pem file>
+.SH EXAMPLES
+.TP
+Revoke a certificate accepting all defualts:
+
+.B geni-revoke-member-certificate --revoke <pem file>
+.SH AUTHOR
+geni-revoke-member-certificate was written by Raytheon BBN Technologies.
