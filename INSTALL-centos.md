@@ -1,8 +1,19 @@
 Installation on CentOS 7
 ========================
 
-Teach CentOS about the RPM repository
--------------------------------------
+Update the OS and install EPEL
+------------------------------
+
+```Shell
+# update the OS
+yum update -y
+
+# Install the EPEL repository
+yum install epel-release
+```
+
+Teach CentOS about the GENI RPM repository
+------------------------------------------
 
 To teach CentOS about a new RPM repository a file can be added to
 `/etc/yum.repos.d` with repository information. A sample file
@@ -27,22 +38,10 @@ Once the server knows about the RPM repository, it is easy to
 install the geni clearinghouse package:
 
 ```Shell
-yum install geni-chapi
+yum install geni-chapi --nogpgcheck -y
 ```
 
 Other installation notes
 ------------------------
 
-```Shell
-# Install the EPEL repository
-sudo yum install epel-release
-
-yum install httpd mod_ssl mod_fcgid
-
-yum install python-flask python-sqlalchemy python-lxml python-psycopg2 \
-         python-flup python-flask-xml-rpc
-```
-
-*Note: omitted python-pip until we need it*
-
-*Note: omitted postgresql-client-common until we need it*
+*Note: omitted postgresql-client-common until we need it* This is probably a mistake.
