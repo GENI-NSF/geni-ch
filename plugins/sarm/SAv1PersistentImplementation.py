@@ -723,6 +723,22 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
 
         return result
 
+    def _validate_project_expiration(self, expiration):
+        if expiration:
+            result = dateutil.parser.parse(expiration)
+            # convert to UTC naive
+            if result.tzinfo:
+                result = result.astimezone(dateutil.tz.tzutc())
+                result = result.replace(tzinfo=None)
+
+            now = dt.datetime.utcnow()
+            if result < now:
+                msg = 'Requested expiration is in the past'
+                raise CHAPIv1ArgumentError(msg)
+        else:
+            result = None
+        return result
+
     # create a new project
     def create_project(self, client_cert, credentials, options, session):
 
@@ -757,8 +773,9 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         for key, value in options["fields"].iteritems():
             setattr(project, SA.project_field_mapping[key], value)
         project.creation = dt.datetime.utcnow()
-        # FIXME: Must project expiration be in UTC?
-        if project.expiration == "": project.expiration=None
+
+        project.expiration = self._validate_project_expiration(project.expiration)
+
         project.project_id = str(uuid.uuid4())
 
         # FIXME: Real project email!
