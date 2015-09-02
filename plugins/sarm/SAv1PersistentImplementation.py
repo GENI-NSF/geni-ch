@@ -453,6 +453,12 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         session.add(object)
         # Force a flush of the session so that adding project/slice members works
         session.flush()
+
+        # Convert dates to strings per API
+        for k,v in ret.iteritems():
+            if isinstance(v, dt.datetime):
+              ret[k] = v.strftime(STANDARD_DATETIME_FORMAT)
+
         return self._successReturn(ret)
 
     # create a new slice
