@@ -7,6 +7,7 @@
 
 == 2.4 ==
  * Migrate management scripts from geni-portal to geni-ch (#101)
+ * Raise not implemented error for delete slice and delete project (#398)
 
 == 2.3 ==
  * Add geni-revoke-member-certificate man page
