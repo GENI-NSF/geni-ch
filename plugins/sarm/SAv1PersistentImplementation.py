@@ -838,6 +838,8 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         project_uuid = self.get_project_id(session, 'project_name', name)
         if not project_uuid:
             raise CHAPIv1ArgumentError('No project found with urn ' + project_urn)
+        if not options['fields']:
+            raise CHAPIv1ArgumentError('No fields to update')
         q = session.query(Project)
         q = q.filter(getattr(Project, "project_name") == name)
         updates = {}
