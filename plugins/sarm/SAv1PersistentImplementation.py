@@ -482,6 +482,11 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
 
         # fill in the fields of the object
         slice = Slice()
+
+        # Set default values for fields that may not get set
+        setattr(slice, SA.slice_field_mapping['SLICE_DESCRIPTION'], '')
+        setattr(slice, SA.slice_field_mapping['SLICE_EXPIRED'], False)
+
         project_urn = None
         for key, value in options["fields"].iteritems():
             if key == "SLICE_PROJECT_URN":
@@ -733,6 +738,11 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
 
         # fill in the fields of the object
         project = Project()
+
+        # Set default values for fields that may not get set
+        setattr(project, SA.project_field_mapping['PROJECT_DESCRIPTION'], '')
+        setattr(project, SA.project_field_mapping['PROJECT_EXPIRED'], False)
+
         for key, value in options["fields"].iteritems():
             setattr(project, SA.project_field_mapping[key], value)
         project.creation = dt.datetime.utcnow()
