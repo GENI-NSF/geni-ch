@@ -778,10 +778,8 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
 
         project.project_id = str(uuid.uuid4())
 
-        # FIXME: Real project email!
-        if not hasattr(project, 'project_email') or not project.project_email:
-            email = "project-%s@example.com" % name
-            setattr(project, 'project_email', email)
+        # Don't fake an email, admit that we don't do project email
+        project.project_email = None
 
         # Set the project lead (the creator)
         if not hasattr(project, 'lead_id') or not project.lead_id:
