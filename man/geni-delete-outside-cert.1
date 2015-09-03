@@ -1,0 +1,60 @@
+.TH geni-delete-outside-cert 1 "September 3, 2015"
+.SH NAME
+geni-delete-outside-cert \- delete a GENI user's certificate
+.SH SYNOPSIS
+.B geni-delete-outside-cert
+\-c signer-cert
+\-k signer-key
+\-l clearinghouse-url
+\-m username
+\-p database-password
+.SH DESCRIPTION
+Delete a GENI user's certificate. The outside certificate is one a user has
+downloaded for use outside of the GENI portal. This command is generally used
+as a fix for a damaged certificate or in the course of revoking a user's
+certificate.
+.SH OPTIONS
+.TP
+\-c <signer certificate>, \-\-certfile <signer certificate>
+The invoker's GENI certificate.
+.TP
+\-d <database name>
+The name of the database holding the outside certificate table.
+.TP
+\-\-debug
+Enable debugging output.
+.TP
+\-h, \-\-help
+Show summary of options.
+.TP
+\-\-host
+The name of the database host.
+.TP
+\-k <key file>, \-\-keyfile <key file>
+The private key associated with the invoker's certificate.
+.TP
+\-l <URL>, \-\-url <URL>
+The URL of the clearinghouse member authority
+.TP
+\-m <username>, \-\-member <username>
+The username or UUID of the member whose certificate should be deleted.
+.TP
+\-p <password>, \-\-password <password>
+The database password.
+.TP
+\-P <password file>, \-\-password-file <password file>
+A file containing the database password. Use this instead of \-p for added
+security.
+.TP
+\-u <database user>, \-\-user <database user>
+The username to use when accessing the database.
+.SH EXAMPLES
+.TP
+Delete an outside certificate:
+
+.B geni-delete-outside-cert -k <key file> -c <cert file>
+    -l https://ch.geni.net/ -m <username>
+.SH AUTHOR
+geni-delete-outside-cert was written by Raytheon BBN Technologies.
+.SH SEE ALSO
+geni-revoke-member-certificate(1)
