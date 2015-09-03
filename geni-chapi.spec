@@ -1,16 +1,16 @@
 Name:           geni-chapi
-Version:        2.2
-Release:        2%{?dist}
+Version:        2.3
+Release:        1%{?dist}
 Summary:        GENI clearinghouse
 BuildArch:      noarch
 License:        GENI Public License
 URL:            https://github.com/GENI-NSF/geni-ch
 Source:         %{name}-%{version}.tar.gz
 Group:          Applications/Internet
-Requires:       m2crypto
-Requires:       python-dateutil
-Requires:       pyOpenSSL
-Requires:       geni-tools, abac
+Requires:       httpd, mod_ssl, mod_fcgid
+Requires:       python-flask, python-sqlalchemy, python-lxml, python-psycopg2
+Requires:       python-flup, python-flask-xml-rpc
+Requires:       geni-tools, abac, postgresql
 
 # BuildRequires: gettext
 # Requires(post): info
@@ -571,10 +571,14 @@ rm -rf $RPM_BUILD_ROOT
 %{_mandir}/man1/geni-list-idp-members.1.gz
 %{_mandir}/man1/geni-list-member-projects.1.gz
 %{_mandir}/man1/geni-list-pending-requests.1.gz
+%{_mandir}/man1/geni-revoke-member-certificate.1.gz
 %{_mandir}/man1/geni-revoke-member-privilege.1.gz
 %{_mandir}/man1/geni-sign-tool-csr.1.gz
 
 %changelog
+* Thu Aug 27 2015 Tom Mitchell <tmitchell@bbn.com> - 2.3-1%{?dist}
+- Add dependencies
+- Include templates
 * Wed Aug 12 2015 Tom Mitchell <tmitchell@bbn.com> - 2.2-2%{?dist}
 - Add dependencies: geni-tools, abac
 - Merge final 2.2 release
