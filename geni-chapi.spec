@@ -10,7 +10,7 @@ Group:          Applications/Internet
 Requires:       httpd, mod_ssl, mod_fcgid
 Requires:       python-flask, python-sqlalchemy, python-lxml, python-psycopg2
 Requires:       python-flup, python-flask-xml-rpc
-Requires:       geni-tools, abac
+Requires:       geni-tools, abac, postgresql
 
 # BuildRequires: gettext
 # Requires(post): info
