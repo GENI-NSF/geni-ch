@@ -21,7 +21,7 @@ nova --os-username=admin-ch.geni.net:COUNT+slice+CENTOS-TEST --os-password="slic
 sudo yum install -y epel-release
 sudo yum install -y automake autoconf
 sudo yum install -y emacs-nox git
-sudo yum install -y python-sqlalchemy python-psycopg2
+sudo yum install -y python-sqlalchemy python-psycopg2 postgresql
 sudo yum install -y httpd mod_fcgid mod_ssl
 sudo yum install -y python-flup python-blinker python-dateutil swig
 sudo yum install -y  m2crypto xmlsec1 xmlsec1-openssl
@@ -45,7 +45,21 @@ CHHOST=`~/geni-ch/bin/geni-install-templates --print_parameter ch_host`
 CH_EMAIL=mbrinn@bbn.com
 TRUSTED_ROOTS_DIR=$CH_DIR/portal/gcf.d/trusted_roots
 
-# Install database (From install_postgresql.sh)
+# Set up database connection.
+# If local database, use install_postgresql.sh
+# Otherwise
+
+
+DB_HOST=database.centostest.count-pg0.apt.emulab.net # To be filled in
+DB_USER=portal
+DB_DATABASE=portal
+DB_PASSWORD=portal
+echo "$DB_HOST:*:$DB_DATABASE:$DB_USER:$DB_PASSWORD"  > ~/.pgpass
+chmod 0600 ~/.pgpass
+touch ~/.psql_history
+PSQL="psql -U $DB_USER -h $DB_HOST $DB_DATABASE"
+
+
 for sch in portal cs logging ma pa sa sr
 do
     $PSQL -f $CHAPI_DIR/db/$sch/postgresql/schema.sql

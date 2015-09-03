@@ -64,6 +64,7 @@ dist_pkgdata_DATA = \
 dist_sbin_SCRIPTS = \
 	geni-add-member-privilege \
 	geni-create-ma-crl \
+	geni-install-templates \
 	geni-list-member-projects \
 	geni-list-pending-requests \
 	geni-revoke-member-certificate \
