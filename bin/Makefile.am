@@ -61,10 +61,27 @@ dist_pkgdata_DATA = \
 	ch-error-log-out.txt \
 	chapi-log-out.txt
 
+dist_bin_SCRIPTS = \
+	geni-add-member-attribute \
+	geni-add-project-member \
+	geni-add-trusted-tool \
+	geni-assert-email \
+	geni-delete-outside-cert \
+	geni-disable-user \
+	geni-enable-user \
+	geni-ops-report \
+	geni-remove-member-attribute \
+	geni-remove-project-member \
+	gmoc_list_contacts \
+	gmoc_list_slices \
+	report_genich_relations
+
 dist_sbin_SCRIPTS = \
 	geni-add-member-privilege \
 	geni-archive-data-tables \
 	geni-create-ma-crl \
+	geni-init-ca \
+	geni-init-services \
 	geni-list-member-projects \
 	geni-list-pending-requests \
 	geni-revoke-member-certificate \

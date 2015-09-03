@@ -24,9 +24,12 @@ man_MANS = \
 dist_man_MANS = \
 	geni-add-member-privilege.1 \
 	geni-archive-data-tables.1 \
+	geni-assert-email.1 \
+	geni-delete-outside-cert.1 \
 	geni-expiring-certs.1 \
 	geni-list-idp-members.1 \
 	geni-list-member-projects.1 \
 	geni-list-pending-requests.1 \
+	geni-revoke-member-certificate.1 \
 	geni-revoke-member-privilege.1 \
 	geni-sign-tool-csr.1

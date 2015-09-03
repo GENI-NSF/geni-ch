@@ -212,15 +212,16 @@ class FieldsArgumentCheck(ArgumentCheck):
                     properly_formed = True
                 except Exception, e:
                     pass
-            else:
-                # If there's no value, that's fine too
+            elif value is None:
+                # If the value is None, that's fine
                 properly_formed = True
         elif field_type == "EMAIL":
             properly_formed = value.find('@')>= 0 and value.find('.') >= 0
         elif field_type == "KEY":
             pass # *** No standard format
         elif field_type == "BOOLEAN":
-            properly_formed = value.lower() in ['t', 'f', 'true', 'false']
+            properly_formed = (type(value) is bool or
+                               value.lower() in ['t', 'f', 'true', 'false'])
         elif field_type == "CREDENTIALS":
             try:
                 Credential(string=value)

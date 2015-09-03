@@ -1,0 +1,59 @@
+#!/bin/sh
+# -*- mode:sh -*-
+
+if [ -z "$1" -o -z "$2" ]; then
+    echo "Usage: sign-auth-req <req file> <cert output file> <urn> [CA]" 1>&2
+    exit 1
+fi
+
+REQ=$1
+OUT=$2
+URN=$3
+
+
+FQDN=`/bin/hostname -f`
+
+
+# Use a non-existent hostname for the authority URL. We were getting a
+# lot of "slice is busy errors from pgeni3.gpolab.bbn.com when using
+# the FQDN of internal lab VMs. My theory is that those connections
+# had to time out. With a non-existent hostname, the connection should
+# error immediately so we'll get fewer "busy" errors. It remains to be
+# seen whether this works in practices.
+
+#AUTH_URL=https://${FQDN}/ca.html
+AUTH_URL=https://example.geni.net/info.html
+
+
+UUID=`openssl req -in ${REQ} -text -noout | grep 'Subject:' | sed -e 's/.*CN=\([^/$]*\).*/\1/g'`
+echo "first uuid = ${UUID}"
+UUID="URI:uuid:${UUID}"
+echo "second uuid = ${UUID}"
+EXT_FILE=`/bin/mktemp`
+EXT_NAME='v3_auth'
+cat > "${EXT_FILE}" <<EOF
+[$EXT_NAME]
+subjectKeyIdentifier=hash
+authorityKeyIdentifier=keyid:always,issuer:always
+authorityInfoAccess = 2.25.305821105408246119474742976030998643995;URI:${AUTH_URL}
+subjectAltName=email:copy,${URN},${UUID}
+EOF
+
+if [ -z "$4" -o "$4" != "CA" ]; then
+    echo 'basicConstraints = CA:false' >> "${EXT_FILE}"
+else
+    echo 'basicConstraints = CA:true' >> "${EXT_FILE}"
+fi
+
+OPENSSL=/usr/bin/openssl
+CONF=/usr/share/geni-ch/CA/openssl.cnf
+
+# This is the policy in the $CONF file that checks fields for validity.
+# Policy anything is not restrictive in any way.
+POLICYARG="-policy policy_anything"
+
+"${OPENSSL}" ca -config "${CONF}" ${POLICYARG} -batch -notext \
+                -extfile "${EXT_FILE}" -extensions "${EXT_NAME}" \
+                -in "${REQ}" -out "${OUT}"
+
+/bin/rm "${EXT_FILE}"

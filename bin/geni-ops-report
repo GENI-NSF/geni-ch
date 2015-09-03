@@ -1,0 +1,410 @@
+#!/usr/bin/env python
+# -*- mode:python -*-
+
+#----------------------------------------------------------------------
+# Copyright (c) 2013-2015 Raytheon BBN Technologies
+#
+# Permission is hereby granted, free of charge, to any person obtaining
+# a copy of this software and/or hardware specification (the "Work") to
+# deal in the Work without restriction, including without limitation the
+# rights to use, copy, modify, merge, publish, distribute, sublicense,
+# and/or sell copies of the Work, and to permit persons to whom the Work
+# is furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be
+# included in all copies or substantial portions of the Work.
+#
+# THE WORK IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+# MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+# NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+# HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+# WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE WORK OR THE USE OR OTHER DEALINGS
+# IN THE WORK.
+#----------------------------------------------------------------------
+
+import sys
+import logging
+import optparse
+import csv
+import psycopg2
+import psycopg2.extras
+
+class Member(object):
+    members = dict()
+    attrs = []
+
+    @classmethod
+    def find(cls, id):
+        if not id in cls.members:
+            m = cls(id)
+            cls.members[id] = m
+        return cls.members[id]
+
+    @classmethod
+    def delete_member(cls, id):
+        del cls.members[id]
+
+    @classmethod
+    def all_members(cls):
+        return cls.members.values()
+
+    @classmethod
+    def sorted_members(cls):
+        return [cls.members[id] for id in sorted(cls.members.keys())]
+
+    def __init__(self, id):
+        self.id = id
+        for attr in self.attrs:
+            setattr(self, attr, '')
+        self.project_lead = False
+        self.operator = False
+        self.last_seen = None
+
+    def parsed_firstname(self):
+        """Get a usable firstname for a member, or fall back to email"""
+        if self.first_name:
+            return self.first_name
+        return self.email_address
+
+    def parsed_lastname(self):
+        """Get a usable lastname for a member, or fall back to email"""
+        if self.last_name:
+            return self.last_name
+        return self.email_address
+
+def note_last_seen(conn):
+    DB_TS_FORMAT = '%Y-%m-%d %H:%M:%S.%f'
+    query = "select member_id, ts from last_seen"
+    cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+    cur.execute(query)
+    fetchsize = 5
+    rows = cur.fetchmany(fetchsize)
+    while rows:
+        for r in rows:
+            mid = r['member_id']
+            if mid in Member.members:
+                m = Member.find(r['member_id'])
+                m.last_seen = r['ts']
+                # last_seen is a datetime.datetime.
+                # Remove the microsecond, we don't care
+                m.last_seen = m.last_seen.replace(microsecond=0)
+        rows = cur.fetchmany(fetchsize)
+    cur.close()
+
+def load_members(conn):
+    query = "select * from ma_member_attribute order by member_id"
+    cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+    cur.execute(query)
+    fetchsize = 5
+    rows = cur.fetchmany(fetchsize)
+    while rows:
+        for r in rows:
+            m = Member.find(r['member_id'])
+            setattr(m, r['name'], r['value'])
+        rows = cur.fetchmany(fetchsize)
+    cur.close()
+    # Remove members who have been disabled from this report
+    disabled_ids = [mem.id for mem in Member.members.values() \
+                        if mem.member_enabled == 'n']
+    for disabled_id in disabled_ids: Member.delete_member(disabled_id)
+    # Get the last seen timestamp for each member
+    note_last_seen(conn)
+
+def all_member_attrs(conn):
+    query = "select distinct name from ma_member_attribute"
+    cur = conn.cursor()
+    cur.execute(query)
+    rows = cur.fetchall()
+    cur.close()
+    return [r[0] for r in rows]
+
+def mark_project_leads(conn):
+    query = ("select member_id, value"
+             + " from ma_member_attribute"
+             + " where name = 'PROJECT_LEAD'"
+             + " order by member_id")
+    cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+    cur.execute(query)
+    fetchsize = 5
+    rows = cur.fetchmany(fetchsize)
+    while rows:
+        for r in rows:
+            mid = r['member_id']
+            if mid in Member.members:
+                m = Member.find(mid)
+                m.project_lead = True
+        rows = cur.fetchmany(fetchsize)
+    cur.close()
+
+def mark_operators(conn):
+    query = ("select member_id, value"
+             + " from ma_member_attribute"
+             + " where name = 'OPERATOR'"
+             + " order by member_id")
+    cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+    cur.execute(query)
+    fetchsize = 5
+    rows = cur.fetchmany(fetchsize)
+    while rows:
+        for r in rows:
+            mid = r['member_id']
+            if mid in Member.members:
+                m = Member.find(mid)
+                m.operator = True
+        rows = cur.fetchmany(fetchsize)
+    cur.close()
+
+def print_members_csv(members):
+    def ident(x): return x
+    def xform_bool(x): return 'Y' if x else ''
+    m_attrs = (('id', ident), ('eppn', ident), ('first_name', ident),
+               ('last_name', ident), ('project_lead', xform_bool),
+               ('operator', xform_bool), ('last_seen', ident))
+    csvout = csv.writer(sys.stdout)
+    csvout.writerow([x for (x, y) in m_attrs])
+    for m in Member.sorted_members():
+        vals = [fn(getattr(m, k)) for (k, fn) in m_attrs]
+        csvout.writerow(vals)
+
+def print_members_gmoc_csv(members):
+    def ident(x): return x
+    m_attrnames = ('contact_urn', 'contact_email', 'contact_lastname',
+                   'contact_givenname', 'owner_id')
+    csvout = csv.writer(sys.stdout, lineterminator='\n')
+    csvout.writerow(m_attrnames)
+    for m in Member.sorted_members():
+        urn = getattr(m, 'urn')
+        email = getattr(m, 'email_address')
+        uuid = getattr(m, 'id')
+        lastname = m.parsed_lastname()
+        firstname = m.parsed_firstname()
+        vals = [urn, email, lastname, firstname, uuid]
+        csvout.writerow(vals)
+
+def load_projects(conn):
+    query = ("select project_id, project_name, value, creation"
+             + " from pa_project p, ma_member_attribute m"
+             + " where p.lead_id = m.member_id"
+             + " and m.name = 'eppn'"
+             + " order by creation")
+    cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+    cur.execute(query)
+    fetchsize = 5
+    result = []
+    hdr = ["project id", "project name", "eppn", "creation"]
+    result.append(hdr)
+    rows = cur.fetchmany(fetchsize)
+    while rows:
+        for r in rows:
+            result.append(r)
+        rows = cur.fetchmany(fetchsize)
+    cur.close()
+    return result
+
+def load_projects_for_audit(conn):
+    query = ("select project_id, project_name, lead_id, creation"
+             + " from pa_project")
+    cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+    cur.execute(query)
+    fetchsize = 5
+    result = []
+    rows = cur.fetchmany(fetchsize)
+    while rows:
+        for r in rows:
+            result.append({'id': r[0], 'name': r[1], 'lead_id': r[2],
+                           'creation': r[3], })
+        rows = cur.fetchmany(fetchsize)
+    cur.close()
+    return result
+
+def read_audit_inventory(audit_file):
+    f = open(audit_file, 'r')
+    inventory = {
+        'operator': [],
+        'projlead': [],
+    }
+    for line in f.readlines():
+        sline = line.strip()
+        if not sline: continue
+        if sline.startswith('#'): continue
+        [privtype, username] = line.split()
+        if not inventory.has_key(privtype):
+            raise ValueError, "Syntax error in %s: unknown privilege type %s" \
+                  % (audit_file, privtype)
+        if username in inventory[privtype]:
+            raise ValueError, "Syntax error in %s: multiple entries for ID %s" \
+                  % (audit_file, username)
+        inventory[privtype].append(username)
+    f.close()
+    return inventory
+
+def audit_member_info(m):
+    info = "%s (%s): %s %s <%s>" % \
+           (m.username, m.id, m.first_name, m.last_name, m.email_address)
+    return info
+
+def audit_members(inventory, projects):
+    operators_seen = []
+    projleads_seen = []
+    projlead_ids = []
+    errors = {
+      'unexpected_operators': [],
+      'unexpected_projleads': [],
+      'unexpected_project_lead_ids': [],
+      'missing_operators': [],
+      'missing_projleads': [],
+    }
+
+    # iterate over members.  look for unexpected operators and leads,
+    # and store all operators and leads we see.
+    for member in Member.sorted_members():
+        info = audit_member_info(member)
+        username = member.username
+        if member.operator:
+            if not username in inventory['operator']:
+                errors['unexpected_operators'].append(info)
+            operators_seen.append(username)
+        if member.project_lead:
+            if not (username in inventory['operator'] or
+                    username in inventory['projlead']):
+                errors['unexpected_projleads'].append(info)
+            projleads_seen.append(username)
+            projlead_ids.append(member.id)
+
+    # iterate over projects.  look for any projects whose lead ID wasn't
+    # seen as a project lead
+    for project in projects:
+        if not project['lead_id'] in projlead_ids:
+            info = ("%(name)s (%(id)s): lead_id=%(lead_id)s,"
+                    + " created=%(creation)s") % project
+            errors['unexpected_project_lead_ids'].append(info)
+
+    # look for any operators or leads we expected, but didn't see
+    for operator in inventory['operator']:
+        if not operator in operators_seen:
+            errors['missing_operators'].append(operator)
+    for projlead in inventory['projlead']:
+        if not projlead in projleads_seen:
+            errors['missing_projleads'].append(projlead)
+
+    return errors
+
+def print_audit_report(errors):
+    any_errors = False
+    for errtype in errors.keys():
+        if len(errors[errtype]) > 0:
+            any_errors = True
+    if any_errors:
+        print """Mismatches found between portal state and infra's inventory.
+For guidance on responding to this report, see:
+  http://groups.geni.net/syseng/wiki/OpsPortalUserManagement
+"""
+    if len(errors['unexpected_project_lead_ids']) > 0:
+        print """ERROR: projects have lead_id who does not have the project
+lead privilege!  Investigate this:
+  %s\n""" % '\n  '.join(errors['unexpected_project_lead_ids'])
+
+    if len(errors['unexpected_operators']) > 0:
+        print """ERROR: unexpected users have the portal operator privilege!
+Investigate this:
+  %s\n""" % '\n  '.join(errors['unexpected_operators'])
+
+    if len(errors['unexpected_projleads']) > 0:
+        print """Unknown users have the portal project creation privilege.
+Double-check that these users are real people, then inventory them:
+  %s\n""" % '\n  '.join(errors['unexpected_projleads'])
+
+    if len(errors['missing_operators']) > 0:
+        print """These users are listed infra's inventory as operators, but do
+not have operator privileges on the portal.  Update the inventory (or
+investigate if this is unexpected):
+  %s\n""" % '\n  '.join(errors['missing_operators'])
+
+    if len(errors['missing_projleads']) > 0:
+        print """These users are listed infra's inventory as project
+leads, but do not have project creation privileges on the portal.
+Update the inventory (or investigate if this is unexpected):
+  %s\n""" % '\n  '.join(errors['missing_projleads'])
+
+def init_logging(options):
+    level = logging.INFO
+    if options.debug:
+        level = logging.DEBUG
+    logging.basicConfig(level=level)
+
+def get_database_password(options):
+    if options.password:
+        return options.password
+    if options.password_file:
+        f = open(options.password_file, 'r')
+        password = f.readlines()[0].strip()
+        f.close()
+        return password
+
+def parse_args(argv):
+    parser = optparse.OptionParser()
+    parser.add_option("--debug", action="store_true", default=False,
+                       help="enable debugging output")
+    parser.add_option("-d", "--database", default='portal',
+                      help="database name")
+    parser.add_option("-g", "--gmoc-format", action="store_true",
+                      default=False,
+                      help="produce output in GMOC contact reporting format")
+    parser.add_option("--host", default='localhost',
+                      help="database host")
+    parser.add_option("-u", "--user", default='portal',
+                      help="database user")
+    parser.add_option("-p", "--password",
+                      help="database password")
+    parser.add_option("-P", "--password-file",
+                      help="file containing database password")
+    parser.add_option("-A", "--audit-file",
+                      help="audit users against inventory file")
+    options,args = parser.parse_args()
+    if not (options.password or options.password_file):
+        parser.print_help()
+        raise Exception("Missing some required arguments")
+    return options,args
+
+def main(argv=None):
+    if argv is None:
+        argv = sys.argv
+    try:
+        options,args = parse_args(argv)
+        init_logging(options)
+    except Exception as e:
+        sys.stderr.write(str(e) + "\n")
+        return 1
+    password = get_database_password(options)
+    # Member dict, id -> Member
+    members = dict()
+    conn = psycopg2.connect(database=options.database,
+                            user=options.user,
+                            password=password,
+                            host=options.host)
+    attrs = all_member_attrs(conn)
+    Member.attrs = attrs
+    load_members(conn)
+    mark_project_leads(conn)
+    mark_operators(conn)
+
+    # Output data depending on requested action
+    if options.audit_file:
+        projects = load_projects_for_audit(conn)
+        inventory = read_audit_inventory(options.audit_file)
+        errors = audit_members(inventory, projects)
+        print_audit_report(errors)
+    elif options.gmoc_format:
+        print_members_gmoc_csv(Member.sorted_members)
+    else:
+        projects = load_projects(conn)
+        print_members_csv(Member.sorted_members)
+        csvout = csv.writer(sys.stdout)
+        csvout.writerows(projects)
+
+    return 0
+
+if __name__ == "__main__":
+    sys.exit(main())

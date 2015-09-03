@@ -1,0 +1,21 @@
+.TH GENI-ASSERT-EMAIL 1 "April 15, 2015"
+.SH NAME
+geni-assert-email \- assert an email address for an eppn
+.SH SYNOPSIS
+.B geni-assert-email
+<\fIeppn\fR>
+<\fIemail\fR>
+.SH DESCRIPTION
+.B geni-assert-email
+allows a GENI operator to assert an email address for a user whose
+identity provider releases an eppn but not an email address.
+.SH EXAMPLES
+Assert email address "alfred@example.com" for eppn "aneuman@example.com":
+
+    geni-assert-email aneuman@example.com alfred@example.com
+.SH BUGS
+geni-assert-email erroneously assumes that the value of $USER matches
+the user's GENI username. This happens to be the case for some users,
+but is not guaranteed.
+.SH AUTHOR
+geni-assert-email was written by Raytheon BBN Technologies.

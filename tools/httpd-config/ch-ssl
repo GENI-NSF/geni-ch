@@ -186,7 +186,7 @@ NameVirtualHost 128.89.96.48:443
         # Include configuration files for CHAPI clearinghouse services
         # RRH
         SSLOptions +ExportCertData
-        SSLCACertificateFile /usr/share/geni-ch/CA/ca-ma-cert.pem
+        SSLCACertificateFile /usr/share/geni-ch/CA/ca-macert.pem
         SSLVerifyClient optional
         SSLVerifyDepth 3
         ScriptAlias /SA /usr/share/geni-ch/chapi/AMsoil/src/main.py

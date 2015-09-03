@@ -1,0 +1,28 @@
+#!/bin/sh
+# -*- mode:sh -*-
+
+if [ -z "$1" -o -z "$2" ]; then
+    echo "Usage: mk-auth-req <key output file> <req output file>" 1>&2
+    exit 1
+fi
+
+KEYFILE=$1
+REQFILE=$2
+AUTHORITY=$3
+EMAIL=$4
+
+SHORT_HOST=`/bin/hostname -s`
+OPENSSL=/usr/bin/openssl
+UUID=`/usr/bin/uuidgen -t`
+SUBJECT="/O=${SHORT_HOST}/OU=authority/OU=${AUTHORITY}/CN=${UUID}/emailAddress=${EMAIL}"
+
+"${OPENSSL}" req -new -newkey rsa:1024 -nodes \
+                 -subj "${SUBJECT}" \
+                 -keyout "${KEYFILE}" \
+                 -out "${REQFILE}"
+
+if [ $? ]; then
+    echo "Generated ${REQFILE} and ${KEYFILE}"
+else
+    echo "Certificate request generation failed." 1>&2
+fi

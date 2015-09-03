@@ -5,25 +5,35 @@ clearinghouse Service Registry.
 
 1. Gather the required information
 
+   Where possible, get the information from the aggregate itself, either
+   from its advertisement RSpec (from listresources), its version 
+   info (from getversion) or its SSL certificate
+
    cert: The x509 certificate of the aggregate (the server end of the
       AM API presented by the aggregate)
    cacert: The SSL cert (or signer of the SSL cert). Used for Flack to allow
       flash to connect. This is really a misnomer: it is not a cacert.
       May be the same as CERT for some aggregates; typically the
-      IG has X-cm.pm as the CERT and X-boss.pm as the CACERT.
+      IG has X-cm.pem as the CERT and X-boss.pem as the CACERT.
    shortname: Short name of the aggregate, matches the nickname used by omni
    longname: Long/complete name of the aggregate
    description: Text description of the aggregate
    URN: URN of aggregate. Must satisfy the requirements described in
       http://groups.geni.net/geni/wiki/GeniApiIdentifiers
    URL: URL of the AM. For some aggregates, there may be two:
-      one for V2 AM, one for V3 AM.
+      one for V2 AM, one for V3 AM. If so, use the V2 AM.
    Type of aggregate:
     InstaGENI: ui_instageni_am
     ExoGENI: ui_exogeni_am
     FOAM: ui_foam_am
     Other (including OpenGENI): ui_other_am  
    Category
+
+    Note: Every aggregate must have one and only one of 
+        ui_prod_cat, ui_dev_cat, ui_experimental_cat. Likewise, every aggregate
+        gets one and only one of ui_compute_cat and ui_network_cat. 
+        ui_stitchable_cat and ui_federated_cat are optional attributes.
+
     ui_compute_cat: Is this aggregate a compute aggregate (provides PCs / VMs)
     ui_network_cat : Is this aggregate a network aggregate 
         (provides paths / flows)
@@ -43,12 +53,9 @@ clearinghouse Service Registry.
     ui_federated_cat : Is this agggregate a member of a different (non-GENI)
         federation, and is federated by mutual agreement between GENI and
         the aggregate's federation?
-    Note: Every aggregate must have one and only one of 
-        ui_prod_cat, ui_dev_cat, ui_experimental_cat. Likewise, every aggregate
-        gets one and only one of ui_compute_cat and ui_network_cat. 
-        ui_stitchable_cat and ui_federated_cat are optional attributes.
-
-   Speaks-for: Y if the aggregate handles speaks-for credentials, N if not
+   Speaks-for: Y if the aggregate handles speaks-for credentials, N if not. 
+        Currently, this is Y for InstaGENI and OpenGENI aggregates, N for ExoGENI 
+        and FOAM aggregates.
 
 There are instructions for gathering the relevant data for FOAM and 
 InstaGENI/ProtoGENI on the syseng wiki 
@@ -61,7 +68,7 @@ get the CM cert (ProtoGENI-only).
 
 Use omni to test adherence to AM API:
 
-   V2
+   V2 [Only if the aggregate advertises support for V2.]
       getversion
       listresources
       createsliver SLICENAME (RSPEC WITH two slivers with a single link)
@@ -71,7 +78,8 @@ Use omni to test adherence to AM API:
       renewsliver SLICENAME new-renew-time
       deletesliver SLICENAME
 
-   V3
+   V3 [Only if the aggregate advertises support for V3. Note: the portal 
+          does not use V3].
       getversion
       listresources
       allocate SLICENAME (RSPEC with two slivers and a single link)
@@ -131,19 +139,15 @@ Add entry for agg to these Make targets:
 
 Add the aggregate to the  Jacks-GENI/jacks-context portal.sh file.
 These are the geni-lib names (which are often reversed relative to omni
-short names) and may require making a pull request to geni-lib as well.
+short names) and may require adding the aggregate to geni-lib as well.
 
 geni-lib is maintained at https://bitbucket.org/barnstorm/geni-lib.
 jacks-context is maintained in https://github.com/Jacks-GENI/jacks-context.
 
 
-7. Update Portal Map
+7. Edit syseng ticket for release.
 
-Once the new aggregate is in the service registry, new map data should 
-be generated. There are two scripts for this: 
-geni-get-ad-rspecs and geni-parse-map-data.
-
-8. Edit syseng ticket for release.
+[Note: This step is part of GPO-internal process.]
 
 Edit the syseng ticket for the clearinghouse update event at which this
 aggregate will be added to production Service Registry (SR):
@@ -155,10 +159,16 @@ Indicate:
  }}}
 
 
-9. Post install testing
+8. Post install testing
 
 After install, validate that aggregate appears in Portal list on 
 jacks-app, jacks-editor-app and slice aggregate view page. Allocate resources
 from Portal and make sure you can SSH from portal, resources turn green, etc.
 
+
+9. Update Portal Map
+
+After the installation and the new aggregate is in the service registry, 
+new map data should be generated. There are two scripts for this: 
+geni-get-ad-rspecs and geni-parse-map-data.
 
