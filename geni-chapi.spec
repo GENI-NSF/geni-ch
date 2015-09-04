@@ -65,6 +65,7 @@ rm -rf $RPM_BUILD_ROOT
 %{_sbindir}/geni-check-errors
 %{_sbindir}/geni-create-ma-crl
 %{_sbindir}/geni-expiring-certs
+%{_sbindir}/geni-install-templates
 %{_sbindir}/geni-list-idp-members
 %{_sbindir}/geni-list-member-projects
 %{_sbindir}/geni-list-pending-requests
@@ -568,6 +569,7 @@ rm -rf $RPM_BUILD_ROOT
 %{_mandir}/man1/geni-add-member-privilege.1.gz
 %{_mandir}/man1/geni-check-errors.1.gz
 %{_mandir}/man1/geni-expiring-certs.1.gz
+%{_mandir}/man1/geni-install-templates.1.gz
 %{_mandir}/man1/geni-list-idp-members.1.gz
 %{_mandir}/man1/geni-list-member-projects.1.gz
 %{_mandir}/man1/geni-list-pending-requests.1.gz
