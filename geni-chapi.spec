@@ -65,6 +65,8 @@ rm -rf $RPM_BUILD_ROOT
 %{_sbindir}/geni-check-errors
 %{_sbindir}/geni-create-ma-crl
 %{_sbindir}/geni-expiring-certs
+%{_sbindir}/geni-init-ca
+%{_sbindir}/geni-init-services
 %{_sbindir}/geni-install-templates
 %{_sbindir}/geni-list-idp-members
 %{_sbindir}/geni-list-member-projects
@@ -325,6 +327,15 @@ rm -rf $RPM_BUILD_ROOT
 %{_datadir}/%{name}/db/sr/postgresql/update-4.sql
 %{_datadir}/%{name}/db/sr/postgresql/update-5.sql
 %{_datadir}/%{name}/fastcgi.conf
+%{_datadir}/%{name}/templates/apache2.conf.tmpl
+%{_datadir}/%{name}/templates/ch-ssl.conf.tmpl
+%{_datadir}/%{name}/templates/chapi.ini.tmpl
+%{_datadir}/%{name}/templates/httpd.conf.tmpl
+%{_datadir}/%{name}/templates/install_service_registry.sql.tmpl
+%{_datadir}/%{name}/templates/openssl.cnf.tmpl
+%{_datadir}/%{name}/templates/parameters.json
+%{_datadir}/%{name}/templates/services.ini.tmpl
+%{_datadir}/%{name}/templates/templates.json
 %{_datadir}/%{name}/sr/certs/al2s-ca.pem
 %{_datadir}/%{name}/sr/certs/al2s.pem
 %{_datadir}/%{name}/sr/certs/apt-boss.pem

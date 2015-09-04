@@ -55,24 +55,10 @@
 	   },
 	   {
 	      "doc" : "CA openssl.cnf file for CH CA",
-	      "source" : "openssl.cnf",
+	      "source" : "openssl.cnf.tmpl",
 	      "destination" : "/usr/share/geni-ch/CA/openssl.cnf",
 	      "owner" : "root:root",
 	      "protection" : "0644"
-	   },
-	   {
-	      "doc" : "geni-init-ca (should be in bin already)",
-	      "source" : "geni-init-ca",
-	      "destination" : "/tmp/bin/geni-init-ca",
-	      "owner" : "root:root",
-	      "protection" : "0777"
-	   },
-	   {
-	      "doc" : "geni-init-services (should be in bin already)",
-	      "source" : "geni-init-services",
-	      "destination" : "/tmp/bin/geni-init-services",
-	      "owner" : "root:root",
-	      "protection" : "0777"
 	   }
 	]
 }
