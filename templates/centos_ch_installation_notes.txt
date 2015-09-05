@@ -34,30 +34,32 @@ ln -s ~/geni-ch ~/chapi
 sudo sed -i -e "s/apache2/httpd/g" ~/geni-ch/bin/geni-chapi-install
 ~/geni-ch/bin/geni-chapi-install
 
+--- This is where we should be starting after installing geni-ch package ---
+
 # Set up templated files
-cd ~/geni-ch/templates
-# Edit parameters.json
-sudo ../bin/geni-install-templates
+cd /usr/share/geni-chapi/templates
+# Edit parameters.json: make sure to set db_host and ch_host!!
+sudo geni-install-templates
 
 CH_DIR=/usr/share/geni-ch
 CHAPI_DIR=/usr/share/geni-chapi
-CHHOST=`~/geni-ch/bin/geni-install-templates --print_parameter ch_host`
+CH_HOST=`geni-install-templates --print_parameter ch_host`
+DB_HOST=`geni-install-templates --print_parameter db_host`
 CH_EMAIL=mbrinn@bbn.com
 TRUSTED_ROOTS_DIR=$CH_DIR/portal/gcf.d/trusted_roots
 
 # Set up database connection.
 # If local database, use install_postgresql.sh
-# Otherwise
-
-
-DB_HOST=database.centostest.count-pg0.apt.emulab.net # To be filled in
+# Otherwise:
 DB_USER=portal
 DB_DATABASE=portal
-DB_PASSWORD=portal
+DB_PASSWORD=portal  # Set as appropriate
 echo "$DB_HOST:*:$DB_DATABASE:$DB_USER:$DB_PASSWORD"  > ~/.pgpass
 chmod 0600 ~/.pgpass
 touch ~/.psql_history
 PSQL="psql -U $DB_USER -h $DB_HOST $DB_DATABASE"
+
+# End of remote database call
 
 
 for sch in portal cs logging ma pa sa sr
@@ -81,7 +83,7 @@ sudo mkdir -p $CH_DIR/CA/private
 sudo mkdir -p $CH_DIR/CA/certs
 sudo mkdir -p $CH_DIR/CA/newcerts
 sudo mkdir -p $CH_DIR/CA/crl
-sudo /tmp/bin/geni-init-ca /etc/geni-ch/services.ini
+sudo geni-init-ca /etc/geni-ch/services.ini
 
 sudo touch $CH_DIR/CA/index.txt
 echo "00" > /tmp/serial
@@ -93,17 +95,17 @@ do
     sudo mkdir -p $CH_DIR/$srv
 done
 
-sudo /tmp/bin/geni-init-services /etc/geni-ch/services.ini
+sudo geni-init-services /etc/geni-ch/services.ini
 sudo chown -R apache.apache /usr/share/geni-ch/CA
 
 # Set up outward facing certs for CH itself
 # Create private key, generate CSR, generate cert
-openssl genrsa -out ch-$CHHOST-key.pem 2048
-openssl req -new -key ch-$CHHOST-key.pem -out /tmp/ch-$CHHOST.csr \
-	-subj "/C=US/ST=MA/L=Cambridge/CN=$CHHOST"
-openssl x509 -req -days 365 -in /tmp/ch-$CHHOST.csr \
-	-signkey ch-$CHHOST-key.pem -out ch-$CHHOST-cert.pem 
-sudo mv ch-$CHHOST-key.pem ch-$CHHOST-cert.pem /etc/geni-chapi
+sudo openssl genrsa -out ch-$CH_HOST-key.pem 2048
+sudo openssl req -new -key ch-$CH_HOST-key.pem -out /tmp/ch-$CH_HOST.csr \
+	-subj "/C=US/ST=MA/L=Cambridge/CN=$CH_HOST"
+sudo openssl x509 -req -days 365 -in /tmp/ch-$CH_HOST.csr \
+	-signkey ch-$CH_HOST-key.pem -out ch-$CH_HOST-cert.pem 
+sudo mv ch-$CH_HOST-key.pem ch-$CH_HOST-cert.pem /etc/geni-chapi
 
 
 # Note: This needs to be moved from geni-portal to geni-ch
@@ -125,23 +127,39 @@ sudo cp /tmp/ca-ma-cert.pem /usr/share/geni-ch/CA
 
 
 # Set up GCF link
-cd
-git clone https://github.com/GENI-NSF/geni-tools.git
-sudo mv ~/geni-tools /usr/share/geni-ch
-sudo ln -s /usr/share/geni-ch/geni-tools /usr/share/geni-ch/gcf
+# cd
+# git clone https://github.com/GENI-NSF/geni-tools.git
+#sudo mv ~/geni-tools /usr/share/geni-ch
+#sudo ln -s /usr/share/geni-ch/geni-tools /usr/share/geni-ch/gcf
 
 # Install ABAC : Grab RPM's from Tom's Zip file (copied to ~)
-cd 
-tar xvfz abac-0.1.9-el7.tar.gz
-cd abac-0.1.9-el7
-sudo rpm -Uvh *.rpm
+#cd 
+#tar xvfz abac-0.1.9-el7.tar.gz
+#cd abac-0.1.9-el7
+#sudo rpm -Uvh *.rpm
 # End of ABAC install
 
-# Install AMSoil and CHAPI
-cd ~/geni-ch/tools
-./install-chapi-centos.sh
-cd /usr/share/geni-ch/chapi/AMsoil/src
+
+# Install AMSoil into CHAPI
+cd $CH_DIR/chapi
+sudo git clone https://github.com/GENI-NSF/geni-soil.git
+sudo ln -s geni-soil AMsoil
+cd AMsoil
+
+# Set up amsoil links to CHAPI plugins
+cd src/plugins # In AMsoil/src/plugins
+for pl in chrm chapiv1rpc sarm marm csrm logging opsmon flaskrest pgch
+do
+    sudo ln -s ../../../chapi/plugins/$pl .
+done
+cd .. # In AMsoil/src
 sudo ln -s main.py main.fcgi
+
+# Install AMSoil and CHAPI
+#cd ~/geni-ch/tools
+#./install-chapi-centos.sh
+#cd /usr/share/geni-ch/chapi/AMsoil/src
+#sudo ln -s main.py main.fcgi
 
 sudo service httpd restart
 
@@ -169,12 +187,14 @@ exit
 # *** Need to check in ch-ssl.conf httpd.conf ***
 
 CHAPI Tests:
-cd ~geni-ch/tools
-export PYTHONPATH=/usr/share/geni-ch/gcf/src
-python client.py --cert /usr/share/geni-ch/ma/ma-cert.pem  --key /usr/share/geni-ch/ma/ma-key.pem  \
-       --url https://mbrinn.foo17.bar/SA --method get_version
-python client.py --cert /usr/share/geni-ch/ma/ma-cert.pem  --key /usr/share/geni-ch/ma/ma-key.pem  \
-       --url https://mbrinn.foo17.bar:8444/SR --method lookup_aggregates
+cd /usr/share/geni-ch/chapi/chapi/tools
+# export PYTHONPATH=/usr/share/geni-ch/gcf/src
+python client.py --cert /usr/share/geni-ch/ma/ma-cert.pem  \
+       --key /usr/share/geni-ch/ma/ma-key.pem  \
+       --url https://$CH_HOST/SA --method get_version
+python client.py --cert /usr/share/geni-ch/ma/ma-cert.pem  \
+       --key /usr/share/geni-ch/ma/ma-key.pem  \
+       --url https://$CH_HOST:8444/SR --method lookup_aggregates
 
 Notes:
 In ch-ssl.conf, 
