@@ -114,14 +114,19 @@ class TemplateInstaller:
         if "__parameters__" not in parameter_info:
             self.error("Missing __parameters__ emtry in parameters file")
         parameter_info = parameter_info['__parameters__']
+        invalid_entries = False
         for parameter in parameter_info:
             if 'name' not in parameter:
                 self.error("No name for parameter: %s" % parameter)
             if 'default' not in parameter and 'value' not in parameter:
-                self.error("No value or default for parameter: %s" % parameter)
+                print "No value or default for parameter: %s" % \
+                    parameter['name']
+                invalid_entries = True
             # Make sure 'value' is set from default if not explicitly set
-            if 'value' not in parameter:
+            elif 'value' not in parameter:
                 parameter['value'] = parameter['default']
+        if invalid_entries:
+            self.error("")
         return parameter_info
 
     # Read template file from 'source' in given template info ditionary

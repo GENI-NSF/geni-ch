@@ -45,15 +45,13 @@ CH_DIR=/usr/share/geni-ch
 CHAPI_DIR=/usr/share/geni-chapi
 CH_HOST=`geni-install-templates --print_parameter ch_host`
 DB_HOST=`geni-install-templates --print_parameter db_host`
-CH_EMAIL=mbrinn@bbn.com
-TRUSTED_ROOTS_DIR=$CH_DIR/portal/gcf.d/trusted_roots
 
 # Set up database connection.
 # If local database, use install_postgresql.sh
 # Otherwise:
-DB_USER=portal
-DB_DATABASE=portal
-DB_PASSWORD=portal  # Set as appropriate
+DB_USER=`geni-install-templates --print_parameter db_user`
+DB_DATABASE=`geni-install-templates --print_parameter db_name`
+DB_PASSWORD=`geni-install-templates --print_parameter db_pass`
 echo "$DB_HOST:*:$DB_DATABASE:$DB_USER:$DB_PASSWORD"  > ~/.pgpass
 chmod 0600 ~/.pgpass
 touch ~/.psql_history
@@ -110,13 +108,12 @@ sudo mv ch-$CH_HOST-key.pem ch-$CH_HOST-cert.pem /etc/geni-chapi
 
 # Note: This needs to be moved from geni-portal to geni-ch
 # Why do we need this??
-# Kill it for now, see if we miss it.
-# sudo cp -r $PORTAL_SRC_DIR/ch $CH_DIR
 sudo mkdir -p /var/www/localhost
 sudo mkdir -p /usr/share/geni-ch/ch/www
 sudo mkdir -p /var/log/geni-chapi/httpd
 
 # Set up trusted roots
+TRUSTED_ROOTS_DIR=$CH_DIR/portal/gcf.d/trusted_roots
 sudo mkdir -p $TRUSTED_ROOTS_DIR
 sudo ln -s $CH_DIR//CA/cacert.pem $TRUSTED_ROOTS_DIR
 sudo ln -s $CH_DIR//ma/ma-cert.pem $TRUSTED_ROOTS_DIR
@@ -184,7 +181,9 @@ PYTHONPATH=/usr/share/geni-ch/gcf/src:/usr/share/geni-ch/chapi/chapi python main
 exit
 # Then you can run as yourself or apache 
 
-# *** Need to check in ch-ssl.conf httpd.conf ***
+# Perhaps we should change the database name/user for the CH to be geni-ch
+# and for portal to be geni-portal? That is, two different database instances
+# in the same postgresql server?
 
 CHAPI Tests:
 cd /usr/share/geni-ch/chapi/chapi/tools
@@ -194,12 +193,14 @@ python client.py --cert /usr/share/geni-ch/ma/ma-cert.pem  \
        --url https://$CH_HOST/SA --method get_version
 python client.py --cert /usr/share/geni-ch/ma/ma-cert.pem  \
        --key /usr/share/geni-ch/ma/ma-key.pem  \
-       --url https://$CH_HOST:8444/SR --method lookup_aggregates
+       --url https://$CH_HOST:8444/SR --method get_services
 
 Notes:
 In ch-ssl.conf, 
-   Haven't put in the MSIE stuff. Not clear what versions we need to support, or if this is still  valid.
-   Haven't put in the stuff to print "YOu have reached a GENI page for a domain which is not in use...". This is really portal stuff. Not clear
+   Haven't put in the MSIE stuff. Not clear what versions we need to support, 
+       or if this is still valid or needed for CH.
+   Haven't put in the stuff to print "You have reached a GENI page for a 
+       domain which is not in use...". This is really portal stuff. Not clear
        we should be doing this for CH.
 
 

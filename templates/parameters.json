@@ -29,12 +29,10 @@
 	   },
 	   {
 	      "name" : "ch_host",
-	      "value" : "ch-mb.gpolab.bbn.com",
 	      "doc" : "SSL private key file for Apache to front CH host"
 	   },
 	   {
 	      "name" : "db_host",
-	      "default" : "localhost",
 	      "doc" : "Nost of CH database instance"
 	   },
 	   {
