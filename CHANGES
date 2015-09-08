@@ -14,6 +14,7 @@
  * Ensure now < slice expiration < max expiration (#413)
  * Validate project expiration dates
  * Set default values for slice and project creation (#414)
+ * Return last_name to monitoring when present (#424)
 
 == 2.3 ==
  * Add geni-revoke-member-certificate man page
