@@ -5,6 +5,17 @@
 
 = GENI Clearinghouse Release Notes =
 
+== 2.4 ==
+ * Migrate management scripts from geni-portal to geni-ch (#101)
+ * Return dates as strings from SA create (#397)
+ * Raise not implemented error for delete slice and delete project (#398)
+ * Stop generating fake project email addresses (#399)
+ * Ensure fields exist before updating (#411)
+ * Ensure now < slice expiration < max expiration (#413)
+ * Validate project expiration dates
+ * Set default values for slice and project creation (#414)
+ * Return last_name to monitoring when present (#424)
+
 == 2.3 ==
  * Add geni-revoke-member-certificate man page
 
