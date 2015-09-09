@@ -5,6 +5,8 @@
 
 = GENI Clearinghouse Release Notes =
 
+== 2.5 ==
+
 == 2.4 ==
  * Migrate management scripts from geni-portal to geni-ch (#101)
  * Return dates as strings from SA create (#397)
