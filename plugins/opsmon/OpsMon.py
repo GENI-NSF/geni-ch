@@ -237,7 +237,7 @@ class OpsMonHandler:
             if row.name == 'displayName': user_fullname = row.value
             if row.name == 'email_address': user_email = row.value
             if row.name == 'first_name' : user_firstname = row.value
-            if row.name == 'lsst_name' : user_lastname = row.value
+            if row.name == 'last_name' : user_lastname = row.value
             if row.name == 'urn' : user_urn = row.value
 
         if user_fullname is None:

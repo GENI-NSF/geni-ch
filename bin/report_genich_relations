@@ -1,0 +1,255 @@
+#!/usr/bin/python
+#
+#----------------------------------------------------------------------
+# Copyright (c) 2012-2015 Raytheon BBN Technologies
+#
+# Permission is hereby granted, free of charge, to any person obtaining
+# a copy of this software and/or hardware specification (the "Work") to
+# deal in the Work without restriction, including without limitation the
+# rights to use, copy, modify, merge, publish, distribute, sublicense,
+# and/or sell copies of the Work, and to permit persons to whom the Work
+# is furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be
+# included in all copies or substantial portions of the Work.
+#
+# THE WORK IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+# MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+# NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+# HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+# WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE WORK OR THE USE OR OTHER DEALINGS
+# IN THE WORK.
+#----------------------------------------------------------------------
+
+# The output of SLICE_GATHER_SCRIPT contains dates of the form
+#   YYYY-mm-dd HH:MM:SS
+# which are in UTC.
+# Set process timezone to UTC before doing anything else so python naive
+# date tools can parse these correctly.
+import os
+os.putenv('TZ', 'UTC')
+
+import csv
+import datetime
+import dateutil.parser
+import re
+import subprocess
+import sys
+import traceback
+
+PASSWD_FILE = '/usr/local/etc/monitoring_passwd'
+VERSION_FILE = '/etc/geni-ch/geni-ch-githash'
+CONFIG_FILE = '/usr/local/etc/gmoc_monitoring.conf'
+CONTACT_GATHER_SCRIPT_ARGS = ('/usr/local/bin/geni-ops-report -u portal ' + \
+                              '-P /usr/sysadmin/etc/portal_password -g')
+SLICE_GATHER_SCRIPT = '/usr/local/bin/gmoc_list_slices'
+
+MANDATORY_CONFIG_VARS = ['GMOC_REL_URL', 'SITENAME', 'ORGNAME', 'POPNAME', 'SA_URN', 'SA_TYPE']
+
+# Variables for things we expect to find in data gathering script output
+MANDATORY_KEYS = ['name', 'urn', 'version', 'type']
+MANDATORY_CONTACT_KEYS = ['contact_email', 'contact_lastname', 'contact_givenname']
+MANDATORY_SLICE_KEYS = ['slice_email', 'slice_creator', 'slice_created', 'slice_expires', 'slice_uuid']
+
+# Include local libraries, to submit monitoring data
+sys.path.append('/usr/local/lib')
+import gmoc
+
+## The caller may pass the relational URL on the command-line.  Take it
+## as a default if so.
+
+config = {}
+verbose_output = True
+debug_output = False
+while len(sys.argv) > 1:
+  nextarg = sys.argv.pop(1)
+  if nextarg == '-h':
+    print """Report GENI CH SA data to GMOC
+usage: {0} [-h]
+       {0} [-q] [-d] [GMOC_URL]
+
+       -h: print this help output
+       -q: be quiet - only syslog failed submissions, don't print them on STDERR
+       -d: debug - show full GMOC data structures and submission details
+       GMOC_URL: set a default GMOC URL to use if none is found in
+                 {1}
+""".format(sys.argv[0], CONFIG_FILE)
+    sys.exit(0)
+  elif nextarg == '-q':
+    verbose_output = False
+  elif nextarg == '-d':
+    debug_output = True
+  else:
+    config['GMOC_REL_URL'] = nextarg
+
+# Utility function for failing on errors.
+# Note: don't use this for configuration errors; those should always be
+# printed on STDERR
+def fail_on_error(message):
+  import syslog
+  syslog.openlog("report_to_gmoc", syslog.LOG_PID, syslog.LOG_USER)
+  syslog.syslog(syslog.LOG_ERR, message)
+  if verbose_output:
+    sys.stderr.write("%s\n" % message)
+  sys.exit(1)
+
+if len(sys.argv) > 1:
+  config['GMOC_REL_URL'] = sys.argv[1]
+
+## Read the config file for monitoring data submission
+
+config_line_re = re.compile('^(\S+)\s*=\s*(.*)$')
+config_file = open(CONFIG_FILE)
+for line in config_file.readlines():
+  mobj = config_line_re.match(line)
+  if mobj:
+    config[mobj.group(1)] = mobj.group(2)
+config_file.close()
+
+for configvar in MANDATORY_CONFIG_VARS:
+  if not config.has_key(configvar):
+    print "Mandatory config variable %s not defined in %s" % \
+          (configvar, CONFIG_FILE)
+    sys.exit(1)
+
+## Read the password for monitoring data submission
+
+f = open(PASSWD_FILE)
+gmoc_passwd = f.readline().strip()
+f.close()
+
+## Read the git hash for version info
+f = open(VERSION_FILE)
+geni_ch_version = f.readline().strip()
+f.close()
+
+# Collect all information into a dict called %info
+
+info = {
+  'contacts': {},
+  'slices': {},
+}
+
+
+
+
+
+
+## create stub objects for site metadata
+organization = gmoc.Organization(
+                 config['ORGNAME'],
+               )
+
+pop = gmoc.POP(
+        config['POPNAME'],
+      )
+
+## create fully-populated objects for aggregate data
+
+sa = gmoc.SliceAuthority(
+       config['SA_URN'],
+       type = config['SA_TYPE'],
+       version = geni_ch_version,
+       pop = pop,
+       operator = organization,
+     )
+
+## Information is collected from GENI CH two dedicated scripts
+# Run the script to get CONTACT info
+p = subprocess.Popen(CONTACT_GATHER_SCRIPT_ARGS.split(),
+                     stdout=subprocess.PIPE,
+                     stderr=subprocess.PIPE)
+[contact_info, errout] = p.communicate()
+if p.returncode != 0:
+  print "%s failed: %s" % (CONTACT_GATHER_SCRIPT_ARGS, errout)
+  sys.exit(1)
+
+# Parse the script output line-by-line
+contact = None
+slice = None
+
+contact_info_list = contact_info.split("\n")
+contact_list = csv.DictReader(contact_info_list, delimiter=',')
+users = {}
+
+for contact in contact_list:
+  for contact_key in MANDATORY_CONTACT_KEYS:
+    if not contact.has_key(contact_key):
+      print "%s output for contact %s missing mandatory key: %s" % \
+            (CONTACT_GATHER_SCRIPT_ARGS, contact['contact_urn'], contact_key)
+  user = contact['contact_urn']
+  users[user] = gmoc.Contact(
+    user,
+    givenName = contact['contact_givenname'],
+    lastName = contact['contact_lastname'],
+    email = contact['contact_email'],
+  )
+sa.users = users.values()
+
+
+# Run the script to get SLICE info
+p = subprocess.Popen([SLICE_GATHER_SCRIPT],
+                     stdout=subprocess.PIPE,
+                     stderr=subprocess.PIPE)
+[output, errout] = p.communicate()
+if p.returncode != 0:
+  print "%s failed: %s" % (SLICE_GATHER_SCRIPT, errout)
+  sys.exit(1)
+output2 = output.split("\n")
+slice_list = csv.DictReader(output2, delimiter=',')
+
+
+# for key in MANDATORY_KEYS:
+#   if not info.has_key(key):
+#     print "output missing mandatory key: %s" % (key)
+#     sys.exit(1)
+
+
+slices = {}
+for slice in slice_list:
+  for slice_key in MANDATORY_SLICE_KEYS:
+    if not slice.has_key(slice_key):
+      print "%s output for slice %s missing mandatory key: %s" % \
+            (SLICE_GATHER_SCRIPT, slice['slice_urn'], slice_key)
+  slice_urn = slice['slice_urn']
+  if not users.has_key(slice['slice_creator']):
+    fail_on_error("Slice %s has creator %s who was not found in contact list" \
+                  % (slice_urn, slice['slice_creator']))
+  slices[slice_urn] = gmoc.Slice(
+    slice_urn,
+    uuid = slice['slice_uuid'],
+#    created = datetime.datetime.fromtimestamp(int(slice['slice_created'])),
+    created = dateutil.parser.parse(slice['slice_created']),
+#    expires = datetime.datetime.fromtimestamp(int(slice['slice_expires'])),
+    expires = dateutil.parser.parse(slice['slice_expires']),
+    creator = users[slice['slice_creator']],
+    sa = sa,
+    operator = organization,
+  )
+
+## Repackage information into GMOC format
+# create brand new data object
+data = gmoc.GMOCClient(
+         serviceURL = config['GMOC_REL_URL'],
+         username = config['SITENAME'],
+         password = gmoc_passwd,
+       )
+if debug_output:
+  data.debugLevel = gmoc.GMOC_DEBUG_VERBOSE
+
+# Now register everything at this POP
+try:
+  result = data.store(pop)
+except Exception, e:
+  fail_on_error(
+    "Received exception (%s) while storing relations to GMOC: %s" % \
+      (str(e), traceback.format_exc())
+  )
+if result != 0:
+  fail_on_error(
+    "Attempted to submit relational data, but received: %s" % result
+  )
+
+sys.exit(0)

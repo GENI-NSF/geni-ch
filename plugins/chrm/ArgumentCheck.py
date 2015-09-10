@@ -212,8 +212,8 @@ class FieldsArgumentCheck(ArgumentCheck):
                     properly_formed = True
                 except Exception, e:
                     pass
-            else:
-                # If there's no value, that's fine too
+            elif value is None:
+                # If the value is None, that's fine
                 properly_formed = True
         elif field_type == "EMAIL":
             properly_formed = value.find('@')>= 0 and value.find('.') >= 0
