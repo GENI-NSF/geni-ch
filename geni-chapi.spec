@@ -1,5 +1,5 @@
 Name:           geni-chapi
-Version:        2.3
+Version:        2.4
 Release:        1%{?dist}
 Summary:        GENI clearinghouse
 BuildArch:      noarch
@@ -59,6 +59,21 @@ rm -rf $RPM_BUILD_ROOT
 %{python_sitelib}/chapiclient/chapi.py
 %{python_sitelib}/chapiclient/chapi.pyc
 %{python_sitelib}/chapiclient/chapi.pyo
+
+# /usr/bin
+%{_bindir}/geni-add-member-attribute
+%{_bindir}/geni-add-project-member
+%{_bindir}/geni-add-trusted-tool
+%{_bindir}/geni-assert-email
+%{_bindir}/geni-delete-outside-cert
+%{_bindir}/geni-disable-user
+%{_bindir}/geni-enable-user
+%{_bindir}/geni-ops-report
+%{_bindir}/geni-remove-member-attribute
+%{_bindir}/geni-remove-project-member
+%{_bindir}/gmoc_list_contacts
+%{_bindir}/gmoc_list_slices
+%{_bindir}/report_genich_relations
 
 # /usr/sbin
 %{_sbindir}/geni-add-member-privilege
@@ -578,7 +593,9 @@ rm -rf $RPM_BUILD_ROOT
 
 # /usr/man
 %{_mandir}/man1/geni-add-member-privilege.1.gz
+%{_mandir}/man1/geni-assert-email.1.gz
 %{_mandir}/man1/geni-check-errors.1.gz
+%{_mandir}/man1/geni-delete-outside-cert.1.gz
 %{_mandir}/man1/geni-expiring-certs.1.gz
 %{_mandir}/man1/geni-install-templates.1.gz
 %{_mandir}/man1/geni-list-idp-members.1.gz
@@ -589,6 +606,8 @@ rm -rf $RPM_BUILD_ROOT
 %{_mandir}/man1/geni-sign-tool-csr.1.gz
 
 %changelog
+* Thu Sep 10 2015 Tom Mitchell <tmitchell@bbn.com> - 2.4-1%{?dist}
+- Update to 2.4 release
 * Thu Aug 27 2015 Tom Mitchell <tmitchell@bbn.com> - 2.3-1%{?dist}
 - Add dependencies
 - Include templates
