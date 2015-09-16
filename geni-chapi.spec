@@ -47,6 +47,7 @@ rm -rf $RPM_BUILD_ROOT
 %config %{_sysconfdir}/%{name}/chapi-centos.ini
 %config %{_sysconfdir}/%{name}/credential_store_policy.json
 %config %{_sysconfdir}/%{name}/example-chapi.ini
+%config %{_sysconfdir}/%{name}/example-parameters.json
 %config %{_sysconfdir}/%{name}/logging_config.conf
 %config %{_sysconfdir}/%{name}/logging_policy.json
 %config %{_sysconfdir}/%{name}/member_authority_policy.json
@@ -348,7 +349,6 @@ rm -rf $RPM_BUILD_ROOT
 %{_datadir}/%{name}/templates/httpd.conf.tmpl
 %{_datadir}/%{name}/templates/install_service_registry.sql.tmpl
 %{_datadir}/%{name}/templates/openssl.cnf.tmpl
-%{_datadir}/%{name}/templates/parameters.json
 %{_datadir}/%{name}/templates/services.ini.tmpl
 %{_datadir}/%{name}/templates/templates.json
 %{_datadir}/%{name}/sr/certs/al2s-ca.pem

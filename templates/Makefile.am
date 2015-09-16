@@ -8,9 +8,5 @@ dist_templates_DATA = \
 	httpd.conf.tmpl \
 	install_service_registry.sql.tmpl \
 	openssl.cnf.tmpl \
-	parameters.json \
 	services.ini.tmpl \
 	templates.json 
-
-
-
