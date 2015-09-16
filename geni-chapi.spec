@@ -307,7 +307,6 @@ rm -rf $RPM_BUILD_ROOT
 %{_datadir}/%{name}/db/cs/postgresql/update-6.sql
 %{_datadir}/%{name}/db/cs/postgresql/update-7.sql
 %{_datadir}/%{name}/db/cs/postgresql/update-8.sql
-%{_datadir}/%{name}/db/logging/postgresql/data.sql
 %{_datadir}/%{name}/db/logging/postgresql/schema.sql
 %{_datadir}/%{name}/db/logging/postgresql/update-1.sql
 %{_datadir}/%{name}/db/logging/postgresql/update-2.sql
@@ -321,7 +320,6 @@ rm -rf $RPM_BUILD_ROOT
 %{_datadir}/%{name}/db/ma/postgresql/update-5.sql
 %{_datadir}/%{name}/db/migration/migrate-assertions.sql
 %{_datadir}/%{name}/db/migration/sliver-info.sql
-%{_datadir}/%{name}/db/pa/postgresql/data.sql
 %{_datadir}/%{name}/db/pa/postgresql/schema.sql
 %{_datadir}/%{name}/db/pa/postgresql/update-1.sql
 %{_datadir}/%{name}/db/pa/postgresql/update-2.sql
@@ -329,13 +327,11 @@ rm -rf $RPM_BUILD_ROOT
 %{_datadir}/%{name}/db/pa/postgresql/update-4.sql
 %{_datadir}/%{name}/db/pa/postgresql/update-5.sql
 %{_datadir}/%{name}/db/sa/postgresql/README.txt
-%{_datadir}/%{name}/db/sa/postgresql/data.sql
 %{_datadir}/%{name}/db/sa/postgresql/schema.sql
 %{_datadir}/%{name}/db/sa/postgresql/update-1.sql
 %{_datadir}/%{name}/db/sa/postgresql/update-2.sql
 %{_datadir}/%{name}/db/sa/postgresql/update-3.sql
 %{_datadir}/%{name}/db/sr/postgresql/README.txt
-%{_datadir}/%{name}/db/sr/postgresql/data.sql
 %{_datadir}/%{name}/db/sr/postgresql/schema.sql
 %{_datadir}/%{name}/db/sr/postgresql/update-1.sql
 %{_datadir}/%{name}/db/sr/postgresql/update-2.sql
