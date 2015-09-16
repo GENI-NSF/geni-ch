@@ -29,6 +29,8 @@ TEMPLATES = \
 	geni-sign-tool-csr \
 	geni-expiring-certs
 
+TEMPLATES.IN = $(TEMPLATES:%=%.in)
+
 $(TEMPLATES): Makefile
 	rm -f $@ $@.tmp
 	srcdir=''; \
@@ -37,29 +39,12 @@ $(TEMPLATES): Makefile
 	chmod a-w $@.tmp
 	mv $@.tmp $@
 
-geni-check-errors: $(srcdir)/geni-check-errors.in
-geni-install-templates: $(srcdir)/geni-install-templates.in
-geni-list-idp-members: $(srcdir)/geni-list-idp-members.in
-geni-list-pending-requests: $(srcdir)/geni-list-pending-requests.in
-geni-sign-tool-csr: $(srcdir)/geni-sign-tool-csr.in
-geni-expiring-certs: $(srcdir)/geni-expiring-certs.in
+%: $(srcdir)/%.in
 
 # Distribute but do not install
-EXTRA_DIST =  \
-	geni-check-errors.in \
-	geni-install-templates.in \
-	geni-list-idp-members.in \
-	geni-list-pending-requests.in \
-	geni-sign-tool-csr.in \
-	geni-expiring-certs.in
+EXTRA_DIST = $(TEMPLATES.IN)
 
-CLEANFILES =  \
-	geni-check-errors \
-	geni-install-templates \
-	geni-list-idp-members \
-	geni-list-pending-requests \
-	geni-sign-tool-csr \
-	geni-expiring-certs
+CLEANFILES = $(TEMPLATES)
 
 sbin_SCRIPTS = \
 	geni-check-errors \
