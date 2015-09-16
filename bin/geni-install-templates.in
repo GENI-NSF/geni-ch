@@ -44,12 +44,19 @@ import tempfile
 
 def parse_args(argv):
     parser = optparse.OptionParser(usage="Instantiate and install template files")
-    parser.add_option("--templates_file", default="templates.json",
-                      help="List of templates and their destinations")	
-    parser.add_option("--parameters_file", default="parameters.json",
-                      help="List of parameters and their values")
-    parser.add_option("--templates_directory", default=".",
-                      help="Location of template files")
+
+    default = '@templatesdir@/templates.json'
+    help_txt = "List of templates and their destinations [default: %default]"
+    parser.add_option("--templates_file", default=default, help=help_txt)
+
+    default = '@pkgsysconfdir@/parameters.json'
+    help_txt = "List of parameters and their values [default: %default]"
+    parser.add_option("--parameters_file", default=default, help=help_txt)
+
+    default = '@templatesdir@'
+    help_txt = "Location of template files [default: %default]"
+    parser.add_option("--templates_directory", default=default, help=help_txt)
+
     parser.add_option("--print_parameter", default=None, 
                       help="Name of parameter whose value to print")
     parser.add_option("--verbose", action="store_true", default=False,

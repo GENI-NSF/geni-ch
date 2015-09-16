@@ -10,6 +10,7 @@
 tooldir = $(pkgdatadir)/../geni-ch/chapi/chapi/tools
 gcfdir = $(pkgdatadir)/../geni-ch/gcf/src
 pkgsysconfdir = $(sysconfdir)/$(PACKAGE)
+templatesdir = $(pkgdatadir)/templates
 
 edit = sed \
 	-e 's|@bindir[@]|$(bindir)|g' \
@@ -17,9 +18,18 @@ edit = sed \
 	-e 's|@pkgsysconfdir[@]|$(pkgsysconfdir)|g' \
 	-e 's|@prefix[@]|$(prefix)|g' \
 	-e 's|@tooldir[@]|$(tooldir)|g' \
-	-e 's|@gcfdir[@]|$(gcfdir)|g'
+	-e 's|@gcfdir[@]|$(gcfdir)|g' \
+	-e 's|@templatesdir[@]|$(templatesdir)|g'
 
-geni-check-errors geni-list-idp-members geni-list-pending-requests geni-sign-tool-csr geni-expiring-certs: Makefile
+TEMPLATES = \
+	geni-check-errors \
+	geni-install-templates \
+	geni-list-idp-members \
+	geni-list-pending-requests \
+	geni-sign-tool-csr \
+	geni-expiring-certs
+
+$(TEMPLATES): Makefile
 	rm -f $@ $@.tmp
 	srcdir=''; \
 	  test -f ./$@.in || srcdir=$(srcdir)/; \
@@ -28,6 +38,7 @@ geni-check-errors geni-list-idp-members geni-list-pending-requests geni-sign-too
 	mv $@.tmp $@
 
 geni-check-errors: $(srcdir)/geni-check-errors.in
+geni-install-templates: $(srcdir)/geni-install-templates.in
 geni-list-idp-members: $(srcdir)/geni-list-idp-members.in
 geni-list-pending-requests: $(srcdir)/geni-list-pending-requests.in
 geni-sign-tool-csr: $(srcdir)/geni-sign-tool-csr.in
@@ -36,6 +47,7 @@ geni-expiring-certs: $(srcdir)/geni-expiring-certs.in
 # Distribute but do not install
 EXTRA_DIST =  \
 	geni-check-errors.in \
+	geni-install-templates.in \
 	geni-list-idp-members.in \
 	geni-list-pending-requests.in \
 	geni-sign-tool-csr.in \
@@ -43,6 +55,7 @@ EXTRA_DIST =  \
 
 CLEANFILES =  \
 	geni-check-errors \
+	geni-install-templates \
 	geni-list-idp-members \
 	geni-list-pending-requests \
 	geni-sign-tool-csr \
@@ -50,6 +63,7 @@ CLEANFILES =  \
 
 sbin_SCRIPTS = \
 	geni-check-errors \
+	geni-install-templates \
 	geni-list-idp-members \
 	geni-list-pending-requests \
 	geni-sign-tool-csr \
@@ -81,7 +95,6 @@ dist_sbin_SCRIPTS = \
 	geni-create-ma-crl \
 	geni-init-ca \
 	geni-init-services \
-	geni-install-templates \
 	geni-list-member-projects \
 	geni-list-pending-requests \
 	geni-revoke-member-certificate \
