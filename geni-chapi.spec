@@ -1,6 +1,6 @@
 Name:           geni-chapi
 Version:        2.4
-Release:        1%{?dist}
+Release:        2%{?dist}
 Summary:        GENI clearinghouse
 BuildArch:      noarch
 License:        GENI Public License
@@ -602,6 +602,8 @@ rm -rf $RPM_BUILD_ROOT
 %{_mandir}/man1/geni-sign-tool-csr.1.gz
 
 %changelog
+* Fri Sep 18 2015 Tom Mitchell <tmitchell@bbn.com> - 2.4-2%{?dist}
+- Improvements to geni-install-templates
 * Thu Sep 10 2015 Tom Mitchell <tmitchell@bbn.com> - 2.4-1%{?dist}
 - Update to 2.4 release
 * Thu Aug 27 2015 Tom Mitchell <tmitchell@bbn.com> - 2.3-1%{?dist}
