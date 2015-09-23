@@ -1,6 +1,6 @@
 Name:           geni-chapi
 Version:        2.4
-Release:        1%{?dist}
+Release:        2%{?dist}
 Summary:        GENI clearinghouse
 BuildArch:      noarch
 License:        GENI Public License
@@ -47,6 +47,7 @@ rm -rf $RPM_BUILD_ROOT
 %config %{_sysconfdir}/%{name}/chapi-centos.ini
 %config %{_sysconfdir}/%{name}/credential_store_policy.json
 %config %{_sysconfdir}/%{name}/example-chapi.ini
+%config %{_sysconfdir}/%{name}/example-parameters.json
 %config %{_sysconfdir}/%{name}/logging_config.conf
 %config %{_sysconfdir}/%{name}/logging_policy.json
 %config %{_sysconfdir}/%{name}/member_authority_policy.json
@@ -306,7 +307,6 @@ rm -rf $RPM_BUILD_ROOT
 %{_datadir}/%{name}/db/cs/postgresql/update-6.sql
 %{_datadir}/%{name}/db/cs/postgresql/update-7.sql
 %{_datadir}/%{name}/db/cs/postgresql/update-8.sql
-%{_datadir}/%{name}/db/logging/postgresql/data.sql
 %{_datadir}/%{name}/db/logging/postgresql/schema.sql
 %{_datadir}/%{name}/db/logging/postgresql/update-1.sql
 %{_datadir}/%{name}/db/logging/postgresql/update-2.sql
@@ -320,7 +320,6 @@ rm -rf $RPM_BUILD_ROOT
 %{_datadir}/%{name}/db/ma/postgresql/update-5.sql
 %{_datadir}/%{name}/db/migration/migrate-assertions.sql
 %{_datadir}/%{name}/db/migration/sliver-info.sql
-%{_datadir}/%{name}/db/pa/postgresql/data.sql
 %{_datadir}/%{name}/db/pa/postgresql/schema.sql
 %{_datadir}/%{name}/db/pa/postgresql/update-1.sql
 %{_datadir}/%{name}/db/pa/postgresql/update-2.sql
@@ -328,13 +327,11 @@ rm -rf $RPM_BUILD_ROOT
 %{_datadir}/%{name}/db/pa/postgresql/update-4.sql
 %{_datadir}/%{name}/db/pa/postgresql/update-5.sql
 %{_datadir}/%{name}/db/sa/postgresql/README.txt
-%{_datadir}/%{name}/db/sa/postgresql/data.sql
 %{_datadir}/%{name}/db/sa/postgresql/schema.sql
 %{_datadir}/%{name}/db/sa/postgresql/update-1.sql
 %{_datadir}/%{name}/db/sa/postgresql/update-2.sql
 %{_datadir}/%{name}/db/sa/postgresql/update-3.sql
 %{_datadir}/%{name}/db/sr/postgresql/README.txt
-%{_datadir}/%{name}/db/sr/postgresql/data.sql
 %{_datadir}/%{name}/db/sr/postgresql/schema.sql
 %{_datadir}/%{name}/db/sr/postgresql/update-1.sql
 %{_datadir}/%{name}/db/sr/postgresql/update-2.sql
@@ -348,7 +345,6 @@ rm -rf $RPM_BUILD_ROOT
 %{_datadir}/%{name}/templates/httpd.conf.tmpl
 %{_datadir}/%{name}/templates/install_service_registry.sql.tmpl
 %{_datadir}/%{name}/templates/openssl.cnf.tmpl
-%{_datadir}/%{name}/templates/parameters.json
 %{_datadir}/%{name}/templates/services.ini.tmpl
 %{_datadir}/%{name}/templates/templates.json
 %{_datadir}/%{name}/sr/certs/al2s-ca.pem
@@ -606,6 +602,8 @@ rm -rf $RPM_BUILD_ROOT
 %{_mandir}/man1/geni-sign-tool-csr.1.gz
 
 %changelog
+* Fri Sep 18 2015 Tom Mitchell <tmitchell@bbn.com> - 2.4-2%{?dist}
+- Improvements to geni-install-templates
 * Thu Sep 10 2015 Tom Mitchell <tmitchell@bbn.com> - 2.4-1%{?dist}
 - Update to 2.4 release
 * Thu Aug 27 2015 Tom Mitchell <tmitchell@bbn.com> - 2.3-1%{?dist}

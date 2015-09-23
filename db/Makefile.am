@@ -14,7 +14,6 @@ nobase_dist_db_DATA = \
 	cs/postgresql/update-6.sql \
 	cs/postgresql/update-7.sql \
 	cs/postgresql/update-8.sql \
-	logging/postgresql/data.sql \
 	logging/postgresql/schema.sql \
 	logging/postgresql/update-1.sql \
 	logging/postgresql/update-2.sql \
@@ -28,20 +27,17 @@ nobase_dist_db_DATA = \
 	ma/postgresql/update-5.sql \
 	migration/migrate-assertions.sql \
 	migration/sliver-info.sql \
-	pa/postgresql/data.sql \
 	pa/postgresql/schema.sql \
 	pa/postgresql/update-1.sql \
 	pa/postgresql/update-2.sql \
 	pa/postgresql/update-3.sql \
 	pa/postgresql/update-4.sql \
 	pa/postgresql/update-5.sql \
-	sa/postgresql/data.sql \
 	sa/postgresql/README.txt \
 	sa/postgresql/schema.sql \
 	sa/postgresql/update-1.sql \
 	sa/postgresql/update-2.sql \
 	sa/postgresql/update-3.sql \
-	sr/postgresql/data.sql \
 	sr/postgresql/README.txt \
 	sr/postgresql/schema.sql \
 	sr/postgresql/update-1.sql \
