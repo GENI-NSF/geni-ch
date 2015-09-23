@@ -12,6 +12,22 @@ yum update -y
 yum install epel-release
 ```
 
+Ensure SELinux is disabled
+--------------------------
+
+Check the status of SELinux:
+
+```Shell
+$ sestatus
+SELinux status:                 disabled
+```
+
+If SELinux is enabled, do this:
+```Shell
+sudo sed -i -e "s/SELINUX=enforcing/SELINUX=disabled/g" /etc/selinux/config
+sudo reboot
+```
+
 Teach CentOS about the GENI RPM repository
 ------------------------------------------
 
@@ -41,7 +57,65 @@ install the geni clearinghouse package:
 yum install geni-chapi --nogpgcheck -y
 ```
 
-Other installation notes
-------------------------
+Install and configure postfix
+-----------------------------
 
-*Note: omitted postgresql-client-common until we need it* This is probably a mistake.
+```Shell
+yum install -y postfix
+```
+
+Configure postfix for this host:
+
+```Shell
+postconf myhostname=<FQDN>
+postconf mydomain=<DN>
+postconf myorigin=\$mydomain
+
+# if you see warnings about IPv6:
+postconf inet_protocols=ipv4
+```
+
+Create postfix user and postdrop group. See `main.cf` for details.
+
+```Shell
+useradd -r postfix
+groupadd -r postdrop
+```
+
+Set file and directory permissions
+
+```Shell
+postfix set-permissions
+
+# If this file exists, delete it
+rm /var/lib/postfix/master.lock
+```
+
+Enable and start postfix
+
+```Shell
+systemctl enable postfix.service
+systemctl start postfix.service
+```
+
+Test it out:
+```Shell
+echo "Body of the mail." | mail -s "Hello world" <email address>
+```
+
+Add portal as a trusted tool
+----------------------------
+
+```Shell
+geni-add-trusted-tool -d portal -u portal -p portal --host localhost \
+    'GENI Portal' urn:publicid:IDN+ch-tm.geni.net+authority+portal
+```
+
+Testing with a portal
+---------------------
+
+Get the portal cert/key
+
+Get the KM cert/key
+
+Edit settings.php (or ini) to point to the new service registry
