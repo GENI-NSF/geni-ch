@@ -1,43 +1,5 @@
-Notes on getting CH up and running from fresh CH install
 
-sudo yum update -y
-
-Disable SELinux:
-sudo sed -i -e "s/SELINUX=enforcing/SELINUX=disabled/g" \
-     /etc/selinux/config
-sudo reboot
-
-# If no DNS name is set, set it in /etc/hosts
-
-# If we've allocated from GRAM, need to open up ports 80, 443, 8443, 8444
-# On the GRAM machine:
-# WIth slice and project name changed appropriately
-source /etc/novarc 
-nova --os-username=admin-ch.geni.net:COUNT+slice+CENTOS-TEST --os-password="sliceMaster:-)" --os-tenant-name=ch.geni.net:COUNT+slice+CENTOS-TEST secgroup-add-rule ch.geni.net:COUNT+slice+CENTOS-TEST_secgrp tcp 80 80 0.0.0.0/0
-nova --os-username=admin-ch.geni.net:COUNT+slice+CENTOS-TEST --os-password="sliceMaster:-)" --os-tenant-name=ch.geni.net:COUNT+slice+CENTOS-TEST secgroup-add-rule ch.geni.net:COUNT+slice+CENTOS-TEST_secgrp tcp 443 443 0.0.0.0/0
-nova --os-username=admin-ch.geni.net:COUNT+slice+CENTOS-TEST --os-password="sliceMaster:-)" --os-tenant-name=ch.geni.net:COUNT+slice+CENTOS-TEST secgroup-add-rule ch.geni.net:COUNT+slice+CENTOS-TEST_secgrp tcp 8443 8444 0.0.0.0/0
-
-
-sudo yum install -y epel-release
-sudo yum install -y automake autoconf
-sudo yum install -y emacs-nox git
-sudo yum install -y python-sqlalchemy python-psycopg2 postgresql
-sudo yum install -y httpd mod_fcgid mod_ssl
-sudo yum install -y python-flup python-blinker python-dateutil swig
-sudo yum install -y  m2crypto xmlsec1 xmlsec1-openssl
-sudo yum install -y python-flask python-flask-xml-rpc pyOpenSSL 
-
-# Sync and install geni-ch
-ln -s ~/geni-ch ~/chapi
-
-# Change apache2 to httpd in bin/geni-chapi-install and install CHAPI SW
-sudo sed -i -e "s/apache2/httpd/g" ~/geni-ch/bin/geni-chapi-install
-~/geni-ch/bin/geni-chapi-install
-
---- This is where we should be starting after installing geni-ch package ---
-
-# Set up templated files
-cd /usr/share/geni-chapi/templates
+cp /etc/geni-chapi/example-parameters.json /etc/geni-chapi/parameters.json
 # Edit parameters.json: make sure to set db_host and ch_host!!
 sudo geni-install-templates
 
@@ -54,19 +16,15 @@ DB_DATABASE=`geni-install-templates --print_parameter db_name`
 DB_PASSWORD=`geni-install-templates --print_parameter db_pass`
 echo "$DB_HOST:*:$DB_DATABASE:$DB_USER:$DB_PASSWORD"  > ~/.pgpass
 chmod 0600 ~/.pgpass
-touch ~/.psql_history
+
 PSQL="psql -U $DB_USER -h $DB_HOST $DB_DATABASE"
 
 # End of remote database call
 
 
-for sch in portal cs logging ma pa sa sr
+for sch in cs logging ma pa sa sr
 do
     $PSQL -f $CHAPI_DIR/db/$sch/postgresql/schema.sql
-done
-for upd in $CHAPI_DIR/db/*/postgresql/update*.sql
-do
-    $PSQL -f $upd
 done
 for data in $CHAPI_DIR/db/*/postgresql/data.sql
 do
@@ -139,8 +97,19 @@ sudo cp /tmp/ca-ma-cert.pem /usr/share/geni-ch/CA
 
 # Install AMSoil into CHAPI
 cd $CH_DIR/chapi
-sudo git clone https://github.com/GENI-NSF/geni-soil.git
-sudo ln -s geni-soil AMsoil
+sudo wget https://github.com/GENI-NSF/geni-soil/archive/gpo-0.3.3.tar.gz
+sudo tar zxf gpo-0.3.3.tar.gz 
+sudo rm gpo-0.3.3.tar.gz
+sudo ln -s geni-soil-gpo-0.3.3 AMsoil
+
+sudo chown apache.apache /usr/share/geni-ch/chapi/AMsoil/deploy
+sudo touch /usr/share/geni-ch/chapi/AMsoil/log/amsoil.log
+sudo chmod a+w /usr/share/geni-ch/chapi/AMsoil/log/amsoil.log
+sudo mkdir /var/log/geni-chapi
+sudo touch /var/log/geni-chapi/chapi.log
+sudo chmod a+w /var/log/geni-chapi/chapi.log
+
+
 cd AMsoil
 
 # Set up amsoil links to CHAPI plugins
@@ -152,13 +121,7 @@ done
 cd .. # In AMsoil/src
 sudo ln -s main.py main.fcgi
 
-# Install AMSoil and CHAPI
-#cd ~/geni-ch/tools
-#./install-chapi-centos.sh
-#cd /usr/share/geni-ch/chapi/AMsoil/src
-#sudo ln -s main.py main.fcgi
-
-sudo service httpd restart
+sudo systemctl restart httpd.service
 
 
 # -----
@@ -173,12 +136,12 @@ Engine(sqlite:////usr/share/geni-ch/chapi/geni-soil/deploy/config.db)
 #    but can read as mbrinn
 
 # test amsoil standalone
-sudo su -
-cd /usr/share/geni-ch/chapi/AMsoil/src
-sudo touch ../log/amsoil.log /var/log/geni-chapi/chapi.log
-sudo chmod a+w ../log/amsoil.log /var/log/geni-chapi/chapi.log
-PYTHONPATH=/usr/share/geni-ch/gcf/src:/usr/share/geni-ch/chapi/chapi python main.py
-exit
+# sudo su -
+# cd /usr/share/geni-ch/chapi/AMsoil/src
+# sudo touch ../log/amsoil.log /var/log/geni-chapi/chapi.log
+# sudo chmod a+w ../log/amsoil.log /var/log/geni-chapi/chapi.log
+# PYTHONPATH=/usr/share/geni-ch/gcf/src:/usr/share/geni-ch/chapi/chapi python main.py
+# exit
 # Then you can run as yourself or apache 
 
 # Perhaps we should change the database name/user for the CH to be geni-ch
@@ -188,10 +151,13 @@ exit
 CHAPI Tests:
 cd /usr/share/geni-ch/chapi/chapi/tools
 # export PYTHONPATH=/usr/share/geni-ch/gcf/src
-python client.py --cert /usr/share/geni-ch/ma/ma-cert.pem  \
-       --key /usr/share/geni-ch/ma/ma-key.pem  \
+python /usr/share/geni-ch/chapi/chapi/tools/client.py \
+       --cert /usr/share/geni-ch/ma/ma-cert.pem \
+       --key /usr/share/geni-ch/ma/ma-key.pem \
        --url https://$CH_HOST/SA --method get_version
-python client.py --cert /usr/share/geni-ch/ma/ma-cert.pem  \
+
+python /usr/share/geni-ch/chapi/chapi/tools/client.py \
+       --cert /usr/share/geni-ch/ma/ma-cert.pem  \
        --key /usr/share/geni-ch/ma/ma-key.pem  \
        --url https://$CH_HOST:8444/SR --method get_services
 
