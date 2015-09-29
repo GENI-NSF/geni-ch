@@ -66,7 +66,8 @@ field_mapping = {
     "SERVICE_CERT": 'service_cert',
     "SERVICE_NAME": 'service_name',
     "SERVICE_DESCRIPTION": 'service_description',
-    "SERVICE_TYPE": "service_type"
+    "SERVICE_TYPE": "service_type",
+    "_GENI_SERVICE_SHORT_NAME": "short_name"
     }
 
 # The externally visible data schema for services
@@ -81,7 +82,8 @@ mandatory_fields = {
 supplemental_fields = { 
     "_GENI_SERVICE_CERT_FILENAME": {"TYPE": "STRING", "OBJECT": "SERVICE"},
     "_GENI_SERVICE_ID" : {"TYPE" : "INTEGER", "OBJECT": "SERVICE"},
-    "_GENI_SERVICE_ATTRIBUTES" : {"TYPE" : "DICTIONARY", "OBJECT" : "SERVICE"}
+    "_GENI_SERVICE_ATTRIBUTES" : {"TYPE" : "DICTIONARY", "OBJECT" : "SERVICE"},
+    "_GENI_SERVICE_SHORT_NAME" : {"TYPE": "STRING", "OBJECT": "SERVICE"}
     }
 
 
