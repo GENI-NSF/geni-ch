@@ -1,42 +1,16 @@
+# ----------------------------------------------------------------------
+# This file documents changes for versions in the 1.x series.
+#
+# For more recent in the 2.x series and beyond, please see CHANGES.md
+# ----------------------------------------------------------------------
+
+
 # Note: keep this file in wiki format for easy pasting to the proto-ch wiki
 # Note: keep milestone bullets in ticket numerical order for easier
 #       reconciliation at release time
 
 
 = GENI Clearinghouse Release Notes =
-
-== 2.5 ==
-
-== 2.4 ==
- * Migrate management scripts from geni-portal to geni-ch (#101)
- * Return dates as strings from SA create (#397)
- * Raise not implemented error for delete slice and delete project (#398)
- * Stop generating fake project email addresses (#399)
- * Ensure fields exist before updating (#411)
- * Ensure now < slice expiration < max expiration (#413)
- * Validate project expiration dates
- * Set default values for slice and project creation (#414)
- * Return last_name to monitoring when present (#424)
-
-== 2.3 ==
- * Add geni-revoke-member-certificate man page
-
-== 2.2 ==
- * Migrate SR certs from geni-portal to geni-ch (#102).
-
-== 2.1.1 ==
- * Fix a bug in lookup_project_attributes where the PROJECT_UID option was
-   required to be a list. Allow it to be a single UID. (#400)
-
-== 2.1 ==
- * Migrate CH tables from geni-portal to geni-ch (#103).
- * Support lists of project_ids in option for lookup_project_attributes (#391).
- * Return most recent slice from SA.lookup and SA.lookup_slices (#393)
- * Allow JSON booleans for boolean type arguments to API calls (#394)
-
-== 2.0 ==
- * Add procedure to add new aggregate (#383).
- * Minor tweaks to `portal_stats.sql`
 
 == 1.29 ==
  * remove hard-coded names in SAv1Implementation.py, 
