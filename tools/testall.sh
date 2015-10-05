@@ -1,4 +1,4 @@
-# /bin/bash
+#!/bin/sh
 
 # Set of tests of API (not the function, just each call)
 
@@ -33,5 +33,3 @@ python client.py --url https://localhost:8001/SA --method lookup_projects --opti
 python client.py --url https://localhost:8001/SA --method update_project --urn foo --options_file /tmp/options.json
 python client.py --url https://localhost:8001/SA --method modify_project_membership --urn foo --options_file /tmp/options.json
 python client.py --url https://localhost:8001/SA --method lookup_project_members --urn foo --options_file /tmp/options.json
-
-

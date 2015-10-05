@@ -1,0 +1,199 @@
+#!/usr/bin/env python
+# -*- Mode: python -*-
+#
+#----------------------------------------------------------------------
+# Copyright (c) 2013-2015 Raytheon BBN Technologies
+#
+# Permission is hereby granted, free of charge, to any person obtaining
+# a copy of this software and/or hardware specification (the "Work") to
+# deal in the Work without restriction, including without limitation the
+# rights to use, copy, modify, merge, publish, distribute, sublicense,
+# and/or sell copies of the Work, and to permit persons to whom the Work
+# is furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be
+# included in all copies or substantial portions of the Work.
+#
+# THE WORK IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+# MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+# NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+# HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+# WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE WORK OR THE USE OR OTHER DEALINGS
+# IN THE WORK.
+#----------------------------------------------------------------------
+
+#----------------------------------------------------------------------
+#
+# Transform ".in" templae files into instantated files and install
+# in specified places. 
+#
+# Requires three arguments:
+#   templates_file (templates.json) : List of templates and their destimations
+#   parameters_file (parameters.json) : List of parameters and their values 
+#   template_directory (.) : Location of template files
+#
+#----------------------------------------------------------------------
+
+import json
+import optparse
+import os
+import sys
+import tempfile
+
+def parse_args(argv):
+    parser = optparse.OptionParser(usage="Instantiate and install template files")
+
+    default = '@templatesdir@/templates.json'
+    help_txt = "List of templates and their destinations [default: %default]"
+    parser.add_option("--templates_file", default=default, help=help_txt)
+
+    default = '@pkgsysconfdir@/parameters.json'
+    help_txt = "List of parameters and their values [default: %default]"
+    parser.add_option("--parameters_file", default=default, help=help_txt)
+
+    default = '@templatesdir@'
+    help_txt = "Location of template files [default: %default]"
+    parser.add_option("--templates_directory", default=default, help=help_txt)
+
+    parser.add_option("--print_parameter", default=None, 
+                      help="Name of parameter whose value to print")
+    parser.add_option("--verbose", action="store_true", default=False,
+                      help="Enable verbose output")
+    options,args = parser.parse_args()
+    return options,args
+
+# Class to handle instantiation and installation of 
+# parameterized template files
+class TemplateInstaller:
+    
+    # Initialization: Grab options, parse parameters and template files
+    def __init__(self, options):
+        self._options = options
+        self._templates_file = options.templates_file
+        self._parameters_file = options.parameters_file
+        self._templates_directory = options.templates_directory
+        self._verbose = options.verbose
+
+        self._template_info = self.parse_template_info()
+        self._parameter_info = self.parse_parameter_info()
+        if self._verbose:
+            print "TEMPLATES = %s" % self._template_info
+            print "PARAMS = %s" % self._parameter_info
+
+    # Exit after printing error message
+    def error(self, msg):
+        print msg
+        sys.exit(-1)
+
+    # Parse JSON file and return, unless error in read or parse
+    def parse_json_file(self, filename, file_description):
+        try:
+            data = open(filename, 'r').read()
+            jdata = json.loads(data)
+            return jdata
+        except Exception as e:
+            print "E = %s" % e
+            self.error("Error parsing %s file: %s" % \
+                           (file_description, filename))
+
+    # Read template file and check that each template has all required fields
+    def parse_template_info(self):
+        template_info = self.parse_json_file(self._templates_file, 
+                                             'template info')
+        if '__templates__' not in template_info:
+            error("Missing __templates__ entry in templates file")
+        template_info = template_info['__templates__']
+        for template in template_info:
+            if 'source' not in template or \
+                    'destination' not in template or \
+                    'owner' not in template or \
+                    'protection' not in template:
+                self.error("Entry incomplete: %s" % template)
+        return template_info
+
+    # Read parameters file and check that each parameter has name
+    # and default or explicit value
+    def parse_parameter_info(self):
+        parameter_info = self.parse_json_file(self._parameters_file, 
+                                             'parameter info')
+        if "__parameters__" not in parameter_info:
+            self.error("Missing __parameters__ emtry in parameters file")
+        parameter_info = parameter_info['__parameters__']
+        invalid_entries = False
+        for parameter in parameter_info:
+            if 'name' not in parameter:
+                self.error("No name for parameter: %s" % parameter)
+            if 'default' not in parameter and 'value' not in parameter:
+                print "No value or default for parameter: %s" % \
+                    parameter['name']
+                invalid_entries = True
+            # Make sure 'value' is set from default if not explicitly set
+            elif 'value' not in parameter:
+                parameter['value'] = parameter['default']
+        if invalid_entries:
+            self.error("")
+        return parameter_info
+
+    # Read template file from 'source' in given template info ditionary
+    def read_template(self, template):
+        source = template['source']
+        path = os.path.join(self._templates_directory, source)
+        try:
+            data = open(path, 'r').read()
+            return data
+        except:
+            self.error("Error reading template file: %s" % source)
+
+    # Instantiate template file by substituting all parameters
+    def instantiate_template(self, template_data):
+        for parameter in self._parameter_info:
+            parameter_name = '@' + parameter['name'] + '@'
+            parameter_value = parameter['value']
+            template_data = template_data.replace(parameter_name, 
+                                                  parameter_value)
+        return template_data
+
+    # Install new data file in proper place with propert chmod/chown
+    def install_instantiated_file(self, data, template):
+        source = template['source']
+        path = os.path.join(self._templates_directory, source)
+        destination = template['destination']
+        destination_dir = os.path.dirname(destination)
+        owner = template['owner']
+        protection = template['protection']
+        print "Install %s to %s [%s %s]" % \
+            (path, destination, owner, protection)
+
+        (fd, fn) = tempfile.mkstemp()
+        os.write(fd, data)
+        os.close(fd)
+        os.system('mkdir -p %s' % destination_dir)
+        os.system("chmod %s %s" % (protection, fn))
+        os.system("chown %s %s" % (owner, fn))
+        os.system("mv %s %s" % (fn, destination))
+        
+
+    def run(self):
+        # If the request is for a single parameter to be printed, print and exit
+        if self._options.print_parameter:
+            for param in self._parameter_info:
+                if self._options.print_parameter == param['name']:
+                    print param['value']
+                    sys.exit(0)
+            self.error("Can't find parameter named %s" % self._options.print_parameter)
+
+        # Otherwise, instantiate all the files and copy to destination
+        for template in self._template_info:
+            template_data = self.read_template(template)
+            instantiated_data = self.instantiate_template(template_data)
+            self.install_instantiated_file(instantiated_data, template)
+
+def main():
+    options, args = parse_args(sys.argv)
+    installer = TemplateInstaller(options)
+    installer.run()
+
+if __name__ == "__main__":
+    sys.exit(main())

@@ -89,11 +89,6 @@ CREATE TABLE sa_sliver_info (
 CREATE INDEX sa_sliver_info_urn ON sa_sliver_info(sliver_urn);
 -- slice_urn should be a value in sa_slice(slice_urn)
 
--- Update the schema version
-INSERT INTO schema_version
-       (key, extra)
-VALUES ('006', 'sa_sliver_info');
-
 -- Add archiving tables sa_slice_old and sa_slice_member_old
 DROP TABLE IF EXISTS sa_slice_old CASCADE;
 
