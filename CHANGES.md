@@ -4,6 +4,8 @@
 
 * Return short name from SR
   ([#430](https://github.com/GENI-NSF/geni-ch/issues/430))
+* Merge transition related changes
+  ([#432](https://github.com/GENI-NSF/geni-ch/issues/432))
 
 # [Release 2.4](https://github.com/GENI-NSF/geni-ch/milestones/2.4)
 
