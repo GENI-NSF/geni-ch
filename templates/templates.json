@@ -1,0 +1,64 @@
+{
+	"__doc__" : [
+	   "This file contains a list of templates to be transformed ",
+	   "and installed at configuration time.",
+	   "It is intended to be used as input to the ",
+	   "geni-install-templates program.", 
+	   "Each element of the __templates__ entry contains a source ",
+	   "and destination, ",
+	   "as well as optional owner (for chown) and protection (for chmod) ",
+	   "to be performed on destimation file."
+	],
+
+	"__templates__" : [
+	   {
+	      "doc" : "List of clearinghouse-specific parameters",
+	      "source" : "chapi.ini.tmpl",
+	      "destination" : "/etc/geni-chapi/chapi.ini",
+	      "owner" : "root:root",
+	      "protection" : "0444"
+           },
+	   {
+	      "doc" : "List of installed CH services and associated params",
+	      "source" : "services.ini.tmpl",
+	      "destination" : "/etc/geni-ch/services.ini",
+	      "owner" : "root:root",
+	      "protection" : "0444"
+           },
+	   {
+	      "doc" : "Apache configuration for Clearinghouse",
+	      "source" : "httpd.conf.tmpl",
+	      "destination" : "/etc/httpd/conf/httpd.conf",
+	      "owner" : "root:root",
+	      "protection" : "0644"
+           }, 
+	   {
+	      "doc" : "Apache CH-SSL configuration for Clearinghouse",
+	      "source" : "ch-ssl.conf.tmpl",
+	      "destination" : "/etc/httpd/conf.d/ch-ssl.conf",
+	      "owner" : "root:root",
+	      "protection" : "0644"
+           }, 
+	   {
+	      "doc" : "Apache configureion include file",
+	      "source" : "apache2.conf.tmpl",
+	      "destination" : "/usr/share/geni-ch/ch/apache2.conf",
+	      "owner" : "root:root",
+	      "protection" : "0644"
+           }, 
+	   {
+	      "doc" : "Install Service registry entries via SQL",
+	      "source" : "install_service_registry.sql.tmpl",
+	      "destination" : "/tmp/install_service_registry.sql",
+	      "owner" : "root:root",
+	      "protection" : "0777"
+	   },
+	   {
+	      "doc" : "CA openssl.cnf file for CH CA",
+	      "source" : "openssl.cnf.tmpl",
+	      "destination" : "/usr/share/geni-ch/CA/openssl.cnf",
+	      "owner" : "root:root",
+	      "protection" : "0644"
+	   }
+	]
+}

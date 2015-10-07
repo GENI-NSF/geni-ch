@@ -1,0 +1,98 @@
+#----------------------------------------------------------------------
+# The DEFAULT section contains values that are available
+# in all other sections AND that are substituted into other
+# values using "%(OPTION_NAME)s" syntax.
+#
+# To override a default value in another section, simply
+# define that NAME with another value. For instance, if
+# the authority field should be different for a service,
+# add "authority=geni.example.com" to that section.
+#----------------------------------------------------------------------
+
+#----------------------------------------------------------------------
+# N.B. Some of the settings in the DEFAULT section can be edited. The
+# ones that cannot be edited are clearly marked. All other sections
+# should be left as is. The clearinghouse and portal are unlikely to
+# function properly with other values.
+# ----------------------------------------------------------------------
+
+[DEFAULT]
+# The email address to configure into the service certificates.
+email=@ch_admin_email@
+
+# The authority portion of the service URN. URNs are of the form
+# authority+type+name, so for example "ch.example.com+authority+sa"
+# for the slice authority (which is of type "authority". Rather
+# confusing with three different uses of the word authority. In the
+# usual case authority will match hostname below.
+authority=@ch_authority@
+
+# The hostname where the services will run. In theory different
+# services can run on different hosts. In practice this hasn't been
+# attempted, so it may not work properly. In the usual case hostname
+# will match authority above.
+servicehost=@ch_host@
+
+# DO NOT EDIT
+# The portal/clearinghouse will not function properly if you change
+# this value.
+datadir = @pkgdatadir@
+
+
+[services]
+services=sr,sa,pa,ma,logging,cs,km,portal,pgch
+
+[ca]
+conf=%(datadir)s/CA/openssl.cnf
+cert=%(datadir)s/CA/cacert.pem
+key=%(datadir)s/CA/private/cakey.pem
+
+[sr]
+cert=%(datadir)s/sr/sr-cert.pem
+key=%(datadir)s/sr/sr-key.pem
+
+[sa]
+cert=%(datadir)s/sa/sa-cert.pem
+key=%(datadir)s/sa/sa-key.pem
+ca=yes
+url=https://%(servicehost)s/SA
+type=1
+
+[pa]
+cert=%(datadir)s/sa/sa-cert.pem
+key=%(datadir)s/sa/sa-key.pem
+url=https://%(servicehost)s/SA
+type=2
+
+[ma]
+cert=%(datadir)s/ma/ma-cert.pem
+key=%(datadir)s/ma/ma-key.pem
+ca=yes
+url=https://%(servicehost)s/MA
+type=3
+
+[logging]
+cert=%(datadir)s/logging/logging-cert.pem
+key=%(datadir)s/logging/logging-key.pem
+url=https://%(servicehost)s/LOG
+type=5
+
+[cs]
+cert=%(datadir)s/cs/cs-cert.pem
+key=%(datadir)s/cs/cs-key.pem
+url=https://%(servicehost)s/CS
+type=6
+
+[km]
+cert=%(datadir)s/km/km-cert.pem
+key=%(datadir)s/km/km-key.pem
+url=https://%(servicehost)s/secure/kmhome.php
+type=8
+
+[portal]
+cert=%(datadir)s/portal/portal-cert.pem
+key=%(datadir)s/portal/portal-key.pem
+
+[pgch]
+url=https://%(servicehost)s:8443/
+type=9

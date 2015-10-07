@@ -26,6 +26,7 @@ dist_man_MANS = \
 	geni-assert-email.1 \
 	geni-delete-outside-cert.1 \
 	geni-expiring-certs.1 \
+	geni-install-templates.1 \
 	geni-list-idp-members.1 \
 	geni-list-member-projects.1 \
 	geni-list-pending-requests.1 \

@@ -1,0 +1,42 @@
+.\"                                      Hey, EMACS: -*- nroff -*-
+.TH GENI-INSTALL-TEMPLATES 1 "September 3, 2015"
+.SH NAME
+geni-install-templates \- Instantiate and install templated files for GENI configuration
+.SH SYNOPSIS
+.B geni-install-templates
+.I \-\-templates_file \ <TEMPLATES_FILE>
+.I \-\-parameters_file \ <PARAMETERS_FILE> 
+.I \-\-templates_directory \ <TEMPLATES_DIRECTORY> 
+.I \-\-print_parameter <PARAM_NAME>
+.br
+.SH DESCRIPTION
+.B geni-install-templates
+instantiates a set of template files listed in the 'templates' file and
+substitutes @PARAM@ entries in the file with PARAMVAL in the templated file based
+on an entry in the parameters file that maps PARAM to PARAMVAL. 
+
+It then copies the edited template file to the location specified in the templates file
+and does appropriate chmod and chown commands.
+
+If the argument provided is '--print_parameter', the program prints the current value
+of the given parameter as specified in the parameters_file and exits.
+
+.SH OPTIONS
+A summary of options is included below.
+.TP
+.B \-\-templates_file <TEMPLATES_FILE>
+The name of the templates file (default=./templates.json)
+.TP
+.B \-\-parameters_file <PARAMETERS_FILE>
+The name of the parameters file (default=./parameters.json)
+Show summary of options.
+.TP
+.B \-\-templates_directory <TEMPLATES_DIRECTORY>
+The name of the directory in which to find the templated files (default=.)
+.TP
+.B \-\-print_parameter <PARAM_NAME>
+Print the current value of the parameter of given name from the parameters file and exit.
+.SH BUGS
+None known.
+.SH AUTHOR
+geni-install-templates was written by Raytheon BBN Technologies.
