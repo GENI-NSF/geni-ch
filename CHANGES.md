@@ -1,5 +1,8 @@
 # GENI Clearinghouse Release Notes
 
+# [Release 2.6](https://github.com/GENI-NSF/geni-ch/milestones/2.6)
+
+
 # [Release 2.5](https://github.com/GENI-NSF/geni-ch/milestones/2.5)
 
 * Return short name from SR
