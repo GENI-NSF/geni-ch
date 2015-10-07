@@ -2,6 +2,8 @@
 
 # [Release 2.6](https://github.com/GENI-NSF/geni-ch/milestones/2.6)
 
+* Skip SQL in clause when collection is empty
+  ([#427](https://github.com/GENI-NSF/geni-ch/issues/427))
 
 # [Release 2.5](https://github.com/GENI-NSF/geni-ch/milestones/2.5)
 

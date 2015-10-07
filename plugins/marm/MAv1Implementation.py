@@ -1537,7 +1537,9 @@ class MAv1Implementation(MAv1DelegateBase):
             else:
                 return field
 
-        if m_ids is None or (isinstance(m_ids, types.ListType) and len(m_ids) == 0):
+        if not m_ids:
+            # No member IDs to filter against so return the current
+            # result, we have nothing to add
             return result
 
         # Always include the MEMBER_URN, we need it for the result
