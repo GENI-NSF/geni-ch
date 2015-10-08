@@ -60,7 +60,7 @@ PSQL="psql -U $DB_USER -h $DB_HOST $DB_DATABASE"
 # End of remote database call
 
 
-for sch in portal cs logging ma pa sa sr
+for sch in cs logging ma pa sa sr
 do
     $PSQL -f $CHAPI_DIR/db/$sch/postgresql/schema.sql
 done
@@ -115,8 +115,8 @@ sudo mkdir -p /var/log/geni-chapi/httpd
 # Set up trusted roots
 TRUSTED_ROOTS_DIR=$CH_DIR/portal/gcf.d/trusted_roots
 sudo mkdir -p $TRUSTED_ROOTS_DIR
-sudo ln -s $CH_DIR//CA/cacert.pem $TRUSTED_ROOTS_DIR
-sudo ln -s $CH_DIR//ma/ma-cert.pem $TRUSTED_ROOTS_DIR
+sudo ln -s $CH_DIR/CA/cacert.pem $TRUSTED_ROOTS_DIR
+sudo ln -s $CH_DIR/ma/ma-cert.pem $TRUSTED_ROOTS_DIR
 
 # Create combined cert
 cat /usr/share/geni-ch/CA/cacert.pem /usr/share/geni-ch/ma/ma-cert.pem > /tmp/ca-ma-cert.pem
