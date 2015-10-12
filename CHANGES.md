@@ -4,6 +4,8 @@
 
 * Skip SQL in clause when collection is empty
   ([#427](https://github.com/GENI-NSF/geni-ch/issues/427))
+* Add iRODS SR scripts
+  ([#436](https://github.com/GENI-NSF/geni-ch/issues/436))
 
 # [Release 2.5](https://github.com/GENI-NSF/geni-ch/milestones/2.5)
 
