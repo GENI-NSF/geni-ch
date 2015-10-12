@@ -231,6 +231,10 @@ sr/sql/add-wvn-eg-of.sql: $(srcdir)/sr/sql/add-wvn-eg-of.sql.in
 sr/sql/add-wvn-eg.sql: $(srcdir)/sr/sql/add-wvn-eg.sql.in
 
 
+dist_srsql_DATA = \
+    sr/sql/add-irods.sql \
+    sr/sql/add-irods-test.sql
+
 srsql_DATA = $(AM_SQL)
 
 dist_srcerts_DATA = \
