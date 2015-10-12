@@ -107,9 +107,15 @@ AM_SQL = \
 	sr/sql/add-wvn-eg-of.sql \
 	sr/sql/add-wvn-eg.sql
 
-AM_SQL_IN = $(AM_SQL:.sql=.sql.in)
+AM_SQL_IN = $(AM_SQL:%=%.in)
 
-$(AM_SQL): Makefile
+IRODS_SQL = \
+	sr/sql/add-irods.sql \
+	sr/sql/add-irods-test.sql
+
+IRODS_SQL_IN = $(IRODS_SQL:%=%.in)
+
+$(AM_SQL) $(IRODS_SQL): Makefile
 	rm -f $@ $@.tmp
 	srcdir=''; \
 	  test -f ./$@.in || srcdir=$(srcdir)/; \
@@ -125,117 +131,24 @@ $(AM_SQL_IN): sr/generate-sql sr/aggdata.csv Makefile
 EXTRA_DIST = \
 	sr/generate-sql \
 	sr/aggdata.csv \
-	$(AM_SQL_IN)
+	$(AM_SQL_IN) \
+	$(IRODS_SQL_IN)
 
 CLEANFILES =  \
-	$(AM_SQL)
+	$(AM_SQL) \
+	$(IRODS_SQL)
 
+%: $(srcdir)/%.in
+
+# I don't know why we have to call out add-al2s.sql separately but
+# without this the make fails with a file not found error on
+# 'sr/sql/add-al2s.sql.in'. None of the other files need a similar
+# dependency if just this one is defined.
 sr/sql/add-al2s.sql: $(srcdir)/sr/sql/add-al2s.sql.in
-sr/sql/add-apt.sql: $(srcdir)/sr/sql/add-apt.sql.in
-sr/sql/add-cenic-ig-of.sql: $(srcdir)/sr/sql/add-cenic-ig-of.sql.in
-sr/sql/add-cenic-ig.sql: $(srcdir)/sr/sql/add-cenic-ig.sql.in
-sr/sql/add-cenic-of.sql: $(srcdir)/sr/sql/add-cenic-of.sql.in
-sr/sql/add-clemson-ig-of.sql: $(srcdir)/sr/sql/add-clemson-ig-of.sql.in
-sr/sql/add-clemson-ig.sql: $(srcdir)/sr/sql/add-clemson-ig.sql.in
-sr/sql/add-clemson-og.sql: $(srcdir)/sr/sql/add-clemson-og.sql.in
-sr/sql/add-cornell-ig-of.sql: $(srcdir)/sr/sql/add-cornell-ig-of.sql.in
-sr/sql/add-cornell-ig.sql: $(srcdir)/sr/sql/add-cornell-ig.sql.in
-sr/sql/add-cwru-ig.sql: $(srcdir)/sr/sql/add-cwru-ig.sql.in
-sr/sql/add-exosm.sql: $(srcdir)/sr/sql/add-exosm.sql.in
-sr/sql/add-fiu-eg.sql: $(srcdir)/sr/sql/add-fiu-eg.sql.in
-sr/sql/add-gatech-ig-of.sql: $(srcdir)/sr/sql/add-colorado-ig-of.sql.in
-sr/sql/add-gatech-ig-of.sql: $(srcdir)/sr/sql/add-gatech-ig-of.sql.in
-sr/sql/add-gatech-ig.sql: $(srcdir)/sr/sql/add-colorado-ig.sql.in
-sr/sql/add-gatech-ig.sql: $(srcdir)/sr/sql/add-gatech-ig.sql.in
-sr/sql/add-gpo-eg-of.sql: $(srcdir)/sr/sql/add-gpo-eg-of.sql.in
-sr/sql/add-gpo-eg.sql: $(srcdir)/sr/sql/add-gpo-eg.sql.in
-sr/sql/add-gpo-ig-of.sql: $(srcdir)/sr/sql/add-gpo-ig-of.sql.in
-sr/sql/add-gpo-ig.sql: $(srcdir)/sr/sql/add-gpo-ig.sql.in
-sr/sql/add-gpo-og.sql: $(srcdir)/sr/sql/add-gpo-og.sql.in
-sr/sql/add-illinois-ig-of.sql: $(srcdir)/sr/sql/add-illinois-ig-of.sql.in
-sr/sql/add-illinois-ig.sql: $(srcdir)/sr/sql/add-illinois-ig.sql.in
-sr/sql/add-im-vw1.sql: $(srcdir)/sr/sql/add-im-vw1.sql.in
-sr/sql/add-im-wilab.sql: $(srcdir)/sr/sql/add-im-wilab.sql.in
-sr/sql/add-kansas-ig-of.sql: $(srcdir)/sr/sql/add-kansas-ig-of.sql.in
-sr/sql/add-kansas-ig.sql: $(srcdir)/sr/sql/add-kansas-ig.sql.in
-sr/sql/add-kettering-ig-of.sql: $(srcdir)/sr/sql/add-kettering-ig-of.sql.in
-sr/sql/add-kettering-ig.sql: $(srcdir)/sr/sql/add-kettering-ig.sql.in
-sr/sql/add-max-ig-of.sql: $(srcdir)/sr/sql/add-max-ig-of.sql.in
-sr/sql/add-max-ig.sql: $(srcdir)/sr/sql/add-max-ig.sql.in
-sr/sql/add-max.sql: $(srcdir)/sr/sql/add-max.sql.in
-sr/sql/add-missouri-ig-of.sql: $(srcdir)/sr/sql/add-missouri-ig-of.sql.in
-sr/sql/add-missouri-ig.sql: $(srcdir)/sr/sql/add-missouri-ig.sql.in
-sr/sql/add-moxi-ig-of.sql: $(srcdir)/sr/sql/add-moxi-ig-of.sql.in
-sr/sql/add-moxi-ig.sql: $(srcdir)/sr/sql/add-moxi-ig.sql.in
-sr/sql/add-moxi-of.sql: $(srcdir)/sr/sql/add-moxi-of.sql.in
-sr/sql/add-nicta-eg.sql: $(srcdir)/sr/sql/add-nicta-eg.sql.in
-sr/sql/add-northwestern-ig.sql: $(srcdir)/sr/sql/add-northwestern-ig.sql.in
-sr/sql/add-nortwestern-ig-of.sql: $(srcdir)/sr/sql/add-nortwestern-ig-of.sql.in
-sr/sql/add-nps-ig-of.sql: $(srcdir)/sr/sql/add-nps-ig-of.sql.in
-sr/sql/add-nps-ig.sql: $(srcdir)/sr/sql/add-nps-ig.sql.in
-sr/sql/add-nysernet-ig-of.sql: $(srcdir)/sr/sql/add-nysernet-ig-of.sql.in
-sr/sql/add-nysernet-ig.sql: $(srcdir)/sr/sql/add-nysernet-ig.sql.in
-sr/sql/add-nysernet-of.sql: $(srcdir)/sr/sql/add-nysernet-of.sql.in
-sr/sql/add-nyu-ig-of.sql: $(srcdir)/sr/sql/add-nyu-ig-of.sql.in
-sr/sql/add-nyu-ig.sql: $(srcdir)/sr/sql/add-nyu-ig.sql.in
-sr/sql/add-ohmetrodc-ig-of.sql: $(srcdir)/sr/sql/add-ohmetrodc-ig-of.sql.in
-sr/sql/add-ohmetrodc-ig.sql: $(srcdir)/sr/sql/add-ohmetrodc-ig.sql.in
-sr/sql/add-osf-eg-of.sql: $(srcdir)/sr/sql/add-osf-eg-of.sql.in
-sr/sql/add-osf-eg.sql: $(srcdir)/sr/sql/add-osf-eg.sql.in
-sr/sql/add-renci-eg-of.sql: $(srcdir)/sr/sql/add-renci-eg-of.sql.in
-sr/sql/add-renci-eg.sql: $(srcdir)/sr/sql/add-renci-eg.sql.in
-sr/sql/add-rutgers-ig-of.sql: $(srcdir)/sr/sql/add-rutgers-ig-of.sql.in
-sr/sql/add-rutgers-ig.sql: $(srcdir)/sr/sql/add-rutgers-ig.sql.in
-sr/sql/add-sl-eg-of.sql: $(srcdir)/sr/sql/add-sl-eg-of.sql.in
-sr/sql/add-sl-eg.sql: $(srcdir)/sr/sql/add-sl-eg.sql.in
-sr/sql/add-sl-of.sql: $(srcdir)/sr/sql/add-sl-of.sql.in
-sr/sql/add-sox-ig-of.sql: $(srcdir)/sr/sql/add-sox-ig-of.sql.in
-sr/sql/add-sox-ig.sql: $(srcdir)/sr/sql/add-sox-ig.sql.in
-sr/sql/add-sox-of.sql: $(srcdir)/sr/sql/add-sox-of.sql.in
-sr/sql/add-stanford-ig.sql: $(srcdir)/sr/sql/add-stanford-ig.sql.in
-sr/sql/add-stanford-ig-of.sql: $(srcdir)/sr/sql/add-stanford-ig-of.sql.in
-sr/sql/add-tamu-eg-of.sql: $(srcdir)/sr/sql/add-tamu-eg-of.sql.in
-sr/sql/add-tamu-eg.sql: $(srcdir)/sr/sql/add-tamu-eg.sql.in
-sr/sql/add-ucdavis-eg-of.sql: $(srcdir)/sr/sql/add-ucdavis-eg-of.sql.in
-sr/sql/add-ucdavis-eg.sql: $(srcdir)/sr/sql/add-ucdavis-eg.sql.in
-sr/sql/add-uchicago-ig-of.sql: $(srcdir)/sr/sql/add-uchicago-ig-of.sql.in
-sr/sql/add-uchicago-ig.sql: $(srcdir)/sr/sql/add-uchicago-ig.sql.in
-sr/sql/add-ucla-ig-of.sql: $(srcdir)/sr/sql/add-ucla-ig-of.sql.in
-sr/sql/add-ucla-ig.sql: $(srcdir)/sr/sql/add-ucla-ig.sql.in
-sr/sql/add-ufl-eg-of.sql: $(srcdir)/sr/sql/add-ufl-eg-of.sql.in
-sr/sql/add-ufl-eg.sql: $(srcdir)/sr/sql/add-ufl-eg.sql.in
-sr/sql/add-uh-eg.sql: $(srcdir)/sr/sql/add-uh-eg.sql.in
-sr/sql/add-ukl-og.sql: $(srcdir)/sr/sql/add-ukl-og.sql.in
-sr/sql/add-uky-ig-of.sql: $(srcdir)/sr/sql/add-uky-ig-of.sql.in
-sr/sql/add-uky-ig.sql: $(srcdir)/sr/sql/add-uky-ig.sql.in
-sr/sql/add-uky-pg.sql: $(srcdir)/sr/sql/add-uky-pg.sql.in
-sr/sql/add-ukypks2-ig-of.sql: $(srcdir)/sr/sql/add-ukypks2-ig-of.sql.in
-sr/sql/add-ukypks2-ig.sql: $(srcdir)/sr/sql/add-ukypks2-ig.sql.in
-sr/sql/add-umkc-ig-of.sql: $(srcdir)/sr/sql/add-umkc-ig-of.sql.in
-sr/sql/add-umkc-ig.sql: $(srcdir)/sr/sql/add-umkc-ig.sql.in
-sr/sql/add-utah-clab.sql: $(srcdir)/sr/sql/add-utah-clab.sql.in
-sr/sql/add-utah-ig-of.sql: $(srcdir)/sr/sql/add-utah-ig-of.sql.in
-sr/sql/add-utah-ig.sql: $(srcdir)/sr/sql/add-utah-ig.sql.in
-sr/sql/add-utah-pg.sql: $(srcdir)/sr/sql/add-utah-pg.sql.in
-sr/sql/add-utah-stitch.sql: $(srcdir)/sr/sql/add-utah-stitch.sql.in
-sr/sql/add-utahddc-ig-of.sql: $(srcdir)/sr/sql/add-utahddc-ig-of.sql.in
-sr/sql/add-utahddc-ig.sql: $(srcdir)/sr/sql/add-utahddc-ig.sql.in
-sr/sql/add-utc-ig-of.sql: $(srcdir)/sr/sql/add-utc-ig-of.sql.in
-sr/sql/add-utc-ig.sql: $(srcdir)/sr/sql/add-utc-ig.sql.in
-sr/sql/add-wall2.sql: $(srcdir)/sr/sql/add-wall2.sql.in
-sr/sql/add-wisconsin-ig-of.sql: $(srcdir)/sr/sql/add-wisconsin-ig-of.sql.in
-sr/sql/add-wisconsin-ig.sql: $(srcdir)/sr/sql/add-wisconsin-ig.sql.in
-sr/sql/add-wsu-eg-of.sql: $(srcdir)/sr/sql/add-wsu-eg-of.sql.in
-sr/sql/add-wsu-eg.sql: $(srcdir)/sr/sql/add-wsu-eg.sql.in
-sr/sql/add-wvn-eg-of.sql: $(srcdir)/sr/sql/add-wvn-eg-of.sql.in
-sr/sql/add-wvn-eg.sql: $(srcdir)/sr/sql/add-wvn-eg.sql.in
 
-
-dist_srsql_DATA = \
-    sr/sql/add-irods.sql \
-    sr/sql/add-irods-test.sql
-
-srsql_DATA = $(AM_SQL)
+srsql_DATA = \
+	$(AM_SQL) \
+	$(IRODS_SQL)
 
 dist_srcerts_DATA = \
 	sr/certs/al2s.pem \
