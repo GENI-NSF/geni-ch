@@ -6,6 +6,8 @@
   ([#427](https://github.com/GENI-NSF/geni-ch/issues/427))
 * Add iRODS SR scripts
   ([#436](https://github.com/GENI-NSF/geni-ch/issues/436))
+* Move iRODS certs to clearinghouse
+  ([#437](https://github.com/GENI-NSF/geni-ch/issues/437))
 
 # [Release 2.5](https://github.com/GENI-NSF/geni-ch/milestones/2.5)
 
