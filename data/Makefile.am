@@ -276,6 +276,8 @@ dist_srcerts_DATA = \
 	sr/certs/im-wilab-ssl.pem \
 	sr/certs/im-vw1-cm.pem \
 	sr/certs/im-vw1-ssl.pem \
+	sr/certs/irods.pem \
+	sr/certs/irods-test.pem \
 	sr/certs/kansas-ig-boss.pem \
 	sr/certs/kansas-ig-cm.pem \
 	sr/certs/kansas-ig-of.pem \
