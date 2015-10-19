@@ -50,6 +50,7 @@ AM_SQL = \
 	sr/sql/add-nortwestern-ig-of.sql \
 	sr/sql/add-nps-ig-of.sql \
 	sr/sql/add-nps-ig.sql \
+	sr/sql/add-nps-vts.sql \
 	sr/sql/add-nysernet-ig-of.sql \
 	sr/sql/add-nysernet-ig.sql \
 	sr/sql/add-nysernet-of.sql \
@@ -71,6 +72,7 @@ AM_SQL = \
 	sr/sql/add-sox-of.sql \
 	sr/sql/add-stanford-ig.sql \
 	sr/sql/add-stanford-ig-of.sql \
+	sr/sql/add-starlight-vts.sql \
 	sr/sql/add-tamu-eg-of.sql \
 	sr/sql/add-tamu-eg.sql \
 	sr/sql/add-ucdavis-eg-of.sql \
@@ -82,12 +84,14 @@ AM_SQL = \
 	sr/sql/add-ufl-eg-of.sql \
 	sr/sql/add-ufl-eg.sql \
 	sr/sql/add-uh-eg.sql \
+	sr/sql/add-uiuc-vts.sql \
 	sr/sql/add-ukl-og.sql \
 	sr/sql/add-uky-ig-of.sql \
 	sr/sql/add-uky-ig.sql \
 	sr/sql/add-uky-pg.sql \
 	sr/sql/add-ukypks2-ig-of.sql \
 	sr/sql/add-ukypks2-ig.sql \
+	sr/sql/add-ukypks2-vts.sql \
 	sr/sql/add-umkc-ig-of.sql \
 	sr/sql/add-umkc-ig.sql \
 	sr/sql/add-utah-clab.sql \
