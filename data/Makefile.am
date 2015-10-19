@@ -31,6 +31,7 @@ AM_SQL = \
 	sr/sql/add-gpo-og.sql \
 	sr/sql/add-illinois-ig-of.sql \
 	sr/sql/add-illinois-ig.sql \
+	sr/sql/add-illinois-vts.sql \
 	sr/sql/add-im-vw1.sql \
 	sr/sql/add-im-wilab.sql \
 	sr/sql/add-kansas-ig-of.sql \
@@ -84,7 +85,6 @@ AM_SQL = \
 	sr/sql/add-ufl-eg-of.sql \
 	sr/sql/add-ufl-eg.sql \
 	sr/sql/add-uh-eg.sql \
-	sr/sql/add-uiuc-vts.sql \
 	sr/sql/add-ukl-og.sql \
 	sr/sql/add-uky-ig-of.sql \
 	sr/sql/add-uky-ig.sql \
