@@ -158,6 +158,21 @@ sudo ln -s main.py main.fcgi
 #cd /usr/share/geni-ch/chapi/AMsoil/src
 #sudo ln -s main.py main.fcgi
 
+# Install postfix mail server
+sudo yum install -y postfix
+sudo postconf myhostname=<FQDN>
+sudo postconf mydomain=<DN>
+sudo postconf myorigin=\$mydomain
+sudo postconf inet_protocols=ipv4
+sudo useradd -r postfix
+sudo groupadd -r postdrop
+sudo postfix set-permissions
+sudo rm /var/lib/postfix/master.lock
+sudo systemctl enable postfix.service
+sudo systemctl start postfix.service
+# Test it out:
+# echo "Body of the mail." | mail -s "Hello world" <email address>
+
 sudo service httpd restart
 
 
