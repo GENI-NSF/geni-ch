@@ -8,6 +8,8 @@
   ([#436](https://github.com/GENI-NSF/geni-ch/issues/436))
 * Move iRODS certs to clearinghouse
   ([#437](https://github.com/GENI-NSF/geni-ch/issues/437))
+* Add VTS aggregates to service registry
+  ([#438](https://github.com/GENI-NSF/geni-ch/issues/438))
 
 # [Release 2.5](https://github.com/GENI-NSF/geni-ch/milestones/2.5)
 

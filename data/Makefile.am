@@ -31,6 +31,7 @@ AM_SQL = \
 	sr/sql/add-gpo-og.sql \
 	sr/sql/add-illinois-ig-of.sql \
 	sr/sql/add-illinois-ig.sql \
+	sr/sql/add-illinois-vts.sql \
 	sr/sql/add-im-vw1.sql \
 	sr/sql/add-im-wilab.sql \
 	sr/sql/add-kansas-ig-of.sql \
@@ -50,6 +51,7 @@ AM_SQL = \
 	sr/sql/add-nortwestern-ig-of.sql \
 	sr/sql/add-nps-ig-of.sql \
 	sr/sql/add-nps-ig.sql \
+	sr/sql/add-nps-vts.sql \
 	sr/sql/add-nysernet-ig-of.sql \
 	sr/sql/add-nysernet-ig.sql \
 	sr/sql/add-nysernet-of.sql \
@@ -71,6 +73,7 @@ AM_SQL = \
 	sr/sql/add-sox-of.sql \
 	sr/sql/add-stanford-ig.sql \
 	sr/sql/add-stanford-ig-of.sql \
+	sr/sql/add-starlight-vts.sql \
 	sr/sql/add-tamu-eg-of.sql \
 	sr/sql/add-tamu-eg.sql \
 	sr/sql/add-ucdavis-eg-of.sql \
@@ -88,6 +91,7 @@ AM_SQL = \
 	sr/sql/add-uky-pg.sql \
 	sr/sql/add-ukypks2-ig-of.sql \
 	sr/sql/add-ukypks2-ig.sql \
+	sr/sql/add-ukypks2-vts.sql \
 	sr/sql/add-umkc-ig-of.sql \
 	sr/sql/add-umkc-ig.sql \
 	sr/sql/add-utah-clab.sql \
