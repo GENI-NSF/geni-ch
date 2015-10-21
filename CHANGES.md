@@ -1,5 +1,7 @@
 # GENI Clearinghouse Release Notes
 
+# [Release 2.7](https://github.com/GENI-NSF/geni-ch/milestones/2.6)
+
 # [Release 2.6](https://github.com/GENI-NSF/geni-ch/milestones/2.6)
 
 * Skip SQL in clause when collection is empty
