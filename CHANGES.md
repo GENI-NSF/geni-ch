@@ -2,6 +2,9 @@
 
 # [Release 2.7](https://github.com/GENI-NSF/geni-ch/milestones/2.6)
 
+* Stop CC'ing on expiring certificate email
+  ([#441](https://github.com/GENI-NSF/geni-ch/issues/441))
+
 # [Release 2.6](https://github.com/GENI-NSF/geni-ch/milestones/2.6)
 
 * Skip SQL in clause when collection is empty
