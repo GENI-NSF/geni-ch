@@ -93,10 +93,11 @@ class Notifier:
         msg['Subject'] = subject
         msg['From'] = from_addr
         msg['To'] = address
-        msg['Cc'] = reply_to
+        # Stop cc'ing, it just creates inbox clutter
+        # msg['Cc'] = reply_to
         msg['Reply-To'] = reply_to
         s = smtplib.SMTP('localhost')
-        s.sendmail(from_addr, [address, reply_to], msg.as_string())
+        s.sendmail(from_addr, [address], msg.as_string())
         s.quit()
 
 def init_logging(options):

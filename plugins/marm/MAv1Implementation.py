@@ -1537,7 +1537,9 @@ class MAv1Implementation(MAv1DelegateBase):
             else:
                 return field
 
-        if m_ids is None or (isinstance(m_ids, types.ListType) and len(m_ids) == 0):
+        if not m_ids:
+            # No member IDs to filter against so return the current
+            # result, we have nothing to add
             return result
 
         # Always include the MEMBER_URN, we need it for the result
@@ -1589,7 +1591,7 @@ class MAv1Implementation(MAv1DelegateBase):
         fields = [f for f in fields if f in MA.field_mapping]
 
         # If no members or no fields (after filtering), do nothing
-        if not m_ids or not fields or (isinstance(m_ids, types.ListType) and len(m_ids) == 0):
+        if not m_ids or not fields:
             return result
 
         # Always fetch expiration to renew expiring certificates
@@ -1694,7 +1696,7 @@ class MAv1Implementation(MAv1DelegateBase):
         fields = [f for f in fields if f in MA.field_mapping]
 
         # If no members or no fields (after filtering), do nothing
-        if not m_ids or not fields or (isinstance(m_ids, types.ListType) and len(m_ids) == 0):
+        if not m_ids or not fields:
             return result
 
         columns = set([OutsideCert.member_id])

@@ -1,5 +1,23 @@
 # GENI Clearinghouse Release Notes
 
+# [Release 2.7](https://github.com/GENI-NSF/geni-ch/milestones/2.6)
+
+* Stop CC'ing on expiring certificate email
+  ([#441](https://github.com/GENI-NSF/geni-ch/issues/441))
+* Allow SLICE_PROJECT_URN to designate project subject
+  ([#442](https://github.com/GENI-NSF/geni-ch/issues/442))
+
+# [Release 2.6](https://github.com/GENI-NSF/geni-ch/milestones/2.6)
+
+* Skip SQL in clause when collection is empty
+  ([#427](https://github.com/GENI-NSF/geni-ch/issues/427))
+* Add iRODS SR scripts
+  ([#436](https://github.com/GENI-NSF/geni-ch/issues/436))
+* Move iRODS certs to clearinghouse
+  ([#437](https://github.com/GENI-NSF/geni-ch/issues/437))
+* Add VTS aggregates to service registry
+  ([#438](https://github.com/GENI-NSF/geni-ch/issues/438))
+
 # [Release 2.5](https://github.com/GENI-NSF/geni-ch/milestones/2.5)
 
 * Return short name from SR
