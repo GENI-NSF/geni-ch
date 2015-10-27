@@ -12,9 +12,6 @@
 
 = GENI Clearinghouse Release Notes =
 
-== 1.30 ==
- * Allow SLICE_PROJECT_URN to allow determining subject in ABACGuard (#442).
-
 == 1.29 ==
  * remove hard-coded names in SAv1Implementation.py, 
    MAv1Implementation.py and cert-utils.py (#25)
