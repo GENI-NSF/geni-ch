@@ -233,6 +233,8 @@ class SubjectInvocationCheck(InvocationCheck):
             # Pulling project out of match
             if "PROJECT_URN" in match_option:
                 urns = match_option['PROJECT_URN']
+            elif "SLICE_PROJECT_URN" in match_option:
+                urns = match_option['SLICE_PROJECT_URN']
             elif "PROJECT_UID" in match_option:
                 project_uids = match_option['PROJECT_UID']
                 if not isinstance(project_uids, list): 
