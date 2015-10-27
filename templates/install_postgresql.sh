@@ -29,7 +29,8 @@ sudo sed -i -e "s/^host/#host/g" $POSTGRESQL_DIR/pg_hba.conf
 sudo sed -i -e "\$ahost all all 0.0.0.0/0 md5" $POSTGRESQL_DIR/pg_hba.conf
 sudo sed -i -e "\$ahost all all ::1/128 md5" $POSTGRESQL_DIR/pg_hba.conf
 
-systemctl restart postgresql.service
+sudo systemctl restart postgresql.service
+
 sudo -u postgres createuser -S -D -R $DB_USER
 sudo -u postgres psql -c "alter user $DB_USER with password '$DB_PASSWORD'"
 sudo -u postgres createdb $DB_DATABASE
