@@ -1,14 +1,7 @@
-# Install geni-ch
-export URL_BASE='http://www.gpolab.bbn.com/experiment-support/gposw'
-sudo curl "${URL_BASE}"/centos/geni.repo -o /etc/yum.repos.d/geni.repo
-sudo yum install -y --nogpg geni-chapi
-
-------
-
 # Install postgresql server
  
 
-sudo yum -y install postgresql-server
+sudo yum install -y postgresql-server
 
 sudo postgresql-setup initdb
 sudo systemctl enable postgresql.service
