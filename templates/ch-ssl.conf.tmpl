@@ -1,9 +1,15 @@
+# This is necessary to allow the FCGI ScriptAliases
+# to run. Otherwise there is a 403 Forbidden error.
 <Directory @pkgdatadir@/chapi/AMsoil/src>
    AllowOverride None
    Require all granted
 </Directory>
 
-<VirtualHost @ch_host@:443>
+NameVirtualHost *:443
+
+<VirtualHost *:443>
+    ServerName @ch_host@
+
     ErrorLog /var/log/httpd/ch_error_log
     CustomLog /var/log/httpd/ch_access_log combined
     LogLevel warn
@@ -29,7 +35,9 @@
 </VirtualHost>
 
 Listen 8444
-<VirtualHost @ch_host@:8444>
+NameVirtualHost *:8444
+<VirtualHost *:8444>
+    ServerName @ch_host@
 
     ErrorLog /var/log/httpd/ch_error_8444_log
     CustomLog /var/log/httpd/ch_access_8444_log combined

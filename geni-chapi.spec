@@ -1,6 +1,6 @@
 Name:           geni-chapi
-Version:        2.4
-Release:        2%{?dist}
+Version:        2.7
+Release:        1%{?dist}
 Summary:        GENI clearinghouse
 BuildArch:      noarch
 License:        GENI Public License
@@ -385,6 +385,8 @@ rm -rf $RPM_BUILD_ROOT
 %{_datadir}/%{name}/sr/certs/im-vw1-ssl.pem
 %{_datadir}/%{name}/sr/certs/im-wilab-cm.pem
 %{_datadir}/%{name}/sr/certs/im-wilab-ssl.pem
+%{_datadir}/%{name}/sr/certs/irods-test.pem
+%{_datadir}/%{name}/sr/certs/irods.pem
 %{_datadir}/%{name}/sr/certs/kansas-ig-boss.pem
 %{_datadir}/%{name}/sr/certs/kansas-ig-cm.pem
 %{_datadir}/%{name}/sr/certs/kansas-ig-of.pem
@@ -512,8 +514,11 @@ rm -rf $RPM_BUILD_ROOT
 %{_datadir}/%{name}/sr/sql/add-gpo-og.sql
 %{_datadir}/%{name}/sr/sql/add-illinois-ig-of.sql
 %{_datadir}/%{name}/sr/sql/add-illinois-ig.sql
+%{_datadir}/%{name}/sr/sql/add-illinois-vts.sql
 %{_datadir}/%{name}/sr/sql/add-im-vw1.sql
 %{_datadir}/%{name}/sr/sql/add-im-wilab.sql
+%{_datadir}/%{name}/sr/sql/add-irods-test.sql
+%{_datadir}/%{name}/sr/sql/add-irods.sql
 %{_datadir}/%{name}/sr/sql/add-kansas-ig-of.sql
 %{_datadir}/%{name}/sr/sql/add-kansas-ig.sql
 %{_datadir}/%{name}/sr/sql/add-kettering-ig-of.sql
@@ -531,6 +536,7 @@ rm -rf $RPM_BUILD_ROOT
 %{_datadir}/%{name}/sr/sql/add-nortwestern-ig-of.sql
 %{_datadir}/%{name}/sr/sql/add-nps-ig-of.sql
 %{_datadir}/%{name}/sr/sql/add-nps-ig.sql
+%{_datadir}/%{name}/sr/sql/add-nps-vts.sql
 %{_datadir}/%{name}/sr/sql/add-nysernet-ig-of.sql
 %{_datadir}/%{name}/sr/sql/add-nysernet-ig.sql
 %{_datadir}/%{name}/sr/sql/add-nysernet-of.sql
@@ -552,6 +558,7 @@ rm -rf $RPM_BUILD_ROOT
 %{_datadir}/%{name}/sr/sql/add-sox-of.sql
 %{_datadir}/%{name}/sr/sql/add-stanford-ig-of.sql
 %{_datadir}/%{name}/sr/sql/add-stanford-ig.sql
+%{_datadir}/%{name}/sr/sql/add-starlight-vts.sql
 %{_datadir}/%{name}/sr/sql/add-tamu-eg-of.sql
 %{_datadir}/%{name}/sr/sql/add-tamu-eg.sql
 %{_datadir}/%{name}/sr/sql/add-ucdavis-eg-of.sql
@@ -569,6 +576,7 @@ rm -rf $RPM_BUILD_ROOT
 %{_datadir}/%{name}/sr/sql/add-uky-pg.sql
 %{_datadir}/%{name}/sr/sql/add-ukypks2-ig-of.sql
 %{_datadir}/%{name}/sr/sql/add-ukypks2-ig.sql
+%{_datadir}/%{name}/sr/sql/add-ukypks2-vts.sql
 %{_datadir}/%{name}/sr/sql/add-umkc-ig-of.sql
 %{_datadir}/%{name}/sr/sql/add-umkc-ig.sql
 %{_datadir}/%{name}/sr/sql/add-utah-clab.sql
@@ -602,6 +610,8 @@ rm -rf $RPM_BUILD_ROOT
 %{_mandir}/man1/geni-sign-tool-csr.1.gz
 
 %changelog
+* Tue Oct 27 2015 Tom Mitchell <tmitchell@bbn.com> - 2.7-1%{?dist}
+- Incorporate 2.5 and 2.6 releases
 * Fri Sep 18 2015 Tom Mitchell <tmitchell@bbn.com> - 2.4-2%{?dist}
 - Improvements to geni-install-templates
 * Thu Sep 10 2015 Tom Mitchell <tmitchell@bbn.com> - 2.4-1%{?dist}

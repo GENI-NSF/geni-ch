@@ -19,6 +19,7 @@ CREATE TABLE service_registry (
   service_cert VARCHAR,
   service_name VARCHAR,
   service_description VARCHAR,
+  short_name VARCHAR,
   PRIMARY KEY (id)
 );
 
