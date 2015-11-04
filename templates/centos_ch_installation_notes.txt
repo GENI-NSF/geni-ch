@@ -58,17 +58,17 @@ sudo chown -R apache.apache /usr/share/geni-ch/CA
 # Create private key, generate CSR, generate cert
 sudo openssl genrsa -out ch-$CH_HOST-key.pem 2048
 sudo openssl req -new -key ch-$CH_HOST-key.pem -out /tmp/ch-$CH_HOST.csr \
-	-subj "/C=US/ST=MA/L=Cambridge/CN=$CH_HOST"
+    -subj "/C=US/ST=MA/L=Cambridge/CN=$CH_HOST"
 sudo openssl x509 -req -days 365 -in /tmp/ch-$CH_HOST.csr \
-	-signkey ch-$CH_HOST-key.pem -out ch-$CH_HOST-cert.pem 
+    -signkey ch-$CH_HOST-key.pem -out ch-$CH_HOST-cert.pem
 sudo mv ch-$CH_HOST-key.pem ch-$CH_HOST-cert.pem /etc/geni-chapi
 
 
 # Note: This needs to be moved from geni-portal to geni-ch
 # Why do we need this??
-sudo mkdir -p /var/www/localhost
-sudo mkdir -p /usr/share/geni-ch/ch/www
-sudo mkdir -p /var/log/geni-chapi/httpd
+# sudo mkdir -p /var/www/localhost
+# sudo mkdir -p /usr/share/geni-ch/ch/www
+# sudo mkdir -p /var/log/geni-chapi/httpd
 
 # Set up trusted roots
 TRUSTED_ROOTS_DIR=$CH_DIR/portal/gcf.d/trusted_roots

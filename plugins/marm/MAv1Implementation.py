@@ -1205,16 +1205,16 @@ class MAv1Implementation(MAv1DelegateBase):
             for row in member_info:
                 pretty_name = get_member_display_name(member_info[row],row)
                 member_email = '"%s" <%s>' % (pretty_name, member_info[row]['MEMBER_EMAIL'])
-        msgbody = "Dear " + pretty_name + ",\n\n"
+        msgbody = "Dear " + pretty_name + ",\n"
         subject = ""
         if privilege == "PROJECT_LEAD":
-            subject = "You are now a GENI Project Lead" 
-            msgbody += "Congratulations, you have been made a 'Project Lead', meaning you can create GENI"
-            msgbody += " Projects, as well as create slices in projects and reserve resources.\n\n"
+            subject = "You are now a GENI Project Lead"
+            msgbody += """
+Congratulations, you have been made a 'Project Lead'! You can now create GENI Projects and invite collaborators to join your projects. You will automatically be added to any slices created by your project members and can log into resources they create. As Project Lead you are responsible for the actions of your project members.
 
-            msgbody += "If you are using the GENI Portal, see "
-            msgbody += "http://groups.geni.net/geni/wiki/SignMeUp#a2b.CreateaGENIProject "  #FIXME: Edit if page moves
-            msgbody += "for instructions on creating a project.\n\n"
+Please see http://groups.geni.net/geni/wiki/ProjectLeadWelcome for information on creating projects and for tips on managing your projects.
+
+"""
         else:
             subject = "You are now a GENI Operator" 
             msgbody += "You are now a GENI Operator on "
