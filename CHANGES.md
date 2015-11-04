@@ -1,6 +1,9 @@
 # GENI Clearinghouse Release Notes
 
-# [Release 2.7](https://github.com/GENI-NSF/geni-ch/milestones/2.6)
+# [Release 2.8](https://github.com/GENI-NSF/geni-ch/milestones/2.8)
+
+
+# [Release 2.7](https://github.com/GENI-NSF/geni-ch/milestones/2.7)
 
 * Stop CC'ing on expiring certificate email
   ([#441](https://github.com/GENI-NSF/geni-ch/issues/441))
