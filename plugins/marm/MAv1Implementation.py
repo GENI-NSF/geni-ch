@@ -1324,7 +1324,7 @@ Please see http://groups.geni.net/geni/wiki/ProjectLeadWelcome for information o
                                     filter(MemberAttribute.member_id == member['PROJECT_MEMBER_UID']).\
                                     filter(MemberAttribute.name == 'PROJECT_LEAD')
                                 rows = q.all()
-                                if rows[0][0] == 'true':
+                                if rows and rows[0][0] == 'true':
                                     row = self.get_attr_for_uid(session,"MEMBER_URN",member['PROJECT_MEMBER_UID'])
                                     new_lead_urn = row[0]
                                     
