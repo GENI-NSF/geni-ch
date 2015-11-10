@@ -470,7 +470,7 @@ class SubjectInvocationCheck(InvocationCheck):
                     for subject in subjects:
                         bindings_by_subject[subject][binding] = "PROJECT_LEAD"
             elif binding == "$PROJECT_ADMIN":
-                # Fill in this binding if the _caller_ is a project lead 
+                # Fill in this binding if the _caller_ is a project admin 
                 # on some project.
                 # Use this EG so a project lead/admin can look up details of 
                 # people they want to add to a project
