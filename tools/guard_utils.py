@@ -307,8 +307,8 @@ def convert_project_urn_to_name(urn, session):
 
 # Convert a project name to project urn
 def convert_project_name_to_urn(name, session):
-    config = pm.getService('config')
-    authority = config.get("chrm.authority")
+    sa = pm.getService('sav1handler')
+    authority = sa.getDelegate().authority
     return to_project_urn(authority, name)
 
 # Take a uid or list of uids, make sure they're all in the cache
