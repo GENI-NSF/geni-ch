@@ -1,6 +1,7 @@
 # GENI Clearinghouse Release Notes
 
 # [Release 2.8](https://github.com/GENI-NSF/geni-ch/milestones/2.8)
+
 * Fix removing lead from project error finding an alternate lead.
   ([#451](https://github.com/GENI-NSF/geni-ch/issues/451))
 
