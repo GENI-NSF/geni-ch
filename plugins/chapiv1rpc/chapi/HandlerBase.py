@@ -42,6 +42,8 @@ class HandlerBase(xmlrpc.Dispatcher):
         self._guard = None
         self._trusted_roots = None
         self._trusted_roots = self.getTrustedRoots()
+        config = pm.getService('config')
+        self._maintenance_file = config.get('geni.maintenance_outage_location')
 
     # Get list of trusted roots for handler
     # If not set, initialize from chapiv1rpc.ch_cert_root directory
@@ -102,4 +104,5 @@ class HandlerBase(xmlrpc.Dispatcher):
                 self._logger.error(traceback.format_exc())
         return {'code' :  e.code , 'value' : None, 'output' : str(e) }
         
-
+    def maintenanceOutage(self):
+        return os.path.exists(self._maintenance_file)
