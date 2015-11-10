@@ -622,11 +622,13 @@ class SubjectInvocationCheck(InvocationCheck):
 
         # Validate subject arguments
         for subject_type, subjects_of_type in subjects.items():
-            ensure_valid_urns(subject_type, subjects_of_type, session)
+            ensure_valid_urns(subject_type, subjects_of_type, session,
+                              self.authority)
 
         # Validate non subject arguments
         for subject_type, subjects_of_type in nonsubjects.items():
-            ensure_valid_urns(subject_type, subjects_of_type, session)
+            ensure_valid_urns(subject_type, subjects_of_type, session,
+                              self.authority)
 
         return subjects
 

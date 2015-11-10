@@ -129,12 +129,11 @@ def validate_uid_list(uids, cache, label):
     return good_urns
 
 # Look at a list of URN's of a given type and determine that they are all valid
-def ensure_valid_urns(urn_type, urns, session):
+def ensure_valid_urns(urn_type, urns, session, authority):
 #    chapi_info("ENSURE_VALID_URNS", "%s %s" % (urn_type, urns))
     if not isinstance(urns, list): urns = [urns]
     db = pm.getService('chdbengine')
     if urn_type == 'PROJECT_URN':
-        authority = pm.getService('config').get("chrm.authority")
         cache = cache_get('project_urns')
         not_found_urns = [urn for urn in urns if urn not in cache]
         if len(not_found_urns) == 0:
