@@ -230,8 +230,8 @@ def convert_slice_uid_to_urn(slice_uid, session):
 # and return a urn or list of urns
 def convert_project_uid_to_urn(project_uid, session):
     db = pm.getService('chdbengine')
-    config = pm.getService('config')
-    authority = config.get("chrm.authority")
+    sa = pm.getService('sav1handler')
+    authority = sa.getDelegate().authority
 
     project_uids = project_uid
     if not isinstance(project_uid, list): project_uids = [project_uid]
@@ -267,8 +267,8 @@ def convert_project_uid_to_urn(project_uid, session):
 # and return a uid or list of uid
 def convert_project_urn_to_uid(project_urn, session):
     db = pm.getService('chdbengine')
-    config = pm.getService('config')
-    authority = config.get("chrm.authority")
+    sa = pm.getService('sav1handler')
+    authority = sa.getDelegate().authority
 
     project_urns = project_urn
     if not isinstance(project_urn, list): project_urns = [project_urn]
