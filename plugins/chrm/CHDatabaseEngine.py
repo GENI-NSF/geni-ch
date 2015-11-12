@@ -25,6 +25,7 @@ import amsoil.core.pluginmanager as pm
 from sqlalchemy import *
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
+import logging
 
 Base = declarative_base()
 
@@ -45,6 +46,7 @@ class CHDatabaseEngine:
         config = pm.getService('config')
         self.db_url = config.get('chrm.db_url')
         self.db = create_engine(self.db_url)
+        # logging.getLogger('sqlalchemy').setLevel(logging.INFO)
         self.session_class = sessionmaker(bind=self.db)
         self.metadata = MetaData(self.db)
         Base.metadata.create_all(self.db)
