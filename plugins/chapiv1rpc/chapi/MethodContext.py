@@ -138,11 +138,7 @@ class MethodContext:
         clearinghouse during a maintenance outage.
 
         """
-        config = pm.getService('config')
-        maintenance_outage_location = \
-            config.get('geni.maintenance_outage_location')
-        outage_mode = os.path.exists(maintenance_outage_location)
-        if outage_mode:
+        if self._handler.maintenanceOutage():
             if self._session and self._client_cert:
                 user_urn = get_urn_from_cert(self._client_cert)
                 is_operator = lookup_operator_privilege(user_urn,

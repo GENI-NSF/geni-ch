@@ -147,7 +147,7 @@ class SAv1Guard(ABACGuardBase):
             policies = \
                 parse_method_policies(self.policies_filename)
             self.INVOCATION_CHECK_FOR_METHOD = \
-                create_subject_invocation_checks(policies)
+                create_subject_invocation_checks(self, policies)
         if self.INVOCATION_CHECK_FOR_METHOD.has_key(method):
             return self.INVOCATION_CHECK_FOR_METHOD[method]
         return None
