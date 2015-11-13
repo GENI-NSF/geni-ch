@@ -25,7 +25,7 @@ import amsoil.core.pluginmanager as pm
 from sqlalchemy import *
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
-#import logging
+import logging
 
 Base = declarative_base()
 
@@ -45,12 +45,11 @@ class CHDatabaseEngine:
     def __init__(self):
         config = pm.getService('config')
         self.db_url = config.get('chrm.db_url')
-# FIXME: Make this log level a chapi config param
-#        logging.getLogger('sqlalchemy').setLevel(logging.INFO)
-#        logging.getLogger('sqlalchemy.pool').setLevel(logging.INFO)
 
         # , pool_size=20 seems possible - default is 5. Haven't seend a need to go higher.
         self.db = create_engine(self.db_url)
+# FIXME: Make this log level a chapi config param
+        # logging.getLogger('sqlalchemy').setLevel(logging.INFO)
         self.session_class = sessionmaker(bind=self.db)
         self.metadata = MetaData(self.db)
         Base.metadata.create_all(self.db)
