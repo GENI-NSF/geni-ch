@@ -95,6 +95,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         self.ch_from_email = self.config.get('chapi.ch_from_email')
 
         self.trusted_root = self.config.get('chapiv1rpc.ch_cert_root')
+        self.authority = self.config.get('chrm.authority')
 
         self.trusted_root_files = \
             [os.path.join(self.trusted_root, f) \
@@ -786,8 +787,9 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
             setattr(project, 'lead_id', client_uuid)
 
         # do the database write
-        result = self.finish_create(session, project,  SA.project_field_mapping, \
-                                        {"PROJECT_URN": row_to_project_urn(project)})
+        project_urn = row_to_project_urn(self.authority, project)
+        result = self.finish_create(session, project, SA.project_field_mapping,
+                                    {"PROJECT_URN": project_urn})
 
         # Add project lead member to member table
         leadMember = ProjectMember()
@@ -917,9 +919,12 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         rows = q.all()
         projects = {}
         for row in rows:
-            projects[row_to_project_urn(row)] = \
-                construct_result_row(row, columns, \
-                                         SA.project_field_mapping, session)
+            project_urn = row_to_project_urn(self.authority, row)
+            result_row = construct_result_row(row, columns,
+                                              SA.project_field_mapping,
+                                              session)
+            projects[project_urn] = result_row
+
         result = self._successReturn(projects)
 
         return result
@@ -936,11 +941,11 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                                       SA.project_field_mapping, 
                                       "project_name", "project_id", 
                                       options, session)
-        projects = [{"PROJECT_ROLE" : row.name, \
-                         "PROJECT_UID" : row.project_id, \
-                         "PROJECT_URN": row_to_project_urn(row), \
-                         "EXPIRED" : row.expired } \
-                        for row in rows]
+        projects = [{"PROJECT_ROLE" : row.name,
+                     "PROJECT_UID" : row.project_id,
+                     "PROJECT_URN": row_to_project_urn(self.authority, row),
+                     "EXPIRED" : row.expired }
+                    for row in rows]
         result = self._successReturn(projects)
 
         return result
@@ -1236,11 +1241,11 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                                       SA.project_field_mapping,
                                       "project_name", "project_id", 
                                       {}, session)
-        projects = [{"PROJECT_ROLE" : row.name, \
-                         "PROJECT_UID" : row.project_id, \
-                         "PROJECT_URN": row_to_project_urn(row), \
-                         "EXPIRED" : row.expired } \
-                        for row in rows]
+        projects = [{"PROJECT_ROLE" : row.name,
+                     "PROJECT_UID" : row.project_id,
+                     "PROJECT_URN": row_to_project_urn(self.authority, row),
+                     "EXPIRED" : row.expired }
+                    for row in rows]
         role = None
         for proj in projects:
             if proj['PROJECT_UID'] == slice_row.project_id:

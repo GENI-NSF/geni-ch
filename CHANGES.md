@@ -1,6 +1,13 @@
 # GENI Clearinghouse Release Notes
 
-# [Release 2.7](https://github.com/GENI-NSF/geni-ch/milestones/2.6)
+# [Release 2.8](https://github.com/GENI-NSF/geni-ch/milestones/2.8)
+
+* Fix removing lead from project error finding an alternate lead.
+  ([#451](https://github.com/GENI-NSF/geni-ch/issues/451))
+* Reduce the use of AMsoil config plug-in at runtime
+  ([#454](https://github.com/GENI-NSF/geni-ch/issues/454))
+
+# [Release 2.7](https://github.com/GENI-NSF/geni-ch/milestones/2.7)
 
 * Stop CC'ing on expiring certificate email
   ([#441](https://github.com/GENI-NSF/geni-ch/issues/441))
