@@ -188,7 +188,7 @@ match_fields = [
 required_create_key_fields = ["KEY_PUBLIC", "KEY_MEMBER"]
 allowed_create_key_fields = [
     "KEY_PUBLIC", "KEY_PRIVATE", "KEY_DESCRIPTION",
-    "_GENI_KEY_FILENAME", "KEY_MEMBER"
+    "_GENI_KEY_FILENAME", "KEY_MEMBER", "KEY_TYPE"
 ]
 updatable_key_fields = ["KEY_DESCRIPTION", "_GENI_KEY_FILENAME"]
 
