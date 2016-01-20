@@ -1,5 +1,10 @@
 # GENI Clearinghouse Release Notes
 
+# [Release 2.9](https://github.com/GENI-NSF/geni-ch/milestones/2.9)
+
+* Allow KEY_TYPE as an argument to MA.create_key()
+  ([#458](https://github.com/GENI-NSF/geni-ch/issues/458))
+
 # [Release 2.8](https://github.com/GENI-NSF/geni-ch/milestones/2.8)
 
 * Fix removing lead from project error finding an alternate lead.
