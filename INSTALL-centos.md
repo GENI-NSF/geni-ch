@@ -68,7 +68,7 @@ Edit `/etc/geni-chapi/parameters.json`:
 * Make sure to set `db_host` and `ch_host`!!
 
 ```Shell
-sudo geni-install-templates
+sudo /usr/sbin/geni-install-templates
 ```
 
 (Optional) Install PostgreSQL database
