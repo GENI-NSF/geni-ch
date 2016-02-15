@@ -79,6 +79,8 @@ Note: if installing on an APT centos image, do:
 sudo yum reinstall polkit\* power
 sudo reboot
 ```
+Note: this file (install_postgresql.sh) is not currently included in the install.
+A copy is attached to this page.
 
 See `install_postgresql.sh`
 
