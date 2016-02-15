@@ -213,35 +213,35 @@ sudo yum install -y postfix
 Configure postfix for this host:
 
 ```Shell
-postconf myhostname=<FQDN>
-postconf mydomain=<DN>
-postconf myorigin=\$mydomain
+sudo postconf myhostname=`hostname -f`
+sudo postconf mydomain=`hostname -d`
+sudo postconf myorigin=\$mydomain
 
 # if you see warnings about IPv6:
-postconf inet_protocols=ipv4
+sudo postconf inet_protocols=ipv4
 ```
 
 Create postfix user and postdrop group. See `main.cf` for details.
 
 ```Shell
-useradd -r postfix
-groupadd -r postdrop
+suo useradd -r postfix
+sudo groupadd -r postdrop
 ```
 
 Set file and directory permissions
 
 ```Shell
-postfix set-permissions
+sudo postfix set-permissions
 
 # If this file exists, delete it
-rm /var/lib/postfix/master.lock
+sudo rm /var/lib/postfix/master.lock
 ```
 
 Enable and start postfix
 
 ```Shell
-systemctl enable postfix.service
-systemctl start postfix.service
+sudo systemctl enable postfix.service
+sudo systemctl start postfix.service
 ```
 
 Test it out:
