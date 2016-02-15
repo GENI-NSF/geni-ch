@@ -80,7 +80,7 @@ sudo yum reinstall polkit\* power
 sudo reboot
 ```
 Note: this file (install_postgresql.sh) is not currently included in the install.
-A copy is attached to this page.
+It needs to be copied out-of-band for now.
 
 See `install_postgresql.sh`
 
