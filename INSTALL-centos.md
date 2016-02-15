@@ -74,6 +74,12 @@ sudo geni-install-templates
 (Optional) Install PostgreSQL database
 --------------------------------------
 
+Note: if installing on an APT centos image, do:
+```Shell
+sudo yum reinstall polkit\* power
+sudo reboot
+```
+
 See `install_postgresql.sh`
 
 Set up environment
@@ -102,6 +108,9 @@ for sch in cs logging ma pa sa sr
 do
     $PSQL -f $CHAPI_DIR/db/$sch/postgresql/schema.sql
 done
+
+# TEMPORARY: UNTIL UPDATE-5.SQL CHANGE IS ROLLED INTO THE BASELINE SCHEMA
+$PSQL -f /usr/share/geni-chapi/db/sr/postgresql/update-5.sql
 
 for data in $CHAPI_DIR/db/*/postgresql/data.sql
 do
@@ -275,7 +284,7 @@ Add portal as a trusted tool
 
 ```Shell
 geni-add-trusted-tool -d portal -u portal -p portal --host localhost \
-    'GENI Portal' urn:publicid:IDN+ch-tm.geni.net+authority+portal
+    'GENI Portal' urn:publicid:IDN+$CH_HOST+authority+portal
 ```
 
 Testing with a portal
