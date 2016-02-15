@@ -207,7 +207,7 @@ Install and configure postfix
 -----------------------------
 
 ```Shell
-yum install -y postfix
+sudo yum install -y postfix
 ```
 
 Configure postfix for this host:
