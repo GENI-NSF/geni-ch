@@ -1,11 +1,28 @@
 # GENI Clearinghouse Release Notes
 
-# [Release 2.7](https://github.com/GENI-NSF/geni-ch/milestones/2.6)
+# [Release 2.10](https://github.com/GENI-NSF/geni-ch/milestones/2.10)
+
+
+# [Release 2.9](https://github.com/GENI-NSF/geni-ch/milestones/2.9)
+
+* Allow KEY_TYPE as an argument to MA.create_key()
+  ([#458](https://github.com/GENI-NSF/geni-ch/issues/458))
+
+# [Release 2.8](https://github.com/GENI-NSF/geni-ch/milestones/2.8)
+
+* Fix removing lead from project error finding an alternate lead.
+  ([#451](https://github.com/GENI-NSF/geni-ch/issues/451))
+* Reduce the use of AMsoil config plug-in at runtime
+  ([#454](https://github.com/GENI-NSF/geni-ch/issues/454))
+
+# [Release 2.7](https://github.com/GENI-NSF/geni-ch/milestones/2.7)
 
 * Stop CC'ing on expiring certificate email
   ([#441](https://github.com/GENI-NSF/geni-ch/issues/441))
 * Allow SLICE_PROJECT_URN to designate project subject
   ([#442](https://github.com/GENI-NSF/geni-ch/issues/442))
+* Change text of project lead email
+  ([#446](https://github.com/GENI-NSF/geni-ch/issues/446))
 
 # [Release 2.6](https://github.com/GENI-NSF/geni-ch/milestones/2.6)
 

@@ -1,5 +1,5 @@
 #----------------------------------------------------------------------         
-# Copyright (c) 2011-2015 Raytheon BBN Technologies
+# Copyright (c) 2011-2016 Raytheon BBN Technologies
 #                                                                               
 # Permission is hereby granted, free of charge, to any person obtaining         
 # a copy of this software and/or hardware specification (the "Work") to         
@@ -25,6 +25,7 @@ import amsoil.core.pluginmanager as pm
 from sqlalchemy import *
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
+import logging
 
 Base = declarative_base()
 
@@ -44,7 +45,11 @@ class CHDatabaseEngine:
     def __init__(self):
         config = pm.getService('config')
         self.db_url = config.get('chrm.db_url')
+
+        # , pool_size=20 seems possible - default is 5. Haven't seend a need to go higher.
         self.db = create_engine(self.db_url)
+# FIXME: Make this log level a chapi config param
+        # logging.getLogger('sqlalchemy').setLevel(logging.INFO)
         self.session_class = sessionmaker(bind=self.db)
         self.metadata = MetaData(self.db)
         Base.metadata.create_all(self.db)

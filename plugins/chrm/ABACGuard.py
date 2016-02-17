@@ -1,5 +1,5 @@
 #----------------------------------------------------------------------
-# Copyright (c) 2011-2015 Raytheon BBN Technologies
+# Copyright (c) 2011-2016 Raytheon BBN Technologies
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and/or hardware specification (the "Work") to
@@ -81,7 +81,7 @@ class InvocationCheck(object):
 # a given method on all the subjects of a given method invocation
 class SubjectInvocationCheck(InvocationCheck):
 
-    def __init__(self, policies, assertions):
+    def __init__(self, guard, policies, assertions):
         self._policies = policies
         if not policies: self._policies = []
         if policies and not isinstance(policies, list):
@@ -92,9 +92,9 @@ class SubjectInvocationCheck(InvocationCheck):
         if assertions and not isinstance(assertions, list):
             self._assertions = [assertions]
 
-        self.config = pm.getService('config')
-        self.key_file = self.config.get("chapiv1rpc.ch_key")
-        self.cert_file = self.config.get("chapiv1rpc.ch_cert")
+        self.key_file = guard.key_file
+        self.cert_file = guard.cert_file
+        self.authority = guard.authority
         self._verbose = False # Set this to True for verbose output
 
     # All recognized binding types (variables that can be
@@ -397,7 +397,7 @@ class SubjectInvocationCheck(InvocationCheck):
                                         subjects, bindings,
                                         options, arguments, session):
 
-        authority = pm.getService('config').get("chrm.authority")
+        authority = self.authority
 
 #        chapi_info('gen_bindings', 
 #                   "Subject Type: %s; bindings: %s; subjects: %s" % \
@@ -470,7 +470,7 @@ class SubjectInvocationCheck(InvocationCheck):
                     for subject in subjects:
                         bindings_by_subject[subject][binding] = "PROJECT_LEAD"
             elif binding == "$PROJECT_ADMIN":
-                # Fill in this binding if the _caller_ is a project lead 
+                # Fill in this binding if the _caller_ is a project admin 
                 # on some project.
                 # Use this EG so a project lead/admin can look up details of 
                 # people they want to add to a project
@@ -622,11 +622,13 @@ class SubjectInvocationCheck(InvocationCheck):
 
         # Validate subject arguments
         for subject_type, subjects_of_type in subjects.items():
-            ensure_valid_urns(subject_type, subjects_of_type, session)
+            ensure_valid_urns(subject_type, subjects_of_type, session,
+                              self.authority)
 
         # Validate non subject arguments
         for subject_type, subjects_of_type in nonsubjects.items():
-            ensure_valid_urns(subject_type, subjects_of_type, session)
+            ensure_valid_urns(subject_type, subjects_of_type, session,
+                              self.authority)
 
         return subjects
 
@@ -770,6 +772,11 @@ class ABACGuardBase(GuardBase):
     def __init__(self):
         GuardBase.__init__(self)
         self.db = pm.getService('chdbengine')
+        self.config = pm.getService('config')
+        self.key_file = self.config.get("chapiv1rpc.ch_key")
+        self.cert_file = self.config.get("chapiv1rpc.ch_cert")
+        self.authority = self.config.get("chrm.authority")
+
         #mapper(MemberAttribute, self.db.MEMBER_ATTRIBUTE_TABLE)
 
     # Base class: Provide a list of argument checks, 
@@ -842,10 +849,10 @@ class ABACGuardBase(GuardBase):
 # Method to convert
 # dictionary of method => arguments for creating SubjectInvocationChecks 
 #into a dictionary method => SubjectInvocationCheck
-def create_subject_invocation_checks(check_specs):
+def create_subject_invocation_checks(guard, check_specs):
     checks = {}
     for method, args in check_specs.items():
         policies = args['policies']
         assertions = args['assertions']
-        checks[method] = SubjectInvocationCheck(policies, assertions)
+        checks[method] = SubjectInvocationCheck(guard, policies, assertions)
     return checks

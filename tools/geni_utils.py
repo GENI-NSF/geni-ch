@@ -1,5 +1,5 @@
 #----------------------------------------------------------------------
-# Copyright (c) 2011-2015 Raytheon BBN Technologies
+# Copyright (c) 2011-2016 Raytheon BBN Technologies
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and/or hardware specification (the "Work") to
@@ -39,9 +39,7 @@ def to_project_urn(authority, project_name):
         (authority, project_name)
 
 # Turn a row with project name into a project URN
-def row_to_project_urn(row):
-    config = pm.getService('config')
-    authority = config.get("chrm.authority")
+def row_to_project_urn(authority, row):
     return to_project_urn(authority, row.project_name)
 
 def urn_for_slice(slice_name, project_name):

@@ -1,5 +1,5 @@
 #----------------------------------------------------------------------
-# Copyright (c) 2011-2015 Raytheon BBN Technologies
+# Copyright (c) 2011-2016 Raytheon BBN Technologies
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and/or hardware specification (the "Work") to
@@ -115,7 +115,7 @@ def add_attribute(attributes, int_arg, uuid_arg):
         attributes['SLICE'] = uuid_arg
         
 def main(args = sys.argv, do_print=True):
-
+    logging.basicConfig()
     opts, args = parseOptions(args)
     client_options = json.loads(opts.options)
     if opts.options_file:
