@@ -1,5 +1,5 @@
 Name:           geni-chapi
-Version:        2.7
+Version:        2.9
 Release:        1%{?dist}
 Summary:        GENI clearinghouse
 BuildArch:      noarch
@@ -343,6 +343,7 @@ rm -rf $RPM_BUILD_ROOT
 %{_datadir}/%{name}/templates/ch-ssl.conf.tmpl
 %{_datadir}/%{name}/templates/chapi.ini.tmpl
 %{_datadir}/%{name}/templates/httpd.conf.tmpl
+%{_datadir}/%{name}/templates/install_postgresql.sh
 %{_datadir}/%{name}/templates/install_service_registry.sql.tmpl
 %{_datadir}/%{name}/templates/openssl.cnf.tmpl
 %{_datadir}/%{name}/templates/services.ini.tmpl
