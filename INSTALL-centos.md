@@ -90,9 +90,6 @@ sudo yum reinstall polkit\* power
 sudo reboot
 ```
 
-Note: this file (install_postgresql.sh) is not currently included in the install.
-It needs to be copied out-of-band for now.
-
 To install PostgreSQL on the same host as the GENI Clearinghouse,
 see `/usr/share/geni-chapi/templates/install_postgresql.sh`. You should copy
 that file and edit the parameters near the top to change passwords to
@@ -130,9 +127,6 @@ for sch in cs logging ma pa sa sr
 do
     $PSQL -f $CHAPI_DIR/db/$sch/postgresql/schema.sql
 done
-
-# TEMPORARY: UNTIL UPDATE-5.SQL CHANGE IS ROLLED INTO THE BASELINE SCHEMA
-$PSQL -f /usr/share/geni-chapi/db/sr/postgresql/update-5.sql
 
 for data in $CHAPI_DIR/db/*/postgresql/data.sql
 do
@@ -261,7 +255,7 @@ sudo postconf inet_protocols=ipv4
 Create postfix user and postdrop group. See `main.cf` for details.
 
 ```Shell
-suo useradd -r postfix
+sudo useradd -r postfix
 sudo groupadd -r postdrop
 ```
 
