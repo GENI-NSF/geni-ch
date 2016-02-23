@@ -86,7 +86,7 @@ PostgreSQL is required for the GENI Clearinghouse.
 
 Note: if installing on an APT centos image, do:
 ```Shell
-sudo yum reinstall polkit\* power
+sudo yum reinstall -y polkit\* power
 sudo reboot
 ```
 
