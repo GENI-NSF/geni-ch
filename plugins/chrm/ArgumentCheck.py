@@ -1,5 +1,5 @@
 #----------------------------------------------------------------------
-# Copyright (c) 2011-2015 Raytheon BBN Technologies
+# Copyright (c) 2011-2016 Raytheon BBN Technologies
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and/or hardware specification (the "Work") to
@@ -212,8 +212,8 @@ class FieldsArgumentCheck(ArgumentCheck):
                     properly_formed = True
                 except Exception, e:
                     pass
-            else:
-                # If there's no value, that's fine too
+            elif value is None:
+                # If the value is None, that's fine
                 properly_formed = True
         elif field_type == "EMAIL":
             properly_formed = value.find('@')>= 0 and value.find('.') >= 0

@@ -1,5 +1,5 @@
 #----------------------------------------------------------------------
-# Copyright (c) 2011-2015 Raytheon BBN Technologies
+# Copyright (c) 2011-2016 Raytheon BBN Technologies
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and/or hardware specification (the "Work") to
@@ -296,7 +296,7 @@ class Loggingv1Guard(ABACGuardBase):
             policies = \
                 parse_method_policies(Loggingv1Guard.policies_filename)
             self.INVOCATION_CHECK_FOR_METHOD = \
-                create_subject_invocation_checks(policies)
+                create_subject_invocation_checks(self, policies)
         if self.INVOCATION_CHECK_FOR_METHOD.has_key(method):
             return self.INVOCATION_CHECK_FOR_METHOD[method]
         return None

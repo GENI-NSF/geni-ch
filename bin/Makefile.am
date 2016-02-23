@@ -10,6 +10,7 @@
 tooldir = $(pkgdatadir)/../geni-ch/chapi/chapi/tools
 gcfdir = $(pkgdatadir)/../geni-ch/gcf/src
 pkgsysconfdir = $(sysconfdir)/$(PACKAGE)
+templatesdir = $(pkgdatadir)/templates
 
 edit = sed \
 	-e 's|@bindir[@]|$(bindir)|g' \
@@ -17,9 +18,20 @@ edit = sed \
 	-e 's|@pkgsysconfdir[@]|$(pkgsysconfdir)|g' \
 	-e 's|@prefix[@]|$(prefix)|g' \
 	-e 's|@tooldir[@]|$(tooldir)|g' \
-	-e 's|@gcfdir[@]|$(gcfdir)|g'
+	-e 's|@gcfdir[@]|$(gcfdir)|g' \
+	-e 's|@templatesdir[@]|$(templatesdir)|g'
 
-geni-check-errors geni-list-idp-members geni-list-pending-requests geni-sign-tool-csr geni-expiring-certs: Makefile
+TEMPLATES = \
+	geni-check-errors \
+	geni-install-templates \
+	geni-list-idp-members \
+	geni-list-pending-requests \
+	geni-sign-tool-csr \
+	geni-expiring-certs
+
+TEMPLATES.IN = $(TEMPLATES:%=%.in)
+
+$(TEMPLATES): Makefile
 	rm -f $@ $@.tmp
 	srcdir=''; \
 	  test -f ./$@.in || srcdir=$(srcdir)/; \
@@ -27,29 +39,16 @@ geni-check-errors geni-list-idp-members geni-list-pending-requests geni-sign-too
 	chmod a-w $@.tmp
 	mv $@.tmp $@
 
-geni-check-errors: $(srcdir)/geni-check-errors.in
-geni-list-idp-members: $(srcdir)/geni-list-idp-members.in
-geni-list-pending-requests: $(srcdir)/geni-list-pending-requests.in
-geni-sign-tool-csr: $(srcdir)/geni-sign-tool-csr.in
-geni-expiring-certs: $(srcdir)/geni-expiring-certs.in
+%: $(srcdir)/%.in
 
 # Distribute but do not install
-EXTRA_DIST =  \
-	geni-check-errors.in \
-	geni-list-idp-members.in \
-	geni-list-pending-requests.in \
-	geni-sign-tool-csr.in \
-	geni-expiring-certs.in
+EXTRA_DIST = $(TEMPLATES.IN)
 
-CLEANFILES =  \
-	geni-check-errors \
-	geni-list-idp-members \
-	geni-list-pending-requests \
-	geni-sign-tool-csr \
-	geni-expiring-certs
+CLEANFILES = $(TEMPLATES)
 
 sbin_SCRIPTS = \
 	geni-check-errors \
+	geni-install-templates \
 	geni-list-idp-members \
 	geni-list-pending-requests \
 	geni-sign-tool-csr \
@@ -61,12 +60,26 @@ dist_pkgdata_DATA = \
 	ch-error-log-out.txt \
 	chapi-log-out.txt
 
+dist_bin_SCRIPTS = \
+	geni-add-member-attribute \
+	geni-add-project-member \
+	geni-add-trusted-tool \
+	geni-assert-email \
+	geni-delete-outside-cert \
+	geni-disable-user \
+	geni-enable-user \
+	geni-ops-report \
+	geni-remove-member-attribute \
+	geni-remove-project-member \
+	gmoc_list_contacts \
+	gmoc_list_slices \
+	report_genich_relations
+
 dist_sbin_SCRIPTS = \
 	geni-add-member-privilege \
 	geni-create-ma-crl \
 	geni-init-ca \
 	geni-init-services \
-	geni-install-templates \
 	geni-list-member-projects \
 	geni-list-pending-requests \
 	geni-revoke-member-certificate \

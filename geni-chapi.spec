@@ -1,5 +1,5 @@
 Name:           geni-chapi
-Version:        2.3
+Version:        2.9
 Release:        1%{?dist}
 Summary:        GENI clearinghouse
 BuildArch:      noarch
@@ -47,6 +47,7 @@ rm -rf $RPM_BUILD_ROOT
 %config %{_sysconfdir}/%{name}/chapi-centos.ini
 %config %{_sysconfdir}/%{name}/credential_store_policy.json
 %config %{_sysconfdir}/%{name}/example-chapi.ini
+%config %{_sysconfdir}/%{name}/example-parameters.json
 %config %{_sysconfdir}/%{name}/logging_config.conf
 %config %{_sysconfdir}/%{name}/logging_policy.json
 %config %{_sysconfdir}/%{name}/member_authority_policy.json
@@ -59,6 +60,21 @@ rm -rf $RPM_BUILD_ROOT
 %{python_sitelib}/chapiclient/chapi.py
 %{python_sitelib}/chapiclient/chapi.pyc
 %{python_sitelib}/chapiclient/chapi.pyo
+
+# /usr/bin
+%{_bindir}/geni-add-member-attribute
+%{_bindir}/geni-add-project-member
+%{_bindir}/geni-add-trusted-tool
+%{_bindir}/geni-assert-email
+%{_bindir}/geni-delete-outside-cert
+%{_bindir}/geni-disable-user
+%{_bindir}/geni-enable-user
+%{_bindir}/geni-ops-report
+%{_bindir}/geni-remove-member-attribute
+%{_bindir}/geni-remove-project-member
+%{_bindir}/gmoc_list_contacts
+%{_bindir}/gmoc_list_slices
+%{_bindir}/report_genich_relations
 
 # /usr/sbin
 %{_sbindir}/geni-add-member-privilege
@@ -291,7 +307,6 @@ rm -rf $RPM_BUILD_ROOT
 %{_datadir}/%{name}/db/cs/postgresql/update-6.sql
 %{_datadir}/%{name}/db/cs/postgresql/update-7.sql
 %{_datadir}/%{name}/db/cs/postgresql/update-8.sql
-%{_datadir}/%{name}/db/logging/postgresql/data.sql
 %{_datadir}/%{name}/db/logging/postgresql/schema.sql
 %{_datadir}/%{name}/db/logging/postgresql/update-1.sql
 %{_datadir}/%{name}/db/logging/postgresql/update-2.sql
@@ -305,7 +320,6 @@ rm -rf $RPM_BUILD_ROOT
 %{_datadir}/%{name}/db/ma/postgresql/update-5.sql
 %{_datadir}/%{name}/db/migration/migrate-assertions.sql
 %{_datadir}/%{name}/db/migration/sliver-info.sql
-%{_datadir}/%{name}/db/pa/postgresql/data.sql
 %{_datadir}/%{name}/db/pa/postgresql/schema.sql
 %{_datadir}/%{name}/db/pa/postgresql/update-1.sql
 %{_datadir}/%{name}/db/pa/postgresql/update-2.sql
@@ -313,13 +327,11 @@ rm -rf $RPM_BUILD_ROOT
 %{_datadir}/%{name}/db/pa/postgresql/update-4.sql
 %{_datadir}/%{name}/db/pa/postgresql/update-5.sql
 %{_datadir}/%{name}/db/sa/postgresql/README.txt
-%{_datadir}/%{name}/db/sa/postgresql/data.sql
 %{_datadir}/%{name}/db/sa/postgresql/schema.sql
 %{_datadir}/%{name}/db/sa/postgresql/update-1.sql
 %{_datadir}/%{name}/db/sa/postgresql/update-2.sql
 %{_datadir}/%{name}/db/sa/postgresql/update-3.sql
 %{_datadir}/%{name}/db/sr/postgresql/README.txt
-%{_datadir}/%{name}/db/sr/postgresql/data.sql
 %{_datadir}/%{name}/db/sr/postgresql/schema.sql
 %{_datadir}/%{name}/db/sr/postgresql/update-1.sql
 %{_datadir}/%{name}/db/sr/postgresql/update-2.sql
@@ -331,9 +343,9 @@ rm -rf $RPM_BUILD_ROOT
 %{_datadir}/%{name}/templates/ch-ssl.conf.tmpl
 %{_datadir}/%{name}/templates/chapi.ini.tmpl
 %{_datadir}/%{name}/templates/httpd.conf.tmpl
+%{_datadir}/%{name}/templates/install_postgresql.sh
 %{_datadir}/%{name}/templates/install_service_registry.sql.tmpl
 %{_datadir}/%{name}/templates/openssl.cnf.tmpl
-%{_datadir}/%{name}/templates/parameters.json
 %{_datadir}/%{name}/templates/services.ini.tmpl
 %{_datadir}/%{name}/templates/templates.json
 %{_datadir}/%{name}/sr/certs/al2s-ca.pem
@@ -374,6 +386,8 @@ rm -rf $RPM_BUILD_ROOT
 %{_datadir}/%{name}/sr/certs/im-vw1-ssl.pem
 %{_datadir}/%{name}/sr/certs/im-wilab-cm.pem
 %{_datadir}/%{name}/sr/certs/im-wilab-ssl.pem
+%{_datadir}/%{name}/sr/certs/irods-test.pem
+%{_datadir}/%{name}/sr/certs/irods.pem
 %{_datadir}/%{name}/sr/certs/kansas-ig-boss.pem
 %{_datadir}/%{name}/sr/certs/kansas-ig-cm.pem
 %{_datadir}/%{name}/sr/certs/kansas-ig-of.pem
@@ -501,8 +515,11 @@ rm -rf $RPM_BUILD_ROOT
 %{_datadir}/%{name}/sr/sql/add-gpo-og.sql
 %{_datadir}/%{name}/sr/sql/add-illinois-ig-of.sql
 %{_datadir}/%{name}/sr/sql/add-illinois-ig.sql
+%{_datadir}/%{name}/sr/sql/add-illinois-vts.sql
 %{_datadir}/%{name}/sr/sql/add-im-vw1.sql
 %{_datadir}/%{name}/sr/sql/add-im-wilab.sql
+%{_datadir}/%{name}/sr/sql/add-irods-test.sql
+%{_datadir}/%{name}/sr/sql/add-irods.sql
 %{_datadir}/%{name}/sr/sql/add-kansas-ig-of.sql
 %{_datadir}/%{name}/sr/sql/add-kansas-ig.sql
 %{_datadir}/%{name}/sr/sql/add-kettering-ig-of.sql
@@ -520,6 +537,7 @@ rm -rf $RPM_BUILD_ROOT
 %{_datadir}/%{name}/sr/sql/add-nortwestern-ig-of.sql
 %{_datadir}/%{name}/sr/sql/add-nps-ig-of.sql
 %{_datadir}/%{name}/sr/sql/add-nps-ig.sql
+%{_datadir}/%{name}/sr/sql/add-nps-vts.sql
 %{_datadir}/%{name}/sr/sql/add-nysernet-ig-of.sql
 %{_datadir}/%{name}/sr/sql/add-nysernet-ig.sql
 %{_datadir}/%{name}/sr/sql/add-nysernet-of.sql
@@ -541,6 +559,7 @@ rm -rf $RPM_BUILD_ROOT
 %{_datadir}/%{name}/sr/sql/add-sox-of.sql
 %{_datadir}/%{name}/sr/sql/add-stanford-ig-of.sql
 %{_datadir}/%{name}/sr/sql/add-stanford-ig.sql
+%{_datadir}/%{name}/sr/sql/add-starlight-vts.sql
 %{_datadir}/%{name}/sr/sql/add-tamu-eg-of.sql
 %{_datadir}/%{name}/sr/sql/add-tamu-eg.sql
 %{_datadir}/%{name}/sr/sql/add-ucdavis-eg-of.sql
@@ -558,6 +577,7 @@ rm -rf $RPM_BUILD_ROOT
 %{_datadir}/%{name}/sr/sql/add-uky-pg.sql
 %{_datadir}/%{name}/sr/sql/add-ukypks2-ig-of.sql
 %{_datadir}/%{name}/sr/sql/add-ukypks2-ig.sql
+%{_datadir}/%{name}/sr/sql/add-ukypks2-vts.sql
 %{_datadir}/%{name}/sr/sql/add-umkc-ig-of.sql
 %{_datadir}/%{name}/sr/sql/add-umkc-ig.sql
 %{_datadir}/%{name}/sr/sql/add-utah-clab.sql
@@ -578,7 +598,9 @@ rm -rf $RPM_BUILD_ROOT
 
 # /usr/man
 %{_mandir}/man1/geni-add-member-privilege.1.gz
+%{_mandir}/man1/geni-assert-email.1.gz
 %{_mandir}/man1/geni-check-errors.1.gz
+%{_mandir}/man1/geni-delete-outside-cert.1.gz
 %{_mandir}/man1/geni-expiring-certs.1.gz
 %{_mandir}/man1/geni-install-templates.1.gz
 %{_mandir}/man1/geni-list-idp-members.1.gz
@@ -589,6 +611,12 @@ rm -rf $RPM_BUILD_ROOT
 %{_mandir}/man1/geni-sign-tool-csr.1.gz
 
 %changelog
+* Tue Oct 27 2015 Tom Mitchell <tmitchell@bbn.com> - 2.7-1%{?dist}
+- Incorporate 2.5 and 2.6 releases
+* Fri Sep 18 2015 Tom Mitchell <tmitchell@bbn.com> - 2.4-2%{?dist}
+- Improvements to geni-install-templates
+* Thu Sep 10 2015 Tom Mitchell <tmitchell@bbn.com> - 2.4-1%{?dist}
+- Update to 2.4 release
 * Thu Aug 27 2015 Tom Mitchell <tmitchell@bbn.com> - 2.3-1%{?dist}
 - Add dependencies
 - Include templates

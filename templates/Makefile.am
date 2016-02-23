@@ -6,11 +6,8 @@ dist_templates_DATA = \
 	ch-ssl.conf.tmpl \
 	chapi.ini.tmpl \
 	httpd.conf.tmpl \
+	install_postgresql.sh \
 	install_service_registry.sql.tmpl \
 	openssl.cnf.tmpl \
-	parameters.json \
 	services.ini.tmpl \
 	templates.json 
-
-
-

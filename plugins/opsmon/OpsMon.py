@@ -1,5 +1,5 @@
 #----------------------------------------------------------------------
-# Copyright (c) 2011-2015 Raytheon BBN Technologies
+# Copyright (c) 2011-2016 Raytheon BBN Technologies
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and/or hardware specification (the "Work") to
@@ -237,7 +237,7 @@ class OpsMonHandler:
             if row.name == 'displayName': user_fullname = row.value
             if row.name == 'email_address': user_email = row.value
             if row.name == 'first_name' : user_firstname = row.value
-            if row.name == 'lsst_name' : user_lastname = row.value
+            if row.name == 'last_name' : user_lastname = row.value
             if row.name == 'urn' : user_urn = row.value
 
         if user_fullname is None:

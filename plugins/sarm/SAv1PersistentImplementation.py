@@ -1,5 +1,5 @@
 #----------------------------------------------------------------------
-# Copyright (c) 2011-2015 Raytheon BBN Technologies
+# Copyright (c) 2011-2016 Raytheon BBN Technologies
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and/or hardware specification (the "Work") to
@@ -95,6 +95,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         self.ch_from_email = self.config.get('chapi.ch_from_email')
 
         self.trusted_root = self.config.get('chapiv1rpc.ch_cert_root')
+        self.authority = self.config.get('chrm.authority')
 
         self.trusted_root_files = \
             [os.path.join(self.trusted_root, f) \
@@ -453,6 +454,12 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         session.add(object)
         # Force a flush of the session so that adding project/slice members works
         session.flush()
+
+        # Convert dates to strings per API
+        for k,v in ret.iteritems():
+            if isinstance(v, dt.datetime):
+              ret[k] = v.strftime(STANDARD_DATETIME_FORMAT)
+
         return self._successReturn(ret)
 
     # create a new slice
@@ -476,6 +483,11 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
 
         # fill in the fields of the object
         slice = Slice()
+
+        # Set default values for fields that may not get set
+        setattr(slice, SA.slice_field_mapping['SLICE_DESCRIPTION'], '')
+        setattr(slice, SA.slice_field_mapping['SLICE_EXPIRED'], False)
+
         project_urn = None
         for key, value in options["fields"].iteritems():
             if key == "SLICE_PROJECT_URN":
@@ -522,19 +534,30 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                                             name + ' in project ' + project_name)
 
         slice.creation = dt.datetime.utcnow()
-        # FIXME: Why check if slice.expiration is set. We are creating the slice here - how can it be set?
+
+        # Set expiration if none was set
         if not slice.expiration:
-            # FIXME: Externalize the #7 here
             slice.expiration = slice.creation + relativedelta(days=SA.SLICE_DEFAULT_LIFE_DAYS)
         else:
-            # Make timzeone UTC naive
             slice.expiration = dateutil.parser.parse(slice.expiration)
+
+        # Make timzeone UTC naive
+        if slice.expiration.tzinfo:
             slice.expiration = slice.expiration.astimezone(dateutil.tz.tzutc())
             slice.expiration = slice.expiration.replace(tzinfo=None)
 
         # if project expiration is sooner than slice expiration, use project expiration
         if project_expiration != None and slice.expiration > project_expiration:
             slice.expiration = project_expiration
+
+        now = dt.datetime.utcnow()
+        if slice.expiration < now:
+            raise CHAPIv1ArgumentError('Requested expiration is in the past')
+
+        # Limit the max expiration to the max renewal period
+        max_exp = now + relativedelta(days=SA.SLICE_MAX_RENEWAL_DAYS)
+        if slice.expiration > max_exp:
+            slice.expiration = max_exp
 
         slice.slice_id = str(uuid.uuid4())
         slice.owner_id = client_uuid
@@ -701,6 +724,22 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
 
         return result
 
+    def _validate_project_expiration(self, expiration):
+        if expiration:
+            result = dateutil.parser.parse(expiration)
+            # convert to UTC naive
+            if result.tzinfo:
+                result = result.astimezone(dateutil.tz.tzutc())
+                result = result.replace(tzinfo=None)
+
+            now = dt.datetime.utcnow()
+            if result < now:
+                msg = 'Requested expiration is in the past'
+                raise CHAPIv1ArgumentError(msg)
+        else:
+            result = None
+        return result
+
     # create a new project
     def create_project(self, client_cert, credentials, options, session):
 
@@ -727,25 +766,30 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
 
         # fill in the fields of the object
         project = Project()
+
+        # Set default values for fields that may not get set
+        setattr(project, SA.project_field_mapping['PROJECT_DESCRIPTION'], '')
+        setattr(project, SA.project_field_mapping['PROJECT_EXPIRED'], False)
+
         for key, value in options["fields"].iteritems():
             setattr(project, SA.project_field_mapping[key], value)
         project.creation = dt.datetime.utcnow()
-        # FIXME: Must project expiration be in UTC?
-        if project.expiration == "": project.expiration=None
+
+        project.expiration = self._validate_project_expiration(project.expiration)
+
         project.project_id = str(uuid.uuid4())
 
-        # FIXME: Real project email!
-        if not hasattr(project, 'project_email') or not project.project_email:
-            email = "project-%s@example.com" % name
-            setattr(project, 'project_email', email)
+        # Don't fake an email, admit that we don't do project email
+        project.project_email = None
 
         # Set the project lead (the creator)
         if not hasattr(project, 'lead_id') or not project.lead_id:
             setattr(project, 'lead_id', client_uuid)
 
         # do the database write
-        result = self.finish_create(session, project,  SA.project_field_mapping, \
-                                        {"PROJECT_URN": row_to_project_urn(project)})
+        project_urn = row_to_project_urn(self.authority, project)
+        result = self.finish_create(session, project, SA.project_field_mapping,
+                                    {"PROJECT_URN": project_urn})
 
         # Add project lead member to member table
         leadMember = ProjectMember()
@@ -794,6 +838,8 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         project_uuid = self.get_project_id(session, 'project_name', name)
         if not project_uuid:
             raise CHAPIv1ArgumentError('No project found with urn ' + project_urn)
+        if not options['fields']:
+            raise CHAPIv1ArgumentError('No fields to update')
         q = session.query(Project)
         q = q.filter(getattr(Project, "project_name") == name)
         updates = {}
@@ -873,9 +919,12 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         rows = q.all()
         projects = {}
         for row in rows:
-            projects[row_to_project_urn(row)] = \
-                construct_result_row(row, columns, \
-                                         SA.project_field_mapping, session)
+            project_urn = row_to_project_urn(self.authority, row)
+            result_row = construct_result_row(row, columns,
+                                              SA.project_field_mapping,
+                                              session)
+            projects[project_urn] = result_row
+
         result = self._successReturn(projects)
 
         return result
@@ -892,11 +941,11 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                                       SA.project_field_mapping, 
                                       "project_name", "project_id", 
                                       options, session)
-        projects = [{"PROJECT_ROLE" : row.name, \
-                         "PROJECT_UID" : row.project_id, \
-                         "PROJECT_URN": row_to_project_urn(row), \
-                         "EXPIRED" : row.expired } \
-                        for row in rows]
+        projects = [{"PROJECT_ROLE" : row.name,
+                     "PROJECT_UID" : row.project_id,
+                     "PROJECT_URN": row_to_project_urn(self.authority, row),
+                     "EXPIRED" : row.expired }
+                    for row in rows]
         result = self._successReturn(projects)
 
         return result
@@ -1192,11 +1241,11 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                                       SA.project_field_mapping,
                                       "project_name", "project_id", 
                                       {}, session)
-        projects = [{"PROJECT_ROLE" : row.name, \
-                         "PROJECT_UID" : row.project_id, \
-                         "PROJECT_URN": row_to_project_urn(row), \
-                         "EXPIRED" : row.expired } \
-                        for row in rows]
+        projects = [{"PROJECT_ROLE" : row.name,
+                     "PROJECT_UID" : row.project_id,
+                     "PROJECT_URN": row_to_project_urn(self.authority, row),
+                     "EXPIRED" : row.expired }
+                    for row in rows]
         role = None
         for proj in projects:
             if proj['PROJECT_UID'] == slice_row.project_id:
