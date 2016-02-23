@@ -180,7 +180,9 @@ class TemplateInstaller:
         if self._options.print_parameter:
             for param in self._parameter_info:
                 if self._options.print_parameter == param['name']:
-                    print param['value']
+                    raw_param = param['value']
+                    new_param = self.instantiate_template(raw_param)
+                    print new_param
                     sys.exit(0)
             self.error("Can't find parameter named %s" % self._options.print_parameter)
 
