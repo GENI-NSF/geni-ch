@@ -181,9 +181,6 @@ dist_srcerts_DATA = \
 	sr/certs/clemson-ig-cm.pem \
 	sr/certs/clemson-ig-of.pem \
 	sr/certs/clemson-og.pem \
-	sr/certs/colorado-ig-boss.pem \
-	sr/certs/colorado-ig-cm.pem \
-	sr/certs/colorado-ig-of.pem \
 	sr/certs/cornell-ig-boss.pem \
 	sr/certs/cornell-ig-cm.pem \
 	sr/certs/cornell-ig-of.pem \
@@ -246,9 +243,6 @@ dist_srcerts_DATA = \
 	sr/certs/ohmetrodc-ig-of.pem \
 	sr/certs/osf-eg-of.pem \
 	sr/certs/osf-eg.pem \
-	sr/certs/princeton-ig-boss.pem \
-	sr/certs/princeton-ig-cm.pem \
-	sr/certs/princeton-ig-of.pem \
 	sr/certs/renci-eg-of.pem \
 	sr/certs/renci-eg.pem \
 	sr/certs/rutgers-ig-boss.pem \
@@ -302,9 +296,6 @@ dist_srcerts_DATA = \
 	sr/certs/utc-ig-boss.pem \
 	sr/certs/utc-ig-cm.pem \
 	sr/certs/utc-ig-of.pem \
-	sr/certs/uwashington-ig-boss.pem \
-	sr/certs/uwashington-ig-cm.pem \
-	sr/certs/uwashington-ig-of.pem \
 	sr/certs/wall2-ca.pem \
 	sr/certs/wall2-cm.pem \
 	sr/certs/wisconsin-ig-boss.pem \
