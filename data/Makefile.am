@@ -17,6 +17,8 @@ AM_SQL = \
 	sr/sql/add-clemson-ig-of.sql \
 	sr/sql/add-clemson-ig.sql \
 	sr/sql/add-clemson-og.sql \
+	sr/sql/add-colorado-ig-of.sql \
+	sr/sql/add-colorado-ig.sql \
 	sr/sql/add-cornell-ig-of.sql \
 	sr/sql/add-cornell-ig.sql \
 	sr/sql/add-cwru-ig.sql \
