@@ -61,6 +61,8 @@ AM_SQL = \
 	sr/sql/add-ohmetrodc-ig.sql \
 	sr/sql/add-osf-eg-of.sql \
 	sr/sql/add-osf-eg.sql \
+	sr/sql/add-princeton-ig.sql \
+	sr/sql/add-princeton-ig-of.sql \
 	sr/sql/add-renci-eg-of.sql \
 	sr/sql/add-renci-eg.sql \
 	sr/sql/add-rutgers-ig-of.sql \
