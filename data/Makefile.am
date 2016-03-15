@@ -92,6 +92,8 @@ AM_SQL = \
 	sr/sql/add-ukl-og.sql \
 	sr/sql/add-uky-ig-of.sql \
 	sr/sql/add-uky-ig.sql \
+	sr/sql/add-ukymcv-ig-of.sql \
+	sr/sql/add-ukymcv-ig.sql \
 	sr/sql/add-uky-pg.sql \
 	sr/sql/add-ukypks2-ig-of.sql \
 	sr/sql/add-ukypks2-ig.sql \
