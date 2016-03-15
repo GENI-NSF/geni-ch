@@ -13,7 +13,10 @@ RSYNC_ARGS = -aztv $(RSYNC_EXCLUDE)
 
 GITHASH = etc/geni-chapi-githash
 
-.PHONY: syncb syncd syncm synci syncs synct syncp syncc
+# This will probably be "../geni-ch"
+SRC_DIR = ../$(notdir $(CURDIR))
+
+.PHONY: syncb syncd syncm synci syncc syncn
 
 default:
 	echo "Choose a specific sync target."
@@ -21,41 +24,20 @@ default:
 $(GITHASH): .git
 	git rev-parse HEAD > $@
 
-synca: $(GITHASH)
-	$(RSYNC) $(RSYNC_ARGS) ../chapi algonquin.gpolab.bbn.com:
-
 syncb: $(GITHASH)
-	$(RSYNC) $(RSYNC_ARGS) ../chapi bigslide.gpolab.bbn.com:
+	$(RSYNC) $(RSYNC_ARGS) $(SRC_DIR) bigslide.gpolab.bbn.com:
 
 syncd: $(GITHASH)
-	$(RSYNC) $(RSYNC_ARGS) ../chapi dagoola.gpolab.bbn.com:
-
-synce: $(GITHASH)
-	$(RSYNC) $(RSYNC_ARGS) ../chapi emmons.gpolab.bbn.com:
-
-synch: $(GITHASH)
-	$(RSYNC) $(RSYNC_ARGS) ../chapi haystack.gpolab.bbn.com:
+	$(RSYNC) $(RSYNC_ARGS) $(SRC_DIR) dagoola.gpolab.bbn.com:
 
 syncm: $(GITHASH)
-	$(RSYNC) $(RSYNC_ARGS) ../chapi marilac.gpolab.bbn.com:
+	$(RSYNC) $(RSYNC_ARGS) $(SRC_DIR) marilac.gpolab.bbn.com:
 
 synci: $(GITHASH)
-	$(RSYNC) $(RSYNC_ARGS) ../chapi illyrica.gpolab.bbn.com:
-
-syncs: $(GITHASH)
-	$(RSYNC) $(RSYNC_ARGS) ../chapi sergyar.gpolab.bbn.com:
-
-synct: $(GITHASH)
-	$(RSYNC) $(RSYNC_ARGS) ../chapi tau-ceti.gpolab.bbn.com:
-
-synctop: $(GITHASH)
-	$(RSYNC) $(RSYNC_ARGS) ../chapi tabletop.gpolab.bbn.com:
-
-syncp: $(GITHASH)
-	$(RSYNC) $(RSYNC_ARGS) ../chapi panther.gpolab.bbn.com:
+	$(RSYNC) $(RSYNC_ARGS) $(SRC_DIR) illyrica.gpolab.bbn.com:
 
 syncc: $(GITHASH)
-	$(RSYNC) $(RSYNC_ARGS) ../chapi cascade.gpolab.bbn.com:
+	$(RSYNC) $(RSYNC_ARGS) $(SRC_DIR) cascade.gpolab.bbn.com:
 
 syncn: $(GITHASH)
-	$(RSYNC) $(RSYNC_ARGS) ../chapi nye.gpolab.bbn.com:
+	$(RSYNC) $(RSYNC_ARGS) $(SRC_DIR) nye.gpolab.bbn.com:
