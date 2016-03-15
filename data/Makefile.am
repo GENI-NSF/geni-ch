@@ -109,6 +109,8 @@ AM_SQL = \
 	sr/sql/add-utahddc-ig.sql \
 	sr/sql/add-utc-ig-of.sql \
 	sr/sql/add-utc-ig.sql \
+	sr/sql/add-uwashington-ig-of.sql \
+	sr/sql/add-uwashington-ig.sql \
 	sr/sql/add-wall2.sql \
 	sr/sql/add-wisconsin-ig-of.sql \
 	sr/sql/add-wisconsin-ig.sql \
