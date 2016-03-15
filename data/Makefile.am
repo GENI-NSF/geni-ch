@@ -31,6 +31,8 @@ AM_SQL = \
 	sr/sql/add-gpo-ig-of.sql \
 	sr/sql/add-gpo-ig.sql \
 	sr/sql/add-gpo-og.sql \
+	sr/sql/add-hawaii-ig-of.sql \
+	sr/sql/add-hawaii-ig.sql \
 	sr/sql/add-illinois-ig-of.sql \
 	sr/sql/add-illinois-ig.sql \
 	sr/sql/add-illinois-vts.sql \
