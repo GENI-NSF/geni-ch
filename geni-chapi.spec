@@ -360,9 +360,6 @@ rm -rf $RPM_BUILD_ROOT
 %{_datadir}/%{name}/sr/certs/clemson-ig-cm.pem
 %{_datadir}/%{name}/sr/certs/clemson-ig-of.pem
 %{_datadir}/%{name}/sr/certs/clemson-og.pem
-%{_datadir}/%{name}/sr/certs/colorado-ig-boss.pem
-%{_datadir}/%{name}/sr/certs/colorado-ig-cm.pem
-%{_datadir}/%{name}/sr/certs/colorado-ig-of.pem
 %{_datadir}/%{name}/sr/certs/cornell-ig-boss.pem
 %{_datadir}/%{name}/sr/certs/cornell-ig-cm.pem
 %{_datadir}/%{name}/sr/certs/cornell-ig-of.pem
@@ -424,9 +421,6 @@ rm -rf $RPM_BUILD_ROOT
 %{_datadir}/%{name}/sr/certs/ohmetrodc-ig-of.pem
 %{_datadir}/%{name}/sr/certs/osf-eg-of.pem
 %{_datadir}/%{name}/sr/certs/osf-eg.pem
-%{_datadir}/%{name}/sr/certs/princeton-ig-boss.pem
-%{_datadir}/%{name}/sr/certs/princeton-ig-cm.pem
-%{_datadir}/%{name}/sr/certs/princeton-ig-of.pem
 %{_datadir}/%{name}/sr/certs/renci-eg-of.pem
 %{_datadir}/%{name}/sr/certs/renci-eg.pem
 %{_datadir}/%{name}/sr/certs/rutgers-ig-boss.pem
@@ -481,9 +475,6 @@ rm -rf $RPM_BUILD_ROOT
 %{_datadir}/%{name}/sr/certs/utc-ig-boss.pem
 %{_datadir}/%{name}/sr/certs/utc-ig-cm.pem
 %{_datadir}/%{name}/sr/certs/utc-ig-of.pem
-%{_datadir}/%{name}/sr/certs/uwashington-ig-boss.pem
-%{_datadir}/%{name}/sr/certs/uwashington-ig-cm.pem
-%{_datadir}/%{name}/sr/certs/uwashington-ig-of.pem
 %{_datadir}/%{name}/sr/certs/wall2-ca.pem
 %{_datadir}/%{name}/sr/certs/wall2-cm.pem
 %{_datadir}/%{name}/sr/certs/wisconsin-ig-boss.pem

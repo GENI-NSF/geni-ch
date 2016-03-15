@@ -17,6 +17,8 @@ AM_SQL = \
 	sr/sql/add-clemson-ig-of.sql \
 	sr/sql/add-clemson-ig.sql \
 	sr/sql/add-clemson-og.sql \
+	sr/sql/add-colorado-ig-of.sql \
+	sr/sql/add-colorado-ig.sql \
 	sr/sql/add-cornell-ig-of.sql \
 	sr/sql/add-cornell-ig.sql \
 	sr/sql/add-cwru-ig.sql \
@@ -29,6 +31,8 @@ AM_SQL = \
 	sr/sql/add-gpo-ig-of.sql \
 	sr/sql/add-gpo-ig.sql \
 	sr/sql/add-gpo-og.sql \
+	sr/sql/add-hawaii-ig-of.sql \
+	sr/sql/add-hawaii-ig.sql \
 	sr/sql/add-illinois-ig-of.sql \
 	sr/sql/add-illinois-ig.sql \
 	sr/sql/add-illinois-vts.sql \
@@ -61,6 +65,8 @@ AM_SQL = \
 	sr/sql/add-ohmetrodc-ig.sql \
 	sr/sql/add-osf-eg-of.sql \
 	sr/sql/add-osf-eg.sql \
+	sr/sql/add-princeton-ig.sql \
+	sr/sql/add-princeton-ig-of.sql \
 	sr/sql/add-renci-eg-of.sql \
 	sr/sql/add-renci-eg.sql \
 	sr/sql/add-rutgers-ig-of.sql \
@@ -88,10 +94,14 @@ AM_SQL = \
 	sr/sql/add-ukl-og.sql \
 	sr/sql/add-uky-ig-of.sql \
 	sr/sql/add-uky-ig.sql \
+	sr/sql/add-ukymcv-ig-of.sql \
+	sr/sql/add-ukymcv-ig.sql \
 	sr/sql/add-uky-pg.sql \
 	sr/sql/add-ukypks2-ig-of.sql \
 	sr/sql/add-ukypks2-ig.sql \
 	sr/sql/add-ukypks2-vts.sql \
+	sr/sql/add-umich-ig-of.sql \
+	sr/sql/add-umich-ig.sql \
 	sr/sql/add-umkc-ig-of.sql \
 	sr/sql/add-umkc-ig.sql \
 	sr/sql/add-utah-clab.sql \
@@ -103,6 +113,10 @@ AM_SQL = \
 	sr/sql/add-utahddc-ig.sql \
 	sr/sql/add-utc-ig-of.sql \
 	sr/sql/add-utc-ig.sql \
+	sr/sql/add-uwashington-ig-of.sql \
+	sr/sql/add-uwashington-ig.sql \
+	sr/sql/add-vt-ig-of.sql \
+	sr/sql/add-vt-ig.sql \
 	sr/sql/add-wall2.sql \
 	sr/sql/add-wisconsin-ig-of.sql \
 	sr/sql/add-wisconsin-ig.sql \
@@ -167,9 +181,6 @@ dist_srcerts_DATA = \
 	sr/certs/clemson-ig-cm.pem \
 	sr/certs/clemson-ig-of.pem \
 	sr/certs/clemson-og.pem \
-	sr/certs/colorado-ig-boss.pem \
-	sr/certs/colorado-ig-cm.pem \
-	sr/certs/colorado-ig-of.pem \
 	sr/certs/cornell-ig-boss.pem \
 	sr/certs/cornell-ig-cm.pem \
 	sr/certs/cornell-ig-of.pem \
@@ -232,9 +243,6 @@ dist_srcerts_DATA = \
 	sr/certs/ohmetrodc-ig-of.pem \
 	sr/certs/osf-eg-of.pem \
 	sr/certs/osf-eg.pem \
-	sr/certs/princeton-ig-boss.pem \
-	sr/certs/princeton-ig-cm.pem \
-	sr/certs/princeton-ig-of.pem \
 	sr/certs/renci-eg-of.pem \
 	sr/certs/renci-eg.pem \
 	sr/certs/rutgers-ig-boss.pem \
@@ -288,9 +296,6 @@ dist_srcerts_DATA = \
 	sr/certs/utc-ig-boss.pem \
 	sr/certs/utc-ig-cm.pem \
 	sr/certs/utc-ig-of.pem \
-	sr/certs/uwashington-ig-boss.pem \
-	sr/certs/uwashington-ig-cm.pem \
-	sr/certs/uwashington-ig-of.pem \
 	sr/certs/wall2-ca.pem \
 	sr/certs/wall2-cm.pem \
 	sr/certs/wisconsin-ig-boss.pem \
