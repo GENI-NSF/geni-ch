@@ -19,6 +19,7 @@ dist_tool_DATA = \
 	chapi_log.py \
 	chapi_utils.py \
 	client.py \
+	credential_tools.py \
 	cs_utils.py \
 	dbtest.py \
 	dbutils.py \

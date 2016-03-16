@@ -2,6 +2,7 @@
 templatesdir = $(pkgdatadir)/templates
 
 dist_templates_DATA = \
+	abac_credential.xml.tmpl \
 	apache2.conf.tmpl \
 	ch-ssl.conf.tmpl \
 	chapi.ini.tmpl \

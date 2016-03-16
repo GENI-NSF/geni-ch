@@ -31,7 +31,6 @@ from tools.cert_utils import *
 from chapi.GuardBase import GuardBase
 from chapi.Exceptions import *
 import types
-from ABAC import *
 from tools.SpeaksFor import determine_speaks_for
 from tools.ABACManager import ABACManager
 from ArgumentCheck import *
@@ -651,8 +650,8 @@ class SubjectInvocationCheck(InvocationCheck):
                                     cert_files_by_name = \
                                         {"ME" : self.cert_file}, 
                                     key_files_by_name = \
-                                        {"ME" : self.key_file},
-                                    manage_context = False)
+                                        {"ME" : self.key_file})
+
         if self._verbose:
             abac_manager._verbose = True
 
