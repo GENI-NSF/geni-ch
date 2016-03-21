@@ -1,5 +1,5 @@
 Name:           geni-chapi
-Version:        2.9
+Version:        2.10
 Release:        1%{?dist}
 Summary:        GENI clearinghouse
 BuildArch:      noarch
@@ -492,6 +492,8 @@ rm -rf $RPM_BUILD_ROOT
 %{_datadir}/%{name}/sr/sql/add-clemson-ig-of.sql
 %{_datadir}/%{name}/sr/sql/add-clemson-ig.sql
 %{_datadir}/%{name}/sr/sql/add-clemson-og.sql
+%{_datadir}/%{name}/sr/sql/add-colorado-ig-of.sql
+%{_datadir}/%{name}/sr/sql/add-colorado-ig.sql
 %{_datadir}/%{name}/sr/sql/add-cornell-ig-of.sql
 %{_datadir}/%{name}/sr/sql/add-cornell-ig.sql
 %{_datadir}/%{name}/sr/sql/add-cwru-ig.sql
@@ -504,6 +506,8 @@ rm -rf $RPM_BUILD_ROOT
 %{_datadir}/%{name}/sr/sql/add-gpo-ig-of.sql
 %{_datadir}/%{name}/sr/sql/add-gpo-ig.sql
 %{_datadir}/%{name}/sr/sql/add-gpo-og.sql
+%{_datadir}/%{name}/sr/sql/add-hawaii-ig-of.sql
+%{_datadir}/%{name}/sr/sql/add-hawaii-ig.sql
 %{_datadir}/%{name}/sr/sql/add-illinois-ig-of.sql
 %{_datadir}/%{name}/sr/sql/add-illinois-ig.sql
 %{_datadir}/%{name}/sr/sql/add-illinois-vts.sql
@@ -538,6 +542,8 @@ rm -rf $RPM_BUILD_ROOT
 %{_datadir}/%{name}/sr/sql/add-ohmetrodc-ig.sql
 %{_datadir}/%{name}/sr/sql/add-osf-eg-of.sql
 %{_datadir}/%{name}/sr/sql/add-osf-eg.sql
+%{_datadir}/%{name}/sr/sql/add-princeton-ig-of.sql
+%{_datadir}/%{name}/sr/sql/add-princeton-ig.sql
 %{_datadir}/%{name}/sr/sql/add-renci-eg-of.sql
 %{_datadir}/%{name}/sr/sql/add-renci-eg.sql
 %{_datadir}/%{name}/sr/sql/add-rutgers-ig-of.sql
@@ -566,9 +572,13 @@ rm -rf $RPM_BUILD_ROOT
 %{_datadir}/%{name}/sr/sql/add-uky-ig-of.sql
 %{_datadir}/%{name}/sr/sql/add-uky-ig.sql
 %{_datadir}/%{name}/sr/sql/add-uky-pg.sql
+%{_datadir}/%{name}/sr/sql/add-ukymcv-ig-of.sql
+%{_datadir}/%{name}/sr/sql/add-ukymcv-ig.sql
 %{_datadir}/%{name}/sr/sql/add-ukypks2-ig-of.sql
 %{_datadir}/%{name}/sr/sql/add-ukypks2-ig.sql
 %{_datadir}/%{name}/sr/sql/add-ukypks2-vts.sql
+%{_datadir}/%{name}/sr/sql/add-umich-ig-of.sql
+%{_datadir}/%{name}/sr/sql/add-umich-ig.sql
 %{_datadir}/%{name}/sr/sql/add-umkc-ig-of.sql
 %{_datadir}/%{name}/sr/sql/add-umkc-ig.sql
 %{_datadir}/%{name}/sr/sql/add-utah-clab.sql
@@ -581,6 +591,10 @@ rm -rf $RPM_BUILD_ROOT
 %{_datadir}/%{name}/sr/sql/add-utc-ig-of.sql
 %{_datadir}/%{name}/sr/sql/add-utc-ig.sql
 %{_datadir}/%{name}/sr/sql/add-wall2.sql
+%{_datadir}/%{name}/sr/sql/add-uwashington-ig-of.sql
+%{_datadir}/%{name}/sr/sql/add-uwashington-ig.sql
+%{_datadir}/%{name}/sr/sql/add-vt-ig-of.sql
+%{_datadir}/%{name}/sr/sql/add-vt-ig.sql
 %{_datadir}/%{name}/sr/sql/add-wisconsin-ig-of.sql
 %{_datadir}/%{name}/sr/sql/add-wisconsin-ig.sql
 %{_datadir}/%{name}/sr/sql/add-wsu-eg-of.sql
