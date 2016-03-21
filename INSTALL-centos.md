@@ -1,6 +1,12 @@
 Installation on CentOS 7
 ========================
 
+Introduction
+------------
+These instructions are for installing the GENI Clearing house.  Information on the Clearinghouse can be found at:
+
+http://groups.geni.net/geni/wiki/GeniClearinghouse
+
 Update the OS and install EPEL
 ------------------------------
 
@@ -73,6 +79,12 @@ sudo cp /etc/geni-chapi/example-parameters.json /etc/geni-chapi/parameters.json
 
 Edit `/etc/geni-chapi/parameters.json`:
 * Make sure to set `db_host` and `ch_host`!!
+
+Do this by adding a line of the format:
+
+"default" : "hostname.domain.tld"
+
+to the appropriate sections of the file.
 
 ```Shell
 sudo /usr/sbin/geni-install-templates
@@ -309,3 +321,7 @@ PORTAL_URN=urn:publicid:IDN+${AUTHORITY}+authority+portal
 geni-add-trusted-tool -d portal -u portal -p portal --host localhost \
     'GENI Portal' "${PORTAL_URN}"
 ```
+
+Open up Firewall if necessary
+-----------------------------
+If your machine is running firewall software it may be necessary for you to add rules to allow connections to the clearinghouse.
