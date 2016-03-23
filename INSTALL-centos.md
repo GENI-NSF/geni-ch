@@ -57,6 +57,13 @@ install the geni clearinghouse package:
 sudo yum install -y --nogpgcheck geni-chapi
 ```
 
+You can see exactly what files have been installed and what directories
+are used for the GENI clearinghouse using an rpm command as follows:
+
+```bash
+rpm -ql geni-chapi
+```
+
 Configure the GENI Clearinghose
 -------------------------------
 
@@ -68,13 +75,20 @@ Edit `/etc/geni-chapi/parameters.json`:
 * Make sure to set `db_host` and `ch_host`!!
 
 ```Shell
-sudo geni-install-templates
+sudo /usr/sbin/geni-install-templates
 ```
 
-(Optional) Install PostgreSQL database
---------------------------------------
+Install PostgreSQL database
+---------------------------
 
-See `install_postgresql.sh`
+If you do not already have PostgreSQL installed then you need to install it.
+PostgreSQL is required for the GENI Clearinghouse.
+
+To install PostgreSQL on the same host as the GENI Clearinghouse,
+see `/usr/share/geni-chapi/templates/install_postgresql.sh`. You should copy
+that file and edit the parameters near the top to change passwords to
+appropriate values for your environment. The passwords should match
+those specified in `/etc/geni-chapi/parameters.json`.
 
 Set up environment
 ------------------
@@ -93,6 +107,11 @@ chmod 0600 ~/.pgpass
 
 PSQL="psql -U $DB_USER -h $DB_HOST $DB_DATABASE"
 ```
+
+If you log out and log back in again you may need to set these environment
+variables again. Another approach is to add these values to your shell
+init file (`.bashrc`, `.cshrc`, etc.) as appropriate so that the values
+are set each time you log in.
 
 Initialize Database
 -------------------
@@ -177,6 +196,9 @@ Install AMSoil
 --------------
 
 ```Shell
+# Be sure wget is available
+sudo yum install -y wget
+
 cd $CH_DIR/chapi
 sudo wget https://github.com/GENI-NSF/geni-soil/archive/gpo-0.3.3.tar.gz
 sudo tar zxf gpo-0.3.3.tar.gz 
@@ -206,11 +228,14 @@ sudo systemctl restart httpd.service
 Install and configure postfix
 -----------------------------
 
+If postfix is not already installed on your host, then install/configure
+it as follows. If postfix is already installed you can go to the next step.
+
 ```Shell
-yum install -y postfix
+yum install -y postfix mailx
 ```
 
-Configure postfix for this host:
+Configure postfix for this host by running these commands:
 
 ```Shell
 postconf myhostname=<FQDN>
@@ -273,16 +298,14 @@ python /usr/share/geni-ch/chapi/chapi/tools/client.py \
 Add portal as a trusted tool
 ----------------------------
 
+When you have a GENI Portal that you want to test with this clearinghouse
+you must configure the clearinghouse to expect communication from the
+portal. Use this command, 
+
 ```Shell
+AUTHORITY=`geni-install-templates --print_parameter ch_authority`
+PORTAL_URN=urn:publicid:IDN+${AUTHORITY}+authority+portal
+
 geni-add-trusted-tool -d portal -u portal -p portal --host localhost \
-    'GENI Portal' urn:publicid:IDN+ch-tm.geni.net+authority+portal
+    'GENI Portal' "${PORTAL_URN}"
 ```
-
-Testing with a portal
----------------------
-
-Get the portal cert/key
-
-Get the KM cert/key
-
-Edit settings.php (or ini) to point to the new service registry

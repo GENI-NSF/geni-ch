@@ -1,5 +1,5 @@
 Name:           geni-chapi
-Version:        2.7
+Version:        2.10
 Release:        1%{?dist}
 Summary:        GENI clearinghouse
 BuildArch:      noarch
@@ -343,6 +343,7 @@ rm -rf $RPM_BUILD_ROOT
 %{_datadir}/%{name}/templates/ch-ssl.conf.tmpl
 %{_datadir}/%{name}/templates/chapi.ini.tmpl
 %{_datadir}/%{name}/templates/httpd.conf.tmpl
+%{_datadir}/%{name}/templates/install_postgresql.sh
 %{_datadir}/%{name}/templates/install_service_registry.sql.tmpl
 %{_datadir}/%{name}/templates/openssl.cnf.tmpl
 %{_datadir}/%{name}/templates/services.ini.tmpl
@@ -359,9 +360,6 @@ rm -rf $RPM_BUILD_ROOT
 %{_datadir}/%{name}/sr/certs/clemson-ig-cm.pem
 %{_datadir}/%{name}/sr/certs/clemson-ig-of.pem
 %{_datadir}/%{name}/sr/certs/clemson-og.pem
-%{_datadir}/%{name}/sr/certs/colorado-ig-boss.pem
-%{_datadir}/%{name}/sr/certs/colorado-ig-cm.pem
-%{_datadir}/%{name}/sr/certs/colorado-ig-of.pem
 %{_datadir}/%{name}/sr/certs/cornell-ig-boss.pem
 %{_datadir}/%{name}/sr/certs/cornell-ig-cm.pem
 %{_datadir}/%{name}/sr/certs/cornell-ig-of.pem
@@ -423,9 +421,6 @@ rm -rf $RPM_BUILD_ROOT
 %{_datadir}/%{name}/sr/certs/ohmetrodc-ig-of.pem
 %{_datadir}/%{name}/sr/certs/osf-eg-of.pem
 %{_datadir}/%{name}/sr/certs/osf-eg.pem
-%{_datadir}/%{name}/sr/certs/princeton-ig-boss.pem
-%{_datadir}/%{name}/sr/certs/princeton-ig-cm.pem
-%{_datadir}/%{name}/sr/certs/princeton-ig-of.pem
 %{_datadir}/%{name}/sr/certs/renci-eg-of.pem
 %{_datadir}/%{name}/sr/certs/renci-eg.pem
 %{_datadir}/%{name}/sr/certs/rutgers-ig-boss.pem
@@ -480,9 +475,6 @@ rm -rf $RPM_BUILD_ROOT
 %{_datadir}/%{name}/sr/certs/utc-ig-boss.pem
 %{_datadir}/%{name}/sr/certs/utc-ig-cm.pem
 %{_datadir}/%{name}/sr/certs/utc-ig-of.pem
-%{_datadir}/%{name}/sr/certs/uwashington-ig-boss.pem
-%{_datadir}/%{name}/sr/certs/uwashington-ig-cm.pem
-%{_datadir}/%{name}/sr/certs/uwashington-ig-of.pem
 %{_datadir}/%{name}/sr/certs/wall2-ca.pem
 %{_datadir}/%{name}/sr/certs/wall2-cm.pem
 %{_datadir}/%{name}/sr/certs/wisconsin-ig-boss.pem
@@ -500,6 +492,8 @@ rm -rf $RPM_BUILD_ROOT
 %{_datadir}/%{name}/sr/sql/add-clemson-ig-of.sql
 %{_datadir}/%{name}/sr/sql/add-clemson-ig.sql
 %{_datadir}/%{name}/sr/sql/add-clemson-og.sql
+%{_datadir}/%{name}/sr/sql/add-colorado-ig-of.sql
+%{_datadir}/%{name}/sr/sql/add-colorado-ig.sql
 %{_datadir}/%{name}/sr/sql/add-cornell-ig-of.sql
 %{_datadir}/%{name}/sr/sql/add-cornell-ig.sql
 %{_datadir}/%{name}/sr/sql/add-cwru-ig.sql
@@ -512,6 +506,8 @@ rm -rf $RPM_BUILD_ROOT
 %{_datadir}/%{name}/sr/sql/add-gpo-ig-of.sql
 %{_datadir}/%{name}/sr/sql/add-gpo-ig.sql
 %{_datadir}/%{name}/sr/sql/add-gpo-og.sql
+%{_datadir}/%{name}/sr/sql/add-hawaii-ig-of.sql
+%{_datadir}/%{name}/sr/sql/add-hawaii-ig.sql
 %{_datadir}/%{name}/sr/sql/add-illinois-ig-of.sql
 %{_datadir}/%{name}/sr/sql/add-illinois-ig.sql
 %{_datadir}/%{name}/sr/sql/add-illinois-vts.sql
@@ -546,6 +542,8 @@ rm -rf $RPM_BUILD_ROOT
 %{_datadir}/%{name}/sr/sql/add-ohmetrodc-ig.sql
 %{_datadir}/%{name}/sr/sql/add-osf-eg-of.sql
 %{_datadir}/%{name}/sr/sql/add-osf-eg.sql
+%{_datadir}/%{name}/sr/sql/add-princeton-ig-of.sql
+%{_datadir}/%{name}/sr/sql/add-princeton-ig.sql
 %{_datadir}/%{name}/sr/sql/add-renci-eg-of.sql
 %{_datadir}/%{name}/sr/sql/add-renci-eg.sql
 %{_datadir}/%{name}/sr/sql/add-rutgers-ig-of.sql
@@ -574,9 +572,13 @@ rm -rf $RPM_BUILD_ROOT
 %{_datadir}/%{name}/sr/sql/add-uky-ig-of.sql
 %{_datadir}/%{name}/sr/sql/add-uky-ig.sql
 %{_datadir}/%{name}/sr/sql/add-uky-pg.sql
+%{_datadir}/%{name}/sr/sql/add-ukymcv-ig-of.sql
+%{_datadir}/%{name}/sr/sql/add-ukymcv-ig.sql
 %{_datadir}/%{name}/sr/sql/add-ukypks2-ig-of.sql
 %{_datadir}/%{name}/sr/sql/add-ukypks2-ig.sql
 %{_datadir}/%{name}/sr/sql/add-ukypks2-vts.sql
+%{_datadir}/%{name}/sr/sql/add-umich-ig-of.sql
+%{_datadir}/%{name}/sr/sql/add-umich-ig.sql
 %{_datadir}/%{name}/sr/sql/add-umkc-ig-of.sql
 %{_datadir}/%{name}/sr/sql/add-umkc-ig.sql
 %{_datadir}/%{name}/sr/sql/add-utah-clab.sql
@@ -589,6 +591,10 @@ rm -rf $RPM_BUILD_ROOT
 %{_datadir}/%{name}/sr/sql/add-utc-ig-of.sql
 %{_datadir}/%{name}/sr/sql/add-utc-ig.sql
 %{_datadir}/%{name}/sr/sql/add-wall2.sql
+%{_datadir}/%{name}/sr/sql/add-uwashington-ig-of.sql
+%{_datadir}/%{name}/sr/sql/add-uwashington-ig.sql
+%{_datadir}/%{name}/sr/sql/add-vt-ig-of.sql
+%{_datadir}/%{name}/sr/sql/add-vt-ig.sql
 %{_datadir}/%{name}/sr/sql/add-wisconsin-ig-of.sql
 %{_datadir}/%{name}/sr/sql/add-wisconsin-ig.sql
 %{_datadir}/%{name}/sr/sql/add-wsu-eg-of.sql
