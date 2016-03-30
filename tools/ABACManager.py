@@ -35,6 +35,7 @@ from chapi_log import *
 from credential_tools import generate_credential
 import xml.dom.minidom as minidom
 import gcf.sfa.trust.certificate as cert
+from ABACKeyId import compute_keyid
 
 # Generate an ABACManager config file
 # [Principals]
@@ -105,11 +106,11 @@ def execute_abac_query(query_expr, id_certs, raw_assertions = []):
 
 # Get the key_id from a cert_file
 def get_keyid_from_certfile(cert_file):
-    c = cert.Certificate(filename=cert_file)
-    id = c.get_extension('subjectKeyIdentifier').replace(':', '').lower()
-    return id
+    return compute_keyid(cert_file)
+#    c = cert.Certificate(filename=cert_file)
+#    id = c.get_extension('subjectKeyIdentifier').replace(':', '').lower()
+#    return id
 
-# *** Why isn't the template getting installed? ***
 ABAC_TEMPLATE = "/usr/share/geni-chapi/templates/abac_credential.xml.tmpl"
 
 

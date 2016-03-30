@@ -216,6 +216,9 @@ rm -rf $RPM_BUILD_ROOT
 %{_datadir}/geni-ch/chapi/chapi/tools/ABACManager.py
 %{_datadir}/geni-ch/chapi/chapi/tools/ABACManager.pyc
 %{_datadir}/geni-ch/chapi/chapi/tools/ABACManager.pyo
+%{_datadir}/geni-ch/chapi/chapi/tools/ABACKeyId.py
+%{_datadir}/geni-ch/chapi/chapi/tools/ABACKeyId.pyc
+%{_datadir}/geni-ch/chapi/chapi/tools/ABACKeyId.pyo
 %{_datadir}/geni-ch/chapi/chapi/tools/CH_constants.py
 %{_datadir}/geni-ch/chapi/chapi/tools/CH_constants.pyc
 %{_datadir}/geni-ch/chapi/chapi/tools/CH_constants.pyo
