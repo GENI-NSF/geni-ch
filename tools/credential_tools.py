@@ -24,9 +24,12 @@
 # Module containing routines for generating credentials of different
 # kinds by instantiating templates
 
-import sys
 import json
-import gcf.sfa.trust.credential as cred
+import os
+import subprocess
+import sys
+import tempfile
+import xml.dom.minidom as minidom
 
 # Main: python credential_tools.py template_file mapping_file signer_cert signer_key output_filename=None
 def main(args):
@@ -61,12 +64,40 @@ def generate_credential(template, mapping, signer_cert, signer_key):
     for key, value in mapping.items():
         template = template.replace(key, value)
 
-    # Create and sign  credential and grab and return the resulting xml
-    ucred = cred.Credential(string=template)
-    ucred.set_issuer_keys(signer_key, signer_cert)
-    ucred.sign()
+    unsigned_cred_file = tempfile.NamedTemporaryFile(delete=False)
+    unsigned_cred_file.write(template)
+    unsigned_cred_file.close()
 
-    ucred_xml = ucred.get_xml()
+    CERT_END = '-----END CERTIFICATE-----\n'
+
+    signer_cert_contents = open(signer_cert).read()
+    cert_chain = signer_cert_contents.split(CERT_END);
+    cert_filenames = []
+    for cert_element in cert_chain:
+        if len(cert_element) == 0: continue;
+        cert_file = tempfile.NamedTemporaryFile(delete=False)
+        cert_filenames.append(cert_file.name)
+        cert_file.write(cert_element + CERT_END)
+        cert_file.close()
+
+    # Pull ref id from credential tag of credential template to be signed
+    template_doc = minidom.parseString(template)
+    credential_elts = template_doc.getElementsByTagName('credential')
+    if len(credential_elts) == 0 or credential_elts[0].getAttribute('xml:id') == '':
+        print "Template doesn't contain credential element with xml:id attribute"
+        return null
+    
+    refid = credential_elts[0].getAttribute('xml:id')
+    args = ['xmlsec1', '--sign', '--node-id', refid, '--privkey-pem', 
+            "%s,%s" % (signer_key, ",".join(cert_filenames)), 
+            unsigned_cred_file.name]
+    ucred_xml = subprocess.check_output(args)
+
+    # Delete temp files
+    for cert_filename in cert_filenames:
+        os.unlink(cert_filename)
+    os.unlink(unsigned_cred_file.name)
+
     return ucred_xml
 
 

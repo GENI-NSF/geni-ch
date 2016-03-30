@@ -34,7 +34,6 @@ import ABAC
 from chapi_log import *
 from credential_tools import generate_credential
 import xml.dom.minidom as minidom
-import gcf.sfa.trust.certificate as cert
 from ABACKeyId import compute_keyid
 
 # Generate an ABACManager config file
@@ -90,8 +89,12 @@ def create_abac_manager_config_file(id_cert_files, id_certs, id_key_files, \
     return config_filename, tempfiles
 
 # Run a subprocess and grab and return contents of standard output
-def grab_output_from_subprocess(args):
-    proc  = subprocess.Popen(args, stdout=subprocess.PIPE)
+def grab_output_from_subprocess(args, include_stderr=False):
+    if include_stderr:
+        proc  = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    else:
+        proc  = subprocess.Popen(args, stdout=subprocess.PIPE)
+
     result = ''
     chunk = proc.stdout.read()
     while chunk:
@@ -107,9 +110,6 @@ def execute_abac_query(query_expr, id_certs, raw_assertions = []):
 # Get the key_id from a cert_file
 def get_keyid_from_certfile(cert_file):
     return compute_keyid(cert_file)
-#    c = cert.Certificate(filename=cert_file)
-#    id = c.get_extension('subjectKeyIdentifier').replace(':', '').lower()
-#    return id
 
 ABAC_TEMPLATE = "/usr/share/geni-chapi/templates/abac_credential.xml.tmpl"
 
@@ -389,6 +389,10 @@ class ABACManager:
         if self._verbose:
             chapi_audit_and_log('ABAC', "Registering assertion file " + assertion_file)
 
+        if not self._validate_signed_document(assertion_file):
+            print "Invalid assertion file: " + assertion_file
+            return
+
         self._assertion_files.append(assertion_file)
         xml_doc = minidom.parse(assertion_file)
         head_node = xml_doc.getElementsByTagName('head')[0]
@@ -410,6 +414,11 @@ class ABACManager:
         assertion = self._transform_string(assertion)
         print "Asserting %s" % assertion
         self.register_assertion(assertion)
+
+    def _validate_signed_document(self, assertion_file):
+        args = ['xmlsec1', '--verify', assertion_file]
+        output = grab_output_from_subprocess(args, True)
+        return "FAIL" not in output
 
     # return list of user-readable credentials in proof chain
     def pretty_print_proof(self, proof):
