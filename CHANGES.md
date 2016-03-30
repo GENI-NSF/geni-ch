@@ -1,7 +1,15 @@
 # GENI Clearinghouse Release Notes
 
+# [Release 2.11](https://github.com/GENI-NSF/geni-ch/milestones/2.11)
+
 # [Release 2.10](https://github.com/GENI-NSF/geni-ch/milestones/2.10)
 
+* Update CentOS installation docs
+  ([#463](https://github.com/GENI-NSF/geni-ch/issues/463))
+* Drop chapi from make sync
+  ([#468](https://github.com/GENI-NSF/geni-ch/issues/468))
+* Add aggregate configurations for future install
+  ([#469](https://github.com/GENI-NSF/geni-ch/issues/469))
 
 # [Release 2.9](https://github.com/GENI-NSF/geni-ch/milestones/2.9)
 
