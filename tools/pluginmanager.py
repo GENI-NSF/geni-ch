@@ -73,10 +73,29 @@ class ConfigDB(object):
     def getAll(self):
         return self._mapping.keys()
 
+class RESTEntry(object):
+    def __init__(self, endpoint, rule, handler, defaults, methods):
+        self._endpoint = endpoint
+        self._rule = rule
+        self._handler = handler
+        self._defaults = defaults
+        self._methods = methods
+
 class RESTDispatcher(object):
+    _entries_by_endpoint = {}
+
     def add_url_rule(self, endpoint, rule, handler, defaults, methods):
         print "RESTDispatcher called: %s %s %s %s %s" % \
             (endpoint, rule, handler, defaults, methods)
+        entry = RESTEntry(endpoint, rule, handler, defaults, methods)
+        key = endpoint.split('/')[1]
+        self._entries_by_endpoint[key] = entry
+
+    def lookup_handler(self, endpoint):
+        key = endpoint.split('/')[1]
+        if key in self._entries_by_endpoint:
+            return self._entries_by_endpoint[key]._handler
+        return None
 
 class RESTServer(object):
 

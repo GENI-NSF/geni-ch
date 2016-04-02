@@ -114,8 +114,25 @@ def application(environ, start_response):
 #    print "ENV = " + str(environ)
     start_response('200 OK', [('Content-Type', 'text/html')])
 
+    # Try to handle REST invocations, registered with rpcserver
+    if 'PATH_INFO' in environ:
+        path_info = environ['PATH_INFO']
+        rpcserver = pm.getService('rpcserver')
+        handler = rpcserver.app.lookup_handler(path_info)
+        if handler:
+#            print "HANDLER = %s" % handler
+#            print "HANDLER = %s" % dir(handler)
+            pieces = path_info.split('/')
+            variety = pieces[2]
+            id = pieces[3]
+            output = handler(variety, id)
+#            print "OUTPUT = " + output
+            return [output]
+
+    # Otherwise it is an XMLRPC invocation
     xmlrpc_endpoint = environ['REQUEST_URI']
     xmlrpc = pm.getService('xmlrpc')
+#    print "ENDPOINTS = %s" % xmlrpc._entries_by_endpoint
     handler_entry = xmlrpc.lookupByEndpoint(xmlrpc_endpoint)
     handler = handler_entry._instance
 #    print "HANDLER = %s: %s, DIR = %s" % (type(handler), handler, dir(handler))
