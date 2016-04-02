@@ -92,9 +92,12 @@ class RESTDispatcher(object):
         self._entries_by_endpoint[key] = entry
 
     def lookup_handler(self, endpoint):
-        key = endpoint.split('/')[1]
-        if key in self._entries_by_endpoint:
-            return self._entries_by_endpoint[key]._handler
+        pieces = endpoint.split('/')
+        if len(pieces) > 2:
+            key = endpoint.split('/')[1]
+        
+            if key in self._entries_by_endpoint:
+                return self._entries_by_endpoint[key]._handler
         return None
 
 class RESTServer(object):
