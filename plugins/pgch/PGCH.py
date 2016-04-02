@@ -21,10 +21,9 @@
 # IN THE WORK.
 #----------------------------------------------------------------------
 
-import amsoil.core.log
-import amsoil.core.pluginmanager as pm
+import logging
+import tools.pluginmanager as pm
 import gcf.sfa.util.xrn
-from amsoil.core import serviceinterface
 from chapi.DelegateBase import DelegateBase
 from chapi.HandlerBase import HandlerBase
 from chapi.Exceptions import *
@@ -36,7 +35,7 @@ from tools.geni_utils import get_member_display_name
 import gcf.sfa.trust.gid as gid
 import gcf.geni.util.urn_util as urn_util
 
-pgch_logger = amsoil.core.log.getLogger('pgchv1')
+pgch_logger = logging.getLogger('pgchv1')
 
 class PGCHv1Handler(HandlerBase):
 

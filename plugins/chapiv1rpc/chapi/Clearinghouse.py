@@ -21,9 +21,8 @@
 # IN THE WORK.
 #----------------------------------------------------------------------
 
-import amsoil.core.log
-import amsoil.core.pluginmanager as pm
-from amsoil.core import serviceinterface
+import logging
+import tools.pluginmanager as pm
 from DelegateBase import DelegateBase
 from HandlerBase import HandlerBase
 from Exceptions import *
@@ -32,8 +31,7 @@ from tools.chapi_log import *
 from MethodContext import *
 import tools.CH_constants as CH
 
-ch_logger = amsoil.core.log.getLogger('chv1')
-xmlrpc = pm.getService('xmlrpc')
+ch_logger = logging.getLogger('chv1')
 
 # RPC handler for Clearinghouse API calls
 class CHv1Handler(HandlerBase):

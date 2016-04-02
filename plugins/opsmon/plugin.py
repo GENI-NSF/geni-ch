@@ -21,7 +21,7 @@
 # IN THE WORK.
 #----------------------------------------------------------------------
 
-import amsoil.core.pluginmanager as pm
+import tools.pluginmanager as pm
 from OpsMon import OpsMonHandler
 
 # Load the handler for the appropriate paths

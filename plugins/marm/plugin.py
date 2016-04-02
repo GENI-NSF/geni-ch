@@ -21,7 +21,7 @@
 # IN THE WORK.                                                                  
 #----------------------------------------------------------------------
 
-import amsoil.core.pluginmanager as pm
+import tools.pluginmanager as pm
 from MAv1Implementation import MAv1Implementation
 from MAv1Guard import MAv1Guard
 

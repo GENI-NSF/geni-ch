@@ -21,9 +21,7 @@
 # IN THE WORK.
 #----------------------------------------------------------------------
 
-import amsoil.core.log
-import amsoil.core.pluginmanager as pm
-from amsoil.core import serviceinterface
+import tools.pluginmanager as pm
 from DelegateBase import DelegateBase
 from HandlerBase import HandlerBase
 from Exceptions import *
@@ -31,7 +29,7 @@ from tools.cert_utils import *
 from tools.chapi_log import *
 from MethodContext import *
 
-ma_logger = amsoil.core.log.getLogger('mav1')
+ma_logger = logging.getLogger('mav1')
 xmlrpc = pm.getService('xmlrpc')
 
 # RPC handler for Member Authority (MA) API calls

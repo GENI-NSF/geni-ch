@@ -24,9 +24,8 @@
 # Base class for delegate bases that want to authenticate, authorize, 
 # Return GENI-style returns
 
-from amsoil.core import serviceinterface
-import amsoil.core.pluginmanager as pm
-from amsoil.config import expand_amsoil_path
+import tools.pluginmanager as pm
+# from amsoil.config import expand_amsoil_path
 from exceptions import *
 from Exceptions import *
 import traceback
@@ -37,7 +36,6 @@ class DelegateBase(object):
     def __init__(self, logger):
         self.logger = logger
 
-    @serviceinterface
     def auth(self, client_cert, credentials, slice_urn=None, privileges=()):
         # check variables
         if not isinstance(privileges, tuple):
@@ -50,7 +48,8 @@ class DelegateBase(object):
 
         # get the cert_root
         config = pm.getService("config")
-        cert_root = expand_amsoil_path(config.get("chapiv1rpc.ch_cert_root"))
+  #      cert_root = expand_amsoil_path(config.get("chapiv1rpc.ch_cert_root"))
+        cert_root = config.get("chapiv1rpc.ch_cert_root")
         
         if client_cert == None:
             # work around if the certificate could not be acquired due to the shortcommings of the werkzeug library

@@ -21,11 +21,9 @@
 # IN THE WORK.
 #----------------------------------------------------------------------
 
-from amsoil.core.exception import CoreException
-
 # Module containing a set of standard CH/SA/MA API exceptions
 
-class CHAPIv1BaseError(CoreException):
+class CHAPIv1BaseError(object):
     def __init__(self, code, name, description, comment):
         self.code = code
         self.name = name

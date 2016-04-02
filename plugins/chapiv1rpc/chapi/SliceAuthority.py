@@ -21,9 +21,8 @@
 # IN THE WORK.
 #----------------------------------------------------------------------
 
-import amsoil.core.log
-import amsoil.core.pluginmanager as pm
-from amsoil.core import serviceinterface
+import logging
+import tools.pluginmanager as pm
 from DelegateBase import DelegateBase
 from HandlerBase import HandlerBase
 from Exceptions import *
@@ -31,8 +30,7 @@ from tools.cert_utils import *
 from tools.chapi_log import *
 from MethodContext import *
 
-sa_logger = amsoil.core.log.getLogger('sav1')
-xmlrpc = pm.getService('xmlrpc')
+sa_logger = logging.getLogger('sav1')
 
 # Handler for SA APi. This version only handles the Slice service
 class SAv1Handler(HandlerBase):

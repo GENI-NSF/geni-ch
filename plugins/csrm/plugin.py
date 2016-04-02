@@ -21,7 +21,7 @@
 # IN THE WORK.
 #----------------------------------------------------------------------
 
-import amsoil.core.pluginmanager as pm
+import tools.pluginmanager as pm
 from CredentialStore import CSv1Delegate, CSv1Handler, CSv1Guard
 
 # Plugin for logging service implementation

@@ -36,7 +36,7 @@ from collections import defaultdict
 from sqlalchemy.orm import mapper
 import sqlalchemy
 
-import amsoil.core.pluginmanager as pm
+import tools.pluginmanager as pm
 
 from gcf.geni.util.urn_util import URN
 import gcf.sfa.trust.gid as sfa_gid
@@ -180,9 +180,9 @@ class MAv1Implementation(MAv1DelegateBase):
 
         all_optional_fields = dict(MA.optional_fields.items() + \
                                    MA.optional_key_fields.items())
-        import flask
+        from tools.geni_utils import get_server_url
         api_versions = \
-            {chapi.Parameters.VERSION_NUMBER : flask.request.url_root}
+            {chapi.Parameters.VERSION_NUMBER : get_server_url()}
         implementation_info = get_implementation_info(MA_LOG_PREFIX)
         version_info = {"VERSION": chapi.Parameters.VERSION_NUMBER,
                         "URN " : self.urn,

@@ -21,9 +21,7 @@
 # IN THE WORK.
 #----------------------------------------------------------------------
 
-import amsoil.core.log
-import amsoil.core.pluginmanager as pm
-from amsoil.core import serviceinterface
+import tools.pluginmanager as pm
 
 from CHDatabaseEngine import *
 from chapi.DelegateBase import DelegateBase
@@ -44,7 +42,7 @@ from datetime import datetime
 from dateutil.relativedelta import relativedelta
 
 
-logging_logger = amsoil.core.log.getLogger('logv1')
+logging_logger = logging.getLogger('logv1')
 xmlrpc = pm.getService('xmlrpc')
 
 class Loggingv1Handler(HandlerBase):

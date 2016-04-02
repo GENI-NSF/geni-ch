@@ -21,9 +21,8 @@
 # IN THE WORK.
 #----------------------------------------------------------------------
 
-import amsoil.core.log
-import amsoil.core.pluginmanager as pm
-from amsoil.core import serviceinterface
+import logging
+import tools.pluginmanager as pm
 from CHDatabaseEngine import *
 from chapi.DelegateBase import DelegateBase
 from chapi.HandlerBase import HandlerBase
@@ -40,7 +39,7 @@ from tools.chapi_log import *
 from tools.geni_constants import *
 from tools.policy_file_checker import PolicyFileChecker
 
-cs_logger = amsoil.core.log.getLogger('csv1')
+cs_logger = logging.getLogger('csv1')
 xmlrpc = pm.getService('xmlrpc')
 
 # Support for GENI Portal/Clearinghouse "Credential Store" a repository

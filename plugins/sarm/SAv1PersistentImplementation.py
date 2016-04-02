@@ -32,7 +32,7 @@ import uuid
 from sqlalchemy import *
 from sqlalchemy.orm import mapper
 
-import amsoil.core.pluginmanager as pm
+import tools.pluginmanager as pm
 
 import gcf.sfa.trust.gid as gid
 from gcf.sfa.trust.certificate import Certificate
@@ -114,9 +114,9 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                    primary_key = self.db.PROJECT_ATTRIBUTE_TABLE.c.id)
 
     def get_version(self, session):
-        import flask
+        from tools.geni_utils import get_server_url
         api_versions = \
-            {chapi.Parameters.VERSION_NUMBER : flask.request.url_root}
+            {chapi.Parameters.VERSION_NUMBER : get_server_url()}
         implementation_info = get_implementation_info(SA_LOG_PREFIX)
         version_info = {"VERSION" : chapi.Parameters.VERSION_NUMBER, 
                         "URN " : self.urn,

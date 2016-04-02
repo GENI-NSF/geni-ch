@@ -24,7 +24,7 @@
 # A series of utilities for constructing 
 #  ABACGuards and SubjectInvocationChecks
 
-import amsoil.core.pluginmanager as pm
+import tools.pluginmanager as pm
 from  sqlalchemy import *
 from  sqlalchemy.orm import aliased
 import threading

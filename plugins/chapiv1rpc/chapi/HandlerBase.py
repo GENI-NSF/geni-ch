@@ -21,22 +21,17 @@
 # IN THE WORK.
 #----------------------------------------------------------------------
 
-import amsoil.core.log
-import amsoil.core.pluginmanager as pm
+import tools.pluginmanager as pm
 from gcf.sfa.trust.certificate import Certificate
-from amsoil.core import serviceinterface
 import os
 import traceback
 from Exceptions import *
 
-xmlrpc = pm.getService('xmlrpc')
-
 # Base class for API handlers, which can have 
 #   plug-replaceable delegates and guards
-class HandlerBase(xmlrpc.Dispatcher):
+class HandlerBase(object):
 
     def __init__(self, logger):
-        super(HandlerBase, self).__init__(logger)
         self._logger = logger
         self._delegate = None
         self._guard = None
@@ -59,21 +54,17 @@ class HandlerBase(xmlrpc.Dispatcher):
         return self._trusted_roots
 
     # Interfaces for setting/getting the delegate (for implementing API calls)
-    @serviceinterface
     def setDelegate(self, delegate):
         self._delegate = delegate
     
-    @serviceinterface
     def getDelegate(self):
         return self._delegate
 
     # Interfaces for setting/getting the guard delegate 
     # (for authenticating/authorizing  API calls)
-    @serviceinterface
     def setGuard(self, guard):
         self._guard = guard
     
-    @serviceinterface
     def getGuard(self):
         return self._guard
 
@@ -82,9 +73,9 @@ class HandlerBase(xmlrpc.Dispatcher):
         """Assembles a GENI compliant return result for successful methods."""
         return { 'code' : 0, 'output' : '', 'value' : result  }
 
-    @serviceinterface
     def requestCertificate(self):
-        cert = super(HandlerBase, self).requestCertificate()
+        # *** get this from env ***
+        cert = ""
         if not cert:
             raise CHAPIv1AuthorizationError('Client certificate required but not provided')
         return cert

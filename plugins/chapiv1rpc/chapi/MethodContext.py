@@ -26,9 +26,10 @@ from tools.cert_utils import *
 from tools.guard_utils import *
 from tools.geni_constants import *
 from Exceptions import *
-import amsoil.core.pluginmanager as pm
+import tools.pluginmanager as pm
 import os
 import sys
+import threading
 import traceback
 #import thread, threading
 
@@ -64,6 +65,11 @@ import traceback
 #         mc._result = self._delegate.method(arg1, arg2, arg3, mc._session)
 #  return mc._result
 
+invocation_context = threading.local()
+
+def set_invocation_environment(environ):
+    invocation_context.environ = environ
+
 class MethodContext:
     def __init__(self, 
                  handler, # Handler object (e.g. SliceAuthority, MemberAuthority)
@@ -90,7 +96,8 @@ class MethodContext:
         self._client_cert = None
         self._email = None
         if self._cert_required:
-            self._client_cert = self._handler.requestCertificate()
+            self._client_cert = invocation_context.environ['SSL_CLIENT_CERT']
+#            self._client_cert = self._handler.requestCertificate()
             if not self._client_cert:
                 raise CHAPIv1ArgumentError("No request certificate")
 

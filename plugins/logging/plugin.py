@@ -21,7 +21,7 @@
 # IN THE WORK.
 #----------------------------------------------------------------------
 
-import amsoil.core.pluginmanager as pm
+import tools.pluginmanager as pm
 from Logging import Loggingv1Delegate, Loggingv1Handler, Loggingv1Guard
 
 # Plugin for logging service implementation

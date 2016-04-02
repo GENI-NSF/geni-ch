@@ -21,7 +21,7 @@
 # IN THE WORK.
 #----------------------------------------------------------------------
 
-import amsoil.core.pluginmanager as pm
+import tools.pluginmanager as pm
 import os, os.path
 from PGCH import PGCHv1Handler, PGCHv1Delegate
 

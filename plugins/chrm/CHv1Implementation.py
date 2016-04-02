@@ -31,7 +31,7 @@ from tools.chapi_utils import *
 from tools.chapi_log import *
 import chapi.Parameters
 import tools.CH_constants as CH
-import amsoil.core.pluginmanager as pm
+import tools.pluginmanager as pm
 
 # A simple fixed implemntation of the CH API. 
 # Only for testing. The real implementation is in CHv1PersistentImplementation
@@ -87,9 +87,9 @@ class CHv1Implementation(CHv1DelegateBase):
 
 
     def get_version(self, session):
-        import flask
+        from tools.geni_utils import get_server_url
         api_versions = \
-            {chapi.Parameters.VERSION_NUMBER : flask.request.url_root}
+            {chapi.Parameters.VERSION_NUMBER : get_server_url()}
         implementation_info = get_implementation_info(SR_LOG_PREFIX)
         version_info = {"VERSION": chapi.Parameters.VERSION_NUMBER,
                         "IMPLEMENTATION" : implementation_info,

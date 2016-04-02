@@ -45,6 +45,7 @@ nobase_dist_plugin_DATA = \
 	chapiv1rpc/chapi/SliceAuthority.py \
 	chapiv1rpc/chapi/__init__.py \
 	chapiv1rpc/plugin.py \
+	chrm/__init__.py \
 	chrm/ABACGuard.py \
 	chrm/ArgumentCheck.py \
 	chrm/CHDatabaseEngine.py \
@@ -54,18 +55,23 @@ nobase_dist_plugin_DATA = \
 	chrm/MANIFEST.json \
 	chrm/ServiceRegistry.py \
 	chrm/plugin.py \
+	csrm/__init__.py \
 	csrm/CredentialStore.py \
 	csrm/MANIFEST.json \
 	csrm/plugin.py \
+	flaskrest/__init__.py \
 	flaskrest/plugin.py \
 	flaskrest/MANIFEST.json \
+	logging/__init__.py \
 	logging/Logging.py \
 	logging/MANIFEST.json \
 	logging/plugin.py \
+	marm/__init__.py \
 	marm/MANIFEST.json \
 	marm/MAv1Guard.py \
 	marm/MAv1Implementation.py \
 	marm/plugin.py \
+	opsmon/__init__.py \
 	opsmon/plugin.py \
 	opsmon/MANIFEST.json \
 	opsmon/OpsMon.py \
@@ -73,6 +79,7 @@ nobase_dist_plugin_DATA = \
 	pgch/PGCH.py \
 	pgch/__init__.py \
 	pgch/plugin.py \
+	sarm/__init__.py \
 	sarm/MANIFEST.json \
 	sarm/SAv1Guard.py \
 	sarm/SAv1PersistentImplementation.py \
