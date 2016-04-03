@@ -37,15 +37,15 @@ class MAv1Handler(HandlerBase):
     def __init__(self):
         super(MAv1Handler, self).__init__(ma_logger)
 
-    def get_version(self):
+    def get_version(self, options={}):
         """Return version of MA API including object model
         This call is unprotected: no checking of credentials
         """
         with MethodContext(self, MA_LOG_PREFIX, 'get_version',
-                           {}, [], {}, read_only=True) as mc:
+                           {}, [], options, read_only=True) as mc:
             if not mc._error:
                 mc._result = \
-                    self._delegate.get_version(mc._session)
+                    self._delegate.get_version(options, mc._session)
         return mc._result
 
     # Generic V2 service methods
@@ -533,7 +533,7 @@ class MAv1DelegateBase(DelegateBase):
         super(MAv1DelegateBase, self).__init__(ma_logger)
     
     # This call is unprotected: no checking of credentials
-    def get_version(self):
+    def get_version(self, options):
         raise CHAPIv1NotImplementedError('')
 
 

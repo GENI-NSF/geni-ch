@@ -86,10 +86,10 @@ class CHv1Implementation(CHv1DelegateBase):
         ]
 
 
-    def get_version(self, session):
+    def get_version(self, options, session):
         from tools.geni_utils import get_server_url
         api_versions = \
-            {chapi.Parameters.VERSION_NUMBER : get_server_url()}
+            {chapi.Parameters.VERSION_NUMBER : get_server_url(options['ENVIRON'])}
         implementation_info = get_implementation_info(SR_LOG_PREFIX)
         version_info = {"VERSION": chapi.Parameters.VERSION_NUMBER,
                         "IMPLEMENTATION" : implementation_info,

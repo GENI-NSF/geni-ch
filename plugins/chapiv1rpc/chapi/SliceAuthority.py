@@ -42,12 +42,12 @@ class SAv1Handler(HandlerBase):
     # This call is unprotected: no checking of credentials
     # Return version information about this SA including what
     # services are provided and underlying object model
-    def get_version(self):
+    def get_version(self, options={}):
         with MethodContext(self, SA_LOG_PREFIX, 'get_version',
-                           {}, [], {}, read_only=True) as mc:
+                           {}, [], options, read_only=True) as mc:
             if not mc._error:
                 mc._result = \
-                    self._delegate.get_version(mc._session)
+                    self._delegate.get_version(options, mc._session)
         return mc._result
 
     # Generic V2 service methods
@@ -640,7 +640,7 @@ class SAv1DelegateBase(DelegateBase):
     def __init__(self):
         super(SAv1DelegateBase, self).__init__(sa_logger)
     
-    def get_version(self, session):
+    def get_version(self, options, session):
         raise CHAPIv1NotImplementedError('')
 
     # This call is protected

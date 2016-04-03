@@ -49,13 +49,11 @@ def urn_for_slice(slice_name, project_name):
         (authority, project_name, slice_name)
 
 # Pull the URL of the server from the environment
-def get_server_url():
-    from plugins.chapiv1rpc.chapi.MethodContext import invocation_context
-    if 'SCRIPT_URI' in invocation_context.environ:
-        return invocation_context.environ['SCRIPT_URI']
+def get_server_url(environ):
+    if 'SCRIPT_URI' in environ:
+        return environ['SCRIPT_URI']
     else:
-        return "https://%s%s" % (invocation_context.environ['HTTP_HOST'], 
-                                  invocation_context.environ['REQUEST_URI'])
+        return "https://%s%s" % (environ['HTTP_HOST'],  environ['REQUEST_URI'])
     
 # Return the user display name
 # First, try '_GENI_MEMBER_DISPLAYNAME'

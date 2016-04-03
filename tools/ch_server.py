@@ -71,21 +71,22 @@
 
 from flup.server.fcgi import WSGIServer
 import xmlrpclib
-from plugins.chapiv1rpc.chapi.MethodContext import set_invocation_environment
 
 import tools.pluginmanager as pm
 pm.registerService('xmlrpc', pm.XMLRPCHandler())
 pm.registerService('config', pm.ConfigDB())
 pm.registerService('rpcserver', pm.RESTServer())
+
 import plugins.chapiv1rpc.plugin
 import plugins.chrm.plugin
 import plugins.csrm.plugin
 import plugins.flaskrest.plugin
 import plugins.logging.plugin
-import plugins.marm.plugin
 import plugins.opsmon.plugin
+import plugins.marm.plugin
 import plugins.pgch.plugin
 import plugins.sarm.plugin
+
 
 
 initialized = False
@@ -98,8 +99,8 @@ def initialize():
         plugins.csrm.plugin.setup()
         plugins.flaskrest.plugin.setup()
         plugins.logging.plugin.setup()
-        plugins.marm.plugin.setup()
         plugins.opsmon.plugin.setup()
+        plugins.marm.plugin.setup()
         plugins.pgch.plugin.setup()
         plugins.sarm.plugin.setup()
         print "INITIALIZED CH_SERVER"
@@ -109,27 +110,22 @@ def application(environ, start_response):
 
     initialize()
 
-    set_invocation_environment(environ)
-
 #    print "ENV = " + str(environ)
     start_response('200 OK', [('Content-Type', 'text/html')])
 
     # Try to handle REST invocations, registered with rpcserver
-    if 'PATH_INFO' in environ:
-        path_info = environ['PATH_INFO']
-        rpcserver = pm.getService('rpcserver')
-        handler = rpcserver.app.lookup_handler(path_info)
-        if handler:
-#            print "HANDLER = %s" % handler
-#            print "HANDLER = %s" % dir(handler)
-            pieces = path_info.split('/')
-            variety = pieces[2]
-            id = pieces[3]
-            output = handler(variety, id)
-#            print "OUTPUT = " + output
-            return [output]
+    rest_output = handle_REST_call(environ)
+    if rest_output: 
+        # It is a REST invocation
+        return [rest_output]
+    else:
+        # Otherwise it is an XMLRPC invocation
+        xmlrpc_output = handle_XMLRPC_call(environ)
+        return [xmlrpc_output]
 
-    # Otherwise it is an XMLRPC invocation
+# Handle XMLRPC invocation
+def handle_XMLRPC_call(environ):
+
     xmlrpc_endpoint = environ['REQUEST_URI']
     xmlrpc = pm.getService('xmlrpc')
 #    print "ENDPOINTS = %s" % xmlrpc._entries_by_endpoint
@@ -147,10 +143,42 @@ def application(environ, start_response):
     args = decoded_data[0]
     method = decoded_data[1]
     fcn = eval("handler.%s" % method)
+
+    # Add calling environment into options argument (if there is one)
+    fcn_args = fcn.__code__.co_varnames
+    if 'options' in fcn_args:
+        options_index = fcn_args.index('options')
+        options_index = options_index-1 # Skip over 'self' fcn argument
+#        print "ARGS = %s INDEX = %s FCN_ARGS = %s" % (args, options_index, fcn_args)
+        if len(args) <= options_index:
+            args = ({},) # Empty default options argument
+        args[options_index]['ENVIRON'] = environ
+
+    print "FCN = %s, ARGS = %s" % (fcn, args)
     method_response = fcn(*args)
 #    print "RESPONSE = %s" % method_response
     response =  xmlrpclib.dumps((method_response, ), allow_none=True)
-    return [response]
+    return response
+
+# Determine if this is a REST call. If so, make the call and return output
+def handle_REST_call(environ):
+    if 'PATH_INFO' in environ:
+        path_info = environ['PATH_INFO']
+        rpcserver = pm.getService('rpcserver')
+        handler = rpcserver.app.lookup_handler(path_info)
+        if handler:
+#            print "HANDLER = %s" % handler
+#            print "HANDLER = %s" % dir(handler)
+            pieces = path_info.split('/')
+            if len(pieces) < 4 :
+                return None
+            variety = pieces[2]
+            id = pieces[3]
+            output = handler(variety, id)
+#            print "OUTPUT = " + output
+            return output
+        return None
+
 
 
 

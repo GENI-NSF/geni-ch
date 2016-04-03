@@ -41,9 +41,7 @@ from sqlalchemy import *
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
 
-
 logging_logger = logging.getLogger('logv1')
-xmlrpc = pm.getService('xmlrpc')
 
 class Loggingv1Handler(HandlerBase):
 

@@ -113,10 +113,10 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         mapper(ProjectAttribute, self.db.PROJECT_ATTRIBUTE_TABLE, \
                    primary_key = self.db.PROJECT_ATTRIBUTE_TABLE.c.id)
 
-    def get_version(self, session):
+    def get_version(self, options, session):
         from tools.geni_utils import get_server_url
         api_versions = \
-            {chapi.Parameters.VERSION_NUMBER : get_server_url()}
+            {chapi.Parameters.VERSION_NUMBER : get_server_url(options['ENVIRON'])}
         implementation_info = get_implementation_info(SA_LOG_PREFIX)
         version_info = {"VERSION" : chapi.Parameters.VERSION_NUMBER, 
                         "URN " : self.urn,

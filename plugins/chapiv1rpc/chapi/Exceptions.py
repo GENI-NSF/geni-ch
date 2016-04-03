@@ -21,9 +21,19 @@
 # IN THE WORK.
 #----------------------------------------------------------------------
 
+import logging
+
 # Module containing a set of standard CH/SA/MA API exceptions
 
-class CHAPIv1BaseError(object):
+class CoreException(Exception):
+  def __init__ (self):
+    self._logged = False
+
+  def log(self, logh, msg, level = logging.ERROR):
+    logh.log(level, msg)
+    self._logged = True
+
+class CHAPIv1BaseError(CoreException):
     def __init__(self, code, name, description, comment):
         self.code = code
         self.name = name

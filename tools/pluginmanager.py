@@ -21,6 +21,10 @@
 # IN THE WORK.
 #----------------------------------------------------------------------
 
+# A set of classes to replace services provided by AMsoil.
+# Simplified to support only use cases needed by GENI Clearinghouse
+
+# All XMLRPC services registered
 ALL_SERVICES = {}
 
 def registerService(name, service):
@@ -30,6 +34,7 @@ def getService(name):
     return ALL_SERVICES[name]
 
 # Stored in plugin manager as 'xmlrpc' service
+# Manages link between registered end points and handlers
 class XMLRPCHandler(object):
 
     _entries = []
@@ -48,6 +53,7 @@ class XMLRPCHandler(object):
     def lookupByServiceName(self, service_name):
         return self._entries_by_service_name[service_name]
 
+# An XMLRPC entry: the service name, handler, endpoint
 class XMLRPCEntry(object):
     def __init__(self, unique_service_name, instance, endpoint):
         self._unique_service_name = unique_service_name
@@ -55,6 +61,7 @@ class XMLRPCEntry(object):
         self._endpoint = endpoint
 
 # Stored in plugin manager as 'config' service
+# Maintains a list of mappings of keys to values
 class ConfigDB(object):
     _mapping = {}
 
@@ -73,6 +80,8 @@ class ConfigDB(object):
     def getAll(self):
         return self._mapping.keys()
 
+# An entry registering a REST service: 
+#    endpoint and handler are all we really care about
 class RESTEntry(object):
     def __init__(self, endpoint, rule, handler, defaults, methods):
         self._endpoint = endpoint
@@ -81,16 +90,20 @@ class RESTEntry(object):
         self._defaults = defaults
         self._methods = methods
 
+# Dispatcher for REST calls, based on 
 class RESTDispatcher(object):
     _entries_by_endpoint = {}
 
+    # Register a dispatch rule mapping key (first entry) to handler
     def add_url_rule(self, endpoint, rule, handler, defaults, methods):
-        print "RESTDispatcher called: %s %s %s %s %s" % \
-            (endpoint, rule, handler, defaults, methods)
+#        print "RESTDispatcher called: %s %s %s %s %s" % \
+#            (endpoint, rule, handler, defaults, methods)
         entry = RESTEntry(endpoint, rule, handler, defaults, methods)
+        #  /foo/bar/baz ==> foo as key
         key = endpoint.split('/')[1]
         self._entries_by_endpoint[key] = entry
 
+    # Lookup handler for given endpoint (/foo/bar/baz => key = foo)
     def lookup_handler(self, endpoint):
         pieces = endpoint.split('/')
         if len(pieces) > 2:
@@ -100,10 +113,8 @@ class RESTDispatcher(object):
                 return self._entries_by_endpoint[key]._handler
         return None
 
+# The REST server really just delegates to a dispatcher
 class RESTServer(object):
 
     app = RESTDispatcher()
     
-    def runServer(self):
-        print "FlaskServer.runServer"
-        pass

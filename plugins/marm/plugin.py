@@ -30,10 +30,7 @@ from MAv1Guard import MAv1Guard
 
 def setup():
 
-    config = pm.getService('config')
-
     delegate = MAv1Implementation()
-
     guard = MAv1Guard()
 
     handler = pm.getService('mav1handler')

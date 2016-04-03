@@ -92,7 +92,8 @@ class DelegateBase(object):
 
         """
         sopt = dict()
-        sfkey = 'speaking_for'
-        if sfkey in options:
-            sopt[sfkey] = options[sfkey]
+        sfkeys = ['ENVIRON', 'speaking_for']
+        for sfkey in sfkeys:
+            if sfkey in options:
+                sopt[sfkey] = options[sfkey]
         return sopt

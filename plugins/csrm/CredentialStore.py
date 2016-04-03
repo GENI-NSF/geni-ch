@@ -40,7 +40,6 @@ from tools.geni_constants import *
 from tools.policy_file_checker import PolicyFileChecker
 
 cs_logger = logging.getLogger('csv1')
-xmlrpc = pm.getService('xmlrpc')
 
 # Support for GENI Portal/Clearinghouse "Credential Store" a repository
 # of assertions from which privileges can be derived
