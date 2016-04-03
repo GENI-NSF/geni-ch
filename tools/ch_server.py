@@ -154,7 +154,7 @@ def handle_XMLRPC_call(environ):
             args = ({},) # Empty default options argument
         args[options_index]['ENVIRON'] = environ
 
-    print "FCN = %s, ARGS = %s" % (fcn, args)
+#    print "FCN = %s, ARGS = %s" % (fcn, args)
     method_response = fcn(*args)
 #    print "RESPONSE = %s" % method_response
     response =  xmlrpclib.dumps((method_response, ), allow_none=True)

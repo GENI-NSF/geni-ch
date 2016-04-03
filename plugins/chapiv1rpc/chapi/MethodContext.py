@@ -91,9 +91,6 @@ class MethodContext:
         self._client_cert = None
         self._email = None
         if self._cert_required:
-            print "OPTIONS = %s" % options
-            print "HANDLER = %s METHOD = %s" % (handler, method_name)
-            print "%s %s" % ('ENVIRON' in options, 'SSL_CLIENT_CERT' in options['ENVIRON'])
             if 'ENVIRON' in options and 'SSL_CLIENT_CERT' in options['ENVIRON']:
                 self._client_cert = options['ENVIRON']['SSL_CLIENT_CERT']
 #            self._client_cert = self._handler.requestCertificate()
