@@ -69,7 +69,6 @@
 #    'HTTP_ACCEPT_ENCODING': 'gzip'
 #    'SSL_SERVER_CERT': ... (PEM of server cert
 
-from flup.server.fcgi import WSGIServer
 import xmlrpclib
 
 import tools.pluginmanager as pm
