@@ -245,4 +245,3 @@ def get_cert_from_file(filename):
     if cert.count('-----BEGIN CERTIFICATE') == 0:
         cert = '-----BEGIN CERTIFICATE-----\n%s\n-----END CERTIFICATE-----' % cert
     return cert
-

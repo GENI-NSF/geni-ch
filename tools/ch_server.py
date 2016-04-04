@@ -87,7 +87,9 @@ import plugins.marm.plugin
 import plugins.pgch.plugin
 import plugins.sarm.plugin
 
+from tools.chapi_log import *
 
+# import cert_registry
 
 initialized = False
 
@@ -103,7 +105,7 @@ def initialize():
         plugins.marm.plugin.setup()
         plugins.pgch.plugin.setup()
         plugins.sarm.plugin.setup()
-        print "INITIALIZED CH_SERVER"
+        chapi_info("CH_SERVER",  "INITIALIZED CH_SERVER")
         initialized = True
 
 def application(environ, start_response):
@@ -154,8 +156,29 @@ def handle_XMLRPC_call(environ):
             args = ({},) # Empty default options argument
         args[options_index]['ENVIRON'] = environ
 
-#    print "FCN = %s, ARGS = %s" % (fcn, args)
+        
+#    cert_registry.register_client_cert(environ['SSL_CLIENT_CERT'])
+#    print "XMLRPC.FCN = %s, ARGS = %s" % (fcn, args)
+#    print "LOOKUP-A %s" % cert_registry.lookup_client_cert()
+
+#    print "LOOKUP-A(2) %s" % cert_registry.lookup_client_cert()
+#    print "LOOKUP-A(3) %s" % cert_registry.lookup_client_cert()
+#    print "LOOKUP-A(4) %s" % cert_registry.lookup_client_cert()
+    
+#    from plugins.chapiv1rpc.chapi.X import foo
+#    print "FOO = %s" % foo()
+
+#    print "ARGS = %s" % (args,)
+#    mr = handler.lookup_members(*args)
+#    print "MR = %s" % mr
+#    import plugins.chapiv1rpc.chapi.SliceAuthority as SA
+#    new_sa_handler = SA.SAv1Handler()
+#    new_sa_handler.setDelegate(handler.getDelegate())
+#    mr2 = new_sa_handler.lookup_members(*args)
+#    print "MR2 = %s" % mr2
+
     method_response = fcn(*args)
+#    print "LOOKUP-B %s" % cert_registry.lookup_client_cert()
 #    print "RESPONSE = %s" % method_response
     response =  xmlrpclib.dumps((method_response, ), allow_none=True)
     return response

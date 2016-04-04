@@ -15,6 +15,7 @@ dist_tool_DATA = \
 	SA_constants.py \
 	SpeaksFor.py \
 	__init__.py \
+	cert_registry.py \
 	cert_utils.py \
 	ch_server.py \
 	ch_server.wsgi \

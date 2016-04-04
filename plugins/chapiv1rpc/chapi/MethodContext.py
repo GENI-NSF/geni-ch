@@ -31,7 +31,8 @@ import os
 import sys
 import threading
 import traceback
-#import thread, threading
+
+import tools.cert_registry as cert_registry
 
 # Class to wrap all calls from handlers to delegates
 # Holding method context
@@ -86,6 +87,11 @@ class MethodContext:
         self._read_only = read_only
         self._provided_session = (session != None)
         self._cert_required = cert_required
+
+        import thread, threading
+#        print "MC: handler %s method %s thread_id %s threading_id %s " % \
+#            (handler, method_name, thread.get_ident(), threading.current_thread().ident)
+#        print "MC: cert %s" % cert_registry.lookup_client_cert()
 
         # Grab the request certificate and email at initialization
         self._client_cert = None
