@@ -143,7 +143,7 @@ def handle_XMLRPC_call(environ):
 #    print "DECODED_DATA = " + str(decoded_data)
     args = decoded_data[0]
     method = decoded_data[1]
-    fcn = eval("handler.%s" % method)
+    fcn = getattr(handler, method)
 
     # Add calling environment into options argument (if there is one)
     fcn_args = fcn.__code__.co_varnames
