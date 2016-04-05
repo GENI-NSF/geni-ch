@@ -88,7 +88,7 @@ import plugins.sarm.plugin
 
 from tools.chapi_log import *
 
-# import cert_registry
+import tools.cert_registry as cert_registry
 
 initialized = False
 
@@ -153,10 +153,10 @@ def handle_XMLRPC_call(environ):
 #        print "ARGS = %s INDEX = %s FCN_ARGS = %s" % (args, options_index, fcn_args)
         if len(args) <= options_index:
             args = ({},) # Empty default options argument
-        args[options_index]['ENVIRON'] = environ
+        # args[options_index]['ENVIRON'] = environ
 
         
-#    cert_registry.register_client_cert(environ['SSL_CLIENT_CERT'])
+    cert_registry.register_client_cert(environ['SSL_CLIENT_CERT'])
 #    print "XMLRPC.FCN = %s, ARGS = %s" % (fcn, args)
 #    print "LOOKUP-A %s" % cert_registry.lookup_client_cert()
 

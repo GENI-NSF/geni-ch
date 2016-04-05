@@ -32,8 +32,6 @@ import sys
 import threading
 import traceback
 
-import tools.cert_registry as cert_registry
-
 # Class to wrap all calls from handlers to delegates
 # Holding method context
 # 
@@ -97,9 +95,9 @@ class MethodContext:
         self._client_cert = None
         self._email = None
         if self._cert_required:
-            if 'ENVIRON' in options and 'SSL_CLIENT_CERT' in options['ENVIRON']:
-                self._client_cert = options['ENVIRON']['SSL_CLIENT_CERT']
-#            self._client_cert = self._handler.requestCertificate()
+#            if 'ENVIRON' in options and 'SSL_CLIENT_CERT' in options['ENVIRON']:
+#                self._client_cert = options['ENVIRON']['SSL_CLIENT_CERT']
+            self._client_cert = self._handler.requestCertificate()
             if not self._client_cert:
                 raise CHAPIv1ArgumentError("No request certificate")
 
