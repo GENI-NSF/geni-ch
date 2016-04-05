@@ -32,6 +32,7 @@ nobase_plugin_DATA = \
 	chapiv1rpc/chapi/Parameters.py
 
 nobase_dist_plugin_DATA = \
+	__init__.py \
 	chapiv1rpc/MANIFEST.json \
 	chapiv1rpc/__init__.py \
 	chapiv1rpc/chapi/Clearinghouse.py \
