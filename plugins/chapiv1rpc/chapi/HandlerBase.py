@@ -27,6 +27,8 @@ import os
 import traceback
 from Exceptions import *
 
+import tools.cert_registry as cert_registry
+
 # Base class for API handlers, which can have 
 #   plug-replaceable delegates and guards
 class HandlerBase(object):
@@ -75,7 +77,7 @@ class HandlerBase(object):
 
     def requestCertificate(self):
         # *** get this from env ***
-        cert = ""
+        cert = cert_registry.lookup_client_cert()
         if not cert:
             raise CHAPIv1AuthorizationError('Client certificate required but not provided')
         return cert
