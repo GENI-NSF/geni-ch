@@ -151,7 +151,7 @@ Initialize Services
 -------------------
 
 ```Shell
-for srv in sr sa pa ma logging cs pgch km portal
+for srv in sr sa pa ma logging cs km portal
 do
     sudo mkdir -p $CH_DIR/$srv
 done
@@ -214,7 +214,7 @@ sudo chmod a+w /var/log/geni-chapi/chapi.log
 
 # Set up amsoil links to CHAPI plugins
 cd $CH_DIR/chapi/AMsoil/src/plugins
-for pl in chrm chapiv1rpc sarm marm csrm logging opsmon flaskrest pgch
+for pl in chrm chapiv1rpc sarm marm csrm logging opsmon flaskrest
 do
     sudo ln -s $CH_DIR/chapi/chapi/plugins/$pl .
 done

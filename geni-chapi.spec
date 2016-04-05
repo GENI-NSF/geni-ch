@@ -193,16 +193,6 @@ rm -rf $RPM_BUILD_ROOT
 %{_datadir}/geni-ch/chapi/chapi/plugins/opsmon/plugin.py
 %{_datadir}/geni-ch/chapi/chapi/plugins/opsmon/plugin.pyc
 %{_datadir}/geni-ch/chapi/chapi/plugins/opsmon/plugin.pyo
-%{_datadir}/geni-ch/chapi/chapi/plugins/pgch/MANIFEST.json
-%{_datadir}/geni-ch/chapi/chapi/plugins/pgch/PGCH.py
-%{_datadir}/geni-ch/chapi/chapi/plugins/pgch/PGCH.pyc
-%{_datadir}/geni-ch/chapi/chapi/plugins/pgch/PGCH.pyo
-%{_datadir}/geni-ch/chapi/chapi/plugins/pgch/__init__.py
-%{_datadir}/geni-ch/chapi/chapi/plugins/pgch/__init__.pyc
-%{_datadir}/geni-ch/chapi/chapi/plugins/pgch/__init__.pyo
-%{_datadir}/geni-ch/chapi/chapi/plugins/pgch/plugin.py
-%{_datadir}/geni-ch/chapi/chapi/plugins/pgch/plugin.pyc
-%{_datadir}/geni-ch/chapi/chapi/plugins/pgch/plugin.pyo
 %{_datadir}/geni-ch/chapi/chapi/plugins/sarm/MANIFEST.json
 %{_datadir}/geni-ch/chapi/chapi/plugins/sarm/SAv1Guard.py
 %{_datadir}/geni-ch/chapi/chapi/plugins/sarm/SAv1Guard.pyc
@@ -276,10 +266,6 @@ rm -rf $RPM_BUILD_ROOT
 %{_datadir}/geni-ch/chapi/chapi/tools/multiclient.py
 %{_datadir}/geni-ch/chapi/chapi/tools/multiclient.pyc
 %{_datadir}/geni-ch/chapi/chapi/tools/multiclient.pyo
-%{_datadir}/geni-ch/chapi/chapi/tools/pgch_client.py
-%{_datadir}/geni-ch/chapi/chapi/tools/pgch_client.pyc
-%{_datadir}/geni-ch/chapi/chapi/tools/pgch_client.pyo
-%{_datadir}/geni-ch/chapi/chapi/tools/pgch_testall.sh
 %{_datadir}/geni-ch/chapi/chapi/tools/policy_file_checker.py
 %{_datadir}/geni-ch/chapi/chapi/tools/policy_file_checker.pyc
 %{_datadir}/geni-ch/chapi/chapi/tools/policy_file_checker.pyo
