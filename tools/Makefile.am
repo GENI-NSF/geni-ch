@@ -32,14 +32,12 @@ dist_tool_DATA = \
 	mapped_tables.py \
 	manage_service_attributes.py \
 	multiclient.py \
-	pgch_client.py \
 	pluginmanager.py \
 	policy_file_checker.py \
-	portal_client.py 
+	portal_client.py
 
 dist_tool_SCRIPTS = \
 	install_ch \
 	install_chapi \
 	install_db \
-	pgch_testall.sh \
 	testall.sh
