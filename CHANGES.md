@@ -2,6 +2,25 @@
 
 # [Release 2.11](https://github.com/GENI-NSF/geni-ch/milestones/2.11)
 
+## Installation Notes
+
+* Remove the PGCH AMsoil plugin link if it exists
+
+    ```
+    sudo rm /usr/share/geni-ch/chapi/AMsoil/src/plugins/pgch
+    ```
+
+* Remove the installed pgch directory if it exists
+
+    ```
+    sudo rm -rf /usr/share/geni-ch/chapi/chapi/plugins/pgch
+    ```
+
+## Changes
+
+* Remove PGCH service
+  ([#474](https://github.com/GENI-NSF/geni-ch/issues/474))
+
 # [Release 2.10](https://github.com/GENI-NSF/geni-ch/milestones/2.10)
 
 * Update CentOS installation docs
