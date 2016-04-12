@@ -76,10 +76,6 @@ nobase_dist_plugin_DATA = \
 	opsmon/plugin.py \
 	opsmon/MANIFEST.json \
 	opsmon/OpsMon.py \
-	pgch/MANIFEST.json \
-	pgch/PGCH.py \
-	pgch/__init__.py \
-	pgch/plugin.py \
 	sarm/__init__.py \
 	sarm/MANIFEST.json \
 	sarm/SAv1Guard.py \
