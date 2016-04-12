@@ -40,7 +40,7 @@ datadir = @pkgdatadir@
 
 
 [services]
-services=sr,sa,pa,ma,logging,cs,km,portal,pgch
+services=sr,sa,pa,ma,logging,cs,km,portal
 
 [ca]
 conf=%(datadir)s/CA/openssl.cnf
@@ -92,7 +92,3 @@ type=8
 [portal]
 cert=%(datadir)s/portal/portal-cert.pem
 key=%(datadir)s/portal/portal-key.pem
-
-[pgch]
-url=https://%(servicehost)s:8443/
-type=9
