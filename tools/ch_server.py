@@ -111,16 +111,26 @@ def application(environ, start_response):
 
 #    print "ENV = " + str(environ)
     start_response('200 OK', [('Content-Type', 'text/html')])
+    try:
+        result = handleCall(environ)
+        return [result]
+    except Exception as e:
+        fault = xmlrpclib.Fault(1, str(e))
+        response =  xmlrpclib.dumps(fault, allow_none=True)
+        return [response]
 
+
+def handleCall(environ):
     # Try to handle REST invocations, registered with rpcserver
     rest_output = handle_REST_call(environ)
     if rest_output: 
         # It is a REST invocation
-        return [rest_output]
+        return rest_output
     else:
         # Otherwise it is an XMLRPC invocation
         xmlrpc_output = handle_XMLRPC_call(environ)
-        return [xmlrpc_output]
+        return xmlrpc_output
+
 
 # Handle XMLRPC invocation
 def handle_XMLRPC_call(environ):
