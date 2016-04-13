@@ -83,7 +83,6 @@ import plugins.flaskrest.plugin
 import plugins.logging.plugin
 import plugins.opsmon.plugin
 import plugins.marm.plugin
-import plugins.pgch.plugin
 import plugins.sarm.plugin
 
 from tools.chapi_log import *
@@ -102,7 +101,6 @@ def initialize():
         plugins.logging.plugin.setup()
         plugins.opsmon.plugin.setup()
         plugins.marm.plugin.setup()
-        plugins.pgch.plugin.setup()
         plugins.sarm.plugin.setup()
         chapi_info("CH_SERVER",  "INITIALIZED CH_SERVER")
         initialized = True
