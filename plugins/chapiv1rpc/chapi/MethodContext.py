@@ -29,7 +29,6 @@ from Exceptions import *
 import tools.pluginmanager as pm
 import os
 import sys
-import threading
 import traceback
 
 # Class to wrap all calls from handlers to delegates
@@ -85,11 +84,6 @@ class MethodContext:
         self._read_only = read_only
         self._provided_session = (session != None)
         self._cert_required = cert_required
-
-        import thread, threading
-#        print "MC: handler %s method %s thread_id %s threading_id %s " % \
-#            (handler, method_name, thread.get_ident(), threading.current_thread().ident)
-#        print "MC: cert %s" % cert_registry.lookup_client_cert()
 
         # Grab the request certificate and email at initialization
         self._client_cert = None
@@ -176,7 +170,6 @@ class MethodContext:
                                  self._options,
                                  self._args_dict,
                                  {'user': self._email})
-#            chapi_info("MC", "MC Enter method %s user %s: On thread %d: %s. %d current threads" % (self._method_name, self._email, thread.get_ident(), threading.current_thread(), threading.active_count()))
             # Check whether we're currenty in a maintenance outage.
             # This will raise an exception if the call shouldn't go through.
             self._checkMaintenanceMode()
@@ -211,8 +204,6 @@ class MethodContext:
     # value is the exception and traceback_object is the stack trace.
     # Otherwise, these are all None
     def __exit__(self, type, value, traceback_object):
-#        chapi_info("MC", "MC EXIT method %s user %s: On thread %d: %s. %d current threads" % (self._method_name, self._email, thread.get_ident(), threading.current_thread(), threading.active_count()))
-#        chapi_info("MethodContext", "__exit__ %s %s %s" % (type, value, traceback_object))
         # If there is an error, handle in standard way (setting result and error)
         if type:
             self._handleError(value, traceback_object)

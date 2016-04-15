@@ -88,8 +88,6 @@ import plugins.sarm.plugin
 
 from tools.chapi_log import *
 
-import tools.cert_registry as cert_registry
-
 initialized = False
 
 def initialize():
@@ -170,11 +168,6 @@ def handle_XMLRPC_call(environ):
     envService.setEnvironment(environ)
 
 #    print "XMLRPC.FCN = %s, ARGS = %s" % (fcn, args)
-#    print "LOOKUP-A %s" % cert_registry.lookup_client_cert()
-
-#    print "LOOKUP-A(2) %s" % cert_registry.lookup_client_cert()
-#    print "LOOKUP-A(3) %s" % cert_registry.lookup_client_cert()
-#    print "LOOKUP-A(4) %s" % cert_registry.lookup_client_cert()
     
 #    from plugins.chapiv1rpc.chapi.X import foo
 #    print "FOO = %s" % foo()

@@ -27,8 +27,6 @@ import os
 import traceback
 from Exceptions import *
 
-import tools.cert_registry as cert_registry
-
 # Base class for API handlers, which can have 
 #   plug-replaceable delegates and guards
 class HandlerBase(object):
