@@ -76,10 +76,11 @@ class HandlerBase(object):
         return { 'code' : 0, 'output' : '', 'value' : result  }
 
     def requestCertificate(self):
-        # *** get this from env ***
-        cert = cert_registry.lookup_client_cert()
+        envService = pm.getService(pm.ENVIRONMENT_SERVICE)
+        cert = envService.getClientCertificate()
         if not cert:
-            raise CHAPIv1AuthorizationError('Client certificate required but not provided')
+            msg = 'Client certificate required but not provided'
+            raise CHAPIv1AuthorizationError(msg)
         return cert
 
     def _errorReturn(self, e, tb=None):
