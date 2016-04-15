@@ -85,17 +85,16 @@ class HandlerBase(object):
     def _errorReturn(self, e, tb=None):
         """Assembles a GENI compliant return result for faulty methods."""
         if not isinstance(e, CHAPIv1BaseError): # convert common errors into CHAPIv1GeneralError
-            e = CHAPIv1ServerError(str(e))
+            e = CHAPIv1ServerError("%s: %s" % (type(e).__name__, str(e)))
         # do some logging
         self._logger.error(e)
+        # Do not print stack trace for authorization error, authentication
+        # error, argument error, etc.
         if type(e) in (CHAPIv1ServerError,
                        CHAPIv1NotImplementedError,
                        CHAPIv1DatabaseError):
-            if tb:
-                self._logger.error("\n".join(traceback.format_tb(tb)))
-            else:
-                self._logger.error(traceback.format_exc())
+            self._logger.error(traceback.format_exc())
         return {'code' :  e.code , 'value' : None, 'output' : str(e) }
-        
+
     def maintenanceOutage(self):
         return os.path.exists(self._maintenance_file)
