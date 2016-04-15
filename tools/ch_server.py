@@ -1,4 +1,4 @@
-#----------------------------------------------------------------------
+# ----------------------------------------------------------------------
 # Copyright (c) 2011-2016 Raytheon BBN Technologies
 #
 # Permission is hereby granted, free of charge, to any person obtaining
@@ -19,64 +19,13 @@
 # WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE WORK OR THE USE OR OTHER DEALINGS
 # IN THE WORK.
-#----------------------------------------------------------------------
+# ----------------------------------------------------------------------
 
-# This gets called when we invoke any of the CH methods<
-
-# When called, we have an environment with these variables
-#    'mod_wsgi.listener_port': '8444'
-#    'SERVER_SOFTWARE': 'Apache/2.2.22 (Ubuntu)'
-#    'mod_wsgi.process_group': ''
-#    'SCRIPT_NAME': '/SR'
-#    'mod_wsgi.handler_script': ''
-#    'SERVER_SIGNATURE': '<address>Apache/2.2.22 (Ubuntu) Server at ch-mb.gpolab.bbn.com Port 8444</address>\\n'
-#    'REQUEST_METHOD': 'POST'
-#    'PATH_INFO': ''
-#    'SERVER_PROTOCOL': 'HTTP/1.1'
-#    'QUERY_STRING': ''
-#    'CONTENT_LENGTH': '105'
-#    'HTTP_USER_AGENT': 'xmlrpclib.py/1.0.1 (by www.pythonware.com)'
-#    'SERVER_NAME': 'ch-mb.gpolab.bbn.com'
-#    'REMOTE_ADDR': '128.89.91.46'
-#    'mod_wsgi.request_handler': 'wsgi-script'
-#    'wsgi.url_scheme': 'https'
-#    'mod_wsgi.callable_object': 'application'
-#    'SERVER_PORT': '8444'
-#    'wsgi.multiprocess': True
-#    'mod_wsgi.input_chunked': '0'
-#    'SERVER_ADDR': '128.89.91.61'
-#    'DOCUMENT_ROOT': '/usr/share/geni-ch/ch/www'
-#    'SSL_CLIENT_CERT': ... (PEM of caller's cert)
-#    'SCRIPT_FILENAME': '/usr/share/geni-ch/chapi/AMsoil/src/msb.wsgi'
-#    'SSL_CLIENT_CERT_CHAIN_0': ... (PEMs of caller's cert parents)
-#    'SERVER_ADMIN': 'portal-sandbox-admin@gpolab.bbn.com'
-#    'wsgi.input': <mod_wsgi.Input object at 0xb88df700>
-#    'HTTP_HOST': 'ch-mb.gpolab.bbn.com:8444'
-#    'HTTPS': '1'
-#    'wsgi.multithread': False
-#    'REQUEST_URI': '/SR'
-#    'wsgi.version': (1, 1)
-#    'GATEWAY_INTERFACE': 'CGI/1.1'
-#    'wsgi.run_once': False
-#    'wsgi.errors': <mod_wsgi.Log object at 0xb891bc28>
-#    'REMOTE_PORT': '48346'
-#    'mod_wsgi.listener_host': ''
-#    'mod_wsgi.version': (3, 3)
-#    'CONTENT_TYPE': 'text/xml'
-#    'mod_wsgi.application_group': 'ch-mb.gpolab.bbn.com:8444|/sr'
-#    'mod_wsgi.script_reloading': '1'
-#    'wsgi.file_wrapper': <built-in method file_wrapper of mod_wsgi.Adapter object at 0xb8633d10>
-#    'HTTP_ACCEPT_ENCODING': 'gzip'
-#    'SSL_SERVER_CERT': ... (PEM of server cert
+# This gets called when we invoke any of the CH methods
 
 import xmlrpclib
 
 import tools.pluginmanager as pm
-pm.registerService('xmlrpc', pm.XMLRPCHandler())
-pm.registerService('config', pm.ConfigDB())
-pm.registerService('rpcserver', pm.RESTServer())
-pm.registerService(pm.ENVIRONMENT_SERVICE, pm.WSGIEnvironment())
-
 import plugins.chapiv1rpc.plugin
 import plugins.chrm.plugin
 import plugins.csrm.plugin
@@ -88,7 +37,13 @@ import plugins.sarm.plugin
 
 from tools.chapi_log import *
 
+pm.registerService('xmlrpc', pm.XMLRPCHandler())
+pm.registerService('config', pm.ConfigDB())
+pm.registerService('rpcserver', pm.RESTServer())
+pm.registerService(pm.ENVIRONMENT_SERVICE, pm.WSGIEnvironment())
+
 initialized = False
+
 
 def initialize():
     global initialized
@@ -104,6 +59,7 @@ def initialize():
         chapi_info("CH_SERVER",  "INITIALIZED CH_SERVER")
         initialized = True
 
+
 def application(environ, start_response):
 
     initialize()
@@ -116,14 +72,14 @@ def application(environ, start_response):
     except Exception as e:
         msg = "%s: %s" % (type(e).__name__, str(e))
         fault = xmlrpclib.Fault(1, msg)
-        response =  xmlrpclib.dumps(fault, allow_none=True)
+        response = xmlrpclib.dumps(fault, allow_none=True)
         return [response]
 
 
 def handleCall(environ):
     # Try to handle REST invocations, registered with rpcserver
     rest_output = handle_REST_call(environ)
-    if rest_output: 
+    if rest_output:
         # It is a REST invocation
         return rest_output
     else:
@@ -158,7 +114,7 @@ def handle_XMLRPC_call(environ):
         # Always clear the environment after the call is complete,
         # even if there was an exception
         envService.clearEnvironment()
-    response =  xmlrpclib.dumps((method_response, ), allow_none=True)
+    response = xmlrpclib.dumps((method_response, ), allow_none=True)
     return response
 
 
@@ -170,7 +126,7 @@ def handle_REST_call(environ):
         handler = rpcserver.app.lookup_handler(path_info)
         if handler:
             pieces = path_info.split('/')
-            if len(pieces) < 4 :
+            if len(pieces) < 4:
                 return None
             variety = pieces[2]
             id = pieces[3]
