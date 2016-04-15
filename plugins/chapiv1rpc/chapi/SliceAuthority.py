@@ -30,8 +30,6 @@ from tools.cert_utils import *
 from tools.chapi_log import *
 from MethodContext import *
 
-import tools.cert_registry as cert_registry
-
 sa_logger = logging.getLogger('sav1')
 
 # Handler for SA APi. This version only handles the Slice service
@@ -113,7 +111,6 @@ class SAv1Handler(HandlerBase):
         return result
 
     def lookup_members(self, type, urn, credentials, options):
-#        print "LOOKUP: %s" % cert_registry.lookup_client_cert()
         if type == "SLICE":
             result = self.lookup_slice_members(urn, credentials, options)
         elif type == "PROJECT":
@@ -220,7 +217,6 @@ class SAv1Handler(HandlerBase):
     # Lookup members of given slice and their roles within that slice
     # Note the session is _not_ read_only because it may update_expirations
     def lookup_slice_members(self, slice_urn, credentials, options):
-#        print "LOOKUP_SLICE_MEMBERS : %s" % cert_registry.lookup_client_cert()
         with MethodContext(self, SA_LOG_PREFIX, 'lookup_slice_members',
                            {'slice_urn' : slice_urn}, 
                            credentials, options, read_only=False) as mc:

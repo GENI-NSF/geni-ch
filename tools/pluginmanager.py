@@ -21,8 +21,13 @@
 # IN THE WORK.
 #----------------------------------------------------------------------
 
+import threading
+import wsgiref.util
+
 # A set of classes to replace services provided by AMsoil.
 # Simplified to support only use cases needed by GENI Clearinghouse
+
+ENVIRONMENT_SERVICE = 'environment'
 
 # All XMLRPC services registered
 ALL_SERVICES = {}
@@ -117,4 +122,28 @@ class RESTDispatcher(object):
 class RESTServer(object):
 
     app = RESTDispatcher()
-    
+
+
+class WSGIEnvironment(object):
+    """Environment Service to hold environment for call context. Stored
+    in the PluginManager as ENVIRONMENT_SERVICE. Holds the full WSGI
+    environment but only makes available the client certificate and the
+    server URL. Could make other things available in the future.
+    """
+
+    _thread_local = threading.local()
+
+    def setEnvironment(self, environ):
+        self._thread_local.environ = environ
+
+    def clearEnvironment(self):
+        self._thread_local.__dict__.clear()
+
+    def getClientCertificate(self):
+        # TODO: error checking
+        return self._thread_local.environ['SSL_CLIENT_CERT']
+
+    def getServerURL(self):
+        include_query = False
+        return wsgiref.util.request_uri(self._thread_local.environ,
+                                        include_query)

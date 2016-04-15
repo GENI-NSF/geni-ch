@@ -27,8 +27,6 @@ import os
 import traceback
 from Exceptions import *
 
-import tools.cert_registry as cert_registry
-
 # Base class for API handlers, which can have 
 #   plug-replaceable delegates and guards
 class HandlerBase(object):
@@ -76,26 +74,26 @@ class HandlerBase(object):
         return { 'code' : 0, 'output' : '', 'value' : result  }
 
     def requestCertificate(self):
-        # *** get this from env ***
-        cert = cert_registry.lookup_client_cert()
+        envService = pm.getService(pm.ENVIRONMENT_SERVICE)
+        cert = envService.getClientCertificate()
         if not cert:
-            raise CHAPIv1AuthorizationError('Client certificate required but not provided')
+            msg = 'Client certificate required but not provided'
+            raise CHAPIv1AuthorizationError(msg)
         return cert
 
     def _errorReturn(self, e, tb=None):
         """Assembles a GENI compliant return result for faulty methods."""
         if not isinstance(e, CHAPIv1BaseError): # convert common errors into CHAPIv1GeneralError
-            e = CHAPIv1ServerError(str(e))
+            e = CHAPIv1ServerError("%s: %s" % (type(e).__name__, str(e)))
         # do some logging
         self._logger.error(e)
+        # Do not print stack trace for authorization error, authentication
+        # error, argument error, etc.
         if type(e) in (CHAPIv1ServerError,
                        CHAPIv1NotImplementedError,
                        CHAPIv1DatabaseError):
-            if tb:
-                self._logger.error("\n".join(traceback.format_tb(tb)))
-            else:
-                self._logger.error(traceback.format_exc())
+            self._logger.error(traceback.format_exc())
         return {'code' :  e.code , 'value' : None, 'output' : str(e) }
-        
+
     def maintenanceOutage(self):
         return os.path.exists(self._maintenance_file)
