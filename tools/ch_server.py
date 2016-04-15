@@ -75,6 +75,7 @@ import tools.pluginmanager as pm
 pm.registerService('xmlrpc', pm.XMLRPCHandler())
 pm.registerService('config', pm.ConfigDB())
 pm.registerService('rpcserver', pm.RESTServer())
+pm.registerService(pm.ENVIRONMENT_SERVICE, pm.WSGIEnvironment())
 
 import plugins.chapiv1rpc.plugin
 import plugins.chrm.plugin
@@ -164,7 +165,9 @@ def handle_XMLRPC_call(environ):
         # args[options_index]['ENVIRON'] = environ
 
         
-    cert_registry.register_client_cert(environ['SSL_CLIENT_CERT'])
+    envService = pm.getService(pm.ENVIRONMENT_SERVICE)
+    envService.setEnvironment(environ)
+
 #    print "XMLRPC.FCN = %s, ARGS = %s" % (fcn, args)
 #    print "LOOKUP-A %s" % cert_registry.lookup_client_cert()
 
@@ -183,10 +186,13 @@ def handle_XMLRPC_call(environ):
 #    new_sa_handler.setDelegate(handler.getDelegate())
 #    mr2 = new_sa_handler.lookup_members(*args)
 #    print "MR2 = %s" % mr2
-
-    method_response = fcn(*args)
-#    print "LOOKUP-B %s" % cert_registry.lookup_client_cert()
-#    print "RESPONSE = %s" % method_response
+    try:
+        method_response = fcn(*args)
+        # print "RESPONSE = %r" % (method_response)
+    finally:
+        # Always clear the environment after the call is complete,
+        # even if there was an exception
+        envService.clearEnvironment()
     response =  xmlrpclib.dumps((method_response, ), allow_none=True)
     return response
 
