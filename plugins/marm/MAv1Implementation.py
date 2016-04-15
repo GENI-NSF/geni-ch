@@ -174,15 +174,14 @@ class MAv1Implementation(MAv1DelegateBase):
 
         self.logging_service = pm.getService('loggingv1handler')
 
-    # This call is unprotected: no checking of credentials
-    def get_version(self, options, session):
-        method = 'get_version'
 
-        all_optional_fields = dict(MA.optional_fields.items() + \
+    # get_version is unprotected: no checking of credentials
+    def get_version(self, options, session):
+        all_optional_fields = dict(MA.optional_fields.items() +
                                    MA.optional_key_fields.items())
-        from tools.geni_utils import get_server_url
-        api_versions = \
-            {chapi.Parameters.VERSION_NUMBER : get_server_url(options['ENVIRON'])}
+        envService = pm.getService(pm.ENVIRONMENT_SERVICE)
+        serverURL = envService.getServerURL()
+        api_versions = {chapi.Parameters.VERSION_NUMBER : serverURL}
         implementation_info = get_implementation_info(MA_LOG_PREFIX)
         version_info = {"VERSION": chapi.Parameters.VERSION_NUMBER,
                         "URN " : self.urn,
@@ -192,8 +191,8 @@ class MAv1Implementation(MAv1DelegateBase):
                         "API_VERSIONS" : api_versions,
                         "FIELDS": all_optional_fields}
         result =  self._successReturn(version_info)
-
         return result
+
 
     # ensure that all of a set of entries are attributes
     def check_attributes(self, attrs):

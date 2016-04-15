@@ -87,9 +87,9 @@ class CHv1Implementation(CHv1DelegateBase):
 
 
     def get_version(self, options, session):
-        from tools.geni_utils import get_server_url
-        api_versions = \
-            {chapi.Parameters.VERSION_NUMBER : get_server_url(options['ENVIRON'])}
+        envService = pm.getService(pm.ENVIRONMENT_SERVICE)
+        serverURL = envService.getServerURL()
+        api_versions = {chapi.Parameters.VERSION_NUMBER : serverURL}
         implementation_info = get_implementation_info(SR_LOG_PREFIX)
         version_info = {"VERSION": chapi.Parameters.VERSION_NUMBER,
                         "IMPLEMENTATION" : implementation_info,
@@ -98,6 +98,7 @@ class CHv1Implementation(CHv1DelegateBase):
                         "API_VERSIONS" : api_versions,
                         "FIELDS": CH.supplemental_fields}
         return self._successReturn(version_info)
+
 
     def lookup_member_authorities(self, client_cert, options, session):
         member_authorities = self.select_services_of_type(self.MA_SERVICE_TYPE)
