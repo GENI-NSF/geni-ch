@@ -137,49 +137,20 @@ def handle_XMLRPC_call(environ):
 
     xmlrpc_endpoint = environ['REQUEST_URI']
     xmlrpc = pm.getService('xmlrpc')
-#    print "ENDPOINTS = %s" % xmlrpc._entries_by_endpoint
     handler_entry = xmlrpc.lookupByEndpoint(xmlrpc_endpoint)
     handler = handler_entry._instance
-#    print "HANDLER = %s: %s, DIR = %s" % (type(handler), handler, dir(handler))
 
     length = int(environ['CONTENT_LENGTH'])
     wsgi_input = environ['wsgi.input']
     data = wsgi_input.read(length)
-#    print "INPUT = %s: %s %s" % (wsgi_input, type(wsgi_input), dir(wsgi_input))
-#    print "DATA = " + data
     decoded_data = xmlrpclib.loads(data)
-#    print "DECODED_DATA = " + str(decoded_data)
+
     args = decoded_data[0]
     method = decoded_data[1]
     fcn = getattr(handler, method)
 
-    # Add calling environment into options argument (if there is one)
-    fcn_args = fcn.__code__.co_varnames
-    if 'options' in fcn_args:
-        options_index = fcn_args.index('options')
-        options_index = options_index-1 # Skip over 'self' fcn argument
-#        print "ARGS = %s INDEX = %s FCN_ARGS = %s" % (args, options_index, fcn_args)
-        if len(args) <= options_index:
-            args = ({},) # Empty default options argument
-        # args[options_index]['ENVIRON'] = environ
-
-        
     envService = pm.getService(pm.ENVIRONMENT_SERVICE)
     envService.setEnvironment(environ)
-
-#    print "XMLRPC.FCN = %s, ARGS = %s" % (fcn, args)
-    
-#    from plugins.chapiv1rpc.chapi.X import foo
-#    print "FOO = %s" % foo()
-
-#    print "ARGS = %s" % (args,)
-#    mr = handler.lookup_members(*args)
-#    print "MR = %s" % mr
-#    import plugins.chapiv1rpc.chapi.SliceAuthority as SA
-#    new_sa_handler = SA.SAv1Handler()
-#    new_sa_handler.setDelegate(handler.getDelegate())
-#    mr2 = new_sa_handler.lookup_members(*args)
-#    print "MR2 = %s" % mr2
     try:
         method_response = fcn(*args)
         # print "RESPONSE = %r" % (method_response)
@@ -190,6 +161,7 @@ def handle_XMLRPC_call(environ):
     response =  xmlrpclib.dumps((method_response, ), allow_none=True)
     return response
 
+
 # Determine if this is a REST call. If so, make the call and return output
 def handle_REST_call(environ):
     if 'PATH_INFO' in environ:
@@ -197,20 +169,11 @@ def handle_REST_call(environ):
         rpcserver = pm.getService('rpcserver')
         handler = rpcserver.app.lookup_handler(path_info)
         if handler:
-#            print "HANDLER = %s" % handler
-#            print "HANDLER = %s" % dir(handler)
             pieces = path_info.split('/')
             if len(pieces) < 4 :
                 return None
             variety = pieces[2]
             id = pieces[3]
             output = handler(variety, id)
-#            print "OUTPUT = " + output
             return output
         return None
-
-
-
-
-
-
