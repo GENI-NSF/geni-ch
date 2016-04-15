@@ -116,7 +116,8 @@ def application(environ, start_response):
         result = handleCall(environ)
         return [result]
     except Exception as e:
-        fault = xmlrpclib.Fault(1, str(e))
+        msg = "%s: %s" % (type(e).__name__, str(e))
+        fault = xmlrpclib.Fault(1, msg)
         response =  xmlrpclib.dumps(fault, allow_none=True)
         return [response]
 
