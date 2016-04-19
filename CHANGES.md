@@ -20,6 +20,8 @@
 
 * Remove PGCH service
   ([#474](https://github.com/GENI-NSF/geni-ch/issues/474))
+* Restrict project names a little bit more
+  ([#480](https://github.com/GENI-NSF/geni-ch/issues/480))
 
 # [Release 2.10](https://github.com/GENI-NSF/geni-ch/milestones/2.10)
 
