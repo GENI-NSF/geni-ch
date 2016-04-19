@@ -44,7 +44,6 @@ rm -rf $RPM_BUILD_ROOT
 %defattr(-,root,root)
 
 # /etc/geni-chapi
-%config %{_sysconfdir}/%{name}/chapi-centos.ini
 %config %{_sysconfdir}/%{name}/credential_store_policy.json
 %config %{_sysconfdir}/%{name}/example-chapi.ini
 %config %{_sysconfdir}/%{name}/example-parameters.json
@@ -254,9 +253,6 @@ rm -rf $RPM_BUILD_ROOT
 %{_datadir}/geni-ch/chapi/chapi/tools/guard_utils.py
 %{_datadir}/geni-ch/chapi/chapi/tools/guard_utils.pyc
 %{_datadir}/geni-ch/chapi/chapi/tools/guard_utils.pyo
-%{_datadir}/geni-ch/chapi/chapi/tools/install_ch
-%{_datadir}/geni-ch/chapi/chapi/tools/install_chapi
-%{_datadir}/geni-ch/chapi/chapi/tools/install_db
 %{_datadir}/geni-ch/chapi/chapi/tools/manage_service_attributes.py
 %{_datadir}/geni-ch/chapi/chapi/tools/manage_service_attributes.pyc
 %{_datadir}/geni-ch/chapi/chapi/tools/manage_service_attributes.pyo
@@ -272,7 +268,6 @@ rm -rf $RPM_BUILD_ROOT
 %{_datadir}/geni-ch/chapi/chapi/tools/portal_client.py
 %{_datadir}/geni-ch/chapi/chapi/tools/portal_client.pyc
 %{_datadir}/geni-ch/chapi/chapi/tools/portal_client.pyo
-%{_datadir}/geni-ch/chapi/chapi/tools/testall.sh
 
 # /usr/share/geni-chapi/
 %{_datadir}/%{name}/sr/sql/add-wvn-eg.sql
