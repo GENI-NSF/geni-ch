@@ -91,7 +91,6 @@ rm -rf $RPM_BUILD_ROOT
 %{_sbindir}/geni-sign-tool-csr
 
 # /usr/share/geni-ch/
-%{_datadir}/geni-ch/chapi/chapi/linkamsoil.sh
 %{_datadir}/geni-ch/chapi/chapi/plugins/chapiv1rpc/MANIFEST.json
 %{_datadir}/geni-ch/chapi/chapi/plugins/chapiv1rpc/__init__.py
 %{_datadir}/geni-ch/chapi/chapi/plugins/chapiv1rpc/__init__.pyc
