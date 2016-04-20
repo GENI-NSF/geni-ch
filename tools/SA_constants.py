@@ -144,7 +144,13 @@ project_request_columns = [
 ]
 
 PROJECT_DEFAULT_INVITATION_EXPIRATION_HOURS = 72
-# FIXME: project name length, regex
+
+# Project name rules:
+#  - Min length 2
+#  - Max length 32
+#  - First character alphabetic
+#  - Subsequent characters alphanumber plus hyphen and underscore
+PROJECT_NAME_REGEX = '^[a-zA-Z][a-zA-Z0-9-_]{1,31}$'
 
 project_request_field_mapping = {
     'id' : 'id', 

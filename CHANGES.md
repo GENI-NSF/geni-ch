@@ -4,22 +4,27 @@
 
 ## Installation Notes
 
-* Remove the PGCH AMsoil plugin link if it exists
+* Remove obsolete installed files if they exist
 
     ```
-    sudo rm /usr/share/geni-ch/chapi/AMsoil/src/plugins/pgch
-    ```
-
-* Remove the installed pgch directory if it exists
-
-    ```
+    sudo rm -f /usr/share/geni-ch/chapi/AMsoil/src/plugins/pgch
     sudo rm -rf /usr/share/geni-ch/chapi/chapi/plugins/pgch
+    sudo rm -f /usr/share/geni-ch/chapi/chapi/tools/pgch_testall.sh
+    sudo rm -f /usr/share/geni-ch/chapi/chapi/tools/pgch_client.py
+    sudo rm -f /usr/share/geni-ch/chapi/chapi/linkamsoil.sh
+    sudo rm -f /etc/geni-chapi/chapi-centos.ini
+    sudo rm -f /usr/share/geni-ch/chapi/chapi/tools/install_ch
+    sudo rm -f /usr/share/geni-ch/chapi/chapi/tools/install_chapi
+    sudo rm -f /usr/share/geni-ch/chapi/chapi/tools/install_db
+    sudo rm -f /usr/share/geni-ch/chapi/chapi/tools/testall.sh
     ```
 
 ## Changes
 
 * Remove PGCH service
   ([#474](https://github.com/GENI-NSF/geni-ch/issues/474))
+* Restrict project names a little bit more
+  ([#480](https://github.com/GENI-NSF/geni-ch/issues/480))
 
 # [Release 2.10](https://github.com/GENI-NSF/geni-ch/milestones/2.10)
 
