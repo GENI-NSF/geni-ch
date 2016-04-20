@@ -30,7 +30,6 @@ from tools.chapi_log import *
 from MethodContext import *
 
 ma_logger = logging.getLogger('mav1')
-xmlrpc = pm.getService('xmlrpc')
 
 # RPC handler for Member Authority (MA) API calls
 class MAv1Handler(HandlerBase):
