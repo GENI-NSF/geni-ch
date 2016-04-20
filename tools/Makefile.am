@@ -34,9 +34,3 @@ dist_tool_DATA = \
 	pluginmanager.py \
 	policy_file_checker.py \
 	portal_client.py
-
-dist_tool_SCRIPTS = \
-	install_ch \
-	install_chapi \
-	install_db \
-	testall.sh

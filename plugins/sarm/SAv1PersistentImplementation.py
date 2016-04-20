@@ -749,17 +749,12 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         self.update_project_expirations(client_uuid, session)
 
         name = options["fields"]["PROJECT_NAME"]
-        # check that project name is valid
-        if ' ' in name:
-            raise CHAPIv1ArgumentError('Project name may not contain spaces.')
-        elif len(name) > 32: # FIXME: Externalize this
-            raise CHAPIv1ArgumentError('Project name %s is too long - use at most 32 characters.' %name)
-            
-        # FIXME: Put this in a constants file
-        pattern = '^[a-zA-Z0-9][a-zA-Z0-9-_]{0,31}$'
-        valid = re.match(pattern,name)
-        if valid == None:
-            raise CHAPIv1ArgumentError('Project name %s is invalid - use at most 32 alphanumeric characters or hyphen or underscore. No leading hyphen or underscore.' %name)
+        valid = re.match(SA.PROJECT_NAME_REGEX, name)
+        if not valid:
+            msg = ('Project name %s is invalid. Use at most 32 alphanumeric'
+                   + ' characters or hyphen or underscore. No leading hyphen'
+                   + ' or underscore.')
+            raise CHAPIv1ArgumentError(msg % (name))
         
         # check that project does not already exist
         if self.get_project_id(session, "project_name", name):
