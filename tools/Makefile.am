@@ -31,9 +31,3 @@ dist_tool_DATA = \
 	multiclient.py \
 	policy_file_checker.py \
 	portal_client.py
-
-dist_tool_SCRIPTS = \
-	install_ch \
-	install_chapi \
-	install_db \
-	testall.sh
