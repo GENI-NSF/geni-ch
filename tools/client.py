@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 #----------------------------------------------------------------------
 # Copyright (c) 2011-2016 Raytheon BBN Technologies
 #
@@ -291,6 +292,46 @@ def main(args = sys.argv, do_print=True):
         (result, msg) = \
             _do_ssl(framework, suppress_errors, reason, fcn, opts.urn,
                     opts.credentials, options)
+
+    # Method to create members
+    elif opts.method in ['create_member'] and opts.string_arg:
+
+        # Use the entered string_arg as the email to register a member
+        attributes =  [{"value" : opts.string_arg,"name" : "email_address","self_asserted":False}]
+        options = {}
+
+
+      	# Send query message and retrieve the result and response message
+        (result, msg) = _do_ssl(framework, suppress_errors, reason, fcn, \
+			attributes, opts.credentials, options)
+
+    # Method to lookup for members
+    elif opts.method in ['lookup_public_member_info',\
+				'lookup_private_member_info',\
+				'lookup_allowed_member_info',\
+				'lookup_identifying_member_info'] and \
+				(opts.urn or opts.uuid_arg):
+
+	# Create client options dictionary
+	client_options = {"match":{}}
+
+        # If the user entered an UUID
+        if opts.uuid_arg:
+ 
+            # Uptade the client options dictionary with the entered UUID  
+	    client_options["match"].update({"MEMBER_UID":opts.uuid_arg}) 
+
+	# If the user entered an URN
+        if opts.urn:
+
+            # Uptade the client options dictionary with the entered URN
+	    client_options["match"].update({"MEMBER_URN":opts.urn}) 
+ 
+
+      	# Send query message and retrieve the result and response message
+	(result, msg) = _do_ssl(framework, suppress_errors, reason, fcn, \
+                                    opts.credentials, client_options)
+
 
     # MA add/revoke privilege methods
     elif opts.method in ['add_member_privilege', 'revoke_member_privilege']:
