@@ -224,7 +224,7 @@ def emulate_portal_page(opts, verbose = False):
         (log_entries, msg) = _do_ssl(framework, 
                                      suppress_errors, reason, 
                                      log_client.get_log_entries_for_context,
-                                     5, member_uid, 24)
+                                     5, member_uid, 24, opts.credentials, client_options)
             
         if verbose:
             print "Result = %s " % log_entries
@@ -233,7 +233,7 @@ def emulate_portal_page(opts, verbose = False):
         (log_entries, msg) = _do_ssl(framework, 
                                      suppress_errors, reason, 
                                      log_client.get_log_entries_by_author,
-                                     member_uid, 24)
+                                     member_uid, 24, opts.credentials, client_options)
             
         if verbose:
             print "Result = %s " % log_entries
