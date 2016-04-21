@@ -150,18 +150,9 @@
    },
 
    "lookup_keys" : {
-     "__DOC__" : "Authority, operator, self, shares_slice",
-     "assertions" : [
-       "ME.INVOKING_ON_$MEMBER<-CALLER",
-       "ME.$SHARES_SLICE_$MEMBER<-CALLER",
-       "ME.INVOKING_ON_$KEY_OWNER<-CALLER"
-       
-     ],
+     "__DOC__" : "Public SSH keys are public if you have the URN",
      "policies" : [
-       "ME.MAY_$METHOD<-ME.IS_AUTHORITY", 
-       "ME.MAY_$METHOD<-ME.IS_OPERATOR", 
-       "ME.MAY_$METHOD<-ME.INVOKING_ON_$SELF",
-       "ME.MAY_$METHOD_$MEMBER<-ME.SHARES_SLICE_$MEMBER"
+       "ME.MAY_$METHOD<-CALLER"
      ]
    },
 
