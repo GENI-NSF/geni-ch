@@ -157,7 +157,7 @@ def make_csr_from_key(private_key):
 def make_cert(uuid, email, urn, signer_cert_file, signer_key_file, csr_file,
               days=365, use_csr_subject=False):
 
-    import amsoil.core.pluginmanager as pm
+    import tools.pluginmanager as pm
     config = pm.getService('config')
     ssl_config_file = config.get("chapi.ssl_config_file")
 
@@ -245,4 +245,3 @@ def get_cert_from_file(filename):
     if cert.count('-----BEGIN CERTIFICATE') == 0:
         cert = '-----BEGIN CERTIFICATE-----\n%s\n-----END CERTIFICATE-----' % cert
     return cert
-

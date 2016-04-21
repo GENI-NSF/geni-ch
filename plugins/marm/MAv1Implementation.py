@@ -36,7 +36,7 @@ from collections import defaultdict
 from sqlalchemy.orm import mapper
 import sqlalchemy
 
-import amsoil.core.pluginmanager as pm
+import tools.pluginmanager as pm
 
 from gcf.geni.util.urn_util import URN
 import gcf.sfa.trust.gid as sfa_gid
@@ -174,15 +174,14 @@ class MAv1Implementation(MAv1DelegateBase):
 
         self.logging_service = pm.getService('loggingv1handler')
 
-    # This call is unprotected: no checking of credentials
-    def get_version(self, session):
-        method = 'get_version'
 
-        all_optional_fields = dict(MA.optional_fields.items() + \
+    # get_version is unprotected: no checking of credentials
+    def get_version(self, options, session):
+        all_optional_fields = dict(MA.optional_fields.items() +
                                    MA.optional_key_fields.items())
-        import flask
-        api_versions = \
-            {chapi.Parameters.VERSION_NUMBER : flask.request.url_root}
+        envService = pm.getService(pm.ENVIRONMENT_SERVICE)
+        serverURL = envService.getServerURL()
+        api_versions = {chapi.Parameters.VERSION_NUMBER : serverURL}
         implementation_info = get_implementation_info(MA_LOG_PREFIX)
         version_info = {"VERSION": chapi.Parameters.VERSION_NUMBER,
                         "URN " : self.urn,
@@ -192,8 +191,8 @@ class MAv1Implementation(MAv1DelegateBase):
                         "API_VERSIONS" : api_versions,
                         "FIELDS": all_optional_fields}
         result =  self._successReturn(version_info)
-
         return result
+
 
     # ensure that all of a set of entries are attributes
     def check_attributes(self, attrs):

@@ -21,9 +21,17 @@
 # IN THE WORK.
 #----------------------------------------------------------------------
 
-from amsoil.core.exception import CoreException
+import logging
 
 # Module containing a set of standard CH/SA/MA API exceptions
+
+class CoreException(Exception):
+  def __init__ (self):
+    self._logged = False
+
+  def log(self, logh, msg, level = logging.ERROR):
+    logh.log(level, msg)
+    self._logged = True
 
 class CHAPIv1BaseError(CoreException):
     def __init__(self, code, name, description, comment):
@@ -44,6 +52,7 @@ DATABASE_ERROR = 4
 DUPLICATE_ERROR = 5
 NOT_IMPLEMENTED_ERROR = 100
 SERVER_ERROR = 101
+CONFIGURATION_ERROR = 102
 
 # Exception for a failure to authenticate the client credentials at server
 class CHAPIv1AuthenticationError(CHAPIv1BaseError):
@@ -95,4 +104,11 @@ class CHAPIv1ServerError(CHAPIv1BaseError):
         super(self.__class__, self).__init__(SERVER_ERROR, \
                                                  'SERVER', \
                                                  'SERVER_ERROR', comment)
+
+# Exception for errors on establishing the client/server connection
+class CHAPIv1ConfigurationError(CHAPIv1BaseError):
+    def __init__(self, comment):
+        super(self.__class__, self).__init__(CONFIGURATION_ERROR, \
+                                                 'CONFIGURATION', \
+                                                 'CONFIG_ERROR', comment)
 

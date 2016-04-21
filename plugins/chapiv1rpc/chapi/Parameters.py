@@ -21,9 +21,10 @@
 # IN THE WORK.
 #----------------------------------------------------------------------
 
-import amsoil.core.pluginmanager as pm
+import tools.pluginmanager as pm
 
 from tools.chapi_log import *
+from Exceptions import *
 
 import ConfigParser
 import logging
@@ -32,8 +33,9 @@ import logging.handlers
 import os
 import os.path
 
-CONFIG_FILE = '@pkgsysconfdir@/chapi.ini'
-DEV_CONFIG_FILE = '@pkgsysconfdir@/chapi-dev.ini'
+GENI_CH_CONF_DIR = '/etc/geni-chapi'
+CONFIG_FILE = os.path.join(GENI_CH_CONF_DIR, 'chapi.ini')
+DEV_CONFIG_FILE = os.path.join(GENI_CH_CONF_DIR, 'chapi-dev.ini')
 
 GENI_CH_DIR = '/usr/share/geni-ch'
 CA_DIR = os.path.join(GENI_CH_DIR, 'CA')
@@ -42,6 +44,13 @@ SA_DIR = os.path.join(GENI_CH_DIR, 'sa')
 GCF_ROOT = os.path.join(GENI_CH_DIR, 'portal', 'gcf.d')
 
 VERSION_NUMBER = '2'
+
+# NOTE: Some parameters have default values and are thus optional in chapi.ini 
+# Values in chapi.in override the defaults if they are there.
+# But some parameters do not have defaults, and if chapi.ini does not 
+# provide them, an error message is logged and the process throws an exception.
+# If chapi.ini has a parameter no listed in default_parameters, 
+# an message is logged but no exception is thrown.
 
 NAME_KEY = 'name'
 VALUE_KEY = 'val'
@@ -112,53 +121,28 @@ default_parameters = [
     },
     {
         NAME_KEY: "chapi.portal_admin_email",
-        VALUE_KEY: "portal-admin@example.com",
+        # No VALUE_KEY default
         DESC_KEY: "portal admin email."
     },
     {
         NAME_KEY: "chapi.portal_help_email",
-        VALUE_KEY: "portal-help@example.com",
+        # No VALUE_KEY default
         DESC_KEY: "portal help email."
     },
     {
         NAME_KEY: "chapi.ch_from_email",
-        VALUE_KEY: "www-data@example.com",
+        # No VALUE_KEY default
         DESC_KEY: "chapi from email"
     },
     {
         NAME_KEY: "chrm.authority",
-        VALUE_KEY: "host.example.com",
+        # No VALUE_KEY default
         DESC_KEY: "Name of CH/SA/MA authority"
     },
     {
-        NAME_KEY: "flask.debug.client_cert_file",
-        VALUE_KEY: "/path/to/developer/cert.pem",
-        DESC_KEY: "Debug client cert file"
-    },
-    {
         NAME_KEY: 'chrm.db_url',
-        VALUE_KEY: 'postgresql://scott:tiger@localhost/chapi',
+        # No VALUE_KEY default
         DESC_KEY: 'Database URL'
-    },
-    {
-        NAME_KEY: "flask.fcgi",
-        VALUE_KEY: True,
-        DESC_KEY: "Use FCGI server instead of the development server."
-    },
-    {
-        NAME_KEY: "flask.fcgi_port",
-        VALUE_KEY: 0,
-        DESC_KEY: "Port to bind the Flask RPC to (FCGI server)."
-    },
-    {
-        NAME_KEY: "flask.app_port",
-        VALUE_KEY: 8001,
-        DESC_KEY: "Port to bind the Flask RPC to (standalone server)."
-    },
-    {
-        NAME_KEY: "flask.debug",
-        VALUE_KEY: True,
-        DESC_KEY: "Write logging messages for the Flask RPC server."
     },
     {
         NAME_KEY: "geni.maintenance_outage_location",
@@ -205,9 +189,18 @@ def param_to_secopt(param):
 def set_parameters():
     config = pm.getService("config")
 
-    # Set up the defaults
+    required_config_params = []
+    default_parameter_names = [] # Keep list of all defined parameter names
+    for param in default_parameters: 
+        default_parameter_names.append(param[NAME_KEY])
+
+    # Set up the defaults. Keep track of params with no defaults
+    # Which must be provided by chapi.ini
     for param in default_parameters:
-        config.install(param[NAME_KEY], param[VALUE_KEY], param[DESC_KEY])
+        if VALUE_KEY in param:
+            config.install(param[NAME_KEY], param[VALUE_KEY], param[DESC_KEY])
+        else:
+            required_config_params.append(param[NAME_KEY])
 
     # Overwrite the defaults with values from the config file
     parser = ConfigParser.SafeConfigParser()
@@ -220,15 +213,45 @@ def set_parameters():
         for param in default_parameters:
             pname = param[NAME_KEY]
             (section, option) = param_to_secopt(pname)
+            value = None
+            value_type = str
+            source = "default_parameters"
+            if VALUE_KEY in param: 
+                value = param[VALUE_KEY]
+                value_type = type(value)
             if parser.has_option(section, option):
-                value_type = type(param[VALUE_KEY])
                 value = get_typed_value(parser, section, option, value_type)
-                if value is not None:
-                    # If a value was extracted, set it
-                    msg = 'Setting parameter %s to %s from %s'
-                    chapi_info('PARAMETERS',
-                                msg % (pname, value, CONFIG_FILE))
-                    config.set(pname, value)
+                source = CONFIG_FILE
+            if value is not None:
+                # If a value was extracted, set it
+                msg = 'Setting parameter %s to %s from %s'
+                chapi_info('PARAMETERS',
+                           msg % (pname, value, source))
+                config.set(pname, value)
+                if pname in required_config_params:
+                    required_config_params.remove(pname);
+
+    # If any required parameters are not provided by chapi.ini, log
+    # error and raise exception
+    if len(required_config_params) > 0:
+        for pname in required_config_params:
+            chapi_info('PARAMETERS', 
+                       'Required parameter not set in %s: %s' % \
+                           (CONFIG_FILE, pname))
+        
+        raise CHAPIv1ConfigurationError("Required params missing %s: %s" %\
+                                            (CONFIG_FILE, 
+                                             ",".join(required_config_params)))
+
+    # If any parameters are provided in chapi.ini but not in default_parameters
+    # Warn but don't raise exception
+    for section in parser.sections():
+        for item in parser.items(section):
+            pname = "%s.%s" % (section, item[0])
+            if pname not in default_parameter_names:
+                chapi_info('PARAMETERS', 
+                           'Unrecognized parameter found in %s: %s' % 
+                           (CONFIG_FILE, pname))
 
     # Overwrite the base settings with values from the developer config file
     parser = ConfigParser.SafeConfigParser()

@@ -21,7 +21,7 @@
 # IN THE WORK.                                                                  
 #----------------------------------------------------------------------
 
-import amsoil.core.pluginmanager as pm
+import tools.pluginmanager as pm
 from MAv1Implementation import MAv1Implementation
 from MAv1Guard import MAv1Guard
 
@@ -30,10 +30,7 @@ from MAv1Guard import MAv1Guard
 
 def setup():
 
-    config = pm.getService('config')
-
     delegate = MAv1Implementation()
-
     guard = MAv1Guard()
 
     handler = pm.getService('mav1handler')

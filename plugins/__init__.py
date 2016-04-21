@@ -1,5 +1,5 @@
 #----------------------------------------------------------------------
-# Copyright (c) 2011-2016 Raytheon BBN Technologies
+# Copyright (c) 2016 Raytheon BBN Technologies
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and/or hardware specification (the "Work") to
@@ -20,34 +20,3 @@
 # OUT OF OR IN CONNECTION WITH THE WORK OR THE USE OR OTHER DEALINGS
 # IN THE WORK.
 #----------------------------------------------------------------------
-
-import tools.pluginmanager as pm
-import logging
-
-rest_logger = logging.getLogger('rest')
-
-# Plugin to load Flask-based REST support
-
-# This is modeled after FlaskXMLRPC
-class FlaskREST:
-    def __init__(self, flaskapp):
-        self._flaskapp = flaskapp
-
-    def registerREST(self, unique_service_name, handler, endpoint,
-                     defaults={},
-                     methods=["GET", "POST"]):
-        "Register the handler for the endpoint"
-        self._flaskapp.app.add_url_rule(endpoint, None, handler,
-                                        defaults=defaults,
-                                        methods=methods)
-#        rest_logger.info("Called FlaskREST.registerREST %s %s %s" % \
-#                             (unique_service_name, handler, endpoint))
-
-# Load the Flask REST server
-def setup():
-    flask_server = pm.getService('rpcserver')
-    flask_rest = FlaskREST(flask_server)
-    pm.registerService('rest', flask_rest)
-
-
-

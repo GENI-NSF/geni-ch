@@ -32,7 +32,7 @@ import uuid
 from sqlalchemy import *
 from sqlalchemy.orm import mapper
 
-import amsoil.core.pluginmanager as pm
+import tools.pluginmanager as pm
 
 import gcf.sfa.trust.gid as gid
 from gcf.sfa.trust.certificate import Certificate
@@ -113,10 +113,11 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         mapper(ProjectAttribute, self.db.PROJECT_ATTRIBUTE_TABLE, \
                    primary_key = self.db.PROJECT_ATTRIBUTE_TABLE.c.id)
 
-    def get_version(self, session):
-        import flask
-        api_versions = \
-            {chapi.Parameters.VERSION_NUMBER : flask.request.url_root}
+    # get_version is unprotected: no checking of credentials
+    def get_version(self, options, session):
+        envService = pm.getService(pm.ENVIRONMENT_SERVICE)
+        serverURL = envService.getServerURL()
+        api_versions = {chapi.Parameters.VERSION_NUMBER : serverURL}
         implementation_info = get_implementation_info(SA_LOG_PREFIX)
         version_info = {"VERSION" : chapi.Parameters.VERSION_NUMBER, 
                         "URN " : self.urn,
@@ -127,8 +128,8 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                         "API_VERSIONS" : api_versions,
                         "FIELDS": SA.supplemental_fields}
         result = self._successReturn(version_info)
-
         return result
+
 
     def get_expiration_query(self, session, type, old_flag, resurrect):
         if type == 'slice':

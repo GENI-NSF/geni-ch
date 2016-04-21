@@ -24,7 +24,7 @@
 # Utility functions for morphing from native schema to public-facing
 # schema
 
-import amsoil.core.pluginmanager as pm
+import tools.pluginmanager as pm
 from datetime import datetime
 from cert_utils import *
 
@@ -48,7 +48,7 @@ def urn_for_slice(slice_name, project_name):
     return "urn:publicid:IDN+%s:%s+slice+%s" % \
         (authority, project_name, slice_name)
 
-
+    
 # Return the user display name
 # First, try '_GENI_MEMBER_DISPLAYNAME'
 # Then try 'MEMBER_FIRSTNAME' 'MEMBER_LASTNAME'

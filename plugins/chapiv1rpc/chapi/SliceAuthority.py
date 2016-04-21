@@ -21,9 +21,8 @@
 # IN THE WORK.
 #----------------------------------------------------------------------
 
-import amsoil.core.log
-import amsoil.core.pluginmanager as pm
-from amsoil.core import serviceinterface
+import logging
+import tools.pluginmanager as pm
 from DelegateBase import DelegateBase
 from HandlerBase import HandlerBase
 from Exceptions import *
@@ -31,8 +30,7 @@ from tools.cert_utils import *
 from tools.chapi_log import *
 from MethodContext import *
 
-sa_logger = amsoil.core.log.getLogger('sav1')
-xmlrpc = pm.getService('xmlrpc')
+sa_logger = logging.getLogger('sav1')
 
 # Handler for SA APi. This version only handles the Slice service
 class SAv1Handler(HandlerBase):
@@ -44,12 +42,12 @@ class SAv1Handler(HandlerBase):
     # This call is unprotected: no checking of credentials
     # Return version information about this SA including what
     # services are provided and underlying object model
-    def get_version(self):
+    def get_version(self, options={}):
         with MethodContext(self, SA_LOG_PREFIX, 'get_version',
-                           {}, [], {}, read_only=True) as mc:
+                           {}, [], options, read_only=True) as mc:
             if not mc._error:
                 mc._result = \
-                    self._delegate.get_version(mc._session)
+                    self._delegate.get_version(options, mc._session)
         return mc._result
 
     # Generic V2 service methods
@@ -642,7 +640,7 @@ class SAv1DelegateBase(DelegateBase):
     def __init__(self):
         super(SAv1DelegateBase, self).__init__(sa_logger)
     
-    def get_version(self, session):
+    def get_version(self, options, session):
         raise CHAPIv1NotImplementedError('')
 
     # This call is protected
@@ -798,3 +796,6 @@ class SAv1DelegateBase(DelegateBase):
     def accept_invitation(self, client_cert, invite_id, member_id, 
                           credentials, options, session):
         raise CHAPIv1NotImplementedError('')
+
+
+    
