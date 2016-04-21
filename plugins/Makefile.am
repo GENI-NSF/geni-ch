@@ -11,26 +11,6 @@ edit = sed \
 	-e 's|@pkgsysconfdir[@]|$(pkgsysconfdir)|g' \
 	-e 's|@prefix[@]|$(prefix)|g'
 
-chapiv1rpc/chapi/Parameters.py: Makefile
-	rm -f $@ $@.tmp
-	srcdir=''; \
-	  test -f ./$@.in || srcdir=$(srcdir)/; \
-	  $(edit) $${srcdir}$@.in >$@.tmp
-	chmod a-w $@.tmp
-	mv $@.tmp $@
-
-chapiv1rpc/chapi/Parameters.py: $(srcdir)/chapiv1rpc/chapi/Parameters.py.in
-
-# Distribute but do not install
-EXTRA_DIST =  \
-	chapiv1rpc/chapi/Parameters.py.in
-
-CLEANFILES =  \
-	chapiv1rpc/chapi/Parameters.py
-
-nobase_plugin_DATA = \
-	chapiv1rpc/chapi/Parameters.py
-
 nobase_dist_plugin_DATA = \
 	__init__.py \
 	chapiv1rpc/MANIFEST.json \
@@ -43,6 +23,7 @@ nobase_dist_plugin_DATA = \
 	chapiv1rpc/chapi/MemberAuthority.py \
 	chapiv1rpc/chapi/MethodContext.py \
 	chapiv1rpc/chapi/Memoize.py \
+	chapiv1rpc/chapi/Parameters.py \
 	chapiv1rpc/chapi/SliceAuthority.py \
 	chapiv1rpc/chapi/__init__.py \
 	chapiv1rpc/plugin.py \
