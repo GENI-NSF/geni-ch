@@ -32,7 +32,7 @@ import uuid
 from sqlalchemy import *
 from sqlalchemy.orm import mapper
 
-import amsoil.core.pluginmanager as pm
+import tools.pluginmanager as pm
 
 import gcf.sfa.trust.gid as gid
 from gcf.sfa.trust.certificate import Certificate
@@ -113,10 +113,11 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         mapper(ProjectAttribute, self.db.PROJECT_ATTRIBUTE_TABLE, \
                    primary_key = self.db.PROJECT_ATTRIBUTE_TABLE.c.id)
 
-    def get_version(self, session):
-        import flask
-        api_versions = \
-            {chapi.Parameters.VERSION_NUMBER : flask.request.url_root}
+    # get_version is unprotected: no checking of credentials
+    def get_version(self, options, session):
+        envService = pm.getService(pm.ENVIRONMENT_SERVICE)
+        serverURL = envService.getServerURL()
+        api_versions = {chapi.Parameters.VERSION_NUMBER : serverURL}
         implementation_info = get_implementation_info(SA_LOG_PREFIX)
         version_info = {"VERSION" : chapi.Parameters.VERSION_NUMBER, 
                         "URN " : self.urn,
@@ -127,8 +128,8 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                         "API_VERSIONS" : api_versions,
                         "FIELDS": SA.supplemental_fields}
         result = self._successReturn(version_info)
-
         return result
+
 
     def get_expiration_query(self, session, type, old_flag, resurrect):
         if type == 'slice':
@@ -748,17 +749,12 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         self.update_project_expirations(client_uuid, session)
 
         name = options["fields"]["PROJECT_NAME"]
-        # check that project name is valid
-        if ' ' in name:
-            raise CHAPIv1ArgumentError('Project name may not contain spaces.')
-        elif len(name) > 32: # FIXME: Externalize this
-            raise CHAPIv1ArgumentError('Project name %s is too long - use at most 32 characters.' %name)
-            
-        # FIXME: Put this in a constants file
-        pattern = '^[a-zA-Z0-9][a-zA-Z0-9-_]{0,31}$'
-        valid = re.match(pattern,name)
-        if valid == None:
-            raise CHAPIv1ArgumentError('Project name %s is invalid - use at most 32 alphanumeric characters or hyphen or underscore. No leading hyphen or underscore.' %name)
+        valid = re.match(SA.PROJECT_NAME_REGEX, name)
+        if not valid:
+            msg = ('Project name %s is invalid. Use at most 32 alphanumeric'
+                   + ' characters or hyphen or underscore. No leading hyphen'
+                   + ' or underscore.')
+            raise CHAPIv1ArgumentError(msg % (name))
         
         # check that project does not already exist
         if self.get_project_id(session, "project_name", name):

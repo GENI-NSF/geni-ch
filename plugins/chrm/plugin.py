@@ -21,7 +21,7 @@
 # IN THE WORK.
 #----------------------------------------------------------------------
 
-import amsoil.core.pluginmanager as pm
+import tools.pluginmanager as pm
 from ServiceRegistry import SRv1Handler, SRv1Delegate
 #from CHv1Implementation import CHv1Implementation
 from CHv1PersistentImplementation import CHv1PersistentImplementation

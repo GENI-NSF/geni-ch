@@ -18,16 +18,12 @@ INFO    :amsoil:\[chv1
 INFO    :amsoil:\[sav1
 INFO    :amsoil:\[mav1
 INFO    :amsoil:\[logv1
-INFO    :amsoil:\[pgchv1
 INFO    :chapi:MA: lookup_member_info: no member_urn row
 INFO    :chapi:SA: Returning empty list of slices
 INFO    :chapi:LOG:.*Result from 
 INFO    :chapi:SA:.*Result from get_requests_by_user
-INFO    :chapi:PGCH:.*: No slice found URN urn:publicid:IDN\+ch
-INFO    :chapi:PGCH:.*: Result from Resolve: \{'output': 'No slice found URN urn:publicid:IDN\+ch.*'.*\}
 ERROR   :amsoil:\[sav1\] \[ARGUMENT\] ARGUMENT_ERROR \(Unknown slice urns: \[\['urn:publicid:IDN\+ch.*'\]\]\)
 INFO    :chapi:SA:.*: Result from lookup_slices: \{'output': "\[ARGUMENT\] ARGUMENT_ERROR \(Unknown slice urns: \[\['urn:publicid:IDN\+ch.*'\]\]\)".*\}
-INFO    :chapi:PGCH:.*: Result from Resolve: \{'output': "\[ARGUMENT\] ARGUMENT_ERROR \(Unknown slice urns: \[\['urn:publicid:IDN\+ch.*'\]\]\)".*\}
 INFO    :chapi:SPEAKSFOR: 'urn:publicid:IDN\+ch.*\+authority\+portal' is speaking for 'urn:publicid:IDN\+ch.*\+user\+
 ERROR   :amsoil:\[sav1\] \[ARGUMENT\] ARGUMENT_ERROR \(Unknown sliver urns.*\)
 INFO    :chapi:SA:.*: Result from update_sliver_info: \{'output': "\[ARGUMENT\] ARGUMENT_ERROR \(Unknown sliver urns.*\).*\}

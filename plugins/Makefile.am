@@ -11,27 +11,8 @@ edit = sed \
 	-e 's|@pkgsysconfdir[@]|$(pkgsysconfdir)|g' \
 	-e 's|@prefix[@]|$(prefix)|g'
 
-chapiv1rpc/chapi/Parameters.py: Makefile
-	rm -f $@ $@.tmp
-	srcdir=''; \
-	  test -f ./$@.in || srcdir=$(srcdir)/; \
-	  $(edit) $${srcdir}$@.in >$@.tmp
-	chmod a-w $@.tmp
-	mv $@.tmp $@
-
-chapiv1rpc/chapi/Parameters.py: $(srcdir)/chapiv1rpc/chapi/Parameters.py.in
-
-# Distribute but do not install
-EXTRA_DIST =  \
-	chapiv1rpc/chapi/Parameters.py.in
-
-CLEANFILES =  \
-	chapiv1rpc/chapi/Parameters.py
-
-nobase_plugin_DATA = \
-	chapiv1rpc/chapi/Parameters.py
-
 nobase_dist_plugin_DATA = \
+	__init__.py \
 	chapiv1rpc/MANIFEST.json \
 	chapiv1rpc/__init__.py \
 	chapiv1rpc/chapi/Clearinghouse.py \
@@ -42,9 +23,11 @@ nobase_dist_plugin_DATA = \
 	chapiv1rpc/chapi/MemberAuthority.py \
 	chapiv1rpc/chapi/MethodContext.py \
 	chapiv1rpc/chapi/Memoize.py \
+	chapiv1rpc/chapi/Parameters.py \
 	chapiv1rpc/chapi/SliceAuthority.py \
 	chapiv1rpc/chapi/__init__.py \
 	chapiv1rpc/plugin.py \
+	chrm/__init__.py \
 	chrm/ABACGuard.py \
 	chrm/ArgumentCheck.py \
 	chrm/CHDatabaseEngine.py \
@@ -54,25 +37,27 @@ nobase_dist_plugin_DATA = \
 	chrm/MANIFEST.json \
 	chrm/ServiceRegistry.py \
 	chrm/plugin.py \
+	csrm/__init__.py \
 	csrm/CredentialStore.py \
 	csrm/MANIFEST.json \
 	csrm/plugin.py \
+	flaskrest/__init__.py \
 	flaskrest/plugin.py \
 	flaskrest/MANIFEST.json \
+	logging/__init__.py \
 	logging/Logging.py \
 	logging/MANIFEST.json \
 	logging/plugin.py \
+	marm/__init__.py \
 	marm/MANIFEST.json \
 	marm/MAv1Guard.py \
 	marm/MAv1Implementation.py \
 	marm/plugin.py \
+	opsmon/__init__.py \
 	opsmon/plugin.py \
 	opsmon/MANIFEST.json \
 	opsmon/OpsMon.py \
-	pgch/MANIFEST.json \
-	pgch/PGCH.py \
-	pgch/__init__.py \
-	pgch/plugin.py \
+	sarm/__init__.py \
 	sarm/MANIFEST.json \
 	sarm/SAv1Guard.py \
 	sarm/SAv1PersistentImplementation.py \

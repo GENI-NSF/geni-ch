@@ -21,7 +21,7 @@
 # IN THE WORK.
 #----------------------------------------------------------------------
 
-import amsoil.core.pluginmanager as pm
+import tools.pluginmanager as pm
 from SAv1PersistentImplementation import SAv1PersistentImplementation
 from SAv1Guard import SAv1Guard
 

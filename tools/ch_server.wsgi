@@ -21,33 +21,17 @@
 # IN THE WORK.
 #----------------------------------------------------------------------
 
-import tools.pluginmanager as pm
-import logging
+import sys
+import os
 
-rest_logger = logging.getLogger('rest')
+sys.path.append("/usr/share/geni-ch/chapi/chapi")
+sys.path.append("/usr/share/geni-ch/chapi/chapi/tools")
+sys.path.append("/usr/share/geni-ch/gcf/src")
 
-# Plugin to load Flask-based REST support
+# Need this for Memoize
+sys.path.append("/usr/share/geni-ch/chapi/chapi/plugins/chapiv1rpc")
 
-# This is modeled after FlaskXMLRPC
-class FlaskREST:
-    def __init__(self, flaskapp):
-        self._flaskapp = flaskapp
+# Need this for CHDatabaseEngine
+sys.path.append("/usr/share/geni-ch/chapi/chapi/plugins/chrm")
 
-    def registerREST(self, unique_service_name, handler, endpoint,
-                     defaults={},
-                     methods=["GET", "POST"]):
-        "Register the handler for the endpoint"
-        self._flaskapp.app.add_url_rule(endpoint, None, handler,
-                                        defaults=defaults,
-                                        methods=methods)
-#        rest_logger.info("Called FlaskREST.registerREST %s %s %s" % \
-#                             (unique_service_name, handler, endpoint))
-
-# Load the Flask REST server
-def setup():
-    flask_server = pm.getService('rpcserver')
-    flask_rest = FlaskREST(flask_server)
-    pm.registerService('rest', flask_rest)
-
-
-
+from ch_server import application as application

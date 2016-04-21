@@ -22,8 +22,7 @@
 #----------------------------------------------------------------------
 
 from CHDatabaseEngine import CHDatabaseEngine
-import amsoil.core.log
-import amsoil.core.pluginmanager as pm
+import tools.pluginmanager as pm
 from sqlalchemy import *
 from sqlalchemy.orm import aliased
 from sqlalchemy.orm import mapper
@@ -37,14 +36,13 @@ from ArgumentCheck import *
 from tools.geni_constants import *
 from tools.geni_utils import *
 from tools.guard_utils import *
-import amsoil.core.pluginmanager as pm
 from tools.chapi_log import *
 from tools.mapped_tables import MemberAttribute
 import logging
 from tools import MA_constants
 import time
 
-logger = amsoil.core.log.getLogger('ABAC')
+logger = logging.getLogger('ABAC')
 
 
 # Pre-processor for method invocations
