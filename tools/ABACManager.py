@@ -30,7 +30,6 @@ import os
 import subprocess
 import sys
 import tempfile
-import ABAC
 from chapi_log import *
 from credential_tools import generate_credential
 import xml.dom.minidom as minidom
