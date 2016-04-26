@@ -48,7 +48,7 @@ def urn_for_slice(slice_name, project_name):
     return "urn:publicid:IDN+%s:%s+slice+%s" % \
         (authority, project_name, slice_name)
 
-    
+
 # Return the user display name
 # First, try '_GENI_MEMBER_DISPLAYNAME'
 # Then try 'MEMBER_FIRSTNAME' 'MEMBER_LASTNAME'
@@ -64,4 +64,3 @@ def get_member_display_name(member_identifying_info, member_urn):
         return member_identifying_info['MEMBER_EMAIL']
     else:
         return get_name_from_urn(member_urn)
-
