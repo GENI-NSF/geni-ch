@@ -6,6 +6,13 @@
 
 ## Installation Notes
 
+# [Release 2.11.1](https://github.com/GENI-NSF/geni-ch/milestones/2.11.1)
+
+## Changes
+
+* Fix XML-RPC responses
+([#492](https://github.com/GENI-NSF/geni-ch/issues/492))
+
 # [Release 2.11](https://github.com/GENI-NSF/geni-ch/milestones/2.11)
 
 ## Changes
