@@ -24,13 +24,13 @@
 import json
 import time
 import datetime
-import amsoil.core.log
-import amsoil.core.pluginmanager as pm
+import logging
+import tools.pluginmanager as pm
 from  sqlalchemy import *
 from  sqlalchemy.orm import aliased
 from tools.dbutils import STANDARD_DATETIME_FORMAT
 
-opsmon_logger = amsoil.core.log.getLogger('opsmon')
+opsmon_logger = logging.getLogger('opsmon')
 
 # Replace : and + in URN to -                                            
 def flatten(urn):

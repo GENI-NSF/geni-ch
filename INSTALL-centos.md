@@ -84,6 +84,12 @@ Install PostgreSQL database
 If you do not already have PostgreSQL installed then you need to install it.
 PostgreSQL is required for the GENI Clearinghouse.
 
+Note: if installing on an APT centos image, do:
+```Shell
+sudo yum reinstall -y polkit\* power
+sudo reboot
+```
+
 To install PostgreSQL on the same host as the GENI Clearinghouse,
 see `/usr/share/geni-chapi/templates/install_postgresql.sh`. You should copy
 that file and edit the parameters near the top to change passwords to
@@ -151,7 +157,7 @@ Initialize Services
 -------------------
 
 ```Shell
-for srv in sr sa pa ma logging cs pgch km portal
+for srv in sr sa pa ma logging cs km portal
 do
     sudo mkdir -p $CH_DIR/$srv
 done
@@ -214,7 +220,7 @@ sudo chmod a+w /var/log/geni-chapi/chapi.log
 
 # Set up amsoil links to CHAPI plugins
 cd $CH_DIR/chapi/AMsoil/src/plugins
-for pl in chrm chapiv1rpc sarm marm csrm logging opsmon flaskrest pgch
+for pl in chrm chapiv1rpc sarm marm csrm logging opsmon flaskrest
 do
     sudo ln -s $CH_DIR/chapi/chapi/plugins/$pl .
 done
@@ -232,41 +238,41 @@ If postfix is not already installed on your host, then install/configure
 it as follows. If postfix is already installed you can go to the next step.
 
 ```Shell
-yum install -y postfix mailx
+sudo yum install -y postfix mailx
 ```
 
 Configure postfix for this host by running these commands:
 
 ```Shell
-postconf myhostname=<FQDN>
-postconf mydomain=<DN>
-postconf myorigin=\$mydomain
+sudo postconf myhostname=`hostname -f`
+sudo postconf mydomain=`hostname -d`
+sudo postconf myorigin=\$mydomain
 
 # if you see warnings about IPv6:
-postconf inet_protocols=ipv4
+sudo postconf inet_protocols=ipv4
 ```
 
 Create postfix user and postdrop group. See `main.cf` for details.
 
 ```Shell
-useradd -r postfix
-groupadd -r postdrop
+sudo useradd -r postfix
+sudo groupadd -r postdrop
 ```
 
 Set file and directory permissions
 
 ```Shell
-postfix set-permissions
+sudo postfix set-permissions
 
 # If this file exists, delete it
-rm /var/lib/postfix/master.lock
+sudo rm /var/lib/postfix/master.lock
 ```
 
 Enable and start postfix
 
 ```Shell
-systemctl enable postfix.service
-systemctl start postfix.service
+sudo systemctl enable postfix.service
+sudo systemctl start postfix.service
 ```
 
 Test it out:

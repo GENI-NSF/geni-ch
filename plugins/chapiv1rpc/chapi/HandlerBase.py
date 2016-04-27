@@ -21,22 +21,17 @@
 # IN THE WORK.
 #----------------------------------------------------------------------
 
-import amsoil.core.log
-import amsoil.core.pluginmanager as pm
+import tools.pluginmanager as pm
 from gcf.sfa.trust.certificate import Certificate
-from amsoil.core import serviceinterface
 import os
 import traceback
 from Exceptions import *
 
-xmlrpc = pm.getService('xmlrpc')
-
-# Base class for API handlers, which can have 
+# Base class for API handlers, which can have
 #   plug-replaceable delegates and guards
-class HandlerBase(xmlrpc.Dispatcher):
+class HandlerBase(object):
 
     def __init__(self, logger):
-        super(HandlerBase, self).__init__(logger)
         self._logger = logger
         self._delegate = None
         self._guard = None
@@ -59,21 +54,17 @@ class HandlerBase(xmlrpc.Dispatcher):
         return self._trusted_roots
 
     # Interfaces for setting/getting the delegate (for implementing API calls)
-    @serviceinterface
     def setDelegate(self, delegate):
         self._delegate = delegate
-    
-    @serviceinterface
+
     def getDelegate(self):
         return self._delegate
 
-    # Interfaces for setting/getting the guard delegate 
+    # Interfaces for setting/getting the guard delegate
     # (for authenticating/authorizing  API calls)
-    @serviceinterface
     def setGuard(self, guard):
         self._guard = guard
-    
-    @serviceinterface
+
     def getGuard(self):
         return self._guard
 
@@ -82,27 +73,34 @@ class HandlerBase(xmlrpc.Dispatcher):
         """Assembles a GENI compliant return result for successful methods."""
         return { 'code' : 0, 'output' : '', 'value' : result  }
 
-    @serviceinterface
     def requestCertificate(self):
-        cert = super(HandlerBase, self).requestCertificate()
+        envService = pm.getService(pm.ENVIRONMENT_SERVICE)
+        cert = envService.getClientCertificate()
         if not cert:
-            raise CHAPIv1AuthorizationError('Client certificate required but not provided')
+            msg = 'Client certificate required but not provided'
+            raise CHAPIv1AuthorizationError(msg)
         return cert
 
     def _errorReturn(self, e, tb=None):
         """Assembles a GENI compliant return result for faulty methods."""
-        if not isinstance(e, CHAPIv1BaseError): # convert common errors into CHAPIv1GeneralError
-            e = CHAPIv1ServerError(str(e))
+        # Determine if the exception is a CHAPI exception. If not, wrap it
+        # in a CHAPI exception.
+        # This used to be an isinstance check, but that failed because
+        # the exceptions were getting loaded via two different entries
+        # in sys.path. We've got to get our sys.path entries and import
+        # statements in order.
+        eName = type(e).__name__
+        if not eName.startswith('CHAPIv1'): # convert common errors into CHAPIv1GeneralError
+            e = CHAPIv1ServerError("%s: %s" % (type(e).__name__, str(e)))
         # do some logging
         self._logger.error(e)
+        # Do not print stack trace for authorization error, authentication
+        # error, argument error, etc.
         if type(e) in (CHAPIv1ServerError,
                        CHAPIv1NotImplementedError,
                        CHAPIv1DatabaseError):
-            if tb:
-                self._logger.error("\n".join(traceback.format_tb(tb)))
-            else:
-                self._logger.error(traceback.format_exc())
+            self._logger.error(traceback.format_exc())
         return {'code' :  e.code , 'value' : None, 'output' : str(e) }
-        
+
     def maintenanceOutage(self):
         return os.path.exists(self._maintenance_file)

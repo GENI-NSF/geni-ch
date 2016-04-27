@@ -21,35 +21,24 @@
 # IN THE WORK.
 #----------------------------------------------------------------------
 
-import amsoil.core.pluginmanager as pm
-import os, os.path
-from PGCH import PGCHv1Handler, PGCHv1Delegate
+import tools.pluginmanager as pm
+from Logging import Loggingv1Delegate, Loggingv1Handler, Loggingv1Guard
 
-# Plugin for PGCH (ProtoGENI CH/SA/MA interface) service
+# Plugin for logging service implementation
 
 def setup():
 
-   # set up config keys                                                        
-   config = pm.getService('config')
+    log_handler = Loggingv1Handler()
+    pm.registerService('loggingv1handler', log_handler)
 
-   # register xmlrpc endpoint                                                  
-   xmlrpc = pm.getService('xmlrpc')
+    log_delegate = Loggingv1Delegate()
+    log_handler.setDelegate(log_delegate)
 
-   pgch_handler = PGCHv1Handler()
-   pgch_delegate = PGCHv1Delegate()
-   pgch_handler.setDelegate(pgch_delegate)
+    log_guard = Loggingv1Guard() 
+    log_handler.setGuard(log_guard)
 
-   pgch_handler2 = PGCHv1Handler()
-   pgch_delegate2 = PGCHv1Delegate()
-   pgch_handler2.setDelegate(pgch_delegate2)
+    xmlrpc = pm.getService('xmlrpc')
+    xmlrpc.registerXMLRPC('log1', log_handler, '/LOG')
 
-   pgch_handler3 = PGCHv1Handler()
-   pgch_delegate3 = PGCHv1Delegate()
-   pgch_handler3.setDelegate(pgch_delegate3)
 
-   pm.registerService('pgchv1handler', pgch_handler)
 
-   # name, handler, endpoint                                                   
-   xmlrpc.registerXMLRPC('pgch2v1', pgch_handler2, '/PGCH')
-   xmlrpc.registerXMLRPC('pgch3v1', pgch_handler3, '/PGCH/ch')
-   xmlrpc.registerXMLRPC('pgchv1', pgch_handler, '/')

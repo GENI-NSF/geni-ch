@@ -23,7 +23,7 @@
 
 from sqlalchemy import *
 from chapi.Exceptions import *
-import amsoil.core.pluginmanager as pm
+import tools.pluginmanager as pm
 from tools.dbutils import *
 from tools.chapi_log import *
 from tools.cert_utils import *

@@ -21,7 +21,7 @@
 # IN THE WORK.
 #----------------------------------------------------------------------
 
-import amsoil.core.pluginmanager as pm
+import tools.pluginmanager as pm
 from chapi.Clearinghouse import CHv1Handler, CHv1DelegateBase
 from chapi.MemberAuthority import MAv1Handler, MAv1DelegateBase
 from chapi.SliceAuthority import SAv1Handler, SAv1DelegateBase

@@ -26,11 +26,10 @@ from tools.cert_utils import *
 from tools.guard_utils import *
 from tools.geni_constants import *
 from Exceptions import *
-import amsoil.core.pluginmanager as pm
+import tools.pluginmanager as pm
 import os
 import sys
 import traceback
-#import thread, threading
 
 # Class to wrap all calls from handlers to delegates
 # Holding method context
@@ -90,6 +89,8 @@ class MethodContext:
         self._client_cert = None
         self._email = None
         if self._cert_required:
+#            if 'ENVIRON' in options and 'SSL_CLIENT_CERT' in options['ENVIRON']:
+#                self._client_cert = options['ENVIRON']['SSL_CLIENT_CERT']
             self._client_cert = self._handler.requestCertificate()
             if not self._client_cert:
                 raise CHAPIv1ArgumentError("No request certificate")
@@ -169,7 +170,6 @@ class MethodContext:
                                  self._options,
                                  self._args_dict,
                                  {'user': self._email})
-#            chapi_info("MC", "MC Enter method %s user %s: On thread %d: %s. %d current threads" % (self._method_name, self._email, thread.get_ident(), threading.current_thread(), threading.active_count()))
             # Check whether we're currenty in a maintenance outage.
             # This will raise an exception if the call shouldn't go through.
             self._checkMaintenanceMode()
@@ -204,8 +204,6 @@ class MethodContext:
     # value is the exception and traceback_object is the stack trace.
     # Otherwise, these are all None
     def __exit__(self, type, value, traceback_object):
-#        chapi_info("MC", "MC EXIT method %s user %s: On thread %d: %s. %d current threads" % (self._method_name, self._email, thread.get_ident(), threading.current_thread(), threading.active_count()))
-#        chapi_info("MethodContext", "__exit__ %s %s %s" % (type, value, traceback_object))
         # If there is an error, handle in standard way (setting result and error)
         if type:
             self._handleError(value, traceback_object)

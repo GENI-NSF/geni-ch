@@ -21,9 +21,7 @@
 # IN THE WORK.
 #----------------------------------------------------------------------
 
-import amsoil.core.log
-import amsoil.core.pluginmanager as pm
-from amsoil.core import serviceinterface
+import tools.pluginmanager as pm
 from DelegateBase import DelegateBase
 from HandlerBase import HandlerBase
 from Exceptions import *
@@ -31,23 +29,22 @@ from tools.cert_utils import *
 from tools.chapi_log import *
 from MethodContext import *
 
-ma_logger = amsoil.core.log.getLogger('mav1')
-xmlrpc = pm.getService('xmlrpc')
+ma_logger = logging.getLogger('mav1')
 
 # RPC handler for Member Authority (MA) API calls
 class MAv1Handler(HandlerBase):
     def __init__(self):
         super(MAv1Handler, self).__init__(ma_logger)
 
-    def get_version(self):
+    def get_version(self, options={}):
         """Return version of MA API including object model
         This call is unprotected: no checking of credentials
         """
         with MethodContext(self, MA_LOG_PREFIX, 'get_version',
-                           {}, [], {}, read_only=True) as mc:
+                           {}, [], options, read_only=True) as mc:
             if not mc._error:
                 mc._result = \
-                    self._delegate.get_version(mc._session)
+                    self._delegate.get_version(options, mc._session)
         return mc._result
 
     # Generic V2 service methods
@@ -535,7 +532,7 @@ class MAv1DelegateBase(DelegateBase):
         super(MAv1DelegateBase, self).__init__(ma_logger)
     
     # This call is unprotected: no checking of credentials
-    def get_version(self):
+    def get_version(self, options):
         raise CHAPIv1NotImplementedError('')
 
 
