@@ -1,23 +1,19 @@
 # GENI Clearinghouse Release Notes
 
-# [Release 2.11](https://github.com/GENI-NSF/geni-ch/milestones/2.11)
+# [Release 2.12](https://github.com/GENI-NSF/geni-ch/milestones/2.12)
+
+## Changes
 
 ## Installation Notes
 
-* Remove obsolete installed files if they exist
+# [Release 2.11.1](https://github.com/GENI-NSF/geni-ch/milestones/2.11.1)
 
-    ```
-    sudo rm -f /usr/share/geni-ch/chapi/AMsoil/src/plugins/pgch
-    sudo rm -rf /usr/share/geni-ch/chapi/chapi/plugins/pgch
-    sudo rm -f /usr/share/geni-ch/chapi/chapi/tools/pgch_testall.sh
-    sudo rm -f /usr/share/geni-ch/chapi/chapi/tools/pgch_client.py
-    sudo rm -f /usr/share/geni-ch/chapi/chapi/linkamsoil.sh
-    sudo rm -f /etc/geni-chapi/chapi-centos.ini
-    sudo rm -f /usr/share/geni-ch/chapi/chapi/tools/install_ch
-    sudo rm -f /usr/share/geni-ch/chapi/chapi/tools/install_chapi
-    sudo rm -f /usr/share/geni-ch/chapi/chapi/tools/install_db
-    sudo rm -f /usr/share/geni-ch/chapi/chapi/tools/testall.sh
-    ```
+## Changes
+
+* Fix XML-RPC responses
+([#492](https://github.com/GENI-NSF/geni-ch/issues/492))
+
+# [Release 2.11](https://github.com/GENI-NSF/geni-ch/milestones/2.11)
 
 ## Changes
 
@@ -25,6 +21,23 @@
   ([#474](https://github.com/GENI-NSF/geni-ch/issues/474))
 * Restrict project names a little bit more
   ([#480](https://github.com/GENI-NSF/geni-ch/issues/480))
+
+## Installation Notes
+
+  * Remove obsolete installed files if they exist
+
+      ```
+      sudo rm -f /usr/share/geni-ch/chapi/AMsoil/src/plugins/pgch
+      sudo rm -rf /usr/share/geni-ch/chapi/chapi/plugins/pgch
+      sudo rm -f /usr/share/geni-ch/chapi/chapi/tools/pgch_testall.sh
+      sudo rm -f /usr/share/geni-ch/chapi/chapi/tools/pgch_client.py
+      sudo rm -f /usr/share/geni-ch/chapi/chapi/linkamsoil.sh
+      sudo rm -f /etc/geni-chapi/chapi-centos.ini
+      sudo rm -f /usr/share/geni-ch/chapi/chapi/tools/install_ch
+      sudo rm -f /usr/share/geni-ch/chapi/chapi/tools/install_chapi
+      sudo rm -f /usr/share/geni-ch/chapi/chapi/tools/install_db
+      sudo rm -f /usr/share/geni-ch/chapi/chapi/tools/testall.sh
+      ```
 
 # [Release 2.10](https://github.com/GENI-NSF/geni-ch/milestones/2.10)
 
