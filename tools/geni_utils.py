@@ -24,6 +24,7 @@
 # Utility functions for morphing from native schema to public-facing
 # schema
 
+import re
 import tools.pluginmanager as pm
 from datetime import datetime
 from cert_utils import *
@@ -47,6 +48,19 @@ def urn_for_slice(slice_name, project_name):
     authority = config.get("chrm.authority")
     return "urn:publicid:IDN+%s:%s+slice+%s" % \
         (authority, project_name, slice_name)
+
+
+def parse_urn(urn):
+    '''returns authority, type, name'''
+    m = re.search('urn:publicid:IDN\+([^\+]+)\+([^\+]+)\+([^\+]+)$', urn)
+    if m is not None:
+        return m.group(1), m.group(2), m.group(3)
+    else:
+        return None
+
+
+def make_urn(authority, typ, name):
+    return 'urn:publicid:IDN+'+authority+'+'+typ+'+'+name
 
 
 # Return the user display name

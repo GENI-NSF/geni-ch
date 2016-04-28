@@ -51,6 +51,7 @@ from tools.guard_utils import *
 from tools.chapi_utils import *
 from tools.ABACManager import *
 from tools.mapped_tables import *
+from tools.geni_utils import *
 from chapi.MemberAuthority import MAv1DelegateBase
 from chapi.Exceptions import *
 import chapi.Parameters
@@ -129,17 +130,6 @@ def make_member_urn(cert, username):
     ma_urn = get_urn_from_cert(cert)
     ma_authority, ma_type, ma_name = parse_urn(ma_urn)
     return make_urn(ma_authority, 'user', username)
-
-def parse_urn(urn):
-    '''returns authority, type, name'''
-    m = re.search('urn:publicid:IDN\+([^\+]+)\+([^\+]+)\+([^\+]+)$', urn)
-    if m is not None:
-        return m.group(1), m.group(2), m.group(3)
-    else:
-        return None
-
-def make_urn(authority, typ, name):
-    return 'urn:publicid:IDN+'+authority+'+'+typ+'+'+name
 
 class MAv1Implementation(MAv1DelegateBase):
 
