@@ -175,17 +175,17 @@ class SAv1Handler(HandlerBase):
         return mc._result
 
     # This call is protected
-    # Get credentials for given user with respect to given slice
-    # Authorization based on client cert and givencredentiabls
+    # Get credentials for given user with respect to given slice or project
+    # Authorization based on client cert and given credentials
     # Note the session is _not_ read_only because it may update_expirations
-    def get_credentials(self, slice_urn, credentials, options):
+    def get_credentials(self, urn, credentials, options):
         with MethodContext(self, SA_LOG_PREFIX, 'get_credentials',
-                           {'slice_urn' : slice_urn},
+                           {'urn' : urn},
                            credentials, options, read_only=False) as mc:
             if not mc._error:
                 mc._result = \
                     self._delegate.get_credentials(mc._client_cert,
-                                                   slice_urn,
+                                                   urn,
                                                    credentials,
                                                    options,
                                                    mc._session)

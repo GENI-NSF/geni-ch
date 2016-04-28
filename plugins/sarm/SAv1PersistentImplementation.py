@@ -332,8 +332,22 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
 
         return result
 
-    def get_credentials(self, client_cert, slice_urn, credentials, options,
+    def get_credentials(self, client_cert, urn, credentials, options,
                         session):
+        (authority, typ, name) = parse_urn(urn)
+        if typ == 'slice':
+            return self.get_slice_credentials(client_cert, urn, credentials,
+                                              options, session)
+        elif typ == 'project':
+            return self.get_project_credentials(client_cert, urn, credentials,
+                                                options, session)
+        else:
+            # Unknown URN type, so fail.
+            msg = 'Invalid URN type "%s" in get_credentials' % (typ)
+            raise CHAPIv1ArgumentError(msg)
+
+    def get_slice_credentials(self, client_cert, slice_urn, credentials, options,
+                              session):
 
         client_uuid = get_uuid_from_cert(client_cert)
         self.update_slice_expirations(client_uuid, session)
@@ -394,6 +408,10 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
 
         return result
 
+    def get_project_credentials(self, client_cert, slice_urn, credentials,
+                                options, session):
+        msg = 'get_project_credentials is not implemented yet.'
+        raise CHAPIv1NotImplementedError(msg)
 
     # check whether a current slice exists, and if so return its id
     def get_slice_id(self, session, field, value, include_expired=False):
