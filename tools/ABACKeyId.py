@@ -55,6 +55,8 @@ def compute_keyid(cert_filename):
     output = subprocess.check_output(args)
     parts = output.strip().split("= ")
     keyid = parts[1]
+    # Replace ':' separators if they are in the returned SHA
+    keyid = keyid.replace(':', '') 
     return keyid
 
     os.unlink(derfile.name)

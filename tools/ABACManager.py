@@ -103,7 +103,7 @@ def grab_output_from_subprocess(args, include_stderr=False):
 
 # Evaluate a query for given ID definitions and raw XML assertions
 def execute_abac_query(query_expr, id_certs, raw_assertions = []):
-    abac_manager = ABACManager(cert_files_by_name=id_certs, raw_assertions=raw_assertions)
+    abac_manager = ABACManager(certs_by_name=id_certs, raw_assertions=raw_assertions)
     return abac_manager.query(query_expr)
 
 # Get the key_id from a cert_file
@@ -345,6 +345,10 @@ class ABACManager:
         # You gotta parse the expressions and go head-to-tail...
         parts = query_expression.split('<-')
         lhs = parts[0]
+        # If we have a parameterized query e.g. A.B(C)<D, replace with A.B_C<-D
+        if ')' in lhs and ')' in lhs:
+            lhs = lhs.replace('(', '_')
+            lhs = lhs.replace(')', '')
         rhs = parts[1]
         response, proof = self.find_path(rhs, lhs)
         return response, proof
