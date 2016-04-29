@@ -72,7 +72,7 @@ def application(environ, start_response):
     except Exception as e:
         msg = "%s: %s" % (type(e).__name__, str(e))
         fault = xmlrpclib.Fault(1, msg)
-        response = xmlrpclib.dumps(fault, allow_none=True)
+        response = xmlrpclib.dumps(fault, methodresponse=True, allow_none=True)
         return [response]
 
 
@@ -114,7 +114,7 @@ def handle_XMLRPC_call(environ):
         # Always clear the environment after the call is complete,
         # even if there was an exception
         envService.clearEnvironment()
-    response = xmlrpclib.dumps((method_response, ), allow_none=True)
+    response = xmlrpclib.dumps((method_response,), methodresponse=True, allow_none=True)
     return response
 
 
