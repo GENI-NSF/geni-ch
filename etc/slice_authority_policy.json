@@ -39,7 +39,7 @@
       ]
    },
 
-  "get_credentials" :  {
+  "get_slice_credentials" :  {
      "__DOC__" : "Slice lead/admin/member or operators can get slice cred",
       "assertions" : [
         "ME.IS_$ROLE_$SLICE<-CALLER"

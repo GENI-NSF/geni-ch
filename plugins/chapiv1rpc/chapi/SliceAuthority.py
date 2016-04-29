@@ -179,13 +179,28 @@ class SAv1Handler(HandlerBase):
     # Authorization based on client cert and given credentials
     # Note the session is _not_ read_only because it may update_expirations
     def get_credentials(self, urn, credentials, options):
-        with MethodContext(self, SA_LOG_PREFIX, 'get_credentials',
-                           {'urn' : urn},
+        urn_parts = parse_urn(urn)
+        if urn_parts is None:
+            msg = "Invalid URN: %s" % urn
+            return self._errorReturn(CHAPIv1ArgumentError(msg))
+        (authority, typ, name) = urn_parts
+        if typ == "slice":
+            result = self.get_slice_credentials(urn, credentials, options)
+        elif typ == "project":
+            result = self.get_project_credentials(urn, credentials, options)
+        else:
+            msg = "Not a slice or project"
+            result = self._errorReturn(CHAPIv1ArgumentError(msg))
+        return result
+
+    def get_slice_credentials(self, slice_urn, credentials, options):
+        with MethodContext(self, SA_LOG_PREFIX, 'get_slice_credentials',
+                           {'slice_urn' : slice_urn},
                            credentials, options, read_only=False) as mc:
             if not mc._error:
                 mc._result = \
-                    self._delegate.get_credentials(mc._client_cert,
-                                                   urn,
+                    self._delegate.get_slice_credentials(mc._client_cert,
+                                                   slice_urn,
                                                    credentials,
                                                    options,
                                                    mc._session)

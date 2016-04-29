@@ -68,7 +68,7 @@ class SAv1Guard(ABACGuardBase):
         'modify_slice_membership' : SimpleArgumentCheck({'slice_urn' : 'URN'}),
         'lookup_slice_members' : SimpleArgumentCheck({'slice_urn' : 'URN'}),
         'lookup_slices_for_member' : SimpleArgumentCheck({'member_urn' : 'URN'}),
-        'get_credentials' : SimpleArgumentCheck({'urn' : 'URN'}),
+        'get_slice_credentials' : SimpleArgumentCheck({'slice_urn' : 'URN'}),
 
         # Argument checks for project methods
 
