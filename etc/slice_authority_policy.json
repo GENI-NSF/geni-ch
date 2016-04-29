@@ -8,8 +8,8 @@
 	],
       "policies" : [
         "ME.MAY_$METHOD<-ME.IS_OPERATOR",
-        "ME.MAY_$METHOD_$PROJECT<-ME.IS_LEAD_$PROJECT", 
-        "ME.MAY_$METHOD_$PROJECT<-ME.IS_ADMIN_$PROJECT", 
+        "ME.MAY_$METHOD_$PROJECT<-ME.IS_LEAD_$PROJECT",
+        "ME.MAY_$METHOD_$PROJECT<-ME.IS_ADMIN_$PROJECT",
         "ME.MAY_$METHOD_$PROJECT<-ME.IS_MEMBER_$PROJECT"
       ]
    },
@@ -34,7 +34,7 @@
 	],
       "policies" : [
          "ME.MAY_$METHOD<-ME.IS_OPERATOR",
-         "ME.MAY_$METHOD_$SLICE<-ME.IS_LEAD_$SLICE", 
+         "ME.MAY_$METHOD_$SLICE<-ME.IS_LEAD_$SLICE",
          "ME.MAY_$METHOD_$SLICE<-ME.IS_ADMIN_$SLICE"
       ]
    },
@@ -46,7 +46,7 @@
 	],
      "policies" : [
         "ME.MAY_$METHOD<-ME.IS_OPERATOR",
-        "ME.MAY_$METHOD_$SLICE<-ME.IS_LEAD_$SLICE", 
+        "ME.MAY_$METHOD_$SLICE<-ME.IS_LEAD_$SLICE",
         "ME.MAY_$METHOD_$SLICE<-ME.IS_ADMIN_$SLICE",
         "ME.MAY_$METHOD_$SLICE<-ME.IS_MEMBER_$SLICE"
      ]
@@ -99,7 +99,7 @@
   "lookup_projects" : {
        "__DOC__" : "Anyone with legitimate cert can call lookup projects",
        "policies" : [
-         "ME.MAY_$METHOD<-CALLER" 
+         "ME.MAY_$METHOD<-CALLER"
        ]
      },
 
@@ -110,7 +110,7 @@
 	],
      "policies" : [
        "ME.MAY_$METHOD<-ME.IS_OPERATOR",
-       "ME.MAY_$METHOD_$PROJECT<-ME.IS_LEAD_$PROJECT", 
+       "ME.MAY_$METHOD_$PROJECT<-ME.IS_LEAD_$PROJECT",
        "ME.MAY_$METHOD_$PROJECT<-ME.IS_ADMIN_$PROJECT"
       ]
    },
@@ -161,7 +161,7 @@
     "policies" : [
       "ME.MAY_$METHOD<-ME.IS_OPERATOR",
       "ME.MAY_$METHOD<-ME.IS_AUTHORITY",
-      "ME.MAY_$METHOD_$SLICE<-ME.IS_LEAD_$SLICE", 
+      "ME.MAY_$METHOD_$SLICE<-ME.IS_LEAD_$SLICE",
       "ME.MAY_$METHOD_$SLICE<-ME.IS_ADMIN_$SLICE",
       "ME.MAY_$METHOD_$SLICE<-ME.IS_MEMBER_$SLICE"
      ]
@@ -189,7 +189,7 @@
      "policies" : [
        "ME.MAY_$METHOD<-ME.IS_OPERATOR",
        "ME.MAY_$METHOD<-ME.IS_AUTHORITY",
-       "ME.MAY_$METHOD_$SLICE<-ME.IS_LEAD_$SLICE", 
+       "ME.MAY_$METHOD_$SLICE<-ME.IS_LEAD_$SLICE",
        "ME.MAY_$METHOD_$SLICE<-ME.IS_ADMIN_$SLICE",
        "ME.MAY_$METHOD_$SLICE<-ME.IS_MEMBER_$SLICE"
      ]
@@ -246,7 +246,7 @@
       "ME.MAY_$METHOD<-ME.IS_OPERATOR",
       "ME.MAY_$METHOD<-ME.IS_LEAD_$REQUEST_ID",
       "ME.MAY_$METHOD<-ME.IS_ADMIN_$REQUEST_ID"
-    ] 
+    ]
    },
 
    "get_requests_by_user" :  {
@@ -285,8 +285,8 @@
 
   "get_request_by_id" : {
     "__DOC__" : [
-      "Only if you are an operator", 
-      "You are the requestor", 
+      "Only if you are an operator",
+      "You are the requestor",
       "or the lead/admin of the context"
     ],
     "assertions" : [
@@ -308,7 +308,7 @@
     ],
     "policies" : [
       "ME.MAY_$METHOD<-ME.IS_OPERATOR",
-      "ME.MAY_$METHOD_$PROJECT<-ME.IS_LEAD_$PROJECT", 
+      "ME.MAY_$METHOD_$PROJECT<-ME.IS_LEAD_$PROJECT",
       "ME.MAY_$METHOD_$PROJECT<-ME.IS_ADMIN_$PROJECT"
      ]
    },
@@ -322,6 +322,6 @@
        "ME.MAY_$METHOD<-ME.IS_OPERATOR",
        "ME.MAY_$METHOD<-ME.INVOKING_ON_$SELF"
      ]
-  }     
+  }
 
 }
