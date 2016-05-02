@@ -394,16 +394,106 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
 
         return result
 
+    project_cred = '''<?xml version="1.0" encoding="utf-8"?>
+    <signed-credential xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://www.planet-lab.org/resources/sfa/credential.xsd" xsi:schemaLocation="http://www.planet-lab.org/resources/sfa/ext/policy/1 http://www.planet-lab.org/resources/sfa/ext/policy/1/policy.xsd">
+    <credential xml:id="ref0">
+        <type>privilege</type>
+        <serial>@serial@</serial>
+        <owner_gid>@owner_certificate@</owner_gid>
+        <owner_urn>@owner_urn@</owner_urn>
+        <target_gid>@project_certificate@</target_gid>
+        <target_urn>@project_urn@</target_urn>
+        <uuid/>
+        <expires>@expiration@</expires>
+        <privileges>
+            <privilege>
+                <name>@project_privilege@</name>
+                <can_delegate>true</can_delegate>
+            </privilege>
+        </privileges>
+    </credential>
+    <signatures>
+        <Signature xmlns="http://www.w3.org/2000/09/xmldsig#" xml:id="Sig_ref0">
+        <SignedInfo>
+            <CanonicalizationMethod Algorithm="http://www.w3.org/TR/2001/REC-xml-c14n-20010315"/>
+            <SignatureMethod Algorithm="http://www.w3.org/2000/09/xmldsig#rsa-sha1"/>
+            <Reference URI="#ref0">
+                <Transforms>
+                    <Transform Algorithm="http://www.w3.org/2000/09/xmldsig#enveloped-signature"/>
+                </Transforms>
+                <DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha1"/>
+                <DigestValue/>
+            </Reference>
+        </SignedInfo>
+        <SignatureValue/>
+        <KeyInfo>
+            <X509Data>
+                <X509SubjectName/>
+                <X509IssuerSerial/>
+                <X509Certificate/>
+            </X509Data>
+            <KeyValue/>
+        </KeyInfo>
+    </Signature>
+    </signatures>
+    </signed-credential>
+    '''
+
     def get_project_credentials(self, client_cert, project_urn, credentials,
                                 options, session):
+        (authority, typ, project_name) = parse_urn(project_urn)
         # Look up project
         # Gather info for credential
         # Do string replacement into credential template
         # Create credential structure (see get_slice_credentials)
         # Do we need to return an ABAC credential?
         # Return project credentials
-        msg = 'get_project_credentials is not implemented yet.'
-        raise CHAPIv1NotImplementedError(msg)
+        q = session.query(self.db.PROJECT_TABLE.c.expiration)
+        q = q.filter(self.db.PROJECT_TABLE.c.project_name == project_name)
+        q = q.filter(self.db.PROJECT_TABLE.c.expired == 'f')
+        rows = q.all()
+        if len(rows) == 0:
+            msg = ("Can't get project credential on expired" +
+                   " or non-existent project %s")
+            raise CHAPIv1ArgumentError(msg % project_urn)
+        row = rows[0]
+        # We don't use or need to use this value...
+        db_expiration = row.expiration
+        # Ignore the credential serial number
+        serial = ''
+        # Temporary fix, see ticket #84.
+        with open(self.ma_cert, 'r') as f:
+            ma_cert = f.read()
+        user_certificate = client_cert + ma_cert
+        user_urn = get_urn_from_cert(client_cert)
+        # We have no project certificates, leave this blank
+        project_certificate = ''
+        # TODO: 24 hours from now in UTC
+        expiration = ''
+        # TODO: How to determine privilege and convert to credential value?
+        privilege = ''
+        substitutions = dict(serial=serial,
+                             owner_certificate=user_certificate,
+                             owner_urn=user_urn,
+                             project_certificate=project_certificate,
+                             project_urn=project_urn,
+                             expiration=expiration,
+                             project_privilege=privilege)
+        unsigned_cred = self.instantiate_credential(self.project_cred,
+                                                    substitutions)
+        raw_result = [dict(geni_type='geni_sfa',
+                           geni_version='3',
+                           geni_value=unsigned_cred)]
+        result = self._successReturn(raw_result)
+        return result
+
+    def instantiate_credential(self, template, substitutions):
+        for k in substitutions:
+            subst_key = '@%s@' % (str(k))
+            chapi_info('SA', 'subst_key = %r' % (subst_key))
+            chapi_info('SA', 'subst value = %r' % (substitutions[k]))
+            template = template.replace(subst_key, substitutions[k])
+        return template
 
     # check whether a current slice exists, and if so return its id
     def get_slice_id(self, session, field, value, include_expired=False):
