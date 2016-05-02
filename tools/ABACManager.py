@@ -33,7 +33,7 @@ import tempfile
 from chapi_log import *
 from credential_tools import generate_credential
 import xml.dom.minidom as minidom
-from ABACKeyId import compute_keyid
+from ABACKeyId import compute_keyid_from_cert_file, compute_keyid_from_cert
 
 # Generate an ABACManager config file
 # [Principals]
@@ -106,9 +106,13 @@ def execute_abac_query(query_expr, id_certs, raw_assertions = []):
     abac_manager = ABACManager(certs_by_name=id_certs, raw_assertions=raw_assertions)
     return abac_manager.query(query_expr)
 
+# Get the key_id from a raw cert
+def get_keyid_from_cert(cert, cert_file):
+    return compute_keyid_from_cert(cert, cert_file)
+
 # Get the key_id from a cert_file
 def get_keyid_from_certfile(cert_file):
-    return compute_keyid(cert_file)
+    return compute_keyid_from_cert_file(cert_file)
 
 ABAC_TEMPLATE = "/usr/share/geni-chapi/templates/abac_credential.xml.tmpl"
 
@@ -214,7 +218,7 @@ class ABACManager:
         for principal_name in certs_by_name.keys():
             cert = certs_by_name[principal_name]
             cert_file = self._dump_to_file(cert)
-            principal = self.register_id(principal_name, cert_file)
+            principal = self.register_id_for_cert(principal_name, cert, cert_file)
 
         # Process the private keys
         for principal_name in key_files_by_name.keys():
@@ -361,6 +365,12 @@ class ABACManager:
     # Register a new ID with the manager
     def register_id(self, name, cert_file):
         id = get_keyid_from_certfile(cert_file)
+        self._ids_by_name[name] = id
+        self._cert_files[name] = cert_file
+
+    # Register a new ID with the manager for a raw_cert and cert_file
+    def register_id_for_cert(self, name, cert, cert_file):
+        id = get_keyid_from_cert(cert, cert_file)
         self._ids_by_name[name] = id
         self._cert_files[name] = cert_file
 

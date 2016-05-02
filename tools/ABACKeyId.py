@@ -3,8 +3,26 @@ import os
 import subprocess
 import sys
 import tempfile
+from chapi_log import *
 
-# Compute the ABAC keyid of a cert
+class ABACKeyIdCache:
+    keyid_by_cert = {}
+    keyid_by_cert_filename = {}
+
+# Compute the ABAC keyid of a raw cert
+# Check if cert is in cert, if so return kdyid
+# Otherwise write cert to temp file, compute key id
+# store keyid in cache by cert, return key_id
+def compute_keyid_from_cert(cert, cert_filename):
+    if cert in ABACKeyIdCache.keyid_by_cert:
+        keyid = ABACKeyIdCache.keyid_by_cert[cert]
+#        chapi_error("KEY_ID", "Returning cached keyid : %s" % keyid)
+        return keyid
+    keyid = compute_keyid_from_cert_file(cert_filename)
+    ABACKeyIdCache.keyid_by_cert[cert] = keyid
+    return keyid
+
+# Compute the ABAC keyid of a cert file
 # Compute the sha1 of the DER of bits of the public key in the cert
 # Essentially, we're running this script:
 #
@@ -12,7 +30,15 @@ import tempfile
 # openssl asn1parse -in $1.pubkey.pem -strparse 18 -out $1.pubkey.der
 # openssl sha1 $1.pubkey.der 
 #
-def compute_keyid(cert_filename):
+def compute_keyid_from_cert_file(cert_filename):
+
+    if cert_filename in ABACKeyIdCache.keyid_by_cert_filename:
+        keyid = ABACKeyIdCache.keyid_by_cert_filename[cert_filename]
+#        chapi_error("KEY_ID", "Returning cached keyid %s for file %s" % \
+#                        (keyid, cert_filename))
+        return keyid
+
+#    chapi_error("KEY_ID", cert_filename)
 #    print "FILENAME = " + cert_filename
 
     # Get the public key from the cert
@@ -57,6 +83,8 @@ def compute_keyid(cert_filename):
     keyid = parts[1]
     # Replace ':' separators if they are in the returned SHA
     keyid = keyid.replace(':', '') 
+
+    ABACKeyIdCache.keyid_by_cert_filename[cert_filename] = keyid
     return keyid
 
     os.unlink(derfile.name)
@@ -66,6 +94,6 @@ if __name__ == "__main__":
     if len(sys.argv) < 2:
         print "Usage: keyid.py x509cert.pem"
         sys.exit(0)
-    keyid = compute_keyid(sys.argv[1])
+#    keyid = compute_keyid(sys.argv[1])
     print "KEYID = " + keyid
 
