@@ -52,6 +52,19 @@
      ]
     },
 
+    "get_project_credentials" :  {
+       "__DOC__" : "Project lead/admin/member or operators can get project cred",
+        "assertions" : [
+          "ME.IS_$ROLE_$PROJECT<-CALLER"
+  	],
+       "policies" : [
+          "ME.MAY_$METHOD<-ME.IS_OPERATOR",
+          "ME.MAY_$METHOD_$PROJECT<-ME.IS_LEAD_$PROJECT",
+          "ME.MAY_$METHOD_$PROJECT<-ME.IS_ADMIN_$PROJECT",
+          "ME.MAY_$METHOD_$PROJECT<-ME.IS_MEMBER_$PROJECT"
+       ]
+      },
+
   "modify_slice_membership" : {
       "__DOC__" : "Operators and slice Lead/Admin can modify slice membership",
       "assertions" : [
