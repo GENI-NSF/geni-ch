@@ -114,7 +114,7 @@ def get_keyid_from_cert(cert, cert_file):
 def get_keyid_from_certfile(cert_file):
     return compute_keyid_from_cert_file(cert_file)
 
-ABAC_TEMPLATE = "/usr/share/geni-chapi/templates/abac_credential.xml.tmpl"
+ABAC_TEMPLATE = "/usr/share/geni-chapi/abac_credential.xml.tmpl"
 
 
 # Generate an ABAC credential of a given assertion signed by "ME"

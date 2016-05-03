@@ -304,6 +304,7 @@ rm -rf $RPM_BUILD_ROOT
 
 # /usr/share/geni-chapi/
 %{_datadir}/%{name}/sr/sql/add-wvn-eg.sql
+%{_datadir}/%{name}/abac_credential.xml.tmpl
 %{_datadir}/%{name}/amsoil-log-out.txt
 %{_datadir}/%{name}/apache-error-log-out.txt
 %{_datadir}/%{name}/apache2.conf
@@ -353,7 +354,6 @@ rm -rf $RPM_BUILD_ROOT
 %{_datadir}/%{name}/db/sr/postgresql/update-4.sql
 %{_datadir}/%{name}/db/sr/postgresql/update-5.sql
 %{_datadir}/%{name}/fastcgi.conf
-%{_datadir}/%{name}/templates/abac_credential.xml.tmpl
 %{_datadir}/%{name}/templates/apache2.conf.tmpl
 %{_datadir}/%{name}/templates/ch-ssl.conf.tmpl
 %{_datadir}/%{name}/templates/chapi.ini.tmpl
