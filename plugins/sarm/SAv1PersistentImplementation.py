@@ -469,7 +469,9 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         # We have no project certificates, leave this blank
         project_certificate = ''
         # TODO: 24 hours from now in UTC
-        expiration = ''
+        expiration = datetime.datetime.utcnow()
+        expiration = expiration + datetime.timedelta(hours=24)
+        expiration = expiration.strftime(STANDARD_DATETIME_FORMAT)
         # TODO: How to determine privilege and convert to credential value?
         privilege = ''
         substitutions = dict(serial=serial,
