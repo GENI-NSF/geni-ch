@@ -3,23 +3,104 @@ import os
 import subprocess
 import sys
 import tempfile
+import time
 from chapi_log import *
 
+# Maintain a global cache of mappings of raw certs and cert files to keyid
 class ABACKeyIdCache:
-    keyid_by_cert = {}
-    keyid_by_cert_filename = {}
+
+    def __init__(self):
+        self.keyid_by_cert = {}
+        self.keyid_by_cert_filename = {}
+        self.timestamp_by_cert = {}    
+        self.timestamp_by_cert_filename = {}
+
+    # Whether to print chapi_error log messages on cache actions
+    VERBOSE = False
+
+    # Max number of entries in either cache
+    MAX_ENTRIES = 200  
+
+    # Max number of seconds since lookup we allow to remain in cache 
+    # (if we've gone past MAX_ENTRIES)
+    CACHE_LIFETIME_SEC = 86400 
+
+    def dump(self):
+        if ABACKeyIdCache.VERBOSE:
+            chapi_error("KEY_ID", "KEYID_BY_CERT = %s" % self.keyid_by_cert)
+            chapi_error("KEY_ID", "KEYID_BY_CERT_FILENAME = %s" % self.keyid_by_cert_filename)
+            chapi_error("KEY_ID", "TS_BY_CERT = %s" % self.timestamp_by_cert)
+            chapi_error("KEY_ID", "TS_BY_CERT_FILENAME = %s" % self.timestamp_by_cert_filename)
+
+    # Prune entries in the given cache (cert or cert_filename)
+    # If we have too many entries, delete all entries that haven't been looked up
+    # in the last CACHE_LIFETIME_SEC seconds
+    def prune(self, certkey_keyid_mapping, certkey_timestamp_mapping): 
+#        self.dump()
+        certkey_to_delete = []
+        time_limit = time.time() - ABACKeyIdCache.CACHE_LIFETIME_SEC
+        if len(certkey_keyid_mapping) > ABACKeyIdCache.MAX_ENTRIES:
+            for certkey in certkey_keyid_mapping:
+                if certkey_timestamp_mapping[certkey] < time_limit:
+                    certkey_to_delete.append(certkey)
+        for certkey in certkey_to_delete:
+            if ABACKeyIdCache.VERBOSE:
+                chapi_error('KEY_ID', "Removing keyid from cache: %s" % \
+                                certkey_keyid_mapping[certkey])
+                del certkey_keyid_mapping[certkey]
+                del certkey_timestamp_mapping[certkey]
+        
+#        self.dump()
+
+    # Lookup keyid from cert from cache. Return keyid or None if not cached
+    def lookup_for_cert(self, cert):
+        self.prune(self.keyid_by_cert, self.timestamp_by_cert)
+        keyid = None
+        if cert in self.keyid_by_cert:
+            keyid = self.keyid_by_cert[cert]
+            self.timestamp_by_cert[cert] = time.time()
+            if ABACKeyIdCache.VERBOSE:
+                chapi_error("KEY_ID", "Returning cached keyid : %s" % keyid)
+        return keyid
+
+    # Lookup keyid from cert_filename. Return keyid or None if not cached
+    def lookup_for_cert_filename(self, cert_filename):
+        self.prune(self.keyid_by_cert_filename, self.timestamp_by_cert_filename)
+        keyid = None
+        if cert_filename in self.keyid_by_cert_filename:
+            keyid = self.keyid_by_cert_filename[cert_filename]
+            self.timestamp_by_cert_filename[cert_filename] = time.time()
+            if ABACKeyIdCache.VERBOSE:
+                chapi_error("KEY_ID", "Returning cached keyid %s for file %s" % \
+                                (keyid, cert_filename))
+        return keyid
+
+    # Register relationship between raw cert and keyid
+    def register_cert(self, cert, keyid):
+        if ABACKeyIdCache.VERBOSE:
+            chapi_error("KEY_ID", "Registering keyid %s for cert" % keyid)
+        self.keyid_by_cert[cert] = keyid
+        self.timestamp_by_cert[cert] = time.time()
+
+    # Register relationship between cert_filename and keyid
+    def register_cert_filename(self, cert_filename, keyid):
+        if ABACKeyIdCache.VERBOSE:
+            chapi_error("KEY_ID", "Registering keyid %s for certfile %s" % \
+                            (keyid, cert_filename))
+        self.keyid_by_cert_filename[cert_filename] = keyid
+        self.timestamp_by_cert_filename[cert_filename] = time.time()
+
+ABAC_KEYID_CACHE = ABACKeyIdCache() # Singleton instance
 
 # Compute the ABAC keyid of a raw cert
 # Check if cert is in cert, if so return kdyid
 # Otherwise write cert to temp file, compute key id
 # store keyid in cache by cert, return key_id
 def compute_keyid_from_cert(cert, cert_filename):
-    if cert in ABACKeyIdCache.keyid_by_cert:
-        keyid = ABACKeyIdCache.keyid_by_cert[cert]
-#        chapi_error("KEY_ID", "Returning cached keyid : %s" % keyid)
-        return keyid
-    keyid = compute_keyid_from_cert_file(cert_filename)
-    ABACKeyIdCache.keyid_by_cert[cert] = keyid
+    keyid = ABAC_KEYID_CACHE.lookup_for_cert(cert)
+    if not keyid:
+        keyid = compute_keyid_from_cert_file(cert_filename)
+        ABAC_KEYID_CACHE.register_cert(cert, keyid)
     return keyid
 
 # Compute the ABAC keyid of a cert file
@@ -28,18 +109,13 @@ def compute_keyid_from_cert(cert, cert_filename):
 #
 # openssl x509 -pubkey -noout -in $1 > $1.pubkey.pem
 # openssl asn1parse -in $1.pubkey.pem -strparse 18 -out $1.pubkey.der
-# openssl sha1 $1.pubkey.der 
 #
 def compute_keyid_from_cert_file(cert_filename):
 
-    if cert_filename in ABACKeyIdCache.keyid_by_cert_filename:
-        keyid = ABACKeyIdCache.keyid_by_cert_filename[cert_filename]
-#        chapi_error("KEY_ID", "Returning cached keyid %s for file %s" % \
-#                        (keyid, cert_filename))
+    keyid = ABAC_KEYID_CACHE.lookup_for_cert_filename(cert_filename)
+    if keyid:
         return keyid
 
-#    chapi_error("KEY_ID", cert_filename)
-#    print "FILENAME = " + cert_filename
 
     # Get the public key from the cert
     # Run openssl x509 -pubkey -noout -in cert_filename -out pubkey.out
@@ -84,11 +160,12 @@ def compute_keyid_from_cert_file(cert_filename):
     # Replace ':' separators if they are in the returned SHA
     keyid = keyid.replace(':', '') 
 
-    ABACKeyIdCache.keyid_by_cert_filename[cert_filename] = keyid
-    return keyid
+    ABAC_KEYID_CACHE.register_cert_filename(cert_filename, keyid)
 
     os.unlink(derfile.name)
     os.unlink(keyfile.name)
+
+    return keyid
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:
