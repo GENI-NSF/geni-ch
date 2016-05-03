@@ -75,6 +75,9 @@ class ProjectInvitation(object):
 class ProjectAttribute(object):
     pass
 
+class MemberRole(object):
+    pass
+
 # Implementation of SA that speaks to GPO Slice and projects table schema
 class SAv1PersistentImplementation(SAv1DelegateBase):
 
@@ -112,6 +115,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                    primary_key = self.db.PROJECT_INVITATION_TABLE.c.id)
         mapper(ProjectAttribute, self.db.PROJECT_ATTRIBUTE_TABLE, \
                    primary_key = self.db.PROJECT_ATTRIBUTE_TABLE.c.id)
+        mapper(MemberRole, self.db.ROLE_TABLE)
 
     # get_version is unprotected: no checking of credentials
     def get_version(self, options, session):
@@ -439,6 +443,21 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
     </signed-credential>
     '''
 
+    def project_cred_privilege_for_role(self, role):
+        """Leads and Admins get 'pi' privilege in a project credential.
+        Members get 'user' privilege in a project credential.
+        These seem to be what ProtoGENI does in GeniSA.pm, so we mimic
+        that (first mover privilege for them).
+        """
+        # do the role constants exist somewhere?
+        # I don't like having the numbers 1, 2, and 3 below
+        privilege = None
+        if role.id == 1 or role.id == 2:
+            privilege = 'pi'
+        elif role.id == 3:
+            privilege = 'user'
+        return privilege
+
     def get_project_credentials(self, client_cert, project_urn, credentials,
                                 options, session):
         (authority, typ, project_name) = parse_urn(project_urn)
@@ -448,7 +467,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         # Create credential structure (see get_slice_credentials)
         # Do we need to return an ABAC credential?
         # Return project credentials
-        q = session.query(self.db.PROJECT_TABLE.c.expiration)
+        q = session.query(self.db.PROJECT_TABLE.c.project_id)
         q = q.filter(self.db.PROJECT_TABLE.c.project_name == project_name)
         q = q.filter(self.db.PROJECT_TABLE.c.expired == 'f')
         rows = q.all()
@@ -458,7 +477,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
             raise CHAPIv1ArgumentError(msg % project_urn)
         row = rows[0]
         # We don't use or need to use this value...
-        db_expiration = row.expiration
+        project_id = row.project_id
         # Ignore the credential serial number
         serial = ''
         # Temporary fix, see ticket #84.
@@ -473,7 +492,9 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         expiration = expiration + datetime.timedelta(hours=24)
         expiration = expiration.strftime(STANDARD_DATETIME_FORMAT)
         # TODO: How to determine privilege and convert to credential value?
-        privilege = ''
+        member_id = self.get_member_id_for_urn(session, user_urn)
+        role = self.get_project_role(session, project_id, member_id)
+        privilege = self.project_cred_privilege_for_role(role)
         substitutions = dict(serial=serial,
                              owner_certificate=user_certificate,
                              owner_urn=user_urn,
@@ -492,8 +513,6 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
     def instantiate_credential(self, template, substitutions):
         for k in substitutions:
             subst_key = '@%s@' % (str(k))
-            chapi_info('SA', 'subst_key = %r' % (subst_key))
-            chapi_info('SA', 'subst value = %r' % (substitutions[k]))
             template = template.replace(subst_key, substitutions[k])
         return template
 
@@ -1611,6 +1630,20 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         if len(rows) > 0:
            return rows[0].member_id
         return None
+
+    def get_project_role(self, session, project_id, member_id):
+        """Lookup the given member's role in the given project.
+        Return the role id and the role name.
+        """
+        q = session.query(MemberRole)
+        q = q.filter(MemberRole.id == ProjectMember.role)
+        q = q.filter(ProjectMember.project_id == project_id)
+        q = q.filter(ProjectMember.member_id == member_id)
+        rows = q.all()
+        result = None
+        if len(rows) == 1:
+            result = rows[0]
+        return result
 
     def get_role_id(self, session, role):
         if role is None or str(role).strip() == "":
