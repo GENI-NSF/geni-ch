@@ -412,7 +412,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         <privileges>
             <privilege>
                 <name>@project_privilege@</name>
-                <can_delegate>true</can_delegate>
+                <can_delegate>false</can_delegate>
             </privilege>
         </privileges>
     </credential>
