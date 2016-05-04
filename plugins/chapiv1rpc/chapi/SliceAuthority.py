@@ -208,15 +208,15 @@ class SAv1Handler(HandlerBase):
 
     def get_project_credentials(self, project_urn, credentials, options):
         with MethodContext(self, SA_LOG_PREFIX, 'get_project_credentials',
-                           {'project_urn' : project_urn},
+                           {'project_urn': project_urn},
                            credentials, options, read_only=False) as mc:
             if not mc._error:
                 mc._result = \
                     self._delegate.get_project_credentials(mc._client_cert,
-                                                   project_urn,
-                                                   credentials,
-                                                   options,
-                                                   mc._session)
+                                                           project_urn,
+                                                           credentials,
+                                                           options,
+                                                           mc._session)
         return mc._result
 
     ## SLICE MEMBER SERVICE methods
