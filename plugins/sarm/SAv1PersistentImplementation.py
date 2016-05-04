@@ -495,25 +495,27 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         member_id = self.get_member_id_for_urn(session, user_urn)
         role = self.get_project_role(session, project_id, member_id)
         privilege = self.project_cred_privilege_for_role(role)
-        substitutions = dict(serial=serial,
-                             owner_certificate=user_certificate,
-                             owner_urn=user_urn,
-                             project_certificate=project_certificate,
-                             project_urn=project_urn,
-                             expiration=expiration,
-                             project_privilege=privilege)
-        unsigned_cred = self.instantiate_credential(self.project_cred,
-                                                    substitutions)
+        substitutions = {
+            '@serial@': serial,
+            '@owner_certificate@': user_certificate,
+            '@owner_urn@': user_urn,
+            '@project_certificate@': project_certificate,
+            '@project_urn@': project_urn,
+            '@expiration@': expiration,
+            '@project_privilege@': privilege
+        }
+        signed_cred = self.sign_credential(self.project_cred, substitutions,
+                                           self.cert, self.key)
         raw_result = [dict(geni_type='geni_sfa',
                            geni_version='3',
-                           geni_value=unsigned_cred)]
+                           geni_value=signed_cred)]
         result = self._successReturn(raw_result)
         return result
 
-    def instantiate_credential(self, template, substitutions):
-        for k in substitutions:
-            subst_key = '@%s@' % (str(k))
-            template = template.replace(subst_key, substitutions[k])
+    def sign_credential(self, template, substitutions, sign_cert_file,
+                        sign_key_file):
+        for k,v in substitutions.iteritems():
+            template = template.replace(k, v)
         return template
 
     # check whether a current slice exists, and if so return its id
