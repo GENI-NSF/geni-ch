@@ -1,0 +1,23 @@
+#!/bin/sh
+
+# Limits as of May 3, 2016
+ERROR_LIMIT=3430
+WARNING_LIMIT=967
+
+RESULT=0
+ERROR_COUNT=`python test/pep8.py --ignore W . | wc -l`
+WARNING_COUNT=`python test/pep8.py --ignore E . | wc -l`
+
+if test $ERROR_COUNT -gt $ERROR_LIMIT
+then
+        echo "Error count $ERROR_COUNT is greater than limit $ERROR_LIMIT"
+        RESULT=1
+fi
+
+if test $WARNING_COUNT -gt $WARNING_LIMIT
+then
+        echo "Warning count $WARNING_COUNT is greater than limit $WARNING_LIMIT"
+        RESULT=1
+fi
+
+exit $RESULT
