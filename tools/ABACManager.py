@@ -119,10 +119,11 @@ ABAC_TEMPLATE = "/usr/share/geni-chapi/abac_credential.xml.tmpl"
 
 # Generate an ABAC credential of a given assertion signed by "ME"
 # with a set of id_certs (a dictionary of {name : cert}
-def generate_abac_credential(assertion, me_cert, me_key, id_certs):
+def generate_abac_credential(assertion, me_cert, me_key, 
+                             id_certs = {}, id_cert_files = {}):
     template = open(ABAC_TEMPLATE).read()
 
-    abac_manager = ABACManager(cert_files_by_name=id_certs)
+    abac_manager = ABACManager(certs_by_name=id_certs, cert_files_by_name=id_cert_files)
     assertion_split = assertion.split('<-')
 
     subject_split = assertion_split[0].split('.')
@@ -319,7 +320,7 @@ class ABACManager:
                 cred = generate_abac_credential(self._options.credential,
                                          self._options.signer_cert,
                                          self._options.signer_key,
-                                         self._cert_files)
+                                         id_cert_files = self._cert_files)
                 if self._options.outfile:
                     f = open(self._options.outfile, 'w')
                     f.write(cred)
