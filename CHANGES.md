@@ -4,6 +4,9 @@
 
 ## Changes
 
+* Provide project credentials via SA.get_credentials
+([#466](https://github.com/GENI-NSF/geni-ch/issues/466))
+
 ## Installation Notes
 
 # [Release 2.11.1](https://github.com/GENI-NSF/geni-ch/milestones/2.11.1)
