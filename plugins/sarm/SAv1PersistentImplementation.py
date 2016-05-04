@@ -451,11 +451,17 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         """
         # do the role constants exist somewhere?
         # I don't like having the numbers 1, 2, and 3 below
-        privilege = None
-        if role.id == 1 or role.id == 2:
+
+        # Duck typing: If it has an id attribute, use it, regardless
+        # of what kind of thing it is.
+        if not hasattr(role, 'id'):
+            privilege = 'none'
+        elif role.id == 1 or role.id == 2:
             privilege = 'pi'
         elif role.id == 3:
             privilege = 'user'
+        else:
+            privilege = 'none'
         return privilege
 
     def get_project_credentials(self, client_cert, project_urn, credentials,
