@@ -1,5 +1,5 @@
-#----------------------------------------------------------------------
-# Copyright (c) 2011-2016 Raytheon BBN Technologies
+# ----------------------------------------------------------------------
+# Copyright (c) 2016 Raytheon BBN Technologies
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and/or hardware specification (the "Work") to
@@ -19,14 +19,10 @@
 # WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE WORK OR THE USE OR OTHER DEALINGS
 # IN THE WORK.
-#----------------------------------------------------------------------
+# ----------------------------------------------------------------------
 
 import sys
 import os
-
-sys.path.append("/usr/share/geni-ch/chapi/chapi")
-sys.path.append("/usr/share/geni-ch/chapi/chapi/tools")
-sys.path.append("/usr/share/geni-ch/gcf/src")
 
 # Need this for Memoize
 sys.path.append("/usr/share/geni-ch/chapi/chapi/plugins/chapiv1rpc")
