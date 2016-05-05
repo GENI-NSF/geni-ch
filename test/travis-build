@@ -1,8 +1,8 @@
 #!/bin/sh
 
-# Limits as of May 3, 2016
-ERROR_LIMIT=3430
-WARNING_LIMIT=967
+# Limits as of May 5, 2016
+ERROR_LIMIT=3419
+WARNING_LIMIT=660
 
 RESULT=0
 ERROR_COUNT=`python test/pep8.py --ignore W . | wc -l`
@@ -22,5 +22,8 @@ fi
 
 # We could eventually watch for trailing whitespace in a similar fashion:
 # find . -name .git -prune -o -type f -exec egrep -l " +$" {} \;
+
+# We could add unit tests and invoke with something like:
+# python -m unittest discover
 
 exit $RESULT
