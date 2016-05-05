@@ -51,6 +51,7 @@ from tools.ABACManager import *
 from tools.cs_utils import *
 from tools.chapi_log import *
 from tools.chapi_utils import *
+from tools.credential_tools import generate_credential
 
 # classes for mapping to sql tables
 
@@ -470,19 +471,13 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         # Read the project credential template
         with open(self.project_cred_tmpl, 'r') as pcfile:
             project_cred = pcfile.read()
-        signed_cred = self.sign_credential(project_cred, substitutions,
-                                           self.cert, self.key)
+        signed_cred = generate_credential(project_cred, substitutions,
+                                          self.cert, self.key)
         raw_result = [dict(geni_type='geni_sfa',
                            geni_version='3',
                            geni_value=signed_cred)]
         result = self._successReturn(raw_result)
         return result
-
-    def sign_credential(self, template, substitutions, sign_cert_file,
-                        sign_key_file):
-        for k,v in substitutions.iteritems():
-            template = template.replace(k, v)
-        return template
 
     # check whether a current slice exists, and if so return its id
     def get_slice_id(self, session, field, value, include_expired=False):
