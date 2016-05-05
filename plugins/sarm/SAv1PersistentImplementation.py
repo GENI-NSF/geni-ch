@@ -425,13 +425,11 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
 
     def get_project_credentials(self, client_cert, project_urn, credentials,
                                 options, session):
+        """Generate a project credential for the calling user. Only
+        an SFA-style credential is generated. No ABAC credential is
+        generated.
+        """
         (authority, typ, project_name) = parse_urn(project_urn)
-        # Look up project
-        # Gather info for credential
-        # Do string replacement into credential template
-        # Create credential structure (see get_slice_credentials)
-        # Do we need to return an ABAC credential?
-        # Return project credentials
         q = session.query(self.db.PROJECT_TABLE.c.project_id)
         q = q.filter(self.db.PROJECT_TABLE.c.project_name == project_name)
         q = q.filter(self.db.PROJECT_TABLE.c.expired == 'f')
@@ -441,7 +439,6 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                    " or non-existent project %s")
             raise CHAPIv1ArgumentError(msg % project_urn)
         row = rows[0]
-        # We don't use or need to use this value...
         project_id = row.project_id
         # Ignore the credential serial number
         serial = ''
@@ -452,11 +449,11 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         user_urn = get_urn_from_cert(client_cert)
         # We have no project certificates, leave this blank
         project_certificate = ''
-        # TODO: 24 hours from now in UTC
+        # 24 hours from now in UTC
         expiration = datetime.datetime.utcnow()
         expiration = expiration + datetime.timedelta(hours=24)
         expiration = expiration.strftime(STANDARD_DATETIME_FORMAT)
-        # TODO: How to determine privilege and convert to credential value?
+        # Determine project role and convert to credential privilege value
         member_id = self.get_member_id_for_urn(session, user_urn)
         role = self.get_project_role(session, project_id, member_id)
         privilege = self.project_cred_privilege_for_role(role)
