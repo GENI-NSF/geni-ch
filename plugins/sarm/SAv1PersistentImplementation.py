@@ -384,10 +384,11 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
             role_name = attribute_type_names[row.role]
             slice_role_assertion = "ME.IS_%s_%s<-CALLER" % (role_name, flatten_urn(slice_urn))
 #            print "SRA = " + slice_role_assertion
-            slice_role_credential = generate_abac_credential(slice_role_assertion,
-                                                              self.cert, self.key,
-                                                              {"CALLER" : client_cert})
-
+            slice_role_credential = \
+                generate_abac_credential(slice_role_assertion,
+                                         self.cert, self.key,
+                                         id_certs = {"CALLER" : client_cert},
+                                         id_cert_files = {"ME" : self.cert})
             abac_raw_creds.append(slice_role_credential)
 
         sfa_creds = \
