@@ -20,4 +20,7 @@ then
         RESULT=1
 fi
 
+# We could eventually watch for trailing whitespace in a similar fashion:
+# find . -name .git -prune -o -type f -exec egrep -l " +$" {} \;
+
 exit $RESULT
