@@ -81,6 +81,9 @@ class MemberRole(object):
 # Implementation of SA that speaks to GPO Slice and projects table schema
 class SAv1PersistentImplementation(SAv1DelegateBase):
 
+    PROJECT_CREDENTIAL_TEMPLATE = \
+            "/usr/share/geni-chapi/project_credential.xml"
+
     def __init__(self):
         super(SAv1PersistentImplementation, self).__init__()
         self.db = pm.getService('chdbengine')
@@ -99,6 +102,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
 
         self.trusted_root = self.config.get('chapiv1rpc.ch_cert_root')
         self.authority = self.config.get('chrm.authority')
+        self.project_cred_tmpl = self.PROJECT_CREDENTIAL_TEMPLATE
 
         self.trusted_root_files = \
             [os.path.join(self.trusted_root, f) \
@@ -398,51 +402,6 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
 
         return result
 
-    project_cred = '''<?xml version="1.0" encoding="utf-8"?>
-    <signed-credential xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://www.planet-lab.org/resources/sfa/credential.xsd" xsi:schemaLocation="http://www.planet-lab.org/resources/sfa/ext/policy/1 http://www.planet-lab.org/resources/sfa/ext/policy/1/policy.xsd">
-    <credential xml:id="ref0">
-        <type>privilege</type>
-        <serial>@serial@</serial>
-        <owner_gid>@owner_certificate@</owner_gid>
-        <owner_urn>@owner_urn@</owner_urn>
-        <target_gid>@project_certificate@</target_gid>
-        <target_urn>@project_urn@</target_urn>
-        <uuid/>
-        <expires>@expiration@</expires>
-        <privileges>
-            <privilege>
-                <name>@project_privilege@</name>
-                <can_delegate>false</can_delegate>
-            </privilege>
-        </privileges>
-    </credential>
-    <signatures>
-        <Signature xmlns="http://www.w3.org/2000/09/xmldsig#" xml:id="Sig_ref0">
-        <SignedInfo>
-            <CanonicalizationMethod Algorithm="http://www.w3.org/TR/2001/REC-xml-c14n-20010315"/>
-            <SignatureMethod Algorithm="http://www.w3.org/2000/09/xmldsig#rsa-sha1"/>
-            <Reference URI="#ref0">
-                <Transforms>
-                    <Transform Algorithm="http://www.w3.org/2000/09/xmldsig#enveloped-signature"/>
-                </Transforms>
-                <DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha1"/>
-                <DigestValue/>
-            </Reference>
-        </SignedInfo>
-        <SignatureValue/>
-        <KeyInfo>
-            <X509Data>
-                <X509SubjectName/>
-                <X509IssuerSerial/>
-                <X509Certificate/>
-            </X509Data>
-            <KeyValue/>
-        </KeyInfo>
-    </Signature>
-    </signatures>
-    </signed-credential>
-    '''
-
     def project_cred_privilege_for_role(self, role):
         """Leads and Admins get 'pi' privilege in a project credential.
         Members get 'user' privilege in a project credential.
@@ -510,7 +469,10 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
             '@expiration@': expiration,
             '@project_privilege@': privilege
         }
-        signed_cred = self.sign_credential(self.project_cred, substitutions,
+        # Read the project credential template
+        with open(self.project_cred_tmpl, 'r') as pcfile:
+            project_cred = pcfile.read()
+        signed_cred = self.sign_credential(project_cred, substitutions,
                                            self.cert, self.key)
         raw_result = [dict(geni_type='geni_sfa',
                            geni_version='3',
