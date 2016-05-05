@@ -4,6 +4,11 @@
 
 ## Changes
 
+* Provide project credentials via SA.get_credentials
+([#466](https://github.com/GENI-NSF/geni-ch/issues/466))
+* Remove dependency on libabac
+([#467](https://github.com/GENI-NSF/geni-ch/issues/467))
+
 ## Installation Notes
 
 # [Release 2.11.1](https://github.com/GENI-NSF/geni-ch/milestones/2.11.1)

@@ -1,3 +1,7 @@
+dist_pkgdata_DATA = \
+	abac_credential.xml \
+	project_credential.xml
+
 # Where Service Registry (SR) certificates get installed
 srcertsdir = $(pkgdatadir)/sr/certs
 

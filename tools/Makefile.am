@@ -10,6 +10,7 @@ tooldir = $(pkgdatadir)/../geni-ch/chapi/chapi/tools
 
 dist_tool_DATA = \
 	ABACManager.py \
+	ABACKeyId.py \
 	CH_constants.py \
 	MA_constants.py \
 	SA_constants.py \
@@ -21,6 +22,7 @@ dist_tool_DATA = \
 	chapi_log.py \
 	chapi_utils.py \
 	client.py \
+	credential_tools.py \
 	cs_utils.py \
 	dbtest.py \
 	dbutils.py \

@@ -36,7 +36,7 @@ class SAv1Guard(ABACGuardBase):
 #    def lookup_slices(self, credentials, options):
 #    def update_slice(self, slice_urn, credentials, options):
 #    def get_credentials(self, slice_urn, credentials, options):
-#    def modify_slice_membership(self, slice_urn, 
+#    def modify_slice_membership(self, slice_urn,
 #    def lookup_slice_members(self, slice_urn, credentials, options):
 #    def lookup_slices_for_member(self, member_urn, credentials, options):
 #    def register_aggregate(self, slice_urn, aggregate_url, credentials, opts):
@@ -45,22 +45,20 @@ class SAv1Guard(ABACGuardBase):
 #    def create_project(self, credentials, options):
 #    def lookup_projects(self, credentials, options):
 #    def update_project(self, project_urn, credentials, options):
-#    def modify_project_membership(self, project_urn, 
+#    def modify_project_membership(self, project_urn,
 #    def lookup_project_members(self, project_urn, credentials, options):
 #    def lookup_projects_for_member(self, member_urn, credentials, options):
 
 
     # Set of argument checks indexed by method name
-    ARGUMENT_CHECK_FOR_METHOD = \
-        {
-
+    ARGUMENT_CHECK_FOR_METHOD = {
         # Argument checks for slice methods
         'create_slice' : \
             CreateArgumentCheck(SA.slice_mandatory_fields,\
                                    SA.slice_supplemental_fields),
         'update_slice' : \
             UpdateArgumentCheck(SA.slice_mandatory_fields,\
-                                    SA.slice_supplemental_fields, 
+                                    SA.slice_supplemental_fields,
                                 {'slice_urn' : "URN"}),
         'lookup_slices' : \
             LookupArgumentCheck(SA.slice_mandatory_fields,\
@@ -68,7 +66,8 @@ class SAv1Guard(ABACGuardBase):
         'modify_slice_membership' : SimpleArgumentCheck({'slice_urn' : 'URN'}),
         'lookup_slice_members' : SimpleArgumentCheck({'slice_urn' : 'URN'}),
         'lookup_slices_for_member' : SimpleArgumentCheck({'member_urn' : 'URN'}),
-        'get_credentials' : SimpleArgumentCheck({'slice_urn' : 'URN'}),
+        'get_slice_credentials': SimpleArgumentCheck({'slice_urn': 'URN'}),
+        'get_project_credentials': SimpleArgumentCheck({'project_urn': 'URN'}),
 
         # Argument checks for project methods
 
@@ -88,19 +87,19 @@ class SAv1Guard(ABACGuardBase):
 
         # Argument checks for sliver info aggregate methods
         'create_sliver_info' : CreateArgumentCheck(SA.sliver_info_mandatory_fields,
-                                                   SA.sliver_info_supplemental_fields), 
+                                                   SA.sliver_info_supplemental_fields),
         'update_sliver_info' : UpdateArgumentCheck(SA.sliver_info_mandatory_fields,
                                                    SA.sliver_info_supplemental_fields,
-                                                   {'sliver_urn' : "URN"}), 
+                                                   {'sliver_urn' : "URN"}),
         'delete_sliver_info' : SimpleArgumentCheck({'sliver_urn' : 'URN'}),
         'lookup_sliver_info' : LookupArgumentCheckMatchOptional(SA.sliver_info_mandatory_fields,
-                                                                SA.sliver_info_supplemental_fields), 
-        
+                                                                SA.sliver_info_supplemental_fields),
+
         # Argument checks for project request methods
         # No options required (context_type, request_id, resolution_status, resolution_description arguments)
-        'create_request' :  None, 
+        'create_request' :  None,
         # No options required (context_type, request_id, resolution_status, resolution_description arguments)
-        'resolve_pending_request' :  None, 
+        'resolve_pending_request' :  None,
         # No options required (context_type, context_id, status arguments)
         'get_requests_for_context' :  None,
         # No options required (member_id, context_type, context_id, status arguments)
@@ -117,7 +116,7 @@ class SAv1Guard(ABACGuardBase):
         'accept_invitation' : None
 
         }
-    
+
 
     # Set of invocation checks indexed by method name
     INVOCATION_CHECK_FOR_METHOD = None
@@ -157,10 +156,3 @@ class SAv1Guard(ABACGuardBase):
         if self.ROW_CHECK_FOR_METHOD.has_key(method):
             return self.ROW_CHECK_FOR_METHOD[method]
         return None
-
-
-
-
-
-        
-    
