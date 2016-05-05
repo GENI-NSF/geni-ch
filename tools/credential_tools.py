@@ -76,7 +76,7 @@ def generate_credential(template, mapping, signer_cert, signer_key):
     cert_chain = signer_cert_contents.split(CERT_END)
     cert_filenames = []
     for cert_element in cert_chain:
-        if not cert_element == 0:
+        if not cert_element:
             continue
         cert_file = tempfile.NamedTemporaryFile(delete=False)
         cert_filenames.append(cert_file.name)
