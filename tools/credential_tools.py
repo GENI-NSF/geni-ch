@@ -1,5 +1,5 @@
-#----------------------------------------------------------------------
-# Copyright (c) 2011-2016 Raytheon BBN Technologies
+# ----------------------------------------------------------------------
+# Copyright (c) 2016 Raytheon BBN Technologies
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and/or hardware specification (the "Work") to
@@ -19,7 +19,7 @@
 # WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE WORK OR THE USE OR OTHER DEALINGS
 # IN THE WORK.
-#----------------------------------------------------------------------
+# ----------------------------------------------------------------------
 
 # Module containing routines for generating credentials of different
 # kinds by instantiating templates
@@ -31,12 +31,13 @@ import sys
 import tempfile
 import xml.dom.minidom as minidom
 
+
 # Main: python credential_tools.py template_file mapping_file signer_cert signer_key output_filename=None
 def main(args):
     if len(args) < 5:
         print "Usage: credential_tools.py template_file mapping_file signer_cert signer_key output_file=None"
         sys.exit(0)
-    
+
     template_file = args[1]
     mapping_file = args[2]
     signer_cert = args[3]
@@ -47,7 +48,7 @@ def main(args):
 
     template = open(template_file).read()
     mapping = json.loads(open(mapping_file).read())
-    
+
     cred = generate_credential(template, mapping, signer_cert, signer_key)
     if output_file:
         out = open(output_file, 'w')
@@ -55,6 +56,7 @@ def main(args):
         out.close()
     else:
         print cred
+
 
 # Generate a credential by substituting all entries in mapping
 # Then signing the credential and returning the resultant XML
@@ -71,10 +73,11 @@ def generate_credential(template, mapping, signer_cert, signer_key):
     CERT_END = '-----END CERTIFICATE-----\n'
 
     signer_cert_contents = open(signer_cert).read()
-    cert_chain = signer_cert_contents.split(CERT_END);
+    cert_chain = signer_cert_contents.split(CERT_END)
     cert_filenames = []
     for cert_element in cert_chain:
-        if len(cert_element) == 0: continue;
+        if not cert_element == 0:
+            continue
         cert_file = tempfile.NamedTemporaryFile(delete=False)
         cert_filenames.append(cert_file.name)
         cert_file.write(cert_element + CERT_END)
@@ -83,13 +86,13 @@ def generate_credential(template, mapping, signer_cert, signer_key):
     # Pull ref id from credential tag of credential template to be signed
     template_doc = minidom.parseString(template)
     credential_elts = template_doc.getElementsByTagName('credential')
-    if len(credential_elts) == 0 or credential_elts[0].getAttribute('xml:id') == '':
+    if not credential_elts or not credential_elts[0].getAttribute('xml:id'):
         print "Template doesn't contain credential element with xml:id attribute"
-        return null
-    
+        return None
+
     refid = credential_elts[0].getAttribute('xml:id')
-    args = ['xmlsec1', '--sign', '--node-id', refid, '--privkey-pem', 
-            "%s,%s" % (signer_key, ",".join(cert_filenames)), 
+    args = ['xmlsec1', '--sign', '--node-id', refid, '--privkey-pem',
+            "%s,%s" % (signer_key, ",".join(cert_filenames)),
             unsigned_cred_file.name]
     ucred_xml = subprocess.check_output(args)
 

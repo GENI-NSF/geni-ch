@@ -114,12 +114,12 @@ def get_keyid_from_cert(cert, cert_file):
 def get_keyid_from_certfile(cert_file):
     return compute_keyid_from_cert_file(cert_file)
 
-ABAC_TEMPLATE = "/usr/share/geni-chapi/templates/abac_credential.xml.tmpl"
+ABAC_TEMPLATE = "/usr/share/geni-chapi/abac_credential.xml"
 
 
 # Generate an ABAC credential of a given assertion signed by "ME"
 # with a set of id_certs (a dictionary of {name : cert}
-def generate_abac_credential(assertion, me_cert, me_key, 
+def generate_abac_credential(assertion, me_cert, me_key,
                              id_certs = {}, id_cert_files = {}):
     template = open(ABAC_TEMPLATE).read()
 
@@ -155,8 +155,8 @@ def generate_abac_credential(assertion, me_cert, me_key,
 
     return generate_credential(template, abac_mapping, me_cert, me_key)
 
-# Assertions are a list of RT0 statements 
-#    X.Y<-Z 
+# Assertions are a list of RT0 statements
+#    X.Y<-Z
 #    X.Y<-Z.W
 # or RT1_lite statements (translated into RT0)
 #    X.Y(S)<-Z(T)
@@ -167,14 +167,14 @@ class ABACManager:
     # Constants
     ten_years = 10*365*24*3600
 
-    # Constructor 
+    # Constructor
     # Optional arguments:
     #    certs_by_name : A dictionary of principal_name => cert
     #    cert_files_by_name : A dictionary of principal_name => cert_filename
     #    key_files_by_name: A dictionary of principal_name => private_key_filename
     #    assertions :  A list of assertions as ABAC statements (X.Y<-Z e.g.)
     #    raw_assertions : A list of signed XML versions of ABAC statements
-    #    assertion_files : A list of files contianing signed XML versions of ABAC statements    
+    #    assertion_files : A list of files contianing signed XML versions of ABAC statements
     #    options : List of command-line provided optional values
     def __init__(self, certs_by_name={}, cert_files_by_name={}, \
                      key_files_by_name={}, \
@@ -272,7 +272,7 @@ class ABACManager:
                 for assertion_file in cp.options("AssertionFiles"):
                     self.register_assertion_file(assertion_file)
 
-        # Use all the other command-line options to override/augment 
+        # Use all the other command-line options to override/augment
         # the values in the ABCManager
 
         # Add new principal ID's / keys
@@ -284,7 +284,7 @@ class ABACManager:
                 if len(parts) > 1:
                     id_cert_file = parts[1].strip()
                     self.register_id(id_name, id_cert_file)
-                    
+
                 id_key_file = None
                 if len(parts) > 2:
                     id_key_file = parts[2].strip()
@@ -301,7 +301,7 @@ class ABACManager:
                 self.register_assertion(assertion)
 
 
-    # Run command-line request for manager, 
+    # Run command-line request for manager,
     # either querying or creating/writing an assertion credential
     def run(self):
         if self._options.query:
@@ -318,7 +318,7 @@ class ABACManager:
                 print "Missing signer_cert or signer_key argument for creating credential"
             else:
                 cred = generate_abac_credential(self._options.credential,
-                                         self._options.signer_cert, 
+                                         self._options.signer_cert,
                                          self._options.signer_key,
                                          id_cert_files = self._cert_files)
                 if self._options.outfile:
@@ -330,12 +330,12 @@ class ABACManager:
 
     # Traverse tree of ABAC expression finding path leading from 'from_expr' to 'to_expr'
     def find_path(self, from_expr, to_expr):
-        if from_expr not in self._all_links: 
+        if from_expr not in self._all_links:
             return False, None
-        if to_expr in self._all_links[from_expr]: 
+        if to_expr in self._all_links[from_expr]:
             direct_link = "%s<-%s" % (to_expr, from_expr)
             return True, [direct_link]
-        for link in self._all_links[from_expr]: 
+        for link in self._all_links[from_expr]:
             found_sub_path, sub_proof = self.find_path(link, to_expr)
             if found_sub_path:
                 direct_link = "%s<-%s" % (link, from_expr)
@@ -381,7 +381,7 @@ class ABACManager:
 
 
     # Register a new assertion with the manager
-    # Parse the expression and resolve the pieces 
+    # Parse the expression and resolve the pieces
     # into RT1_line/RT0 roles and principal keyids
     # Generate exception if a principal is referenced but not registered
     def register_assertion(self, assertion):
@@ -394,7 +394,7 @@ class ABACManager:
         parts = assertion.split('<-')
         subject_role= parts[0]
         principal = parts[1]
-        if principal not in self._all_links: 
+        if principal not in self._all_links:
             self._all_links[principal] = []
         self._all_links[principal].append(subject_role)
 
@@ -419,7 +419,7 @@ class ABACManager:
         tail_keyid_elt = tail_node.getElementsByTagName('keyid')[0]
         tail_keyid = tail_keyid_elt.childNodes[0].wholeText
         tail_role_elts = tail_node.getElementsByTagName('role')
-        
+
         assertion = "%s.%s<-%s" % (head_keyid, head_role, tail_keyid)
         if len(tail_role_elts) > 0:
             tail_role = tail_role_elts[0].childNodes[0].wholeText
@@ -451,7 +451,7 @@ class ABACManager:
         self._created_filenames.append(filename)
         return filename
 
-    # Dump an assertion to stdout or a file, 
+    # Dump an assertion to stdout or a file,
     # depending on whether outfile_name is set
     def _dump_assertion(self, assertion, outfile_name):
         outfile = sys.stdout
@@ -475,7 +475,7 @@ class ABACManager:
             raise Exception("Unregistered principal: " + name)
 
     # Resolve a role string into RT1_lite syntax
-    # I.e. 
+    # I.e.
     #    R => R (where R is a simple non-parenthesized string)
     #    R(S) => R_S.keyid() where S is the name of  principal
     def _resolve_role(self, role):
@@ -503,26 +503,26 @@ class ABACManager:
 
 def main(argv=sys.argv):
     parser = optparse.OptionParser(description='Produce an ABAC Assertion')
-    parser.add_option("--assertion", 
+    parser.add_option("--assertion",
                       help="ABAC-style assertion",
                       action = 'append',
                       default=[])
-    parser.add_option("--assertion_file", 
+    parser.add_option("--assertion_file",
                       help="file containing ABAC assertion",
                       action = 'append',
                       default = [])
     parser.add_option("--signer_cert", help="File containing cred signer cert")
     parser.add_option("--signer_key", help="File containing cred signer key")
-    parser.add_option("--id", action='append', 
-                      help="Identifier name (self-signed case) or " + 
+    parser.add_option("--id", action='append',
+                      help="Identifier name (self-signed case) or " +
                       "name:cert_file (externally signed case")
-    parser.add_option("--credential", 
+    parser.add_option("--credential",
                       help="Expression of ABAC statement for which to generate signed credential")
     parser.add_option("--query", help="Query expression to evaluate")
-    parser.add_option('--outfile',  
+    parser.add_option('--outfile',
                       help="name of file to put signed XML contents of credential (default=stdout)")
-    parser.add_option('--config', 
-                      help="Name of config file with Principals/Keys/Assertions/AssertionFiles sections", 
+    parser.add_option('--config',
+                      help="Name of config file with Principals/Keys/Assertions/AssertionFiles sections",
                       default = None)
 
     (options, args) = parser.parse_args(argv)
@@ -540,13 +540,3 @@ if __name__ == "__main__":
 
     main()
     sys.exit(0)
-
-
-
-
-
-    
-                          
-
-
-    
