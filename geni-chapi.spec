@@ -307,7 +307,7 @@ rm -rf $RPM_BUILD_ROOT
 
 # /usr/share/geni-chapi/
 %{_datadir}/%{name}/sr/sql/add-wvn-eg.sql
-%{_datadir}/%{name}/abac_credential.xml.tmpl
+%{_datadir}/%{name}/abac_credential.xml
 %{_datadir}/%{name}/amsoil-log-out.txt
 %{_datadir}/%{name}/apache-error-log-out.txt
 %{_datadir}/%{name}/apache2.conf

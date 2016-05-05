@@ -1,5 +1,5 @@
 dist_pkgdata_DATA = \
-	abac_credential.xml.tmpl
+	abac_credential.xml
 
 # Where Service Registry (SR) certificates get installed
 srcertsdir = $(pkgdatadir)/sr/certs
