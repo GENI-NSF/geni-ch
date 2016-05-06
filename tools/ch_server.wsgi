@@ -24,18 +24,4 @@
 import sys
 import os
 
-# All of these sys.path.append calls can go alway
-# when the WSGI configuration adds 'python-path' to
-# the WSGIDaemonProcess command.
-
-sys.path.append("/usr/share/geni-ch/chapi/chapi")
-sys.path.append("/usr/share/geni-ch/chapi/chapi/tools")
-sys.path.append("/usr/share/geni-ch/gcf/src")
-
-# Need this for Memoize
-sys.path.append("/usr/share/geni-ch/chapi/chapi/plugins/chapiv1rpc")
-
-# Need this for CHDatabaseEngine
-sys.path.append("/usr/share/geni-ch/chapi/chapi/plugins/chrm")
-
 from tools.ch_server import application as application
