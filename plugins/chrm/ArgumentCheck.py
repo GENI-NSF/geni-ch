@@ -57,7 +57,7 @@ class FieldsArgumentCheck(ArgumentCheck):
     # additional_required_options - Additional required options keys
     # mandatory_fields: Any CH/MA/SA must implement these fields in their
     #   object model
-    # supplemental_fields: This particular CH/MA/SA implements these 
+    # supplemental_fields: This particular CH/MA/SA implements these
     #   addtional fields
     # argument_types: dictionary of additional arguments (not in options) and their required types
     def __init__(self, field_option, additional_required_options, \
@@ -75,7 +75,7 @@ class FieldsArgumentCheck(ArgumentCheck):
         if self._field_option and self._field_option not in options.keys():
             raise CHAPIv1ArgumentError("Missing Option: " \
                                            + str(self._field_option))
-            
+
         # Check to see that all the additional required options are present
         if self._additional_required_options:
             for required_option in self._additional_required_options:
@@ -89,7 +89,7 @@ class FieldsArgumentCheck(ArgumentCheck):
         # Normalize field inputs (e.g turn all dates into UTC)
         self.normalizeFields(options)
 
-    # Make sure all object fields provided are recognized 
+    # Make sure all object fields provided are recognized
     def validateFieldList(self, fields):
         for field in fields:
             if not field in self._mandatory_fields and \
@@ -119,7 +119,7 @@ class FieldsArgumentCheck(ArgumentCheck):
                         chapi_debug('ArgCheck', 'DATETIME convert: %s %s' % (field_value, utc_field_value))
                 except Exception:
                     pass # Can't normalize, will fail when we try to check valid format
-                           
+
     # Take a list of {field : value} dictionaries
     # Make sure all field name/value pairs are recognized and of proper type
     def validateFieldValueDictionary(self, field_values):
@@ -139,7 +139,7 @@ class FieldsArgumentCheck(ArgumentCheck):
             field_type = self._mandatory_fields[field]['TYPE']
         elif field in self._supplemental_fields and \
                  'TYPE' in self._supplemental_fields[field]:
-	    field_type = self._supplemental_fields[field]['TYPE']
+            field_type = self._supplemental_fields[field]['TYPE']
         elif field in self._matchable_fields and \
                  'TYPE' in self._matchable_fields[field]:
             field_type = self._matchable_fields[field]['TYPE']
@@ -162,7 +162,7 @@ class FieldsArgumentCheck(ArgumentCheck):
             arg_type = self._argument_types[arg_name]
             self.validateTypedField(arg_name, arg_type, arg_value)
 
-    # Validate that a given field value of given type has proper format 
+    # Validate that a given field value of given type has proper format
     def validateTypedField(self, field, field_type, value):
 
         properly_formed = True
@@ -193,7 +193,7 @@ class FieldsArgumentCheck(ArgumentCheck):
             try:
                 v = int(value)
                 if field_type == "POSITIVE":
-                    properly_formed = (v > 0) 
+                    properly_formed = (v > 0)
             except Exception as e:
                 properly_formed = False
         elif field_type == "DATETIME":
@@ -244,7 +244,7 @@ class FieldsArgumentCheck(ArgumentCheck):
             if type(value) != dict:
                 propertly_formed = False
             else:
-                # Must be 
+                # Must be
                 # {"PROJECT" : project_uid}, or {"SLICE" : slice_uid} or {"MEMBER" : member_uid}
                 # or we tolerate any other tag/value
                 for attr_key, attr_value in value.items():
@@ -259,7 +259,7 @@ class FieldsArgumentCheck(ArgumentCheck):
         if not properly_formed:
             raise CHAPIv1ArgumentError("Ill-formed argument of type %s field %s: %s" % \
                                            (field_type, field, value))
-                                 
+
 
     # Check that provided values are legitimate
     def checkAllowedFields(self, field_values, field_detail_key, \
@@ -355,17 +355,17 @@ class CreateArgumentCheck(FieldsArgumentCheck):
                                         'CREATE', \
                                         ['REQUIRED', 'ALLOWED'])
             self.checkRequiredFields(options['fields'], \
-                                         self._mandatory_fields, 
+                                         self._mandatory_fields,
                                          'CREATE', \
                                          'REQUIRED')
             self.checkRequiredFields(options['fields'], \
-                                         self._supplemental_fields, 
+                                         self._supplemental_fields,
                                          'CREATE', \
                                          'REQUIRED')
-                                     
-        
+
+
 # Update - 'fields' [{FIELD : VALUE], {FIELD : VALUE} ...]
-# For each field, check that there is an {'Update' : True} entry in 
+# For each field, check that there is an {'Update' : True} entry in
 #   object spec
 class UpdateArgumentCheck(FieldsArgumentCheck):
     def __init__(self, mandatory_fields, supplemental_fields, argument_types = None):
@@ -391,7 +391,7 @@ class SimpleArgumentCheck(FieldsArgumentCheck):
     def validate(self, options, arguments):
         self.validateArgumentFormats(arguments)
 
-                              
+
 
 class ValidURNCheck(ArgumentCheck):
     def __init__(self, urn_key) : self._urn_key = urn_key
@@ -404,4 +404,3 @@ class ValidURNCheck(ArgumentCheck):
         for urn in urns:
             if not is_valid_urn(urn):
                 raise CHAPIv1ArgumentError("Invalid URN: " + urn)
-            
