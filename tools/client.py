@@ -62,33 +62,43 @@ def parseOptions(args):
                       default=os.path.join(gcf_home, 'alice-cert.pem'))
     parser.add_option("--method", help="Name of method to invoke",
                       default="get_version")
-    parser.add_option("--page",
-                      help="Name of portal page to simulate (home, projects, slices)")
+    helpMsg = 'Name of portal page to simulate (home, projects, slices)'
+    parser.add_option("--page", help=helpMsg)
     parser.add_option("--eppn", help="EPPN of user")
     parser.add_option("--agg_url", help="URL of aggregate in some API calls",
                       default=None)
     parser.add_option("--string_arg", help="String argument for some calls",
                       default=None)
-    parser.add_option("--string2_arg", help="second string argument for some calls",
+    parser.add_option("--string2_arg",
+                      help="second string argument for some calls",
                       default=None)
     parser.add_option("--int_arg", help="Integer argument for some calls",
                       type='int', default=None)
-    parser.add_option("--int2_arg", help="second integer argument for some calls",
+    parser.add_option("--int2_arg",
+                      help="second integer argument for some calls",
                       type='int', default=None)
-    parser.add_option("--int3_arg", help="third integer argument for some calls",
+    parser.add_option("--int3_arg",
+                      help="third integer argument for some calls",
                       type='int', default=None)
     parser.add_option("--uuid_arg", help="UUID argument for some calls",
                       default=None)
-    parser.add_option("--uuid2_arg", help="second UUID argument for some calls",
+    parser.add_option("--uuid2_arg",
+                      help="second UUID argument for some calls",
                       default=None)
     parser.add_option("--uuid3_arg", help="third UUID argument for some calls",
                       default=None)
     parser.add_option("--file_arg", help="FILE argument for some calls",
                       default=None)
-    parser.add_option("--options", help="JSON of options argument", default="{}")
-    parser.add_option("--options_file", help="File containing JSON of options argument", default=None)
-    parser.add_option("--attributes", help="JSON of attributes argument", default="{}")
-    parser.add_option("--attributes_file", help="File containing JSON of attributes argument", default=None)
+    parser.add_option("--options", help="JSON of options argument",
+                      default="{}")
+    parser.add_option("--options_file",
+                      help="File containing JSON of options argument",
+                      default=None)
+    parser.add_option("--attributes", help="JSON of attributes argument",
+                      default="{}")
+    parser.add_option("--attributes_file",
+                      help="File containing JSON of attributes argument",
+                      default=None)
     parser.add_option("--credentials",
                       help="List of comma-separated credential files",
                       default="")
@@ -162,7 +172,8 @@ def main(args=sys.argv, do_print=True):
         (result, msg) = _do_ssl(framework, suppress_errors, reason, fcn,
                                 client_options)
     # Methods that take a URN and an aggregate URL argument
-    elif opts.method in ['register_aggregate', 'remove_aggregate'] and opts.agg_url:
+    elif opts.method in ['register_aggregate', 'remove_aggregate'] and \
+            opts.agg_url:
         (result, msg) = _do_ssl(framework, suppress_errors, reason, fcn,
                                 opts.urn, opts.agg_url, opts.credentials,
                                 client_options)
@@ -281,20 +292,25 @@ def main(args=sys.argv, do_print=True):
     elif opts.method in ['get_requests_for_context']:
         (result, msg) = \
             _do_ssl(framework, suppress_errors, reason, fcn, opts.int_arg,
-                    opts.uuid_arg, opts.int2_arg, opts.credentials, client_options)
+                    opts.uuid_arg, opts.int2_arg, opts.credentials,
+                    client_options)
     elif opts.method in ['get_requests_by_user']:
         (result, msg) = \
             _do_ssl(framework, suppress_errors, reason, fcn, opts.uuid_arg,
-                    opts.int_arg, opts.uuid2_arg, opts.int2_arg, opts.credentials, client_options)
-    elif opts.method in ['get_pending_requests_for_user', 'get_number_of_pending_requests_for_user']:
+                    opts.int_arg, opts.uuid2_arg, opts.int2_arg,
+                    opts.credentials, client_options)
+    elif opts.method in ['get_pending_requests_for_user',
+                         'get_number_of_pending_requests_for_user']:
         (result, msg) = \
             _do_ssl(framework, suppress_errors, reason, fcn, opts.uuid_arg,
-                    opts.int_arg, opts.uuid2_arg, opts.credentials, client_options)
+                    opts.int_arg, opts.uuid2_arg, opts.credentials,
+                    client_options)
 
     elif opts.method in ['get_request_by_id']:
         (result, msg) = \
             _do_ssl(framework, suppress_errors, reason, fcn,
-                    opts.int_arg, opts.int2_arg, opts.credentials, client_options)
+                    opts.int_arg, opts.int2_arg, opts.credentials,
+                    client_options)
 
     # MA certificate methods
     elif opts.method in ['create_certificate']:
