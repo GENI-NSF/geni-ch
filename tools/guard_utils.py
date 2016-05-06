@@ -21,7 +21,7 @@
 # IN THE WORK.
 #----------------------------------------------------------------------
 
-# A series of utilities for constructing 
+# A series of utilities for constructing
 #  ABACGuards and SubjectInvocationChecks
 
 import tools.pluginmanager as pm
@@ -52,7 +52,7 @@ def cache_get(k):
         _context.cache[k] = dict()
     return _context.cache[k]
 
-# Remove cache 
+# Remove cache
 def cache_clear():
     if hasattr(_context, 'cache'):
         del _context.cache
@@ -70,7 +70,7 @@ def timed_cache_lookup(cache, urn, lifetime):
 def timed_cache_register(cache, urn, value):
     now = datetime.utcnow()
     cache[urn] = {'timestamp' : now, 'value' : value}
-    
+
 
 # Some helper methods
 
@@ -83,7 +83,7 @@ def lookup_project_name_for_slice(slice_urn):
     project_name = authority_parts[1]
     return project_name
 
-# Return a string based on a URN but with all punctuation (+:-.) 
+# Return a string based on a URN but with all punctuation (+:-.)
 # replaced with _
 def flatten_urn(urn):
     if urn is None or not (isinstance(urn, str) or
@@ -109,12 +109,12 @@ def lookup_project_names_for_user(user_urn, session):
                      db.PROJECT_MEMBER_TABLE.c.member_id)
     q = q.filter(db.MEMBER_ATTRIBUTE_TABLE.c.value == user_urn)
     rows = q.all()
-    
+
     project_names = [row.project_name for row in rows]
     cache[user_urn] = project_names
     return project_names
 
-# Check that a list of UID's are all in the cache, 
+# Check that a list of UID's are all in the cache,
 # otherwise raise ArgumentException
 def validate_uid_list(uids, cache, label):
     bad_uids = []
@@ -150,7 +150,7 @@ def ensure_valid_urns(urn_type, urns, session, authority):
             project_urn = to_project_urn(authority, project_name)
             cache[project_urn] = True
         bad_urns = [urn for urn in not_found_urns if urn not in cache]
-        if len(bad_urns) > 0: 
+        if len(bad_urns) > 0:
             raise CHAPIv1ArgumentError('Unknown project urns: [%s]' % bad_urns)
     elif urn_type == 'SLICE_URN':
         cache = cache_get('slice_urns')
@@ -165,7 +165,7 @@ def ensure_valid_urns(urn_type, urns, session, authority):
         for row in rows:
             cache[row.slice_urn] = True
         bad_urns = [urn for urn in not_found_urns if urn not in cache]
-        if len(bad_urns) > 0: 
+        if len(bad_urns) > 0:
             raise CHAPIv1ArgumentError('Unknown slice urns: [%s]' % bad_urns)
     elif urn_type == 'MEMBER_URN':
         cache = cache_get('member_urns')
@@ -181,7 +181,7 @@ def ensure_valid_urns(urn_type, urns, session, authority):
         for row in rows:
             cache[row.value] = True
         bad_urns = [urn for urn in not_found_urns if urn not in cache]
-        if len(bad_urns) > 0: 
+        if len(bad_urns) > 0:
             raise CHAPIv1ArgumentError('Unknown member urns: [%s]' % bad_urns)
     elif urn_type == 'SLIVER_URN':
         q = session.query(db.SLIVER_INFO_TABLE.c.sliver_urn)
@@ -330,7 +330,7 @@ def convert_member_uid_to_urn(member_uid, session):
             member_urn = row.value
             member_id = row.member_id
             cache[member_id] = member_urn
-            
+
     if not isinstance(member_uid, list):
         if member_uid in cache:
             return cache[member_uid]
@@ -359,7 +359,7 @@ def convert_member_uid_to_email(member_uid, session):
             member_email = row.value
             member_id = row.member_id
             cache[member_id] = member_email
-            
+
     if not isinstance(member_uid, list):
         if member_uid in cache:
             return cache[member_uid]
@@ -390,7 +390,7 @@ def convert_member_email_to_uid(member_email, session):
             member_id = row.member_id
             cache[email_value] = member_id
 
-    # Unlike most other 'convert' routines, we want to return 
+    # Unlike most other 'convert' routines, we want to return
     # only the list of good uid's and not error on bad emails
     # To support bulk email or asking about whether an email is valid
     uids = [cache[em.lower()] for em in member_emails if em.lower() in cache]
@@ -429,7 +429,7 @@ def convert_member_eppn_to_uid(member_eppn, session):
 
 def lookup_slice_urn_for_sliver_urn(sliver_urn, session):
     db = pm.getService('chdbengine')
-    
+
     q = session.query(db.SLIVER_INFO_TABLE.c.slice_urn)
     q = q.filter(db.SLIVER_INFO_TABLE.c.sliver_urn == sliver_urn)
     rows = q.all()
@@ -437,7 +437,7 @@ def lookup_slice_urn_for_sliver_urn(sliver_urn, session):
         return rows[0].slice_urn
     else:
         return None
-    
+
 
 # How long do we keep cache entries for operator privileges
 OPERATOR_CACHE_LIFETIME_SECS = 60
@@ -445,7 +445,7 @@ OPERATOR_CACHE_LIFETIME_SECS = 60
 PI_CACHE_LIFETIME_SECS = 60
 
 
-# Lookup whether given user (by urn) has 'operator' 
+# Lookup whether given user (by urn) has 'operator'
 # as an attribute in ma_member_attribute
 def lookup_operator_privilege(user_urn, session):
     db = pm.getService('chdbengine')
@@ -473,7 +473,7 @@ def lookup_operator_privilege(user_urn, session):
 def lookup_authority_privilege(user_urn, session):
     return user_urn.find("+authority+")>= 0
 
-# Lookup whether given user (by urn) has 'project_lead' 
+# Lookup whether given user (by urn) has 'project_lead'
 # as an attribute in ma_member_attribute
 def lookup_pi_privilege(user_urn, session):
     db = pm.getService('chdbengine')
@@ -502,15 +502,15 @@ def get_project_role_for_member(caller_urn, project_urns, session):
     db = pm.getService('chdbengine')
     if not isinstance(project_urns, list): project_urns = [project_urns]
     if len(project_urns) == 0:
-#        chapi_debug('UTILS', 
+#        chapi_debug('UTILS',
 #                    "get_project_role_for_member got " + \
 #                        "empty list of project urns")
         return []
     project_names = \
         [get_name_from_urn(project_urn) for project_urn in project_urns]
 
-    q = session.query(db.PROJECT_MEMBER_TABLE.c.role, 
-                      db.PROJECT_TABLE.c.project_name, 
+    q = session.query(db.PROJECT_MEMBER_TABLE.c.role,
+                      db.PROJECT_TABLE.c.project_name,
                       db.MEMBER_ATTRIBUTE_TABLE)
     q = q.filter(db.PROJECT_MEMBER_TABLE.c.project_id == \
                      db.PROJECT_TABLE.c.project_id)
@@ -529,8 +529,8 @@ def get_slice_role_for_member(caller_urn, slice_urns, session):
     if len(slice_urns) == 0:
         return []
 
-    q = session.query(db.SLICE_MEMBER_TABLE.c.role, 
-                      db.SLICE_TABLE.c.slice_urn, 
+    q = session.query(db.SLICE_MEMBER_TABLE.c.role,
+                      db.SLICE_TABLE.c.slice_urn,
                       db.MEMBER_ATTRIBUTE_TABLE)
     q = q.filter(db.SLICE_MEMBER_TABLE.c.slice_id == \
                      db.SLICE_TABLE.c.slice_id)
@@ -541,9 +541,9 @@ def get_slice_role_for_member(caller_urn, slice_urns, session):
     q = q.filter(db.MEMBER_ATTRIBUTE_TABLE.c.value == caller_urn)
     rows = q.all()
     return rows
-        
+
 # Support for parsing CHAPI policies from JSON files
-# Take a JSON file and return a dictionary of 
+# Take a JSON file and return a dictionary of
 # method => {"policy" : ..., "assertions" :  ... }
 def parse_method_policies(filename):
     policies = {}
@@ -553,11 +553,11 @@ def parse_method_policies(filename):
 
 #        chapi_info("PMP", "DATA = %s" % data)
 #        chapi_info("PMP", "RP = %s" % raw_policies)
-        
+
         # Replace names of functions with functions"
         for method_name, method_attrs in raw_policies.items():
             if method_name == "__DOC__" or \
-                    isinstance(method_attrs, basestring): 
+                    isinstance(method_attrs, basestring):
                 continue
 #            chapi_info("PMP", "MN = %s MA = %s" % (method_name, method_attrs))
             assertions = None
@@ -572,7 +572,7 @@ def parse_method_policies(filename):
                     policy_statements = \
                         [rps.replace("$METHOD", method_name.upper()) \
                              for rps in raw_policy_statements]
-            policies[method_name] = {"policies" : policy_statements, 
+            policies[method_name] = {"policies" : policy_statements,
                                      "assertions" : assertions}
     except Exception, e:
         chapi_info("Error", "%s" % e)
@@ -582,10 +582,10 @@ def parse_method_policies(filename):
 
 # The convention of these methods is to return the list of subjects that
 # Satisfy the criteria
-# e.g. shares_project(member1_urn, member2_urns) returns the 
+# e.g. shares_project(member1_urn, member2_urns) returns the
 # subset of member2_urns that share a project with member1_urn
 
-# Return those members of member2_urns that share membership 
+# Return those members of member2_urns that share membership
 # in a project with member1_urn
 def shares_project(member1_urn, member2_urns, session, project_uid = None):
     if member2_urns is None or len(member2_urns) == 0:
@@ -596,8 +596,8 @@ def shares_project(member1_urn, member2_urns, session, project_uid = None):
     ma1 = aliased(db.MEMBER_ATTRIBUTE_TABLE)
     ma2 = aliased(db.MEMBER_ATTRIBUTE_TABLE)
 
-    q = session.query(pm1.c.project_id, 
-                      ma1.c.value.label('member1'), 
+    q = session.query(pm1.c.project_id,
+                      ma1.c.value.label('member1'),
                       ma2.c.value.label('member2'))
     if project_uid is not None:
         q = q.filter(pm1.c.project_id == project_uid)
@@ -625,8 +625,8 @@ def shares_slice(member1_urn, member2_urns, session, slice_uid = None):
     ma1 = aliased(db.MEMBER_ATTRIBUTE_TABLE)
     ma2 = aliased(db.MEMBER_ATTRIBUTE_TABLE)
 
-    q = session.query(st.c.expired, sm1.c.slice_id, sm2.c.slice_id, 
-                      ma1.c.value.label('member1'), 
+    q = session.query(st.c.expired, sm1.c.slice_id, sm2.c.slice_id,
+                      ma1.c.value.label('member1'),
                       ma2.c.value.label('member2'))
     if slice_uid is not None:
         q = q.filter(sm1.c.slice_id == slice_uid)
@@ -664,16 +664,16 @@ def has_role_on_some_project(member_urns, role, session):
     members_with_role = [row.value for row in rows]
     return members_with_role
 
-# Return the list of members who have a pending request from or 
+# Return the list of members who have a pending request from or
 # to someone in list of other members
 # That is, if subject_is_lead
-#    Return those members of lead_urns who have a request pending 
+#    Return those members of lead_urns who have a request pending
 #    from one or more of the requestor_urns
 # Otherwise if not subject_is_lead
-#    Return those members of requestor_urns who have a request pending 
+#    Return those members of requestor_urns who have a request pending
 #    to one or more of the lead_urns
-def has_pending_request_on_project_lead_by(lead_urns, requestor_urns, 
-                                           subject_is_lead, 
+def has_pending_request_on_project_lead_by(lead_urns, requestor_urns,
+                                           subject_is_lead,
                                            session):
     if lead_urns is None or len(lead_urns) == 0 or requestor_urns is None or len(requestor_urns) == 0:
         return []
@@ -683,7 +683,7 @@ def has_pending_request_on_project_lead_by(lead_urns, requestor_urns,
     ma1 = aliased(db.MEMBER_ATTRIBUTE_TABLE)
     ma2 = aliased(db.MEMBER_ATTRIBUTE_TABLE)
 
-    q = session.query(db.PROJECT_REQUEST_TABLE.c.status, 
+    q = session.query(db.PROJECT_REQUEST_TABLE.c.status,
                       ma1.c.value.label('lead_urn'),
                       ma2.c.value.label('requestor_urn'))
     q = q.filter(pm1.c.member_id == ma1.c.member_id)
@@ -731,7 +731,7 @@ def get_project_request_project_urn(request_id, session):
     q = session.query(db.PROJECT_REQUEST_TABLE.c.context_id)
     q = q.filter(db.PROJECT_REQUEST_TABLE.c.id == request_id)
     rows = q.all()
-    
+
     if len(rows) > 0:
         project_uid = rows[0].context_id
         project_urn = convert_project_uid_to_urn(project_uid, session)
@@ -753,4 +753,3 @@ def get_key_owner_urn(key_id, session):
     if len(rows) > 0:
         owner_urn = rows[0].value
     return owner_urn
-
