@@ -8,6 +8,8 @@
 ([#466](https://github.com/GENI-NSF/geni-ch/issues/466))
 * Remove dependency on libabac
 ([#467](https://github.com/GENI-NSF/geni-ch/issues/467))
+* Fix speaks-for attribute in service registry
+([#497](https://github.com/GENI-NSF/geni-ch/issues/497))
 
 ## Installation Notes
 
