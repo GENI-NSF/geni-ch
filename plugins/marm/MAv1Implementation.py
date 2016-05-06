@@ -659,13 +659,13 @@ class MAv1Implementation(MAv1DelegateBase):
         abac_raw_creds = []
         if lookup_operator_privilege(user_urn, session):
            assertion = generate_abac_credential("ME.IS_OPERATOR<-CALLER",
-                                                self.cert, self.key, 
+                                                self.cert, self.key,
                                                 id_certs = {"CALLER" : user_cert},
                                                 id_cert_files = {"ME" : self.cert})
            abac_raw_creds.append(assertion)
         if lookup_pi_privilege(user_urn, session):
             assertion = generate_abac_credential("ME.IS_PI<-CALLER",
-                                                 self.cert, self.key, 
+                                                 self.cert, self.key,
                                                  id_certs = {"CALLER" : user_cert},
                                                  id_cert_files = {"ME" : self.cert})
             abac_raw_creds.append(assertion)
