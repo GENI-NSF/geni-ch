@@ -37,25 +37,25 @@ from chapi.Exceptions import *
 # That is:
 #     1. There is a 'speaking_for' option with the value of the
 #          URN of the spoken-for user
-#     2. There is a speaks-for credential in the list of credentials 
-#         that is signed by the spoken-for user authorizing the 
+#     2. There is a speaks-for credential in the list of credentials
+#         that is signed by the spoken-for user authorizing the
 #         speaking entity to speak for it
 #     3. The URN of the 'speaking_for' option matches the URN
 #         in the speaks-for credential
-#     4. The certificate of the spoken-for user is in the 
+#     4. The certificate of the spoken-for user is in the
 #         list of credentials [Note: This one is still open to debate...]
 #
 # Args:
 #   client_cert: the cert of the actual invoker of the SSL connection
-#   credentials: the list of credentials passed with the call, 
+#   credentials: the list of credentials passed with the call,
 #        possibly including user certs and speaks-for credentials
-#   options: the dictionary of options supplied with the call, 
+#   options: the dictionary of options supplied with the call,
 #        possibly including a 'speaking_for' option
 #
-# Return: 
-#   agent_cert: Cert of actual (spoken for) speaker if 'speaks for', 
+# Return:
+#   agent_cert: Cert of actual (spoken for) speaker if 'speaks for',
 #        client_cert if not.
-#   revised_options : Original options with 
+#   revised_options : Original options with
 #       {'speaking_as' : original_client_cert} added if 'speaks for'
 def determine_speaks_for(client_cert, credentials, options, trusted_roots=None):
 
@@ -88,7 +88,7 @@ def determine_speaks_for(client_cert, credentials, options, trusted_roots=None):
                        "No trusted roots in determine_speaks_for.")
             return client_cert, options
 
-    # Loop over all ABAC credentials and see if any prove 
+    # Loop over all ABAC credentials and see if any prove
     # AGENT.speaks_for(AGENT)<-CLIENT
     speaks_for_found = False
     for sf_credential in credentials:
@@ -113,15 +113,15 @@ def determine_speaks_for(client_cert, credentials, options, trusted_roots=None):
         # See if the credential asserts the right speaks_for statement
         query = "AGENT.speaks_for(AGENT)<-CLIENT"
         certs_by_name = {"CLIENT" : client_cert, "AGENT" : agent_cert}
-        ok, proof = execute_abac_query(query, certs_by_name, 
+        ok, proof = execute_abac_query(query, certs_by_name,
                                        [sf_cred_value])
-        if ok: 
+        if ok:
             speaks_for_found = True
             break
 
     # If we didn't found a speaks-for credential, raise error
     if not speaks_for_found:
-        # If there is a speaking_for option but no 
+        # If there is a speaking_for option but no
         # speaks-for credential, error.
         msg = "No speaks-for credential but %r passed option speaking_for = %r"
         msg = msg % (client_urn, speaking_for)
