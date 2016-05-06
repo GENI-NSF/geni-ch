@@ -85,17 +85,17 @@ class CHv1Implementation(CHv1DelegateBase):
         },
         ]
 
-
     def get_version(self, options, session):
         envService = pm.getService(pm.ENVIRONMENT_SERVICE)
         serverURL = envService.getServerURL()
-        api_versions = {chapi.Parameters.VERSION_NUMBER : serverURL}
+        versionNumber = plugins.chapiv1rpc.chapi.Parameters.VERSION_NUMBER
+        api_versions = {versionNumber: serverURL}
         implementation_info = get_implementation_info(SR_LOG_PREFIX)
-        version_info = {"VERSION": chapi.Parameters.VERSION_NUMBER,
-                        "IMPLEMENTATION" : implementation_info,
+        version_info = {"VERSION": versionNumber,
+                        "IMPLEMENTATION": implementation_info,
                         "SERVICES": CH.services,
-                        "SERVICE_TYPES" : CH.service_types.keys(),
-                        "API_VERSIONS" : api_versions,
+                        "SERVICE_TYPES": CH.service_types.keys(),
+                        "API_VERSIONS": api_versions,
                         "FIELDS": CH.supplemental_fields}
         return self._successReturn(version_info)
 

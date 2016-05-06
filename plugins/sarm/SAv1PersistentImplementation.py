@@ -126,15 +126,16 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
     def get_version(self, options, session):
         envService = pm.getService(pm.ENVIRONMENT_SERVICE)
         serverURL = envService.getServerURL()
-        api_versions = {chapi.Parameters.VERSION_NUMBER : serverURL}
+        versionNumber = plugins.chapiv1rpc.chapi.Parameters.VERSION_NUMBER
+        api_versions = {versionNumber: serverURL}
         implementation_info = get_implementation_info(SA_LOG_PREFIX)
-        version_info = {"VERSION" : chapi.Parameters.VERSION_NUMBER,
-                        "URN " : self.urn,
-                        "IMPLEMENTATION" : implementation_info,
-                        "SERVICES" : SA.services,
-                        "CREDENTIAL_TYPES" : SA.credential_types,
-                        "ROLES" : attribute_type_names.values(),
-                        "API_VERSIONS" : api_versions,
+        version_info = {"VERSION": versionNumber,
+                        "URN ": self.urn,
+                        "IMPLEMENTATION": implementation_info,
+                        "SERVICES": SA.services,
+                        "CREDENTIAL_TYPES": SA.credential_types,
+                        "ROLES": attribute_type_names.values(),
+                        "API_VERSIONS": api_versions,
                         "FIELDS": SA.supplemental_fields}
         result = self._successReturn(version_info)
         return result

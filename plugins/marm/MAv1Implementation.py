@@ -171,16 +171,17 @@ class MAv1Implementation(MAv1DelegateBase):
                                    MA.optional_key_fields.items())
         envService = pm.getService(pm.ENVIRONMENT_SERVICE)
         serverURL = envService.getServerURL()
-        api_versions = {chapi.Parameters.VERSION_NUMBER : serverURL}
+        versionNumber = plugins.chapiv1rpc.chapi.Parameters.VERSION_NUMBER
+        api_versions = {versionNumber: serverURL}
         implementation_info = get_implementation_info(MA_LOG_PREFIX)
-        version_info = {"VERSION": chapi.Parameters.VERSION_NUMBER,
-                        "URN " : self.urn,
-                        "IMPLEMENTATION" : implementation_info,
-                        "SERVICES" : MA.services,
+        version_info = {"VERSION": versionNumber,
+                        "URN ": self.urn,
+                        "IMPLEMENTATION": implementation_info,
+                        "SERVICES": MA.services,
                         "CREDENTIAL_TYPES": MA.credential_types,
-                        "API_VERSIONS" : api_versions,
+                        "API_VERSIONS": api_versions,
                         "FIELDS": all_optional_fields}
-        result =  self._successReturn(version_info)
+        result = self._successReturn(version_info)
         return result
 
 
