@@ -1,24 +1,24 @@
-#----------------------------------------------------------------------         
+#----------------------------------------------------------------------
 # Copyright (c) 2011-2016 Raytheon BBN Technologies
-#                                                                               
-# Permission is hereby granted, free of charge, to any person obtaining         
-# a copy of this software and/or hardware specification (the "Work") to         
-# deal in the Work without restriction, including without limitation the        
-# rights to use, copy, modify, merge, publish, distribute, sublicense,          
-# and/or sell copies of the Work, and to permit persons to whom the Work        
-# is furnished to do so, subject to the following conditions:                   
-#                                                                               
-# The above copyright notice and this permission notice shall be                
-# included in all copies or substantial portions of the Work.                   
-#                                                                               
-# THE WORK IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS           
-# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF                    
-# MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND                         
-# NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT                   
-# HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,                  
-# WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,            
-# OUT OF OR IN CONNECTION WITH THE WORK OR THE USE OR OTHER DEALINGS            
-# IN THE WORK.                                                                  
+#
+# Permission is hereby granted, free of charge, to any person obtaining
+# a copy of this software and/or hardware specification (the "Work") to
+# deal in the Work without restriction, including without limitation the
+# rights to use, copy, modify, merge, publish, distribute, sublicense,
+# and/or sell copies of the Work, and to permit persons to whom the Work
+# is furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be
+# included in all copies or substantial portions of the Work.
+#
+# THE WORK IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+# MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+# NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+# HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+# WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE WORK OR THE USE OR OTHER DEALINGS
+# IN THE WORK.
 #----------------------------------------------------------------------
 
 # Implementation of the Member Authority
@@ -51,6 +51,7 @@ from tools.guard_utils import *
 from tools.chapi_utils import *
 from tools.ABACManager import *
 from tools.mapped_tables import *
+from tools.geni_utils import *
 from chapi.MemberAuthority import MAv1DelegateBase
 from chapi.Exceptions import *
 import chapi.Parameters
@@ -130,19 +131,8 @@ def make_member_urn(cert, username):
     ma_authority, ma_type, ma_name = parse_urn(ma_urn)
     return make_urn(ma_authority, 'user', username)
 
-def parse_urn(urn):
-    '''returns authority, type, name'''
-    m = re.search('urn:publicid:IDN\+([^\+]+)\+([^\+]+)\+([^\+]+)$', urn)
-    if m is not None:
-        return m.group(1), m.group(2), m.group(3)
-    else:
-        return None
-
-def make_urn(authority, typ, name):
-    return 'urn:publicid:IDN+'+authority+'+'+typ+'+'+name
-
 class MAv1Implementation(MAv1DelegateBase):
-    
+
     def __init__(self):
         super(MAv1Implementation, self).__init__()
         self.db = pm.getService('chdbengine')
@@ -379,13 +369,13 @@ class MAv1Implementation(MAv1DelegateBase):
         return self._successReturn(result)
 
     # This call is unprotected: no checking of credentials
-    def lookup_public_member_info(self, client_cert, 
+    def lookup_public_member_info(self, client_cert,
                                   credentials, options, session):
         result = self.lookup_member_info(options, MA.public_fields, session)
         return result
 
     # This call is protected
-    def lookup_private_member_info(self, client_cert, credentials, 
+    def lookup_private_member_info(self, client_cert, credentials,
                                    options, session):
         result = self.lookup_member_info(options, MA.private_fields, session)
         return result
@@ -394,8 +384,8 @@ class MAv1Implementation(MAv1DelegateBase):
     def lookup_public_identifying_member_info(self, client_cert,
                                               credentials, options, session):
         result = \
-            self.lookup_member_info(options, 
-                                    MA.public_fields + MA.identifying_fields, 
+            self.lookup_member_info(options,
+                                    MA.public_fields + MA.identifying_fields,
                                     session)
         return result
 
@@ -436,7 +426,7 @@ class MAv1Implementation(MAv1DelegateBase):
                                              'lookup_identifying_member_info', \
                                              options, {}, session)
 
-        # 2b. Call lookup_identifying_member_info with identifyable members 
+        # 2b. Call lookup_identifying_member_info with identifyable members
         #   with identifying fields
         identifying_options = {'match' : allowed_identifying_match, \
                                    'filter' : identifying_fields}
@@ -497,7 +487,7 @@ class MAv1Implementation(MAv1DelegateBase):
                 else:
                     raise CHAPIv1ArgumentError("Unknown member field %s" % field)
         return public_fields, identifying_fields, private_fields
-                
+
     def determine_allowed_match(self, client_cert, credentials, \
                                     ma_guard, method, options, \
                                     arguments, session):
@@ -544,7 +534,7 @@ class MAv1Implementation(MAv1DelegateBase):
 
 
     # This call is protected
-    def update_member_info(self, client_cert, member_urn, 
+    def update_member_info(self, client_cert, member_urn,
                            credentials, options, session):
         # determine whether self_asserted
         try:
@@ -558,7 +548,7 @@ class MAv1Implementation(MAv1DelegateBase):
         if len(uids) == 0:
             raise CHAPIv1ArgumentError('No member with URN ' + member_urn)
         uid = uids[0]
-        
+
         # do the update
         all_keys = {}
         for attr, value in options['fields'].iteritems():
@@ -571,7 +561,7 @@ class MAv1Implementation(MAv1DelegateBase):
                 all_keys[table][MA.field_mapping[attr]] = value
         for table, keys in all_keys.iteritems():
             self.update_keys(session, table, keys, uid)
-            
+
         result = self._successReturn(True)
         return result
 
@@ -636,7 +626,7 @@ class MAv1Implementation(MAv1DelegateBase):
             session.add(obj)
 
     # part of the API, mainly call get_all_credentials()
-    def get_credentials(self, client_cert, member_urn, 
+    def get_credentials(self, client_cert, member_urn,
                         credentials, options, session):
 
         uids = self.get_uids_for_attribute(session, "MEMBER_URN", member_urn)
@@ -658,7 +648,7 @@ class MAv1Implementation(MAv1DelegateBase):
         #chapi_debug(MA_LOG_PREFIX, 'GUC: outside certs = '+str(certs))
         certs = self.get_val_for_uid(session, OutsideCert, "certificate", uid)
         if not certs:
-            certs = self.get_val_for_uid(session, InsideKey, "certificate", 
+            certs = self.get_val_for_uid(session, InsideKey, "certificate",
                                          uid)
         if not certs:
             chapi_warn(MA_LOG_PREFIX, "Get Credentials found no cert for uid %s" % uid, {'user': get_email_from_cert(client_cert)})
@@ -669,11 +659,15 @@ class MAv1Implementation(MAv1DelegateBase):
         abac_raw_creds = []
         if lookup_operator_privilege(user_urn, session):
            assertion = generate_abac_credential("ME.IS_OPERATOR<-CALLER",
-                                                self.cert, self.key, {"CALLER" : user_cert})
+                                                self.cert, self.key, 
+                                                id_certs = {"CALLER" : user_cert},
+                                                id_cert_files = {"ME" : self.cert})
            abac_raw_creds.append(assertion)
         if lookup_pi_privilege(user_urn, session):
             assertion = generate_abac_credential("ME.IS_PI<-CALLER",
-                                                 self.cert, self.key, {"CALLER" : user_cert})
+                                                 self.cert, self.key, 
+                                                 id_certs = {"CALLER" : user_cert},
+                                                 id_cert_files = {"ME" : self.cert})
             abac_raw_creds.append(assertion)
         sfa_creds = \
             [{'geni_type' : 'geni_sfa', 'geni_version' : '3', 'geni_value' : cred}
@@ -700,7 +694,7 @@ class MAv1Implementation(MAv1DelegateBase):
         #chapi_debug(MA_LOG_PREFIX, 'GUC: cred = '+cred.save_to_string())
         return cred.save_to_string()
 
-    def create_member(self, client_cert, attributes, 
+    def create_member(self, client_cert, attributes,
                       credentials, options, session):
 
         user_email = get_email_from_cert(client_cert)
@@ -759,7 +753,7 @@ class MAv1Implementation(MAv1DelegateBase):
     # Implementation of KEY Service methods
 
     def create_key(self, client_cert, credentials, options, session):
-        
+
         user_email = get_email_from_cert(client_cert)
 
        # Check that all the fields are allowed to be updated
@@ -777,7 +771,7 @@ class MAv1Implementation(MAv1DelegateBase):
         lookup_member_id_options = {'match' : {'MEMBER_URN' : member_urn},
                                     'filter' : ['MEMBER_UID']}
         result = \
-            self.lookup_public_member_info(client_cert, credentials, 
+            self.lookup_public_member_info(client_cert, credentials,
                                            lookup_member_id_options,
                                            session)
         if result['code'] != NO_ERROR:
@@ -867,11 +861,11 @@ class MAv1Implementation(MAv1DelegateBase):
         # Handle key_member specially: it is not part of the SSH key table
         if 'KEY_MEMBER' in match_criteria.keys():
             member_urns = match_criteria['KEY_MEMBER']
-            if not isinstance(member_urns, types.ListType): 
+            if not isinstance(member_urns, types.ListType):
                     member_urns = [member_urns]
             if len(member_urns) == 0:
                 # FIXME: If you specify an empty list, what should the behavior be?
-                # ANSWER: This is fine. An empty list means 
+                # ANSWER: This is fine. An empty list means
                 # 'give me keys for no users' hence ' give me no keys'
                 q = q.filter(self.db.MEMBER_ATTRIBUTE_TABLE.c.value == None)
                 #  chapi_debug(MA_LOG_PREFIX, "lookup_keys had empty list of urns")
@@ -880,12 +874,12 @@ class MAv1Implementation(MAv1DelegateBase):
                 enabled, disabled = check_disabled_users(self.db, member_urns, session)
                 member_urns = enabled
                 if len(disabled) > 0:
-                    chapi_info(MA_LOG_PREFIX, 
-                               "Attempt to access SSH keys of disabled users %s" % 
+                    chapi_info(MA_LOG_PREFIX,
+                               "Attempt to access SSH keys of disabled users %s" %
                                disabled)
             del match_criteria['KEY_MEMBER']
 
-        q = add_filters(q, match_criteria, self.db.SSH_KEY_TABLE, 
+        q = add_filters(q, match_criteria, self.db.SSH_KEY_TABLE,
                         MA.key_field_mapping, session)
         rows = q.all()
 
@@ -909,7 +903,7 @@ class MAv1Implementation(MAv1DelegateBase):
                     key_data['KEY_ID'] = str(key_id)
 
 
-        # Strip out any KEY_PRIVATE fields from key returns not for the 
+        # Strip out any KEY_PRIVATE fields from key returns not for the
         # calling user
         member_urn = get_urn_from_cert(client_cert)
         for urn, all_key_fields in keys.items():
@@ -985,7 +979,7 @@ class MAv1Implementation(MAv1DelegateBase):
             raise Exception(msg % (member_id))
 
     # Member certificate methods
-    def create_certificate(self, client_cert, member_urn, 
+    def create_certificate(self, client_cert, member_urn,
                            credentials, options, session):
 
         user_email = get_email_from_cert(client_cert)
@@ -1085,7 +1079,7 @@ class MAv1Implementation(MAv1DelegateBase):
 
             # insert into MA_INSIDE_KEY_TABLENAME
             # (member_id, client_urn, certificate, private_key)
-            # values 
+            # values
             # (member_id, client_urn, cert, key)
             insert_values = {'client_urn' : client_urn,
                              'member_id' : str(member_id),
@@ -1134,7 +1128,7 @@ class MAv1Implementation(MAv1DelegateBase):
         return (len(rows)==0 or rows[0][0] == 'y')
 
     # enable/disable a user/member  (private)
-    def enable_user(self, client_cert, member_urn, enable_sense, 
+    def enable_user(self, client_cert, member_urn, enable_sense,
                     credentials, options, session):
         '''Mark a member/user as enabled or disabled.
         IFF enabled_sense is True, then user is unconditionally enabled, otherwise disabled.
@@ -1195,7 +1189,7 @@ class MAv1Implementation(MAv1DelegateBase):
 
     # send email about new lead/operator privilege
     def mail_new_privilege(self,member_id, privilege, session):
-        options = {'match' : {'MEMBER_UID' : member_id },'filter': ['_GENI_MEMBER_DISPLAYNAME','MEMBER_FIRSTNAME','MEMBER_LASTNAME','MEMBER_EMAIL']}  
+        options = {'match' : {'MEMBER_UID' : member_id },'filter': ['_GENI_MEMBER_DISPLAYNAME','MEMBER_FIRSTNAME','MEMBER_LASTNAME','MEMBER_EMAIL']}
         info = self.lookup_member_info(options, MA.identifying_fields, session)
         member_info = info['value']
         pretty_name = ""
@@ -1215,10 +1209,10 @@ Please see http://groups.geni.net/geni/wiki/ProjectLeadWelcome for information o
 
 """
         else:
-            subject = "You are now a GENI Operator" 
+            subject = "You are now a GENI Operator"
             msgbody += "You are now a GENI Operator on "
             msgbody += self.config.get("chrm.authority") + ".\n\n"
-        
+
         msgbody += "Sincerely,\n"
         msgbody += "GENI Clearinghouse operations\n"
 
@@ -1227,7 +1221,7 @@ Please see http://groups.geni.net/geni/wiki/ProjectLeadWelcome for information o
         send_email(tolist, unicode(self.ch_from_email),unicode(self.portal_help_email),subject,msgbody,cclist)
 
     #  member_privilege (private)
-    def add_member_privilege(self, client_cert, member_uid, privilege, 
+    def add_member_privilege(self, client_cert, member_uid, privilege,
                              credentials, options, session):
         '''Mark a member/user as having a particular contextless privilege.
         privilege must be either OPERATOR or PROJECT_LEAD.'''
@@ -1272,7 +1266,7 @@ Please see http://groups.geni.net/geni/wiki/ProjectLeadWelcome for information o
 
         return result
 
-    def revoke_member_privilege(self, client_cert, member_uid, 
+    def revoke_member_privilege(self, client_cert, member_uid,
                                 privilege, credentials, options, session):
         '''Mark a member/user as not having a particular contextless privilege.
         privilege must be either OPERATOR or PROJECT_LEAD.'''
@@ -1307,7 +1301,7 @@ Please see http://groups.geni.net/geni/wiki/ProjectLeadWelcome for information o
                 member_urn = row[0]
                 #get projects for which member is lead
 
-                projects = self._sa_handler._delegate.lookup_projects_for_member(client_cert, member_urn, 
+                projects = self._sa_handler._delegate.lookup_projects_for_member(client_cert, member_urn,
                                                                                  credentials, {}, session)
 
                 for project in projects['value']:
@@ -1315,7 +1309,7 @@ Please see http://groups.geni.net/geni/wiki/ProjectLeadWelcome for information o
                     if project['PROJECT_ROLE'] == 'LEAD':
                         project_urn = project['PROJECT_URN']
                         #look for authorized admin to be new lead
-                        members = self._sa_handler._delegate.lookup_project_members(client_cert, project_urn, 
+                        members = self._sa_handler._delegate.lookup_project_members(client_cert, project_urn,
                                                                                     credentials, {}, session)
                         for member in members['value']:
                             if member['PROJECT_ROLE'] == 'ADMIN':
@@ -1326,7 +1320,7 @@ Please see http://groups.geni.net/geni/wiki/ProjectLeadWelcome for information o
                                 if rows and rows[0][0] == 'true':
                                     row = self.get_attr_for_uid(session,"MEMBER_URN",member['PROJECT_MEMBER_UID'])
                                     new_lead_urn = row[0]
-                                    
+
                                     options = {'members_to_change':[{'PROJECT_MEMBER': member_urn,'PROJECT_ROLE':'MEMBER'}, \
                                                                         {'PROJECT_MEMBER': new_lead_urn,'PROJECT_ROLE':'LEAD'}]}
                                     result = self._sa_handler._delegate.modify_project_membership(client_cert, project['PROJECT_URN'], credentials, options, session)
@@ -1366,7 +1360,7 @@ Please see http://groups.geni.net/geni/wiki/ProjectLeadWelcome for information o
         return True
 
     #  add member_attribute (private)
-    def add_member_attribute(self, client_cert, member_urn, attr_name, attr_value, 
+    def add_member_attribute(self, client_cert, member_urn, attr_name, attr_value,
                              attr_self_assert,
                              credentials, options, session):
         user_email = get_email_from_cert(client_cert)
@@ -1431,7 +1425,7 @@ Please see http://groups.geni.net/geni/wiki/ProjectLeadWelcome for information o
 
         return result
 
-    def remove_member_attribute(self, client_cert, member_urn, attr_name, 
+    def remove_member_attribute(self, client_cert, member_urn, attr_name,
                                 credentials, options, session, attr_value=None):
         user_email = get_email_from_cert(client_cert)
         caller_urn = get_urn_from_cert(client_cert)
@@ -1513,10 +1507,10 @@ Please see http://groups.geni.net/geni/wiki/ProjectLeadWelcome for information o
         urns = []
         urns.append(member_urn)
         options = {\
-            "match" : {"MEMBER_URN" : urns}, 
-            "filter" : ["_GENI_MEMBER_DISPLAYNAME", "MEMBER_FIRSTNAME", 
+            "match" : {"MEMBER_URN" : urns},
+            "filter" : ["_GENI_MEMBER_DISPLAYNAME", "MEMBER_FIRSTNAME",
                         "MEMBER_LASTNAME", "MEMBER_EMAIL"]}
-        result = self.lookup_member_info(options, MA.identifying_fields, 
+        result = self.lookup_member_info(options, MA.identifying_fields,
                                          session)
         if result['code'] != NO_ERROR or member_urn not in result['value']:
             return member_urn

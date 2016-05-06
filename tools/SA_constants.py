@@ -104,11 +104,11 @@ slice_field_mapping = {
     "SLICE_EXPIRATION" :  "expiration",
     "SLICE_EXPIRED" :  "expired",
     "SLICE_CREATION" :  "creation",
-    "SLICE_PROJECT_URN" : {"base_field" : "project_id", 
+    "SLICE_PROJECT_URN" : {"base_field" : "project_id",
                            "to_external" : convert_project_uid_to_urn,
                            "to_internal" : convert_project_urn_to_uid},
     "_GENI_SLICE_EMAIL" : "slice_email",
-    "_GENI_SLICE_OWNER" : "owner_id", 
+    "_GENI_SLICE_OWNER" : "owner_id",
     "_GENI_PROJECT_UID": 'project_id'
 }
 
@@ -153,16 +153,16 @@ PROJECT_DEFAULT_INVITATION_EXPIRATION_HOURS = 72
 PROJECT_NAME_REGEX = '^[a-zA-Z][a-zA-Z0-9-_]{1,31}$'
 
 project_request_field_mapping = {
-    'id' : 'id', 
-    'context_type' : 'context_type', 
-    'context_id' : 'context_id', 
-    'request_text' : 'request_text', 
-    'request_type' : 'request_type', 
-    'request_details' : 'request_details', 
-    'requestor' : 'requestor', 
-    'status' : 'status', 
-    'creation_timestamp' : 'creation_timestamp', 
-    'resolver'  : 'resolver' , 
-    'resolution_timestamp' : 'resolution_timestamp', 
+    'id' : 'id',
+    'context_type' : 'context_type',
+    'context_id' : 'context_id',
+    'request_text' : 'request_text',
+    'request_type' : 'request_type',
+    'request_details' : 'request_details',
+    'requestor' : 'requestor',
+    'status' : 'status',
+    'creation_timestamp' : 'creation_timestamp',
+    'resolver'  : 'resolver' ,
+    'resolution_timestamp' : 'resolution_timestamp',
     'resolution_description' : 'resolution_description'
 }

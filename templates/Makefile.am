@@ -10,4 +10,4 @@ dist_templates_DATA = \
 	install_service_registry.sql.tmpl \
 	openssl.cnf.tmpl \
 	services.ini.tmpl \
-	templates.json 
+	templates.json
