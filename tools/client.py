@@ -135,7 +135,7 @@ def main(args = sys.argv, do_print=True):
     client = framework.make_client(opts.url, opts.key, opts.cert,
                                    allow_none=True,
                                    verbose=False)
-    fcn = eval("client.%s" % opts.method)
+    fcn = getattr(client, opts.method)
     
     # Methods that take no arguments
     result = None
