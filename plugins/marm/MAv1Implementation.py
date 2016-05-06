@@ -1,5 +1,5 @@
-#----------------------------------------------------------------------
-# Copyright (c) 2011-2016 Raytheon BBN Technologies
+# ----------------------------------------------------------------------
+# Copyright (c) 2013-2016 Raytheon BBN Technologies
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and/or hardware specification (the "Work") to
@@ -19,7 +19,7 @@
 # WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE WORK OR THE USE OR OTHER DEALINGS
 # IN THE WORK.
-#----------------------------------------------------------------------
+# ----------------------------------------------------------------------
 
 # Implementation of the Member Authority
 
@@ -52,9 +52,9 @@ from tools.chapi_utils import *
 from tools.ABACManager import *
 from tools.mapped_tables import *
 from tools.geni_utils import *
-from chapi.MemberAuthority import MAv1DelegateBase
-from chapi.Exceptions import *
-import chapi.Parameters
+from plugins.chapiv1rpc.chapi.MemberAuthority import MAv1DelegateBase
+from plugins.chapiv1rpc.chapi.Exceptions import *
+import plugins.chapiv1rpc.chapi.Parameters
 
 # classes for mapping to sql tables
 

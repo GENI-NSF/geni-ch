@@ -1,5 +1,5 @@
-#----------------------------------------------------------------------
-# Copyright (c) 2011-2016 Raytheon BBN Technologies
+# ----------------------------------------------------------------------
+# Copyright (c) 2013-2016 Raytheon BBN Technologies
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and/or hardware specification (the "Work") to
@@ -19,7 +19,7 @@
 # WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE WORK OR THE USE OR OTHER DEALINGS
 # IN THE WORK.
-#----------------------------------------------------------------------
+# ----------------------------------------------------------------------
 
 from CHDatabaseEngine import CHDatabaseEngine
 import tools.pluginmanager as pm
@@ -27,8 +27,8 @@ from sqlalchemy import *
 from sqlalchemy.orm import aliased
 from sqlalchemy.orm import mapper
 from tools.cert_utils import *
-from chapi.GuardBase import GuardBase
-from chapi.Exceptions import *
+from plugins.chapiv1rpc.chapi.GuardBase import GuardBase
+from plugins.chapiv1rpc.chapi.Exceptions import *
 import types
 from tools.SpeaksFor import determine_speaks_for
 from tools.ABACManager import ABACManager

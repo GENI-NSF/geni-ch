@@ -1,5 +1,5 @@
-#----------------------------------------------------------------------
-# Copyright (c) 2011-2016 Raytheon BBN Technologies
+# ----------------------------------------------------------------------
+# Copyright (c) 2013-2016 Raytheon BBN Technologies
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and/or hardware specification (the "Work") to
@@ -19,7 +19,7 @@
 # WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE WORK OR THE USE OR OTHER DEALINGS
 # IN THE WORK.
-#----------------------------------------------------------------------
+# ----------------------------------------------------------------------
 
 # A series of utilities for constructing
 #  ABACGuards and SubjectInvocationChecks
@@ -31,8 +31,8 @@ import threading
 from geni_utils import *
 from cert_utils import *
 from geni_constants import *
-from chapi.Memoize import memoize
-from chapi.Exceptions import *
+from plugins.chapiv1rpc.chapi.Memoize import memoize
+from plugins.chapiv1rpc.chapi.Exceptions import *
 import MA_constants as MA
 from datetime import datetime, timedelta
 from dbutils import add_filters

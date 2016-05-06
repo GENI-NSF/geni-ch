@@ -1,5 +1,5 @@
-#----------------------------------------------------------------------
-# Copyright (c) 2011-2016 Raytheon BBN Technologies
+# ----------------------------------------------------------------------
+# Copyright (c) 2013-2016 Raytheon BBN Technologies
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and/or hardware specification (the "Work") to
@@ -19,7 +19,7 @@
 # WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE WORK OR THE USE OR OTHER DEALINGS
 # IN THE WORK.
-#----------------------------------------------------------------------
+# ----------------------------------------------------------------------
 
 # Class to manage a set of ABAC credentials, certificates and prove queries
 
@@ -426,7 +426,7 @@ class ABACManager:
             assertion = "%s.%s<-%s.%s" % (head_keyid, head_role, tail_keyid, tail_role)
 
         assertion = self._transform_string(assertion)
-        print "Asserting %s" % assertion
+        # print "Asserting %s" % assertion
         self.register_assertion(assertion)
 
     def _validate_signed_document(self, assertion_file):

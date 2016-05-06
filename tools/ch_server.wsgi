@@ -25,9 +25,9 @@ import sys
 import os
 
 # Need this for Memoize
-sys.path.append("/usr/share/geni-ch/chapi/chapi/plugins/chapiv1rpc")
+# sys.path.append("/usr/share/geni-ch/chapi/chapi/plugins/chapiv1rpc")
 
 # Need this for CHDatabaseEngine
-sys.path.append("/usr/share/geni-ch/chapi/chapi/plugins/chrm")
+# sys.path.append("/usr/share/geni-ch/chapi/chapi/plugins/chrm")
 
 from ch_server import application as application

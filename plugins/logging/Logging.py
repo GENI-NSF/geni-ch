@@ -1,5 +1,5 @@
-#----------------------------------------------------------------------
-# Copyright (c) 2011-2016 Raytheon BBN Technologies
+# ----------------------------------------------------------------------
+# Copyright (c) 2013-2016 Raytheon BBN Technologies
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and/or hardware specification (the "Work") to
@@ -19,16 +19,16 @@
 # WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE WORK OR THE USE OR OTHER DEALINGS
 # IN THE WORK.
-#----------------------------------------------------------------------
+# ----------------------------------------------------------------------
 
 import tools.pluginmanager as pm
 
-from CHDatabaseEngine import *
-from chapi.DelegateBase import DelegateBase
-from chapi.HandlerBase import HandlerBase
-from chapi.Exceptions import *
-from chapi.MethodContext import *
-from ABACGuard import *
+from plugins.chrm.CHDatabaseEngine import *
+from plugins.chapiv1rpc.chapi.DelegateBase import DelegateBase
+from plugins.chapiv1rpc.chapi.HandlerBase import HandlerBase
+from plugins.chapiv1rpc.chapi.Exceptions import *
+from plugins.chapiv1rpc.chapi.MethodContext import *
+from plugins.chrm.ABACGuard import *
 
 from tools.dbutils import *
 from tools.geni_constants import context_type_names

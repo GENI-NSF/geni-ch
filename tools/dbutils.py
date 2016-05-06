@@ -22,10 +22,10 @@
 # ----------------------------------------------------------------------
 
 from chapi_log import *
-from chapi.Exceptions import *
+from plugins.chapiv1rpc.chapi.Exceptions import *
 import types
 from datetime import *
-from  sqlalchemy.orm import aliased
+from sqlalchemy.orm import aliased
 
 # A set of utilities for dealing with SQL alchemy as the database backend
 # Convert between external (in get_version) and internal (in database) field names

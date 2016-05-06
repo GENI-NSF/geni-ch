@@ -22,14 +22,14 @@
 # ----------------------------------------------------------------------
 
 import tools.pluginmanager as pm
-from chapi.Clearinghouse import CHv1Handler
+from plugins.chapiv1rpc.chapi.Clearinghouse import CHv1Handler
 import tools.CH_constants as CH
 from CHv1PersistentImplementation import CHv1PersistentImplementation
 from gcf.geni.util.urn_util import URN
-from chapi.Exceptions import *
+from plugins.chapiv1rpc.chapi.Exceptions import *
 from tools.dbutils import *
 from tools.chapi_log import *
-from chapi.MethodContext import *
+from plugins.chapiv1rpc.chapi.MethodContext import *
 import os
 
 # Class for extending the standard CHAPI CH (Clearinghouse i.e. Registry)

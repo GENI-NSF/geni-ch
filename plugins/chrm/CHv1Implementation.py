@@ -1,5 +1,5 @@
-#----------------------------------------------------------------------
-# Copyright (c) 2011-2016 Raytheon BBN Technologies
+# ----------------------------------------------------------------------
+# Copyright (c) 2013-2016 Raytheon BBN Technologies
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and/or hardware specification (the "Work") to
@@ -19,17 +19,17 @@
 # WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE WORK OR THE USE OR OTHER DEALINGS
 # IN THE WORK.
-#----------------------------------------------------------------------
+# ----------------------------------------------------------------------
 
 # Simple persistence-free version of CH for testing/development
-from chapi.Clearinghouse import CHv1DelegateBase
-from chapi.Exceptions import *
+from plugins.chapiv1rpc.chapi.Clearinghouse import CHv1DelegateBase
+from plugins.chapiv1rpc.chapi.Exceptions import *
 from gcf.geni.util.urn_util import URN
 from tools.dbutils import *
 from tools.cert_utils import *
 from tools.chapi_utils import *
 from tools.chapi_log import *
-import chapi.Parameters
+import plugins.chapiv1rpc.chapi.Parameters
 import tools.CH_constants as CH
 import tools.pluginmanager as pm
 
