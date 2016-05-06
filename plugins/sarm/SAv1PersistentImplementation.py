@@ -1,5 +1,5 @@
-#----------------------------------------------------------------------
-# Copyright (c) 2011-2016 Raytheon BBN Technologies
+# ----------------------------------------------------------------------
+# Copyright (c) 2013-2016 Raytheon BBN Technologies
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and/or hardware specification (the "Work") to
@@ -19,7 +19,7 @@
 # WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE WORK OR THE USE OR OTHER DEALINGS
 # IN THE WORK.
-#----------------------------------------------------------------------
+# ----------------------------------------------------------------------
 
 import datetime as dt
 from dateutil.relativedelta import relativedelta
@@ -38,9 +38,9 @@ import gcf.sfa.trust.gid as gid
 from gcf.sfa.trust.certificate import Certificate
 import gcf.geni.util.cred_util as cred_util
 import gcf.geni.util.cert_util as cert_util
-from chapi.Exceptions import *
-import chapi.Parameters
-from chapi.SliceAuthority import SAv1DelegateBase
+from plugins.chapiv1rpc.chapi.Exceptions import *
+import plugins.chapiv1rpc.chapi.Parameters
+from plugins.chapiv1rpc.chapi.SliceAuthority import SAv1DelegateBase
 import tools.SA_constants as SA
 from tools.dbutils import *
 from tools.cert_utils import *

@@ -1,5 +1,5 @@
-#----------------------------------------------------------------------
-# Copyright (c) 2011-2016 Raytheon BBN Technologies
+# ----------------------------------------------------------------------
+# Copyright (c) 2013-2016 Raytheon BBN Technologies
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and/or hardware specification (the "Work") to
@@ -19,13 +19,13 @@
 # WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE WORK OR THE USE OR OTHER DEALINGS
 # IN THE WORK.
-#----------------------------------------------------------------------
+# ----------------------------------------------------------------------
 
 from chapi_log import *
-from chapi.Exceptions import *
+from plugins.chapiv1rpc.chapi.Exceptions import *
 import types
 from datetime import *
-from  sqlalchemy.orm import aliased
+from sqlalchemy.orm import aliased
 
 # A set of utilities for dealing with SQL alchemy as the database backend
 # Convert between external (in get_version) and internal (in database) field names
@@ -114,7 +114,7 @@ def add_filters(query, match_criteria, table, mapping, session):
 
 STANDARD_DATETIME_FORMAT = '%Y-%m-%dT%H:%M:%SZ'
 
-# Construct a result row {external_field : value, external_field : value} 
+# Construct a result row {external_field : value, external_field : value}
 # from row which is a set of values indexed by internal fields
 def construct_result_row(row, columns, mapping, session):
     result_row = {}
@@ -168,6 +168,3 @@ def check_disabled_users(db, member_urns, session):
     enabled_members = [member_urn for member_urn in member_urns \
                            if member_urn not in disabled_members]
     return enabled_members, disabled_members
-       
-
-

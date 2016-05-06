@@ -1,5 +1,5 @@
-#----------------------------------------------------------------------
-# Copyright (c) 2011-2016 Raytheon BBN Technologies
+# ----------------------------------------------------------------------
+# Copyright (c) 2013-2016 Raytheon BBN Technologies
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and/or hardware specification (the "Work") to
@@ -19,21 +19,21 @@
 # WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE WORK OR THE USE OR OTHER DEALINGS
 # IN THE WORK.
-#----------------------------------------------------------------------
+# ----------------------------------------------------------------------
 
 import tools.pluginmanager as pm
-from chapi.Clearinghouse import CHv1Handler
+from plugins.chapiv1rpc.chapi.Clearinghouse import CHv1Handler
 import tools.CH_constants as CH
 from CHv1PersistentImplementation import CHv1PersistentImplementation
 from gcf.geni.util.urn_util import URN
-from chapi.Exceptions import *
+from plugins.chapiv1rpc.chapi.Exceptions import *
 from tools.dbutils import *
 from tools.chapi_log import *
-from chapi.MethodContext import *
+from plugins.chapiv1rpc.chapi.MethodContext import *
 import os
 
 # Class for extending the standard CHAPI CH (Clearinghouse i.e. Registry)
-# calls for legacy calls for ServiceRegistry: 
+# calls for legacy calls for ServiceRegistry:
 #   get_services
 #   get_services_of_type(service_type)
 #   get_service_by_id(id)
@@ -56,11 +56,11 @@ class SRv1Handler(CHv1Handler):
     # Return list of all services of given type registed in SR
     def get_services_of_type(self, service_type):
         with MethodContext(self, SR_LOG_PREFIX, 'get_services_of_type',
-                           {'service_type' : service_type}, 
+                           {'service_type' : service_type},
                            [], {}, read_only=True, cert_required=False) as mc:
             if not mc._error:
                 mc._result = \
-                    self._delegate.get_services_of_type(service_type, 
+                    self._delegate.get_services_of_type(service_type,
                                                         mc._session)
         return mc._result
 
@@ -95,7 +95,7 @@ class SRv1Delegate(CHv1PersistentImplementation):
     # Return a dictionary of each URN mapped to the URL of associated URN, or None if not found
     def lookup_authorities_for_urns(self, urns, session):
         urns_to_authorities = {}
-        for urn in urns: 
+        for urn in urns:
             urns_to_authorities[urn] = \
                 self.lookup_authority_for_urn(urn, session)
         return self._successReturn(urns_to_authorities)
@@ -130,7 +130,7 @@ class SRv1Delegate(CHv1PersistentImplementation):
         if authority:
             authority_url = authority['SERVICE_URL']
         return authority_url
-            
+
 
     # Return list of trust roots for given Federation
     def get_trust_roots(self, client_cert, session):
@@ -149,7 +149,7 @@ class SRv1Delegate(CHv1PersistentImplementation):
             return services
 
         result = [s for s in services['value'] \
-                                 if s['SERVICE_TYPE'] == service_type] 
+                                 if s['SERVICE_TYPE'] == service_type]
 
         return result
 
@@ -180,4 +180,3 @@ class SRv1Delegate(CHv1PersistentImplementation):
         result = self._successReturn(services)
 
         return result
-

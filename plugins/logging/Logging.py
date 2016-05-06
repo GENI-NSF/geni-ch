@@ -1,5 +1,5 @@
-#----------------------------------------------------------------------
-# Copyright (c) 2011-2016 Raytheon BBN Technologies
+# ----------------------------------------------------------------------
+# Copyright (c) 2013-2016 Raytheon BBN Technologies
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and/or hardware specification (the "Work") to
@@ -19,16 +19,16 @@
 # WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE WORK OR THE USE OR OTHER DEALINGS
 # IN THE WORK.
-#----------------------------------------------------------------------
+# ----------------------------------------------------------------------
 
 import tools.pluginmanager as pm
 
-from CHDatabaseEngine import *
-from chapi.DelegateBase import DelegateBase
-from chapi.HandlerBase import HandlerBase
-from chapi.Exceptions import *
-from chapi.MethodContext import *
-from ABACGuard import *
+from plugins.chrm.CHDatabaseEngine import *
+from plugins.chapiv1rpc.chapi.DelegateBase import DelegateBase
+from plugins.chapiv1rpc.chapi.HandlerBase import HandlerBase
+from plugins.chapiv1rpc.chapi.Exceptions import *
+from plugins.chapiv1rpc.chapi.MethodContext import *
+from plugins.chrm.ABACGuard import *
 
 from tools.dbutils import *
 from tools.geni_constants import context_type_names
@@ -72,7 +72,7 @@ class Loggingv1Handler(HandlerBase):
             if not mc._error:
                 mc._result = \
                     self._delegate.get_log_entries_by_author(mc._client_cert,
-                                                             user_id, 
+                                                             user_id,
                                                              num_hours,
                                                              credentials,
                                                              options,
@@ -84,8 +84,8 @@ class Loggingv1Handler(HandlerBase):
     def get_log_entries_for_context(self, context_type, context_id, num_hours,
                                     credentials, options):
         with MethodContext(self, LOG_LOG_PREFIX, 'get_log_entries_for_context',
-                           {'context_type' : context_type, 
-                            'context_id' : context_id, 
+                           {'context_type' : context_type,
+                            'context_id' : context_id,
                             'num_hours' : num_hours},
                            credentials, options, read_only=True) as mc:
             if not mc._error:
@@ -119,7 +119,7 @@ class Loggingv1Handler(HandlerBase):
 
     # Get set of attributes for given log entry
     def get_attributes_for_log_entry(self, event_id, credentials, options):
-        with MethodContext(self, LOG_LOG_PREFIX, 
+        with MethodContext(self, LOG_LOG_PREFIX,
                            'get_attributes_for_log_entry',
                            {'event_id' : event_id},
                            credentials, options, read_only=True) as mc:
@@ -167,15 +167,15 @@ class Loggingv1Delegate(DelegateBase):
         event_id = result.inserted_primary_key[0]
         # Register the attributes
         for key, value in attributes.iteritems():
-            # Insert into logging_entry_attribute_table 
-            # (event_id, attribute_name, attribute_value) 
+            # Insert into logging_entry_attribute_table
+            # (event_id, attribute_name, attribute_value)
             # values (event_id, key, value)
             ins = self.db.LOGGING_ENTRY_ATTRIBUTE_TABLE.insert().values(event_id = event_id, attribute_name=key, attribute_value=str(value))
             result = session.execute(ins)
 
         return self._successReturn(True)
 
-    def get_log_entries_by_author(self, client_cert, user_id, 
+    def get_log_entries_by_author(self, client_cert, user_id,
                                   num_hours, credentials, options, session):
 
         q = session.query(self.db.LOGGING_ENTRY_TABLE)
@@ -183,12 +183,12 @@ class Loggingv1Delegate(DelegateBase):
         min_event_time = datetime.utcnow() - relativedelta(hours=num_hours)
         q = q.filter(self.db.LOGGING_ENTRY_TABLE.c.event_time >= min_event_time)
         rows = q.all()
-        entries = [construct_result_row(row, self.columns, 
+        entries = [construct_result_row(row, self.columns,
                                         self.field_mapping, session) \
                        for row in rows]
         return self._successReturn(entries)
 
-    def get_log_entries_for_context(self, client_cert, context_type, 
+    def get_log_entries_for_context(self, client_cert, context_type,
                                     context_id, num_hours, credentials,
                                     options, session):
 
@@ -204,7 +204,7 @@ class Loggingv1Delegate(DelegateBase):
                        for row in rows]
         return self._successReturn(entries)
 
-    def get_log_entries_by_attributes(self, client_cert, attribute_sets, 
+    def get_log_entries_by_attributes(self, client_cert, attribute_sets,
                                       num_hours, credentials, options, session):
 
         q = session.query(self.db.LOGGING_ENTRY_TABLE)
@@ -221,7 +221,7 @@ class Loggingv1Delegate(DelegateBase):
         q = q.filter(or_condition)
         q = q.distinct()
         rows = q.all()
-        entries = [construct_result_row(row, self.columns, 
+        entries = [construct_result_row(row, self.columns,
                                         self.field_mapping, session) \
                        for row in rows]
         return self._successReturn(entries)
@@ -252,11 +252,11 @@ class Loggingv1Guard(ABACGuardBase):
             SimpleArgumentCheck({'message' : 'STRING',
                                  'attributes' : 'ATTRIBUTE_SET'}),
         'get_log_entries_by_author' : \
-            SimpleArgumentCheck({'user_id' : 'UID', 
+            SimpleArgumentCheck({'user_id' : 'UID',
                                  'num_hours' : 'POSITIVE'}),
         'get_log_entries_for_context' : \
-            SimpleArgumentCheck({'context_type' : 'CONTEXT_TYPE', 
-                                 'context_id' : 'UID', 
+            SimpleArgumentCheck({'context_type' : 'CONTEXT_TYPE',
+                                 'context_id' : 'UID',
                                  'num_hours' : 'POSITIVE'}),
         'get_log_entries_by_attributes' : \
             None,
@@ -296,6 +296,3 @@ class Loggingv1Guard(ABACGuardBase):
         if self.INVOCATION_CHECK_FOR_METHOD.has_key(method):
             return self.INVOCATION_CHECK_FOR_METHOD[method]
         return None
-
-
-
