@@ -38,4 +38,4 @@ sys.path.append("/usr/share/geni-ch/chapi/chapi/plugins/chapiv1rpc")
 # Need this for CHDatabaseEngine
 sys.path.append("/usr/share/geni-ch/chapi/chapi/plugins/chrm")
 
-from ch_server import application as application
+from tools.ch_server import application as application
