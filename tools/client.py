@@ -32,7 +32,7 @@ from gcf.omnilib.frameworks.framework_base import Framework_Base
 from portal_client import *
 from geni_constants import *
 
-# Generic client to speak XMLRPC/SSL SA/CH/MA API calls to 
+# Generic client to speak XMLRPC/SSL SA/CH/MA API calls to
 
 class MAClientFramework(Framework_Base):
     def __init__(self, config, opts):
@@ -55,7 +55,7 @@ def parseOptions(args):
                           default=os.path.join(gcf_home, 'alice-key.pem'))
     parser.add_option("--cert", help="Location of user cert", \
                           default=os.path.join(gcf_home, 'alice-cert.pem'))
-    parser.add_option("--method", help="Name of method to invoke", 
+    parser.add_option("--method", help="Name of method to invoke",
                       default="get_version")
     parser.add_option("--page", help="Name of portal page to simulate (home, projects, slices)")
     parser.add_option("--eppn", help="EPPN of user")
@@ -97,7 +97,7 @@ def parseOptions(args):
             cred_file = cred_parts[0]
             cred_type = cred_parts[1]
             cred_data = open(cred_file).read()
-            cred_struct= {'geni_type' : cred_type, 'geni_version' : 1, 
+            cred_struct= {'geni_type' : cred_type, 'geni_version' : 1,
                           'geni_value' : cred_data}
             cred_structs.append(cred_struct)
         opts.credentials = cred_structs
@@ -114,7 +114,7 @@ def add_attribute(attributes, int_arg, uuid_arg):
         attributes['PROJECT'] = uuid_arg
     elif int_arg == SLICE_CONTEXT and uuid_arg:
         attributes['SLICE'] = uuid_arg
-        
+
 def main(args = sys.argv, do_print=True):
     logging.basicConfig()
     opts, args = parseOptions(args)
@@ -132,7 +132,7 @@ def main(args = sys.argv, do_print=True):
     config = {'cert' : opts.cert, 'key' : opts.key}
 
     framework = MAClientFramework(config, {})
-    client = framework.make_client(opts.url, opts.key, opts.cert, 
+    client = framework.make_client(opts.url, opts.key, opts.cert,
                                    allow_none=True,
                                    verbose=False)
     fcn = eval("client.%s" % opts.method)
@@ -237,37 +237,37 @@ def main(args = sys.argv, do_print=True):
                     opts.credentials, client_options)
     elif opts.method in ['create_sliver_info', 'lookup_sliver_info']:
         (result, msg) = \
-            _do_ssl(framework, suppress_errors, reason, fcn, 
+            _do_ssl(framework, suppress_errors, reason, fcn,
                     opts.credentials, client_options)
 
 
     # Project request methods
     elif opts.method in ['create_request']:
         (result, msg) = \
-            _do_ssl(framework, suppress_errors, reason, fcn, opts.int_arg, 
+            _do_ssl(framework, suppress_errors, reason, fcn, opts.int_arg,
                     opts.uuid_arg, opts.int2_arg, opts.string_arg, opts.string2_arg, \
                         opts.credentials, client_options)
     elif opts.method in ['resolve_pending_request']:
         (result, msg) = \
-            _do_ssl(framework, suppress_errors, reason, fcn, opts.int_arg, 
+            _do_ssl(framework, suppress_errors, reason, fcn, opts.int_arg,
                     opts.int2_arg, opts.int3_arg, opts.string_arg, \
                         opts.credentials, client_options)
     elif opts.method in ['invite_member']:
         (result, msg) = \
-            _do_ssl(framework, suppress_errors, reason, fcn, opts.int_arg, 
-                    opts.uuid_arg, 
+            _do_ssl(framework, suppress_errors, reason, fcn, opts.int_arg,
+                    opts.uuid_arg,
                     opts.credentials, client_options)
-        
+
     elif opts.method in ['accept_invitation']:
         (result, msg) = \
-            _do_ssl(framework, suppress_errors, reason, fcn, 
+            _do_ssl(framework, suppress_errors, reason, fcn,
                     opts.uuid_arg, # invite_id
                     opts.uuid2_arg, # member_id
                     opts.credentials, client_options)
-        
+
     elif opts.method in ['get_requests_for_context']:
         (result, msg) = \
-            _do_ssl(framework, suppress_errors, reason, fcn, opts.int_arg, 
+            _do_ssl(framework, suppress_errors, reason, fcn, opts.int_arg,
                     opts.uuid_arg, opts.int2_arg, opts.credentials, client_options)
     elif opts.method in ['get_requests_by_user']:
         (result, msg) = \
@@ -280,7 +280,7 @@ def main(args = sys.argv, do_print=True):
 
     elif opts.method in ['get_request_by_id']:
         (result, msg) = \
-            _do_ssl(framework, suppress_errors, reason, fcn, 
+            _do_ssl(framework, suppress_errors, reason, fcn,
                     opts.int_arg, opts.int2_arg, opts.credentials, client_options)
 
     # MA certificate methods
@@ -317,16 +317,16 @@ def main(args = sys.argv, do_print=True):
 
         # If the user entered an UUID
         if opts.uuid_arg:
- 
-            # Uptade the client options dictionary with the entered UUID  
-	    client_options["match"].update({"MEMBER_UID":opts.uuid_arg}) 
+
+            # Uptade the client options dictionary with the entered UUID
+	    client_options["match"].update({"MEMBER_UID":opts.uuid_arg})
 
 	# If the user entered an URN
         if opts.urn:
 
             # Uptade the client options dictionary with the entered URN
-	    client_options["match"].update({"MEMBER_URN":opts.urn}) 
- 
+	    client_options["match"].update({"MEMBER_URN":opts.urn})
+
 
       	# Send query message and retrieve the result and response message
 	(result, msg) = _do_ssl(framework, suppress_errors, reason, fcn, \
@@ -347,7 +347,7 @@ def main(args = sys.argv, do_print=True):
         (result, msg) = \
             _do_ssl(framework, suppress_errors, reason, fcn, opts.urn, \
                         opts.credentials, options)
-        
+
 
     # Generic Federation v2 API methods
     elif opts.method in ['lookup', 'create']:
@@ -380,8 +380,8 @@ def main(args = sys.argv, do_print=True):
                                     client_attributes, \
                                     opts.credentials, client_options)
 
-    
-                             
+
+
     # Methods that take credentials and options and urn arguments
     elif opts.urn:
         (result, msg) = _do_ssl(framework, suppress_errors, reason, fcn, \
@@ -396,6 +396,6 @@ def main(args = sys.argv, do_print=True):
         print "RESULT = " + str(result)
         if msg:
             print "MSG = " + str(msg)
-    
+
 if __name__ == "__main__":
     sys.exit(main())
