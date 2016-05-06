@@ -53,43 +53,43 @@ class MAv1Guard(ABACGuardBase):
                                 select_fields(MA.optional_fields, \
                                               MA.public_fields), \
                                 select_fields(MA.standard_plus_optional, \
-                                              MA.match_fields)), 
+                                              MA.match_fields)),
         'lookup_private_member_info' : \
             LookupArgumentCheck(select_fields(MA.standard_fields, \
                                               MA.private_fields), \
                                 select_fields(MA.optional_fields, \
                                               MA.private_fields), \
                                 select_fields(MA.standard_plus_optional, \
-                                              MA.match_fields)), 
+                                              MA.match_fields)),
         'lookup_identifying_member_info' : \
             LookupArgumentCheck(select_fields(MA.standard_fields, \
                                               MA.identifying_fields), \
                                 select_fields(MA.optional_fields, \
                                               MA.identifying_fields), \
                                 select_fields(MA.standard_plus_optional, \
-                                              MA.match_fields)), 
+                                              MA.match_fields)),
         'lookup_public_identifying_member_info' : \
             LookupArgumentCheck(select_fields(MA.standard_fields, \
                                               MA.public_fields+MA.identifying_fields), \
                                 select_fields(MA.optional_fields, \
                                               MA.public_fields+MA.identifying_fields), \
                                 select_fields(MA.standard_plus_optional, \
-                                              MA.match_fields)), 
+                                              MA.match_fields)),
         'lookup_login_info' : \
             LookupArgumentCheck(select_fields(MA.standard_fields, \
                                                   MA.public_fields+MA.identifying_fields+MA.private_fields),
-                                select_fields(MA.optional_fields, 
+                                select_fields(MA.optional_fields,
                                                   MA.public_fields+MA.identifying_fields+MA.private_fields),
                                 ['_GENI_MEMBER_EPPN']),
         'get_credentials' : SimpleArgumentCheck({'member_urn' : 'URN'}),
         'update_member_info' :  \
             UpdateArgumentCheck({}, {}, {'member_urn' : "URN"}),
-        
+
         'create_key' : \
             CreateArgumentCheck(select_fields(MA.standard_key_fields, \
                                            MA.allowed_create_key_fields), \
                                     select_fields(MA.optional_key_fields, \
-                                           MA.allowed_create_key_fields)), 
+                                           MA.allowed_create_key_fields)),
         'delete_key' : \
             None,
         'update_key' : \
@@ -102,7 +102,7 @@ class MAv1Guard(ABACGuardBase):
             LookupArgumentCheck(MA.standard_key_fields, \
                                     MA.optional_key_fields),
         'create_certificate' : \
-            None,  
+            None,
         'create_member' : \
             None, # Check is done in create_member itself
 
@@ -154,12 +154,3 @@ class MAv1Guard(ABACGuardBase):
         if self.INVOCATION_CHECK_FOR_METHOD.has_key(method):
             return self.INVOCATION_CHECK_FOR_METHOD[method]
         return None
-
-
-
-
-
-
-
-        
-    
