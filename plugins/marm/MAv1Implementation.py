@@ -1,5 +1,5 @@
-#----------------------------------------------------------------------
-# Copyright (c) 2011-2016 Raytheon BBN Technologies
+# ----------------------------------------------------------------------
+# Copyright (c) 2013-2016 Raytheon BBN Technologies
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and/or hardware specification (the "Work") to
@@ -19,7 +19,7 @@
 # WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE WORK OR THE USE OR OTHER DEALINGS
 # IN THE WORK.
-#----------------------------------------------------------------------
+# ----------------------------------------------------------------------
 
 # Implementation of the Member Authority
 
@@ -52,9 +52,9 @@ from tools.chapi_utils import *
 from tools.ABACManager import *
 from tools.mapped_tables import *
 from tools.geni_utils import *
-from chapi.MemberAuthority import MAv1DelegateBase
-from chapi.Exceptions import *
-import chapi.Parameters
+from plugins.chapiv1rpc.chapi.MemberAuthority import MAv1DelegateBase
+from plugins.chapiv1rpc.chapi.Exceptions import *
+import plugins.chapiv1rpc.chapi.Parameters
 
 # classes for mapping to sql tables
 
@@ -659,13 +659,13 @@ class MAv1Implementation(MAv1DelegateBase):
         abac_raw_creds = []
         if lookup_operator_privilege(user_urn, session):
            assertion = generate_abac_credential("ME.IS_OPERATOR<-CALLER",
-                                                self.cert, self.key, 
+                                                self.cert, self.key,
                                                 id_certs = {"CALLER" : user_cert},
                                                 id_cert_files = {"ME" : self.cert})
            abac_raw_creds.append(assertion)
         if lookup_pi_privilege(user_urn, session):
             assertion = generate_abac_credential("ME.IS_PI<-CALLER",
-                                                 self.cert, self.key, 
+                                                 self.cert, self.key,
                                                  id_certs = {"CALLER" : user_cert},
                                                  id_cert_files = {"ME" : self.cert})
             abac_raw_creds.append(assertion)

@@ -1,5 +1,5 @@
-#----------------------------------------------------------------------
-# Copyright (c) 2011-2016 Raytheon BBN Technologies
+# ----------------------------------------------------------------------
+# Copyright (c) 2013-2016 Raytheon BBN Technologies
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and/or hardware specification (the "Work") to
@@ -19,10 +19,10 @@
 # WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE WORK OR THE USE OR OTHER DEALINGS
 # IN THE WORK.
-#----------------------------------------------------------------------
+# ----------------------------------------------------------------------
 
 from sqlalchemy import *
-from chapi.Exceptions import *
+from plugins.chapiv1rpc.chapi.Exceptions import *
 import tools.pluginmanager as pm
 from tools.dbutils import *
 from tools.chapi_log import *
@@ -39,21 +39,21 @@ class CHv1PersistentImplementation(CHv1Implementation):
 
     # Get all MAs (authorities of type MA)
     def lookup_member_authorities(self, client_cert, options, session):
-        result = self.lookup_authorities(client_cert, 
+        result = self.lookup_authorities(client_cert,
                                          CH.SERVICE_MEMBER_AUTHORITY,
                                          options, session)
         return result
 
     # Get all SA's (authorities of type SA)
     def lookup_slice_authorities(self, client_cert, options, session):
-        result = self.lookup_authorities(client_cert, 
+        result = self.lookup_authorities(client_cert,
                                          CH.SERVICE_SLICE_AUTHORITY,
                                          options, session)
         return result
 
     # Get all aggregates (authorities of type aggregate)
     def lookup_aggregates(self, client_cert, options, session):
-        result = self.lookup_authorities(client_cert, 
+        result = self.lookup_authorities(client_cert,
                                          CH.SERVICE_AGGREGATE_MANAGER,
                                          options, session)
         return result
@@ -72,7 +72,7 @@ class CHv1PersistentImplementation(CHv1Implementation):
                     q = q.filter(self.db.SERVICES_TABLE.c.service_type == None)
             else:
                 q = q.filter(self.db.SERVICES_TABLE.c.service_type == service_type)
-        q = add_filters(q,  match_criteria, self.db.SERVICES_TABLE, 
+        q = add_filters(q,  match_criteria, self.db.SERVICES_TABLE,
                         CH.field_mapping, session)
         rows = q.all()
 
@@ -94,7 +94,7 @@ class CHv1PersistentImplementation(CHv1Implementation):
 
             # If there are service type names and not codes, change to codes
             # Raise ArgumentError if there are any undefined services
-            if not isinstance(service_type, list): 
+            if not isinstance(service_type, list):
                 service_type = [service_type]
             bad_service_types = []
             new_service_types = []
@@ -150,13 +150,3 @@ class CHv1PersistentImplementation(CHv1Implementation):
                 if "_GENI_SERVICE_ATTRIBUTES" not in service:
                     service['_GENI_SERVICE_ATTRIBUTES'] = {}
                 service['_GENI_SERVICE_ATTRIBUTES'][attrib_row.name]=attrib_row.value
-
-
-
-        
-    
-
-
-
-
-

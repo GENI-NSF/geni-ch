@@ -1,5 +1,5 @@
-#----------------------------------------------------------------------
-# Copyright (c) 2011-2016 Raytheon BBN Technologies
+# ----------------------------------------------------------------------
+# Copyright (c) 2013-2016 Raytheon BBN Technologies
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and/or hardware specification (the "Work") to
@@ -19,19 +19,19 @@
 # WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE WORK OR THE USE OR OTHER DEALINGS
 # IN THE WORK.
-#----------------------------------------------------------------------
+# ----------------------------------------------------------------------
 
 import logging
 import tools.pluginmanager as pm
-from CHDatabaseEngine import *
-from chapi.DelegateBase import DelegateBase
-from chapi.HandlerBase import HandlerBase
-from ABACGuard import *
-from chapi.Exceptions import *
+from plugins.chrm.CHDatabaseEngine import *
+from plugins.chapiv1rpc.chapi.DelegateBase import DelegateBase
+from plugins.chapiv1rpc.chapi.HandlerBase import HandlerBase
+from plugins.chrm.ABACGuard import *
+from plugins.chapiv1rpc.chapi.Exceptions import *
 from sqlalchemy import *
 from datetime import *
 from dateutil.relativedelta import relativedelta
-from chapi.MethodContext import *
+from plugins.chapiv1rpc.chapi.MethodContext import *
 from tools.guard_utils import *
 from tools.dbutils import *
 from tools.cert_utils import *
@@ -60,8 +60,8 @@ class CSv1Handler(HandlerBase):
             if not mc._error:
                 mc._result = \
                     self._delegate.get_attributes(mc._client_cert,
-                                                  principal, context_type, 
-                                                  context, credentials, 
+                                                  principal, context_type,
+                                                  context, credentials,
                                                   options, mc._session)
         return mc._result
 
@@ -144,11 +144,11 @@ class CSv1Delegate(DelegateBase):
         return None
 
 
-    def get_permissions(self, client_cert, principal, credentials, 
+    def get_permissions(self, client_cert, principal, credentials,
                         options, session):
 
-        q = session.query(self.db.CS_ACTION_TABLE.c.name, 
-                          self.db.CS_ACTION_TABLE.c.context_type, 
+        q = session.query(self.db.CS_ACTION_TABLE.c.name,
+                          self.db.CS_ACTION_TABLE.c.context_type,
                           self.db.PROJECT_MEMBER_TABLE.c.project_id.label('context'))
         q = q.filter(self.db.PROJECT_MEMBER_TABLE.c.member_id == principal)
         q = q.filter(self.db.PROJECT_MEMBER_TABLE.c.role == self.db.CS_POLICY_TABLE.c.attribute)
@@ -159,8 +159,8 @@ class CSv1Delegate(DelegateBase):
         project_rows = q.all()
 #        print "PROJECT_ROWS = %d " % len(project_rows)
 
-        q = session.query(self.db.CS_ACTION_TABLE.c.name, 
-                          self.db.CS_ACTION_TABLE.c.context_type, 
+        q = session.query(self.db.CS_ACTION_TABLE.c.name,
+                          self.db.CS_ACTION_TABLE.c.context_type,
                           self.db.SLICE_MEMBER_TABLE.c.slice_id.label('context'))
         q = q.filter(self.db.SLICE_MEMBER_TABLE.c.member_id == principal)
         q = q.filter(self.db.SLICE_MEMBER_TABLE.c.role == self.db.CS_POLICY_TABLE.c.attribute)
@@ -171,7 +171,7 @@ class CSv1Delegate(DelegateBase):
         slice_rows = q.all()
 #        print "SLICE = %d " % len(slice_rows)
 
-        q = session.query(self.db.CS_ACTION_TABLE.c.name, 
+        q = session.query(self.db.CS_ACTION_TABLE.c.name,
                           self.db.CS_POLICY_TABLE.c.context_type)
         q = q.filter(self.db.MEMBER_ATTRIBUTE_TABLE.c.name == 'OPERATOR')
         q = q.filter(self.db.MEMBER_ATTRIBUTE_TABLE.c.member_id == principal)
@@ -182,7 +182,7 @@ class CSv1Delegate(DelegateBase):
         operator_rows = q.all()
 #        print "OPERATOR = %d " % len(operator_rows)
 
-        q = session.query(self.db.CS_ACTION_TABLE.c.name, 
+        q = session.query(self.db.CS_ACTION_TABLE.c.name,
                           self.db.CS_POLICY_TABLE.c.context_type)
         q = q.filter(self.db.MEMBER_ATTRIBUTE_TABLE.c.name == 'PROJECT_LEAD')
         q = q.filter(self.db.MEMBER_ATTRIBUTE_TABLE.c.member_id == principal)
@@ -190,18 +190,18 @@ class CSv1Delegate(DelegateBase):
         q = q.filter(self.db.CS_POLICY_TABLE.c.context_type == RESOURCE_CONTEXT)
         q = q.filter(self.db.CS_ACTION_TABLE.c.privilege == self.db.CS_POLICY_TABLE.c.privilege)
         q = q.filter(self.db.CS_ACTION_TABLE.c.context_type == self.db.CS_POLICY_TABLE.c.context_type)
-        
+
         lead_rows = q.all()
 #        print "LEAD = %d " % len(lead_rows)
 
         rows = project_rows + slice_rows + operator_rows + lead_rows
 
         # Convert from unicode to string
-        response = [( str(row.name), str(row.context_type), self.get_context(row) ) for row in rows] 
+        response = [( str(row.name), str(row.context_type), self.get_context(row) ) for row in rows]
         return self._successReturn(response)
 
 # Guard on Credential Store methods
-# Essentially you can get attributes or permissions for yourself, 
+# Essentially you can get attributes or permissions for yourself,
 # or if you are an authority
 class CSv1Guard(ABACGuardBase):
     def __init__(self):
@@ -246,6 +246,3 @@ class CSv1Guard(ABACGuardBase):
         if self.INVOCATION_CHECK_FOR_METHOD.has_key(method):
             return self.INVOCATION_CHECK_FOR_METHOD[method]
         return None
-
-
-
