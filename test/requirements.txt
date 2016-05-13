@@ -1,4 +1,0 @@
-# These versions match CentOS 7
-M2Crypto == 0.21.1
-pyOpenSSL == 0.13.1
-python-dateutil == 1.5
