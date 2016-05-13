@@ -1,4 +1,6 @@
 language: python
+virtualenv:
+  system_site_packages: true
 sudo: required
 before_install:
   - sudo apt-get -qq update
@@ -8,7 +10,6 @@ before_script:
   - wget https://github.com/GENI-NSF/geni-tools/archive/v2.10.tar.gz -O /tmp/geni-tools.tar.gz
   - tar -xf /tmp/geni-tools.tar.gz -C /tmp
   - export PYTHONPATH=$PYTHONPATH:/tmp/geni-tools-2.10/src
-  - ls /usr/lib/python2.7/dist-packages/OpenSSL
 script:
   - test/travis-build
   - python -m unittest discover test
