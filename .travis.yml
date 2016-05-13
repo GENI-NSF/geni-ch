@@ -5,7 +5,7 @@ before_install:
   - sudo apt-get install -y python-m2crypto python-dateutil python-openssl
   - sudo apt-get install -y libxmlsec1 xmlsec1 libxmlsec1-openssl libxmlsec1-dev
 before_script:
-  - wget https://github.com/GENI-NSF/geni-tools/archive/v2.10.tar.gz /tmp/geni-tools.tar.gz
+  - wget https://github.com/GENI-NSF/geni-tools/archive/v2.10.tar.gz -O /tmp/geni-tools.tar.gz
   - tar -xf /tmp/geni-tools.tar.gz
   - export PYTHONPATH=$PYTHONPATH:$PWD/geni-tools-2.10/src
 script:
