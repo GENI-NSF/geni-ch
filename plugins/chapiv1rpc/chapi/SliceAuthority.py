@@ -64,7 +64,7 @@ class SAv1Handler(HandlerBase):
         else:
              result = self._errorReturn(CHAPIv1ArgumentError("Invalid type: %s" % type))
         return result
-            
+
     def update(self, type, urn, credentials, options):
         if type == "SLICE":
             result = self.update_slice(urn, credentials, options)
@@ -75,7 +75,7 @@ class SAv1Handler(HandlerBase):
         else:
             return self._errorReturn(CHAPIv1ArgumentError("Invalid type: %s" % type))
         return result
-            
+
     def delete(self, type, urn, credentials, options):
         if type == "SLICE":
           msg = "method delete not implemented for type %s" % (type)
@@ -88,7 +88,7 @@ class SAv1Handler(HandlerBase):
         else:
              result = self._errorReturn(CHAPIv1ArgumentError("Invalid type: %s" % type))
         return result
-            
+
     def lookup(self, type, credentials, options):
         if type == "SLICE":
             result = self.lookup_slices(credentials, options)
@@ -137,8 +137,8 @@ class SAv1Handler(HandlerBase):
                            {}, credentials, options, read_only=False) as mc:
             if not mc._error:
                 mc._result = \
-                    self._delegate.create_slice(mc._client_cert, 
-                                                credentials, 
+                    self._delegate.create_slice(mc._client_cert,
+                                                credentials,
                                                 options,
                                                 mc._session)
         return mc._result
@@ -152,8 +152,8 @@ class SAv1Handler(HandlerBase):
                            {}, credentials, options, read_only=False) as mc:
             if not mc._error:
                 mc._result = \
-                    self._delegate.lookup_slices(mc._client_cert, 
-                                                 credentials, 
+                    self._delegate.lookup_slices(mc._client_cert,
+                                                 credentials,
                                                  options,
                                                  mc._session)
         return mc._result
@@ -163,36 +163,64 @@ class SAv1Handler(HandlerBase):
     # Authorized by client cert and credentials
     def update_slice(self, slice_urn, credentials, options):
         with MethodContext(self, SA_LOG_PREFIX, 'update_slice',
-                           {'slice_urn' : slice_urn}, 
+                           {'slice_urn' : slice_urn},
                            credentials, options, read_only=False) as mc:
             if not mc._error:
                 mc._result = \
-                    self._delegate.update_slice(mc._client_cert, 
-                                                slice_urn, 
-                                                credentials, 
+                    self._delegate.update_slice(mc._client_cert,
+                                                slice_urn,
+                                                credentials,
                                                 options,
                                                 mc._session)
         return mc._result
 
     # This call is protected
-    # Get credentials for given user with respect to given slice
-    # Authorization based on client cert and givencredentiabls
+    # Get credentials for given user with respect to given slice or project
+    # Authorization based on client cert and given credentials
     # Note the session is _not_ read_only because it may update_expirations
-    def get_credentials(self, slice_urn, credentials, options):
-        with MethodContext(self, SA_LOG_PREFIX, 'get_credentials',
-                           {'slice_urn' : slice_urn}, 
+    def get_credentials(self, urn, credentials, options):
+        urn_parts = parse_urn(urn)
+        if urn_parts is None:
+            msg = "Invalid URN: %s" % urn
+            return self._errorReturn(CHAPIv1ArgumentError(msg))
+        (authority, typ, name) = urn_parts
+        if typ == "slice":
+            result = self.get_slice_credentials(urn, credentials, options)
+        elif typ == "project":
+            result = self.get_project_credentials(urn, credentials, options)
+        else:
+            msg = "Not a slice or project"
+            result = self._errorReturn(CHAPIv1ArgumentError(msg))
+        return result
+
+    def get_slice_credentials(self, slice_urn, credentials, options):
+        with MethodContext(self, SA_LOG_PREFIX, 'get_slice_credentials',
+                           {'slice_urn' : slice_urn},
                            credentials, options, read_only=False) as mc:
             if not mc._error:
                 mc._result = \
-                    self._delegate.get_credentials(mc._client_cert, 
+                    self._delegate.get_slice_credentials(mc._client_cert,
                                                    slice_urn,
-                                                   credentials, 
+                                                   credentials,
                                                    options,
                                                    mc._session)
         return mc._result
 
+    def get_project_credentials(self, project_urn, credentials, options):
+        with MethodContext(self, SA_LOG_PREFIX, 'get_project_credentials',
+                           {'project_urn': project_urn},
+                           credentials, options, read_only=False) as mc:
+            if not mc._error:
+                mc._result = \
+                    self._delegate.get_project_credentials(mc._client_cert,
+                                                           project_urn,
+                                                           credentials,
+                                                           options,
+                                                           mc._session)
+        return mc._result
+
     ## SLICE MEMBER SERVICE methods
-    
+
     # Modify slice membership, adding, removing and changing roles
     # of members with respect to given slice
     # The list of members_to_add, members_to_remove, members_to_modify
@@ -200,16 +228,16 @@ class SAv1Handler(HandlerBase):
     # 'members_to_add' : List of {URN : ROLE} dictionaries
     # 'members_to_remove' : List of URNs
     # 'members_to_modify' : List of {URN : ROLE} dictionaries
-    def modify_slice_membership(self, slice_urn, 
+    def modify_slice_membership(self, slice_urn,
                                     credentials, options):
         with MethodContext(self, SA_LOG_PREFIX, 'modify_slice_membership',
-                           {'slice_urn' : slice_urn}, 
+                           {'slice_urn' : slice_urn},
                            credentials, options, read_only=False) as mc:
             if not mc._error:
                 mc._result = \
-                    self._delegate.modify_slice_membership(mc._client_cert, 
+                    self._delegate.modify_slice_membership(mc._client_cert,
                                                            slice_urn,
-                                                           credentials, 
+                                                           credentials,
                                                            options,
                                                            mc._session)
         return mc._result
@@ -218,13 +246,13 @@ class SAv1Handler(HandlerBase):
     # Note the session is _not_ read_only because it may update_expirations
     def lookup_slice_members(self, slice_urn, credentials, options):
         with MethodContext(self, SA_LOG_PREFIX, 'lookup_slice_members',
-                           {'slice_urn' : slice_urn}, 
+                           {'slice_urn' : slice_urn},
                            credentials, options, read_only=False) as mc:
             if not mc._error:
                 mc._result = \
-                    self._delegate.lookup_slice_members(mc._client_cert, 
+                    self._delegate.lookup_slice_members(mc._client_cert,
                                                            slice_urn,
-                                                           credentials, 
+                                                           credentials,
                                                            options,
                                                            mc._session)
         return mc._result
@@ -233,13 +261,13 @@ class SAv1Handler(HandlerBase):
     # Note the session is _not_ read_only because it may update_expirations
     def lookup_slices_for_member(self, member_urn, credentials, options):
         with MethodContext(self, SA_LOG_PREFIX, 'lookup_slices_for_member',
-                           {'member_urn' : member_urn}, 
+                           {'member_urn' : member_urn},
                            credentials, options, read_only=False) as mc:
             if not mc._error:
                 mc._result = \
-                    self._delegate.lookup_slices_for_member(mc._client_cert, 
+                    self._delegate.lookup_slices_for_member(mc._client_cert,
                                                            member_urn,
-                                                           credentials, 
+                                                           credentials,
                                                            options,
                                                            mc._session)
         return mc._result
@@ -247,16 +275,16 @@ class SAv1Handler(HandlerBase):
     ## SLIVER INFO SERVICE methods
 
     # Create a record of sliver creation
-    # Provide a dictionary of required fields and return a 
+    # Provide a dictionary of required fields and return a
     # dictionary of completed fields for new records
     def create_sliver_info(self, credentials, options):
         with MethodContext(self, SA_LOG_PREFIX, 'create_sliver_info',
-                           {}, 
+                           {},
                            credentials, options, read_only=False) as mc:
             if not mc._error:
                 mc._result = \
-                    self._delegate.create_sliver_info(mc._client_cert, 
-                                                      credentials, 
+                    self._delegate.create_sliver_info(mc._client_cert,
+                                                      credentials,
                                                       options,
                                                       mc._session)
         return mc._result
@@ -264,13 +292,13 @@ class SAv1Handler(HandlerBase):
     # Delete a sliver_info record of given sliver_urn
     def delete_sliver_info(self, sliver_urn, credentials, options):
         with MethodContext(self, SA_LOG_PREFIX, 'delete_sliver_info',
-                           {'sliver_urn' : sliver_urn}, 
+                           {'sliver_urn' : sliver_urn},
                            credentials, options, read_only=False) as mc:
             if not mc._error:
                 mc._result = \
-                    self._delegate.delete_sliver_info(mc._client_cert, 
+                    self._delegate.delete_sliver_info(mc._client_cert,
                                                       sliver_urn,
-                                                      credentials, 
+                                                      credentials,
                                                       options,
                                                       mc._session)
         return mc._result
@@ -278,27 +306,27 @@ class SAv1Handler(HandlerBase):
     # Update the details of a sliver_info record of given sliver_urn
     def update_sliver_info(self, sliver_urn, credentials, options):
         with MethodContext(self, SA_LOG_PREFIX, 'update_sliver_info',
-                           {'sliver_urn' : sliver_urn}, 
+                           {'sliver_urn' : sliver_urn},
                            credentials, options, read_only=False) as mc:
             if not mc._error:
                 mc._result = \
-                    self._delegate.update_sliver_info(mc._client_cert, 
+                    self._delegate.update_sliver_info(mc._client_cert,
                                                       sliver_urn,
-                                                      credentials, 
+                                                      credentials,
                                                       options,
                                                       mc._session)
         return mc._result
 
-    # Lookup sliver info for given match criteria 
+    # Lookup sliver info for given match criteria
     # return fields in given fillter driteria
     def lookup_sliver_info(self, credentials, options):
         with MethodContext(self, SA_LOG_PREFIX, 'lookup_sliver_info',
-                           {}, 
+                           {},
                            credentials, options, read_only=True) as mc:
             if not mc._error:
                 mc._result = \
-                    self._delegate.lookup_sliver_info(mc._client_cert, 
-                                                      credentials, 
+                    self._delegate.lookup_sliver_info(mc._client_cert,
+                                                      credentials,
                                                       options,
                                                       mc._session)
         return mc._result
@@ -308,13 +336,13 @@ class SAv1Handler(HandlerBase):
     # Create project with given details in options
     def create_project(self, credentials, options):
         with MethodContext(self, SA_LOG_PREFIX, 'create_project',
-                           {}, 
-                           credentials, options, 
+                           {},
+                           credentials, options,
                            read_only=False) as mc:
             if not mc._error:
                 mc._result = \
-                    self._delegate.create_project(mc._client_cert, 
-                                                  credentials, 
+                    self._delegate.create_project(mc._client_cert,
+                                                  credentials,
                                                   options,
                                                   mc._session)
         return mc._result
@@ -324,12 +352,12 @@ class SAv1Handler(HandlerBase):
     # Note the session is _not_ read_only because it may update_expirations
     def lookup_projects(self, credentials, options):
         with MethodContext(self, SA_LOG_PREFIX, 'lookup_projects',
-                           {}, 
+                           {},
                            credentials, options, read_only=False) as mc:
             if not mc._error:
                 mc._result = \
-                    self._delegate.lookup_projects(mc._client_cert, 
-                                                   credentials, 
+                    self._delegate.lookup_projects(mc._client_cert,
+                                                   credentials,
                                                    options,
                                                    mc._session)
         return mc._result
@@ -337,20 +365,20 @@ class SAv1Handler(HandlerBase):
     # Update fields in given project object specified in options
     def update_project(self, project_urn, credentials, options):
         with MethodContext(self, SA_LOG_PREFIX, 'update_project',
-                           {'project_urn' : project_urn}, 
+                           {'project_urn' : project_urn},
                            credentials, options, read_only=False) as mc:
             if not mc._error:
                 mc._result = \
-                    self._delegate.update_project(mc._client_cert, 
+                    self._delegate.update_project(mc._client_cert,
                                                   project_urn,
-                                                  credentials, 
+                                                  credentials,
                                                   options,
                                                   mc._session)
         return mc._result
 
 
     ## PROJECT MEMBER SERVICE methods
-    
+
     # Modify project membership, adding, removing and changing roles
     # of members with respect to given project
     # The list of members_to_add, members_to_remove, members_to_modify
@@ -358,16 +386,16 @@ class SAv1Handler(HandlerBase):
     # 'members_to_add' : List of {URN : ROLE} dictionaries
     # 'members_to_remove' : List of URNs
     # 'members_to_modify' : List of {URN : ROLE} dictionaries
-    def modify_project_membership(self, project_urn, 
+    def modify_project_membership(self, project_urn,
                                       credentials, options):
         with MethodContext(self, SA_LOG_PREFIX, 'modify_project_membership',
-                           {'project_urn' : project_urn}, 
+                           {'project_urn' : project_urn},
                            credentials, options, read_only=False) as mc:
             if not mc._error:
                 mc._result = \
-                    self._delegate.modify_project_membership(mc._client_cert, 
+                    self._delegate.modify_project_membership(mc._client_cert,
                                                              project_urn,
-                                                             credentials, 
+                                                             credentials,
                                                              options,
                                                              mc._session)
         return mc._result
@@ -376,13 +404,13 @@ class SAv1Handler(HandlerBase):
     # Note the session is _not_ read_only because it may update_expirations
     def lookup_project_members(self, project_urn, credentials, options):
         with MethodContext(self, SA_LOG_PREFIX, 'lookup_project_members',
-                           {'project_urn' : project_urn}, 
+                           {'project_urn' : project_urn},
                            credentials, options, read_only=False) as mc:
             if not mc._error:
                 mc._result = \
-                    self._delegate.lookup_project_members(mc._client_cert, 
+                    self._delegate.lookup_project_members(mc._client_cert,
                                                           project_urn,
-                                                          credentials, 
+                                                          credentials,
                                                           options,
                                                           mc._session)
         return mc._result
@@ -392,19 +420,19 @@ class SAv1Handler(HandlerBase):
     # Note the session is _not_ read_only because it may update_expirations
     def lookup_projects_for_member(self, member_urn, credentials, options):
         with MethodContext(self, SA_LOG_PREFIX, 'lookup_projects_for_member',
-                           {'member_urn' : member_urn}, 
+                           {'member_urn' : member_urn},
                            credentials, options, read_only=False) as mc:
             if not mc._error:
                 mc._result = \
-                    self._delegate.lookup_projects_for_member(mc._client_cert, 
+                    self._delegate.lookup_projects_for_member(mc._client_cert,
                                                           member_urn,
-                                                          credentials, 
+                                                          credentials,
                                                           options,
                                                           mc._session)
         return mc._result
 
     ## PROJECT ATTRIBUTE SERVICE methods
-        
+
     # Lookup, add, or remove project attributes
     # of members with respect to given project
     # The name and value of the attribute to add
@@ -412,16 +440,16 @@ class SAv1Handler(HandlerBase):
     # 'attribute_to_add' : NAME,VALUE
     # 'attribute_to_remove' : NAME
     # Note the session is _not_ read_only because it may update_expirations
-    def lookup_project_attributes(self, project_urn, 
+    def lookup_project_attributes(self, project_urn,
                                  credentials, options):
         with MethodContext(self, SA_LOG_PREFIX, 'lookup_project_attributes',
-                           {'project_urn' : project_urn}, 
+                           {'project_urn' : project_urn},
                            credentials, options, read_only=False) as mc:
             if not mc._error:
                 mc._result = \
-                    self._delegate.lookup_project_attributes(mc._client_cert, 
+                    self._delegate.lookup_project_attributes(mc._client_cert,
                                                              project_urn,
-                                                             credentials, 
+                                                             credentials,
                                                              options,
                                                              mc._session)
         return mc._result
@@ -433,13 +461,13 @@ class SAv1Handler(HandlerBase):
                                   project_urn, \
                                   credentials, options):
         with MethodContext(self, SA_LOG_PREFIX, 'add_project_attribute',
-                           {'project_urn' : project_urn}, 
+                           {'project_urn' : project_urn},
                            credentials, options, read_only=False) as mc:
             if not mc._error:
                 mc._result = \
-                    self._delegate.add_project_attribute(mc._client_cert, 
+                    self._delegate.add_project_attribute(mc._client_cert,
                                                              project_urn,
-                                                             credentials, 
+                                                             credentials,
                                                              options,
                                                              mc._session)
         return mc._result
@@ -451,13 +479,13 @@ class SAv1Handler(HandlerBase):
                                      project_urn, \
                                      credentials, options):
         with MethodContext(self, SA_LOG_PREFIX, 'remove_project_attribute',
-                           {'project_urn' : project_urn}, 
+                           {'project_urn' : project_urn},
                            credentials, options, read_only=False) as mc:
             if not mc._error:
                 mc._result = \
-                    self._delegate.remove_project_attribute(mc._client_cert, 
+                    self._delegate.remove_project_attribute(mc._client_cert,
                                                             project_urn,
-                                                            credentials, 
+                                                            credentials,
                                                             options,
                                                             mc._session)
         return mc._result
@@ -465,25 +493,25 @@ class SAv1Handler(HandlerBase):
 
     # Methods for handling pending project / slice requests and invitations
     # Note: Not part of standard Federation API
-    
-    def create_request(self, context_type, context_id, request_type, request_text, 
+
+    def create_request(self, context_type, context_id, request_type, request_text,
                        request_details, credentials, options):
         with MethodContext(self, SA_LOG_PREFIX, 'create_request',
                            {'context_type' : context_type,
-                            'context_id' : context_id, 
+                            'context_id' : context_id,
                             'request_type' : request_type,
                             'request_text' : request_text,
                             'request_details' : request_details},
                            credentials, options, read_only=False) as mc:
             if not mc._error:
                 mc._result = \
-                    self._delegate.create_request(mc._client_cert, 
+                    self._delegate.create_request(mc._client_cert,
                                                   context_type,
                                                   context_id,
                                                   request_type,
                                                   request_text,
                                                   request_details,
-                                                  credentials, 
+                                                  credentials,
                                                   options,
                                                   mc._session)
         return mc._result
@@ -493,13 +521,13 @@ class SAv1Handler(HandlerBase):
                                     credentials, options):
         with MethodContext(self, SA_LOG_PREFIX, 'resolve_pending_request',
                            {'context_type' : context_type,
-                            'request_id' : request_id, 
+                            'request_id' : request_id,
                             'resolution_status' : resolution_status,
                             'resolution_description' : resolution_description},
                            credentials, options, read_only=False) as mc:
             if not mc._error:
                 mc._result = \
-                    self._delegate.resolve_pending_request(mc._client_cert, 
+                    self._delegate.resolve_pending_request(mc._client_cert,
                                                            context_type,
                                                            request_id,
                                                            resolution_status,
@@ -513,38 +541,38 @@ class SAv1Handler(HandlerBase):
                                      credentials, options):
         with MethodContext(self, SA_LOG_PREFIX, 'get_requests_for_context',
                            {'context_type' : context_type,
-                            'context_id' : context_id, 
+                            'context_id' : context_id,
                             'status' : status},
                            credentials, options, read_only=True) as mc:
             if not mc._error:
                 mc._result = \
-                    self._delegate.get_requests_for_context(mc._client_cert, 
+                    self._delegate.get_requests_for_context(mc._client_cert,
                                                             context_type,
                                                             context_id,
                                                             status,
-                                                            credentials, 
+                                                            credentials,
                                                             options,
                                                             mc._session)
         return mc._result
 
 
-    def get_requests_by_user(self, member_id, context_type, 
-                             context_id, status, 
+    def get_requests_by_user(self, member_id, context_type,
+                             context_id, status,
                              credentials, options):
         with MethodContext(self, SA_LOG_PREFIX, 'get_requests_by_user',
                            {'member_id' : member_id,
                             'context_type' : context_type,
-                            'context_id' : context_id, 
+                            'context_id' : context_id,
                             'status' : status},
                            credentials, options, read_only=True) as mc:
             if not mc._error:
                 mc._result = \
-                    self._delegate.get_requests_by_user(mc._client_cert, 
+                    self._delegate.get_requests_by_user(mc._client_cert,
                                                         member_id,
                                                         context_type,
                                                         context_id,
                                                         status,
-                                                        credentials, 
+                                                        credentials,
                                                         options,
                                                         mc._session)
         return mc._result
@@ -558,11 +586,11 @@ class SAv1Handler(HandlerBase):
                            credentials, options, read_only=True) as mc:
             if not mc._error:
                 mc._result = \
-                    self._delegate.get_pending_requests_for_user(mc._client_cert, 
+                    self._delegate.get_pending_requests_for_user(mc._client_cert,
                                                                  member_id,
                                                                  context_type,
                                                                  context_id,
-                                                                 credentials, 
+                                                                 credentials,
                                                                  options,
                                                                  mc._session)
         return mc._result
@@ -577,7 +605,7 @@ class SAv1Handler(HandlerBase):
                            credentials, options, read_only=True) as mc:
             if not mc._error:
                 mc._result = \
-                    self._delegate.get_number_of_pending_requests_for_user(mc._client_cert, 
+                    self._delegate.get_number_of_pending_requests_for_user(mc._client_cert,
                                                                            member_id,
                                                                            context_type,
                                                                            context_id,
@@ -593,10 +621,10 @@ class SAv1Handler(HandlerBase):
                            credentials, options, read_only=True) as mc:
             if not mc._error:
                 mc._result = \
-                    self._delegate.get_request_by_id(mc._client_cert, 
+                    self._delegate.get_request_by_id(mc._client_cert,
                                                      request_id,
                                                      context_type,
-                                                     credentials, 
+                                                     credentials,
                                                      options,
                                                      mc._session)
         return mc._result
@@ -607,7 +635,7 @@ class SAv1Handler(HandlerBase):
                            credentials, options, read_only=False) as mc:
             if not mc._error:
                 mc._result = \
-                    self._delegate.invite_member(mc._client_cert, 
+                    self._delegate.invite_member(mc._client_cert,
                                                  role,
                                                  project_id,
                                                  credentials,
@@ -621,7 +649,7 @@ class SAv1Handler(HandlerBase):
                            credentials, options, read_only=False) as mc:
             if not mc._error:
                 mc._result = \
-                    self._delegate.accept_invitation(mc._client_cert, 
+                    self._delegate.accept_invitation(mc._client_cert,
                                                      invite_id,
                                                      member_id,
                                                      credentials,
@@ -634,12 +662,12 @@ class SAv1Handler(HandlerBase):
 # implemented in a derived class, and that derived class
 # must call setDelegate on the handler
 class SAv1DelegateBase(DelegateBase):
-    
+
     ## SLICE SERVICE methods
 
     def __init__(self):
         super(SAv1DelegateBase, self).__init__(sa_logger)
-    
+
     def get_version(self, options, session):
         raise CHAPIv1NotImplementedError('')
 
@@ -659,14 +687,14 @@ class SAv1DelegateBase(DelegateBase):
         raise CHAPIv1NotImplementedError('')
 
     # This call is protected
-    def get_credentials(self, client_cert, slice_urn, credentials, options, 
+    def get_credentials(self, client_cert, slice_urn, credentials, options,
                         session):
         raise CHAPIv1NotImplementedError('')
 
     ## SLICE MEMBER SERVICE methods
-    
+
     def modify_slice_membership(self,  \
-                                    client_cert, slice_urn, 
+                                    client_cert, slice_urn,
                                     credentials, options, session):
         raise CHAPIv1NotImplementedError('')
 
@@ -697,7 +725,7 @@ class SAv1DelegateBase(DelegateBase):
     def lookup_sliver_info(self, client_cert, credentials, options, session):
         raise CHAPIv1NotImplementedError('')
 
-    
+
     ## PROJECT SERVICE methods
 
     def create_project(self, client_cert, credentials, options, session):
@@ -706,14 +734,14 @@ class SAv1DelegateBase(DelegateBase):
     def lookup_projects(self, client_cert, credentials, options, session):
         raise CHAPIv1NotImplementedError('')
 
-    def update_project(self, client_cert, project_urn, credentials, 
+    def update_project(self, client_cert, project_urn, credentials,
                        options, session):
         raise CHAPIv1NotImplementedError('')
 
     ## PROJECT MEMBER SERVICE methods
-    
+
     def modify_project_membership(self,  \
-                                    client_cert, project_urn, 
+                                    client_cert, project_urn,
                                     credentials, options, session):
         raise CHAPIv1NotImplementedError('')
 
@@ -728,7 +756,7 @@ class SAv1DelegateBase(DelegateBase):
         raise CHAPIv1NotImplementedError('')
 
     ## PROJECT ATTRIBUTE SERVICE methods
-    
+
     def lookup_project_attributes(self,  \
                                       client_cert, project_urn,  \
                                       credentials, options, session):
@@ -793,9 +821,6 @@ class SAv1DelegateBase(DelegateBase):
                       credentials, options, session):
         raise CHAPIv1NotImplementedError('')
 
-    def accept_invitation(self, client_cert, invite_id, member_id, 
+    def accept_invitation(self, client_cert, invite_id, member_id,
                           credentials, options, session):
         raise CHAPIv1NotImplementedError('')
-
-
-    

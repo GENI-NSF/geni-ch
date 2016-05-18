@@ -20,8 +20,19 @@
 # OUT OF OR IN CONNECTION WITH THE WORK OR THE USE OR OTHER DEALINGS
 # IN THE WORK.
 # ----------------------------------------------------------------------
+import unittest
+from tools.geni_utils import *
 
-import sys
-import os
 
-from tools.ch_server import application as application
+class TestGeniUtils(unittest.TestCase):
+
+    def test_parse_urn(self):
+        authority = 'ch.example.com'
+        tipe = 'slice'
+        name = 'foo'
+        urn = 'urn:publicid:IDN+%s+%s+%s' % (authority, tipe, name)
+        self.assertEqual(parse_urn(urn), (authority, tipe, name))
+
+
+if __name__ == '__main__':
+    unittest.main()
