@@ -267,7 +267,10 @@ def set_parameters():
             pname = param[NAME_KEY]
             (section, option) = param_to_secopt(pname)
             if parser.has_option(section, option):
-                value_type = type(param[VALUE_KEY])
+                if VALUE_KEY in param:
+                    value_type = type(param[VALUE_KEY])
+                else:
+                    value_type = str
                 value = get_typed_value(parser, section, option, value_type)
                 if value is not None:
                     # If a value was extracted, set it
