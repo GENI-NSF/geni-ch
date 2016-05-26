@@ -32,6 +32,7 @@
 from gcf.geni.SecureXMLRPCServer import SecureXMLRPCRequestHandler, SecureXMLRPCServer
 
 import optparse
+import os
 import sys
 import urlparse
 import xmlrpclib
@@ -46,12 +47,18 @@ import plugins.opsmon.plugin
 import plugins.marm.plugin
 import plugins.sarm.plugin
 
+from plugins.chapiv1rpc.chapi.Parameters import set_auxiliary_config_file
+
 from tools.chapi_log import *
 from tools.ch_server import handleCall, initialize
 
 opts = None
 args = None
 test_server_initialized = False
+
+# This server overrides certain parameters (notably the database) 
+# in a subsequently parsed parameters config file.
+set_auxiliary_config_file('chapi-test.ini')
 
 pm.registerService('xmlrpc', pm.XMLRPCHandler())
 pm.registerService('config', pm.ConfigDB())

@@ -35,4 +35,5 @@ dist_tool_DATA = \
 	multiclient.py \
 	pluginmanager.py \
 	policy_file_checker.py \
-	portal_client.py
+	portal_client.py \
+	test_server.py

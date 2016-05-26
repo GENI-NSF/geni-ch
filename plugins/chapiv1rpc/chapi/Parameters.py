@@ -36,6 +36,7 @@ import os.path
 GENI_CH_CONF_DIR = '/etc/geni-chapi'
 CONFIG_FILE = os.path.join(GENI_CH_CONF_DIR, 'chapi.ini')
 DEV_CONFIG_FILE = os.path.join(GENI_CH_CONF_DIR, 'chapi-dev.ini')
+AUX_CONFIG_FILE = None
 
 GENI_CH_DIR = '/usr/share/geni-ch'
 CA_DIR = os.path.join(GENI_CH_DIR, 'CA')
@@ -151,6 +152,12 @@ default_parameters = [
     }
 ]
 
+# Allow clients to set an optional auxiliary config file to 
+# be parsed after CONFIG_FILE and DEV_CONFIG_FILE
+def set_auxiliary_config_file(filename):
+    global AUX_CONFIG_FILE
+    AUX_CONFIG_FILE = os.path.join(GENI_CH_CONF_DIR, filename)
+
 
 def get_typed_value(parser, section, option, value_type):
     """Get a typed value from a ConfigParser.
@@ -254,14 +261,27 @@ def set_parameters():
                            (CONFIG_FILE, pname))
 
     # Overwrite the base settings with values from the developer config file
+    override_parameters(DEV_CONFIG_FILE, "developer")
+
+    # If an 'auxiliary' config file is provided, 
+    # override the parameters from that file
+    if AUX_CONFIG_FILE:
+        override_parameters(AUX_CONFIG_FILE, "auxiliary")
+
+def override_parameters(config_filename, config_label):
+    
+    config = pm.getService("config")
+
     parser = ConfigParser.SafeConfigParser()
-    result = parser.read(DEV_CONFIG_FILE)
+    result = parser.read(config_filename)
     if len(result) != 1:
         # file was not read, warn and return
         chapi_debug('PARAMETERS',
-                   'Unable to read developer config file %s' % (DEV_CONFIG_FILE))
+                   'Unable to read developer %s file %s' % \
+                        (config_label, config_filename))
     else:
-        chapi_warn('PARAMETERS', "Over-riding configs using developer config file %s" % (DEV_CONFIG_FILE))
+        chapi_warn('PARAMETERS', "Over-riding configs using %s config file %s"\
+                       % (config_label, config_filename))
         # FIXME: Only allow log settings to be changed?
         for param in default_parameters:
             pname = param[NAME_KEY]
@@ -276,7 +296,7 @@ def set_parameters():
                     # If a value was extracted, set it
                     msg = 'Setting parameter %s to %s from %s'
                     chapi_info('PARAMETERS',
-                                msg % (pname, value, DEV_CONFIG_FILE))
+                                msg % (pname, value, config_filename))
                     config.set(pname, value)
 
 def configure_logging():
