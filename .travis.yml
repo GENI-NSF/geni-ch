@@ -11,7 +11,7 @@ before_script:
   - tar -xf /tmp/geni-tools.tar.gz -C /tmp
   - export PYTHONPATH=$PYTHONPATH:/tmp/geni-tools-2.10/src
 script:
-  - test/travis-build
+#  - test/travis-build
   - python -m unittest discover test
   - echo "MSB TESTING"
 
