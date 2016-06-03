@@ -13,3 +13,5 @@ before_script:
 script:
   - test/travis-build
   - python -m unittest discover test
+  - echo "MSB TESTING"
+
