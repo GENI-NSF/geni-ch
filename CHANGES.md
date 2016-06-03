@@ -1,5 +1,15 @@
 # GENI Clearinghouse Release Notes
 
+# [Release 2.13](https://github.com/GENI-NSF/geni-ch/milestones/2.13)
+
+## Changes
+
+* None
+
+## Installation Notes
+
+* None
+
 # [Release 2.12](https://github.com/GENI-NSF/geni-ch/milestones/2.12)
 
 ## Changes
