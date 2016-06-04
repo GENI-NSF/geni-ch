@@ -30,13 +30,13 @@ def main():
         print "Usage: json_extractor.py field filename"
         sys.exit(0)
 
-    fields = sys.argv[1] # Colon separated
+    fields = sys.argv[1] # Comma separated
     filename = sys.argv[2]
 
     data = open(filename).read()
     jdata = json.loads(data)
 
-    field_list = fields.split(':')
+    field_list = fields.split(',')
     result = jdata
     for field in field_list:
         result = result[field]
