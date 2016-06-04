@@ -102,7 +102,7 @@ def parseOptions(args):
     parser.add_option("--credentials",
                       help="List of comma-separated credential files",
                       default="")
-    parser.add_option("--raw_output", action="store", 
+    parser.add_option("--raw_output", action="store_true", 
                       dest="raw_output", default=False)
 
     [opts, args] = parser.parse_args(args)
