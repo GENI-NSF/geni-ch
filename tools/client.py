@@ -330,6 +330,9 @@ def main(args=sys.argv, do_print=True):
         # Use the entered string_arg as the email to register a member
         attributes = [{"value": opts.string_arg,
                        "name": "email_address",
+                       "self_asserted": False},
+                      {"value": opts.string_arg,
+                       "name": "eppn",
                        "self_asserted": False}]
         options = {}
 
