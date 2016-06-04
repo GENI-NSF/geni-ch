@@ -102,6 +102,8 @@ def parseOptions(args):
     parser.add_option("--credentials",
                       help="List of comma-separated credential files",
                       default="")
+    parser.add_option("--raw_output", action="store", 
+                      dest="raw_output", default=False)
 
     [opts, args] = parser.parse_args(args)
     if len(opts.credentials) > 0:
@@ -142,7 +144,7 @@ def main(args=sys.argv, do_print=True):
     client_attributes = json.loads(opts.attributes)
     if opts.attributes_file:
         client_attributes = json.load(open(opts.attributes_file, 'r'))
-    if do_print:
+    if do_print and not opts.raw_output:
         print "CREDS = " + str(opts.credentials)
         print "OPTIONS = " + str(client_options)
     suppress_errors = None
@@ -413,7 +415,10 @@ def main(args=sys.argv, do_print=True):
                                 opts.credentials, client_options)
 
     if do_print:
-        print "RESULT = " + str(result)
+        if opts.raw_output:
+            print str(result)
+        else:
+            print "RESULT = " + str(result)
         if msg:
             print "MSG = " + str(msg)
 
