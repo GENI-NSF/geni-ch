@@ -416,7 +416,7 @@ def main(args=sys.argv, do_print=True):
 
     if do_print:
         if opts.raw_output:
-            print str(result)
+            print result
         else:
             print "RESULT = " + str(result)
         if msg:
