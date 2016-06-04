@@ -388,6 +388,12 @@ def main(args=sys.argv, do_print=True):
             _do_ssl(framework, suppress_errors, reason, fcn, opts.type,
                     opts.urn, opts.credentials, client_options)
 
+    # Lookup login info (authorities only)
+    elif opts.method in ['lookup_login_info']:
+        (result, msg) = \
+            _do_ssl(framework, suppress_errors, reason, fcn, 
+                    opts.credentials, client_options)
+
     # Portal query
     elif opts.method in ['portal_query']:
         options = {}
