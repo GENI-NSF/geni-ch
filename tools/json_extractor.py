@@ -28,7 +28,7 @@ import sys
 def main():
     if len(sys.argv) <= 2:
         print "Usage: json_extractor.py field filename"
-        sys.exit(0)
+        sys.exit(1)
 
     fields = sys.argv[1] # Comma separated
     filename = sys.argv[2]
@@ -40,17 +40,27 @@ def main():
     result = jdata
     for field in field_list:
         if type(result) == dict:
+            if field not in result:
+                print "%s not in %s. Full JSON data: %s" % (field, result, jdata)
+                sys.exit(1)
             result = result[field]
         elif type(result) == list:
             field_parts = field.split('=')
             field_name = field_parts[0]
             field_value = field_parts[1]
+            found = None
             for entry in result:
                 if entry[field_name] == field_value:
-                    result = entry
+                    found = entry
                     break
+            if not found:
+                print "%s=%s not found in %s. Full JSON data: %s" % \
+                    (field_name, field_value, result, jdata)
+                sys.exit(1)
+            result = found
             
     print result
+    return 0
 
 
 
