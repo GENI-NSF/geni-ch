@@ -22,47 +22,61 @@
 # IN THE WORK.
 # ----------------------------------------------------------------------
 
+# A tool to extract values from JSON files
+# Intended for facilitating unit testing (getting output from client.py, e.g.)
+#
+# Usage: json_extractor.py keys filename
+# where
+#  keys is a comma-separated list of 
+#      dictionary keys (Lookup the value for key f and continue)
+#      key=value pairs (for finding a dictionary in a list of dictionaries)
+#
+# Thus for JSON containing:
+#
+# {"a": [{"name": "foo", "value": "bar"}, {"name": "boo", "value": "baz"}], "b" : "3"}
+#
+# json_extractor.py a,name=foo,value => bar
+# json_extractor.py b => 3
+
 import json
 import sys
 
 def main():
     if len(sys.argv) <= 2:
-        print "Usage: json_extractor.py field filename"
+        print "Usage: json_extractor.py keys filename"
         sys.exit(1)
 
-    fields = sys.argv[1] # Comma separated
+    keys = sys.argv[1] # Comma separated
     filename = sys.argv[2]
 
     data = open(filename).read()
     jdata = json.loads(data)
 
-    field_list = fields.split(',')
+    key_list = keys.split(',')
     result = jdata
-    for field in field_list:
+    for key in key_list:
         if type(result) == dict:
-            if field not in result:
-                print "%s not in %s. Full JSON data: %s" % (field, result, jdata)
+            if key not in result:
+                print "%s not in %s. Full JSON data: %s" % (key, result, jdata)
                 sys.exit(1)
-            result = result[field]
+            result = result[key]
         elif type(result) == list:
-            field_parts = field.split('=')
-            field_name = field_parts[0]
-            field_value = field_parts[1]
+            key_parts = key.split('=')
+            key_name = key_parts[0]
+            key_value = key_parts[1]
             found = None
             for entry in result:
-                if entry[field_name] == field_value:
+                if entry[key_name] == key_value:
                     found = entry
                     break
             if not found:
                 print "%s=%s not found in %s. Full JSON data: %s" % \
-                    (field_name, field_value, result, jdata)
+                    (key_name, key_value, result, jdata)
                 sys.exit(1)
             result = found
             
     print result
     return 0
-
-
 
 if __name__ == "__main__":
     sys.exit(main())
