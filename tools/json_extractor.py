@@ -39,7 +39,17 @@ def main():
     field_list = fields.split(',')
     result = jdata
     for field in field_list:
-        result = result[field]
+        if type(result) == dict:
+            result = result[field]
+        elif type(result) == list:
+            field_parts = field.split('=')
+            field_name = field_parts[0]
+            field_value = field_parts[1]
+            for entry in result:
+                if entry[field_name] == field_value:
+                    result = entry
+                    break
+            
     print result
 
 
