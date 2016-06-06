@@ -118,7 +118,10 @@ sudo service postfix restart
 export PYTHONPATH=~/geni-tools/src:$CHAPIDIR
 
 # Start test CH server
-$CHAPIDIR/tools/test_server.py > /tmp/test_server.log &
+cd $CHAPIDIR/tools
+./test_server.py >& /tmp/test_server.log &
 
 
 
+# When testing is done, run 
+# kill %1 or killall python to kill the server
