@@ -63,6 +63,9 @@ sudo mkdir $DATADIR/km
 sudo mkdir $DATADIR/portal
 sudo $CHAPIDIR/bin/geni-init-services /tmp/services.ini
 
+echo "CONTENTS of /usr/share/geni-ch"
+find . -name /usr/share/geni-ch
+
 # Set up trusted roots
 sudo mkdir -p $DATADIR/portal/gcf.d/trusted_roots
 cat $DATADIR/CA/cacert.pem $DATADIR/ma/ma-cert.pem > /tmp/CATedCACerts.pem
