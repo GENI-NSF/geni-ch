@@ -9,7 +9,9 @@ HOSTNAME=`hostname -f`
 DATADIR=/usr/share/geni-ch
 HOME=`pwd`
 CHAPIDIR=$HOME
-export PYTHONPATH=$HOME/geni-tools/src:$CHAPIDIR
+
+echo "PYTHONPATH = $PYTHONPATH"
+# export PYTHONPATH=$HOME/geni-tools/src:$CHAPIDIR
 
 #    Make a first user, priv
 PRIV_EPPN=priv@geni.net

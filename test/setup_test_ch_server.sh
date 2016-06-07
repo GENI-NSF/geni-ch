@@ -1,10 +1,6 @@
 #!/bin/bash
 #
-# Install GENI-CH and GENI-TOOLS
-git clone https://github.com/GENI-NSF/geni-tools.git
-#git clone https://github.com/GENI-NSF/geni-ch.git
-#git clone https://github.com/MarshallBrinn/geni-ch.git
-#cd geni-ch
+# Temporarily, Go to test suite branch
 git checkout -b tkt504_test_suite
 
 # Update / Install required packages
@@ -116,11 +112,10 @@ sudo service postfix restart
 # whomi = travis
 
 # Set up runtime
-export PYTHONPATH=$HOME/geni-tools/src:$CHAPIDIR
+export PYTHONPATH=$PYTHONPATH:$CHAPIDIR
 
 # Start test CH server
-cd $CHAPIDIR/tools
-./test_server.py >& /tmp/test_server.log &
+$CHAPIDIR/tools/test_server.py >& /tmp/test_server.log &
 
 
 
