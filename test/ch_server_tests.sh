@@ -3,6 +3,11 @@
 # Unit tests for CH server functionality
 # Assumes test server is running on https://localhost:9999
 
+echo "PWD:"
+pwd
+echo "HOME:"
+echo ~
+
 
 # Set up environment
 HOSTNAME=`hostname -f`
