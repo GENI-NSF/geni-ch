@@ -111,11 +111,8 @@ sudo postfix set-permissions
 sudo rm /var/lib/postfix/master.lock
 sudo service postfix restart
 
-pwd
-whoami
-ls -l ~/geni-ch
-ls -l ~/geni-ch/tools
-ls -l ~/geni-ch/test
+# pwd = /home/travis/build/GENI-NSF/geni-ch/geni-ch
+# whomi = travis
 
 # Set up runtime
 export PYTHONPATH=~/geni-tools/src:$CHAPIDIR
