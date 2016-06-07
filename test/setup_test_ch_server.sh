@@ -64,7 +64,7 @@ sudo mkdir $DATADIR/portal
 sudo $CHAPIDIR/bin/geni-init-services /tmp/services.ini
 
 echo "CONTENTS of /usr/share/geni-ch"
-find . -name /usr/share/geni-ch
+find /usr/share/geni-ch -ls
 
 # Set up trusted roots
 sudo mkdir -p $DATADIR/portal/gcf.d/trusted_roots
