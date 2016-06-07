@@ -22,9 +22,10 @@ echo "localhost:*:chtest:chtest:chtest" > ~/.pgpass
 chmod 0600 ~/.pgpass
 
 # Setup script variables
+HOME=`pwd`
 HOSTNAME=`hostname -f`
 DATADIR=/usr/share/geni-ch
-CHAPIDIR=~/geni-ch
+CHAPIDIR=$HOME/geni-ch
 PSQL="psql -U chtest -h localhost chtest"
 
 # Install CH
@@ -115,7 +116,7 @@ sudo service postfix restart
 # whomi = travis
 
 # Set up runtime
-export PYTHONPATH=~/geni-tools/src:$CHAPIDIR
+export PYTHONPATH=$HOME/geni-tools/src:$CHAPIDIR
 
 # Start test CH server
 cd $CHAPIDIR/tools
