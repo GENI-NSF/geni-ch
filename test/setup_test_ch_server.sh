@@ -1,3 +1,5 @@
+#!/bin/bash
+#
 # Install GENI-CH and GENI-TOOLS
 git clone https://github.com/GENI-NSF/geni-tools.git
 #git clone https://github.com/GENI-NSF/geni-ch.git
