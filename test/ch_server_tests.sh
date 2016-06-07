@@ -8,7 +8,7 @@
 HOSTNAME=`hostname -f`
 DATADIR=/usr/share/geni-ch
 HOME=`pwd`
-CHAPIDIR=$HOME/geni-ch
+CHAPIDIR=$HOME
 export PYTHONPATH=$HOME/geni-tools/src:$CHAPIDIR
 
 #    Make a first user, priv

@@ -25,7 +25,7 @@ chmod 0600 ~/.pgpass
 HOME=`pwd`
 HOSTNAME=`hostname -f`
 DATADIR=/usr/share/geni-ch
-CHAPIDIR=$HOME/geni-ch
+CHAPIDIR=$HOME
 PSQL="psql -U chtest -h localhost chtest"
 
 # Install CH
