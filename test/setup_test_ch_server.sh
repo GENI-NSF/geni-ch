@@ -7,17 +7,13 @@ git clone https://github.com/MarshallBrinn/geni-ch.git
 cd geni-ch
 git checkout -b tkt504_test_suite
 
-# Update / Install
-sudo apt-get -qq update
-sudo apt-get install -y python-m2crypto python-dateutil python-openssl
-sudo apt-get install -y libxmlsec1 xmlsec1 libxmlsec1-openssl libxmlsec1-dev
-
+# Update / Install required packages
 sudo apt-get install -y python-sqlalchemy python-lxml python-psycopg2
 # postgresql is already installed
 
 # Set up database
 echo "createdb chtest" > /tmp/createdb.sh
-echo "createuser -S -D _R chtest" >> /tmp/createdb.sh
+echo "createuser -S -D -R chtest" >> /tmp/createdb.sh
 echo "psql -c 'GRANT ALL PRIVILEGES on database chtest to chtest'" >> /tmp/createdb.sh
 echo "psql -c \"ALTER USER chtest WITH PASSWORD 'chtest'\"" >> /tmp/createdb.sh
 
