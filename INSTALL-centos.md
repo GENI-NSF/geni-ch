@@ -7,15 +7,12 @@ These instructions are for installing the GENI Clearinghouse.  Information on th
 
 http://groups.geni.net/geni/wiki/GeniClearinghouse
 
-Update the OS and install EPEL
+Update the OS
 ------------------------------
 
 ```Shell
 # update the OS
 sudo yum update -y
-
-# Install the EPEL repository
-sudo yum install -y epel-release
 ```
 
 Ensure SELinux is disabled
@@ -56,7 +53,7 @@ sudo curl "${URL_BASE}"/centos/geni.repo -o /etc/yum.repos.d/geni.repo
 Installing the GENI Clearinghouse package
 -----------------------------------------
 
-Once the server knows about the RPM repository, it is easy to 
+Once the server knows about the RPM repository, it is easy to
 install the geni clearinghouse package:
 
 ```Shell
@@ -212,37 +209,10 @@ cat /usr/share/geni-ch/CA/cacert.pem /usr/share/geni-ch/ma/ma-cert.pem > /tmp/ca
 sudo cp /tmp/ca-ma-cert.pem /usr/share/geni-ch/CA
 ```
 
-Install AMSoil
---------------
+Restart httpd
 
 ```Shell
-# Be sure wget is available
-sudo yum install -y wget
-
-cd $CH_DIR/chapi
-sudo wget https://github.com/GENI-NSF/geni-soil/archive/gpo-0.3.3.tar.gz
-sudo tar zxf gpo-0.3.3.tar.gz 
-sudo rm gpo-0.3.3.tar.gz
-sudo ln -s geni-soil-gpo-0.3.3 AMsoil
-
-sudo chown apache.apache $CH_DIR/chapi/AMsoil/deploy
-sudo touch $CH_DIR/chapi/AMsoil/log/amsoil.log
-sudo chmod a+w $CH_DIR/chapi/AMsoil/log/amsoil.log
-sudo mkdir /var/log/geni-chapi
-sudo touch /var/log/geni-chapi/chapi.log
-sudo chmod a+w /var/log/geni-chapi/chapi.log
-
-# Set up amsoil links to CHAPI plugins
-cd $CH_DIR/chapi/AMsoil/src/plugins
-for pl in chrm chapiv1rpc sarm marm csrm logging opsmon flaskrest
-do
-    sudo ln -s $CH_DIR/chapi/chapi/plugins/$pl .
-done
-
-cd /usr/share/geni-ch/chapi/AMsoil/src
-sudo ln -s main.py main.fcgi
-
-sudo systemctl restart httpd.service
+sudo systemctl start httpd.service
 ```
 
 Install and configure postfix
@@ -307,8 +277,6 @@ python /usr/share/geni-ch/chapi/chapi/tools/client.py \
 
 Test Slice Authority (port 443)
 ```Shell
-cd /usr/share/geni-ch/chapi/chapi/tools
-# export PYTHONPATH=/usr/share/geni-ch/gcf/src
 python /usr/share/geni-ch/chapi/chapi/tools/client.py \
        --cert /usr/share/geni-ch/ma/ma-cert.pem \
        --key /usr/share/geni-ch/ma/ma-key.pem \
@@ -320,7 +288,7 @@ Add portal as a trusted tool
 
 When you have a GENI Portal that you want to test with this Clearinghouse
 you must configure the Clearinghouse to expect communication from the
-portal. Use this command, 
+portal. Use this command,
 
 ```Shell
 AUTHORITY=`geni-install-templates --print_parameter ch_authority`

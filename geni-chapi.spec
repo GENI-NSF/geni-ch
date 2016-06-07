@@ -7,10 +7,9 @@ License:        GENI Public License
 URL:            https://github.com/GENI-NSF/geni-ch
 Source:         %{name}-%{version}.tar.gz
 Group:          Applications/Internet
-Requires:       httpd, mod_ssl, mod_fcgid
-Requires:       python-flask, python-sqlalchemy, python-lxml, python-psycopg2
-Requires:       python-flup, python-flask-xml-rpc, python-blinker
-Requires:       geni-tools, abac, postgresql
+Requires:       httpd, mod_ssl, mod_wsgi
+Requires:       python-sqlalchemy, python-psycopg2
+Requires:       geni-tools, postgresql
 
 # BuildRequires: gettext
 # Requires(post): info
@@ -310,7 +309,6 @@ rm -rf $RPM_BUILD_ROOT
 %{_datadir}/%{name}/abac_credential.xml
 %{_datadir}/%{name}/amsoil-log-out.txt
 %{_datadir}/%{name}/apache-error-log-out.txt
-%{_datadir}/%{name}/apache2.conf
 %{_datadir}/%{name}/ch-error-log-out.txt
 %{_datadir}/%{name}/chapi-log-out.txt
 %{_datadir}/%{name}/db/cs/postgresql/data.sql
@@ -356,12 +354,10 @@ rm -rf $RPM_BUILD_ROOT
 %{_datadir}/%{name}/db/sr/postgresql/update-3.sql
 %{_datadir}/%{name}/db/sr/postgresql/update-4.sql
 %{_datadir}/%{name}/db/sr/postgresql/update-5.sql
-%{_datadir}/%{name}/fastcgi.conf
 %{_datadir}/%{name}/project_credential.xml
 %{_datadir}/%{name}/templates/apache2.conf.tmpl
 %{_datadir}/%{name}/templates/ch-ssl.conf.tmpl
 %{_datadir}/%{name}/templates/chapi.ini.tmpl
-%{_datadir}/%{name}/templates/httpd.conf.tmpl
 %{_datadir}/%{name}/templates/install_postgresql.sh
 %{_datadir}/%{name}/templates/install_service_registry.sql.tmpl
 %{_datadir}/%{name}/templates/openssl.cnf.tmpl

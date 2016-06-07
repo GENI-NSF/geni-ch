@@ -1,11 +1,21 @@
-# This is necessary to allow the FCGI ScriptAliases
-# to run. Otherwise there is a 403 Forbidden error.
-<Directory @pkgdatadir@/chapi/AMsoil/src>
-   AllowOverride None
-   Require all granted
+# ----------------------------------------------------------------------
+# Enable access to the WSGI files. Without this, the client is denied
+# acess to the WSGI entry point.
+# ----------------------------------------------------------------------
+<Directory /usr/share/geni-ch/chapi/chapi>
+  AllowOverride None
+  Require all granted
 </Directory>
 
-NameVirtualHost *:443
+# ----------------------------------------------------------------------
+# Ubuntu uses the WSGIDaemonProcess python-path setting, and CentOS 7
+# uses the path specified in WSGIPythonPath. The WSGI docs indicate
+# that the the WSGIDaemonProcess should not be using WSGIPythonPath.
+# Leave both in place so it works on both platforms.
+# ----------------------------------------------------------------------
+WSGIPythonPath /usr/share/geni-ch/chapi/chapi
+WSGIDaemonProcess ch_server display-name=%{GROUP} python-path=/usr/share/geni-c\
+h/chapi/chapi
 
 <VirtualHost *:443>
     ServerName @ch_host@
@@ -23,18 +33,16 @@ NameVirtualHost *:443
     SSLVerifyClient optional
     SSLVerifyDepth 3
 
-    FcgidInitialEnv PYTHONPATH @pkgdatadir@/gcf/src:@pkgdatadir@/chapi/chapi:@pkgdatadir@/chapi/chapi/tools
-    ScriptAlias /SA @pkgdatadir@/chapi/AMsoil/src/main.fcgi
-    ScriptAlias /MA @pkgdatadir@/chapi/AMsoil/src/main.fcgi
-    ScriptAlias /CS @pkgdatadir@/chapi/AMsoil/src/main.fcgi
-    ScriptAlias /LOG @pkgdatadir@/chapi/AMsoil/src/main.fcgi
-    ScriptAliasMatch /info/*/* @pkgdatadir@/chapi/AMsoil/src/main.fcgi
-
+    WSGIScriptAlias / @pkgdatadir@/chapi/chapi/tools/ch_server.wsgi
+    WSGIScriptAlias /SA @pkgdatadir@/chapi/chapi/tools/ch_server.wsgi
+    WSGIScriptAlias /MA @pkgdatadir@/chapi/chapi/tools/ch_server.wsgi
+    WSGIScriptAlias /CS @pkgdatadir@/chapi/chapi/tools/ch_server.wsgi
+    WSGIScriptAlias /LOG @pkgdatadir@/chapi/chapi/tools/ch_server.wsgi
+    WSGIScriptAliasMatch /info/*/* @pkgdatadir@/chapi/chapi/tools/ch_server.wsgi
 
 </VirtualHost>
 
 Listen 8444
-NameVirtualHost *:8444
 <VirtualHost *:8444>
     ServerName @ch_host@
 
@@ -51,9 +59,7 @@ NameVirtualHost *:8444
     SSLVerifyClient optional_no_ca
     SSLVerifyDepth 3
 
-    FcgidInitialEnv PYTHONPATH @pkgdatadir@/gcf/src:@pkgdatadir@/chapi/chapi:@pkgdatadir@/chapi/chapi/tools
-    ScriptAlias /CH @pkgdatadir@/chapi/AMsoil/src/main.fcgi
-    ScriptAlias /SR @pkgdatadir@/chapi/AMsoil/src/main.fcgi
+    WSGIScriptAlias /CH @pkgdatadir@/chapi/chapi/tools/ch_server.wsgi
+    WSGIScriptAlias /SR @pkgdatadir@/chapi/chapi/tools/ch_server.wsgi
 
 </VirtualHost>
-
