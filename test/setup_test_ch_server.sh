@@ -17,7 +17,7 @@ sudo apt-get install -y python-sqlalchemy python-lxml python-psycopg2
 
 # Set up database
 echo "createdb chtest" > /tmp/createdb.sh
-echo "createuser chtest" >> /tmp/createdb.sh
+echo "createuser -S -D _R chtest" >> /tmp/createdb.sh
 echo "psql -c 'GRANT ALL PRIVILEGES on database chtest to chtest'" >> /tmp/createdb.sh
 echo "psql -c \"ALTER USER chtest WITH PASSWORD 'chtest'\"" >> /tmp/createdb.sh
 
