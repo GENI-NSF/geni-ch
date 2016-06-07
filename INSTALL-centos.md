@@ -3,7 +3,7 @@ Installation on CentOS 7
 
 Introduction
 ------------
-These instructions are for installing the GENI Clearing house.  Information on the Clearinghouse can be found at:
+These instructions are for installing the GENI Clearinghouse.  Information on the Clearinghouse can be found at:
 
 http://groups.geni.net/geni/wiki/GeniClearinghouse
 
@@ -82,7 +82,9 @@ Edit `/etc/geni-chapi/parameters.json`:
 
 Do this by adding a line of the format:
 
+```
 "default" : "hostname.domain.tld"
+```
 
 to the appropriate sections of the file.
 
@@ -310,8 +312,8 @@ python /usr/share/geni-ch/chapi/chapi/tools/client.py \
 Add portal as a trusted tool
 ----------------------------
 
-When you have a GENI Portal that you want to test with this clearinghouse
-you must configure the clearinghouse to expect communication from the
+When you have a GENI Portal that you want to test with this Clearinghouse
+you must configure the Clearinghouse to expect communication from the
 portal. Use this command, 
 
 ```Shell
@@ -324,4 +326,4 @@ geni-add-trusted-tool -d portal -u portal -p portal --host localhost \
 
 Open up Firewall if necessary
 -----------------------------
-If your machine is running firewall software it may be necessary for you to add rules to allow connections to the clearinghouse.
+If your machine is running firewall software it may be necessary for you to add rules to allow connections to the Clearinghouse.  The ports that need to be open are 22(SSH), 80(HTTP), 443(HTTPS) and 8444(Clearinghouse).
