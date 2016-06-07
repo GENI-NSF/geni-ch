@@ -11,6 +11,8 @@ HOME=`pwd`
 CHAPIDIR=$HOME/geni-ch
 export PYTHONPATH=$HOME/geni-tools/src:$CHAPIDIR
 
+git branch -a
+
 #    Make a first user, priv
 PRIV_EPPN=priv@geni.net
 python $CHAPIDIR/tools/client.py --method create_member --url https://localhost:9999/MA --key /usr/share/geni-ch/ma/ma-key.pem --cert /usr/share/geni-ch/ma/ma-cert.pem --string_arg=$PRIV_EPPN --raw_output > /tmp/priv-raw.json
