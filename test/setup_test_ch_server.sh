@@ -3,8 +3,8 @@
 # Install GENI-CH and GENI-TOOLS
 git clone https://github.com/GENI-NSF/geni-tools.git
 #git clone https://github.com/GENI-NSF/geni-ch.git
-git clone https://github.com/MarshallBrinn/geni-ch.git
-cd geni-ch
+#git clone https://github.com/MarshallBrinn/geni-ch.git
+#cd geni-ch
 git checkout -b tkt504_test_suite
 
 # Update / Install required packages
