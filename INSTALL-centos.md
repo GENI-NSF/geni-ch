@@ -7,15 +7,12 @@ These instructions are for installing the GENI Clearinghouse.  Information on th
 
 http://groups.geni.net/geni/wiki/GeniClearinghouse
 
-Update the OS and install EPEL
+Update the OS
 ------------------------------
 
 ```Shell
 # update the OS
 sudo yum update -y
-
-# Install the EPEL repository
-sudo yum install -y epel-release
 ```
 
 Ensure SELinux is disabled
@@ -212,6 +209,12 @@ cat /usr/share/geni-ch/CA/cacert.pem /usr/share/geni-ch/ma/ma-cert.pem > /tmp/ca
 sudo cp /tmp/ca-ma-cert.pem /usr/share/geni-ch/CA
 ```
 
+Restart httpd
+
+```Shell
+sudo systemctl start httpd.service
+```
+
 Install and configure postfix
 -----------------------------
 
@@ -274,8 +277,6 @@ python /usr/share/geni-ch/chapi/chapi/tools/client.py \
 
 Test Slice Authority (port 443)
 ```Shell
-cd /usr/share/geni-ch/chapi/chapi/tools
-# export PYTHONPATH=/usr/share/geni-ch/gcf/src
 python /usr/share/geni-ch/chapi/chapi/tools/client.py \
        --cert /usr/share/geni-ch/ma/ma-cert.pem \
        --key /usr/share/geni-ch/ma/ma-key.pem \
