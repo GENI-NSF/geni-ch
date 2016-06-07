@@ -7,10 +7,9 @@ License:        GENI Public License
 URL:            https://github.com/GENI-NSF/geni-ch
 Source:         %{name}-%{version}.tar.gz
 Group:          Applications/Internet
-Requires:       httpd, mod_ssl, mod_fcgid
-Requires:       python-flask, python-sqlalchemy, python-lxml, python-psycopg2
-Requires:       python-flup, python-flask-xml-rpc, python-blinker
-Requires:       geni-tools, abac, postgresql
+Requires:       httpd, mod_ssl, mod_wsgi
+Requires:       python-sqlalchemy, python-psycopg2
+Requires:       geni-tools, postgresql
 
 # BuildRequires: gettext
 # Requires(post): info
