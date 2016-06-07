@@ -13,8 +13,7 @@ sudo apt-get install -y python-m2crypto python-dateutil python-openssl
 sudo apt-get install -y libxmlsec1 xmlsec1 libxmlsec1-openssl libxmlsec1-dev
 
 sudo apt-get install -y python-sqlalchemy python-lxml python-psycopg2
-sudo apt-get install -y postgresql
-
+# postgresql is already installed
 
 # Set up database
 sudo su - postgres
