@@ -16,12 +16,12 @@ sudo apt-get install -y python-sqlalchemy python-lxml python-psycopg2
 # postgresql is already installed
 
 # Set up database
-sudo su - postgres
-createdb chtest
-createuser chtest
-psql -c "GRANT ALL PRIVILEGES on database chtest to chtest"
-psql -c "ALTER USER chtest WITH PASSWORD 'chtest'"
-exit
+echo "createdb chtest" > /tmp/createdb.sh
+echo "createuser chtest" >> /tmp/createdb.sh
+echo "psql -c 'GRANT ALL PRIVILEGES on database chtest to chtest'" >> /tmp/createdb.sh
+echo "psql -c \"ALTER USER chtest WITH PASSWORD 'chtest'\"" >> /tmp/createdb.sh
+
+sudo su - postgres < /tmp/createdb.sh
 echo "localhost:*:chtest:chtest:chtest" > ~/.pgpass
 chmod 0600 ~/.pgpass
 
