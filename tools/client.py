@@ -102,6 +102,8 @@ def parseOptions(args):
     parser.add_option("--credentials",
                       help="List of comma-separated credential files",
                       default="")
+    parser.add_option("--raw_output", action="store_true", 
+                      dest="raw_output", default=False)
 
     [opts, args] = parser.parse_args(args)
     if len(opts.credentials) > 0:
@@ -142,7 +144,7 @@ def main(args=sys.argv, do_print=True):
     client_attributes = json.loads(opts.attributes)
     if opts.attributes_file:
         client_attributes = json.load(open(opts.attributes_file, 'r'))
-    if do_print:
+    if do_print and not opts.raw_output:
         print "CREDS = " + str(opts.credentials)
         print "OPTIONS = " + str(client_options)
     suppress_errors = None
@@ -328,6 +330,9 @@ def main(args=sys.argv, do_print=True):
         # Use the entered string_arg as the email to register a member
         attributes = [{"value": opts.string_arg,
                        "name": "email_address",
+                       "self_asserted": False},
+                      {"value": opts.string_arg,
+                       "name": "eppn",
                        "self_asserted": False}]
         options = {}
 
@@ -386,6 +391,12 @@ def main(args=sys.argv, do_print=True):
             _do_ssl(framework, suppress_errors, reason, fcn, opts.type,
                     opts.urn, opts.credentials, client_options)
 
+    # Lookup login info (authorities only)
+    elif opts.method in ['lookup_login_info']:
+        (result, msg) = \
+            _do_ssl(framework, suppress_errors, reason, fcn, 
+                    opts.credentials, client_options)
+
     # Portal query
     elif opts.method in ['portal_query']:
         options = {}
@@ -413,7 +424,10 @@ def main(args=sys.argv, do_print=True):
                                 opts.credentials, client_options)
 
     if do_print:
-        print "RESULT = " + str(result)
+        if opts.raw_output:
+            print json.dumps(result)
+        else:
+            print "RESULT = " + str(result)
         if msg:
             print "MSG = " + str(msg)
 
