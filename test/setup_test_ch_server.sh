@@ -33,6 +33,7 @@ make
 sudo make install
 
 # Set up CA
+echo "Setting up cA"
 sudo mkdir -p /usr/share/geni-ch/CA/private
 sudo cp $CHAPIDIR/templates/openssl.cnf.tmpl /usr/share/geni-ch/CA/openssl.cnf
 sudo $CHAPIDIR/bin/init-ca
@@ -61,8 +62,16 @@ sudo mkdir $DATADIR/logging
 sudo mkdir $DATADIR/cs
 sudo mkdir $DATADIR/km
 sudo mkdir $DATADIR/portal
+echo "Setting up GENI services"
 sudo $CHAPIDIR/bin/geni-init-services /tmp/services.ini
 
+echo "/usr/share/geni-ch/SA/openssl.cnf:"
+cat /usr/share/geni-ch/SA/openssl.cnf
+echo "/tmp/services.ini:"
+cat /tmp/services.ini
+
+echo "UNAME -a"
+uname -a
 echo "CONTENTS of /usr/share/geni-ch"
 find /usr/share/geni-ch -ls
 
