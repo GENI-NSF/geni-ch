@@ -3,10 +3,6 @@
 # Unit tests for CH server functionality
 # Assumes test server is running on https://localhost:9999
 
-pwd
-ls -l ~/geni-ch
-ls -l ~/geni-ch/test
-ls -l ~/geni-ch/tools
 
 # Set up environment
 HOSTNAME=`hostname -f`
