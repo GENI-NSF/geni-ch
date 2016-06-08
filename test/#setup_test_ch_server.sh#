@@ -104,6 +104,7 @@ sudo sed -i "s/@db_user@/chtest/g" /etc/geni-chapi/chapi.ini
 sudo sed -i "s/@db_pass@/chtest/g" /etc/geni-chapi/chapi.ini
 sudo sed -i "s/@db_host@/localhost/g" /etc/geni-chapi/chapi.ini
 sudo sed -i "s/@db_name@/chtest/g" /etc/geni-chapi/chapi.ini
+sudo sed -i "s/
 
 cat /etc/geni-chapi/chapi.ini
 
