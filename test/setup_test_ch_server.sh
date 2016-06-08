@@ -120,6 +120,9 @@ sudo service postfix restart
 # Set up runtime
 export PYTHONPATH=$PYTHONPATH:$CHAPIDIR
 
+echo $CHAPIDIR
+ls -l $CHAPIDIR/tools/test_server.py
+
 # Start test CH server
 $CHAPIDIR/tools/test_server.py >& /tmp/test_server.log &
 
