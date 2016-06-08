@@ -29,13 +29,19 @@ make
 sudo make install
 
 # Set up CA
-echo "Setting up cA"
-echo "SHORTHOSTNAME:"
-hostname -s
-
 sudo mkdir -p /usr/share/geni-ch/CA/private
 sudo cp $CHAPIDIR/templates/openssl.cnf.tmpl /usr/share/geni-ch/CA/openssl.cnf
-sudo $CHAPIDIR/bin/init-ca
+
+# Create CA initialization file
+cat "[ca]" > /tmp/ca.ini
+cat "conf=$DATADIR/CA" >> /tmp/ca.ini
+cat "cert=$DATADIR/CA/cacert.pem" >> /tmp/ca.ini
+cat "key=$DATADIR/CA/private/cakey.pem" >> /tmp/ca.ini
+cat "authority=testch" >> /tmp/ca.ini
+cat /tmp/ca.ini
+
+sudo $CHAPIDIR/bin/geni-init-ca /tmp/ca.ini
+
 sudo mkdir $DATADIR/CA/newcerts
 sudo touch $DATADIR/CA/index.txt
 echo "01" > /tmp/serial; sudo mv /tmp/serial $DATADIR/CA
