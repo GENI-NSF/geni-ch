@@ -123,7 +123,8 @@ export PYTHONPATH=$PYTHONPATH:$CHAPIDIR
 # Start test CH server
 $CHAPIDIR/tools/test_server.py >& /tmp/test_server.log &
 
-sleep 5
+sleep 10
+set -x
 netstat -an | grep 9999
 tail /tmp/test_server.log
 ps auxw | grep test_server
