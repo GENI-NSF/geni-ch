@@ -3,10 +3,6 @@
 # Temporarily, Go to test suite branch
 git checkout -b tkt504_test_suite
 
-# Update / Install required packages
-sudo apt-get install -y python-sqlalchemy python-lxml python-psycopg2
-# postgresql is already installed
-
 # Set up database
 echo "createdb chtest" > /tmp/createdb.sh
 echo "createuser -S -D -R chtest" >> /tmp/createdb.sh
@@ -34,6 +30,9 @@ sudo make install
 
 # Set up CA
 echo "Setting up cA"
+echo "SHORTHOSTNAME:"
+hostname -s
+
 sudo mkdir -p /usr/share/geni-ch/CA/private
 sudo cp $CHAPIDIR/templates/openssl.cnf.tmpl /usr/share/geni-ch/CA/openssl.cnf
 sudo $CHAPIDIR/bin/init-ca
@@ -66,7 +65,7 @@ echo "Setting up GENI services"
 sudo $CHAPIDIR/bin/geni-init-services /tmp/services.ini
 
 echo "/usr/share/geni-ch/SA/openssl.cnf:"
-cat /usr/share/geni-ch/SA/openssl.cnf
+cat /usr/share/geni-ch/CA/openssl.cnf
 echo "/tmp/services.ini:"
 cat /tmp/services.ini
 

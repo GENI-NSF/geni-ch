@@ -10,7 +10,7 @@ DATADIR=/usr/share/geni-ch
 HOME=`pwd`
 CHAPIDIR=$HOME
 
-echo "PYTHONPATH = $PYTHONPATH"
+#echo "PYTHONPATH = $PYTHONPATH"
 # export PYTHONPATH=$HOME/geni-tools/src:$CHAPIDIR
 
 #    Make a first user, priv
