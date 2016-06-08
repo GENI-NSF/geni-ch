@@ -55,29 +55,38 @@ from tools.credential_tools import generate_credential
 
 # classes for mapping to sql tables
 
+
 class Slice(object):
     pass
+
 
 class Project(object):
     pass
 
+
 class SliceMember(object):
     pass
+
 
 class ProjectMember(object):
     pass
 
+
 class SliverInfo(object):
     pass
+
 
 class ProjectInvitation(object):
     pass
 
+
 class ProjectAttribute(object):
     pass
 
+
 class MemberRole(object):
     pass
+
 
 # Implementation of SA that speaks to GPO Slice and projects table schema
 class SAv1PersistentImplementation(SAv1DelegateBase):
@@ -106,20 +115,18 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         self.project_cred_tmpl = self.PROJECT_CREDENTIAL_TEMPLATE
 
         self.trusted_root_files = \
-            [os.path.join(self.trusted_root, f) \
-                 for f in os.listdir(self.trusted_root) if not f.startswith('CAT')]
-#        print "TR = " + str(self.trusted_root_files)
-
+            [os.path.join(self.trusted_root, f)
+             for f in os.listdir(self.trusted_root) if not f.startswith('CAT')]
 
         mapper(Slice, self.db.SLICE_TABLE)
         mapper(SliceMember, self.db.SLICE_MEMBER_TABLE)
         mapper(Project, self.db.PROJECT_TABLE)
         mapper(ProjectMember, self.db.PROJECT_MEMBER_TABLE)
         mapper(SliverInfo, self.db.SLIVER_INFO_TABLE)
-        mapper(ProjectInvitation, self.db.PROJECT_INVITATION_TABLE, \
-                   primary_key = self.db.PROJECT_INVITATION_TABLE.c.id)
-        mapper(ProjectAttribute, self.db.PROJECT_ATTRIBUTE_TABLE, \
-                   primary_key = self.db.PROJECT_ATTRIBUTE_TABLE.c.id)
+        mapper(ProjectInvitation, self.db.PROJECT_INVITATION_TABLE,
+               primary_key=self.db.PROJECT_INVITATION_TABLE.c.id)
+        mapper(ProjectAttribute, self.db.PROJECT_ATTRIBUTE_TABLE,
+               primary_key=self.db.PROJECT_ATTRIBUTE_TABLE.c.id)
         mapper(MemberRole, self.db.ROLE_TABLE)
 
     # get_version is unprotected: no checking of credentials
@@ -143,22 +150,21 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         result = self._successReturn(version_info)
         return result
 
-
     def get_expiration_query(self, session, type, old_flag, resurrect):
+        nowAtUtc = "now() at time zone 'utc'"
         if type == 'slice':
             table = Slice
-            q = session.query(Slice.slice_id, \
-                                  Slice.project_id, \
-                                  Slice.slice_name)
+            q = session.query(Slice.slice_id, Slice.project_id,
+                              Slice.slice_name)
         else:
             table = Project
-            q = session.query(Project.project_id, \
-                                  Project.project_name)
+            q = session.query(Project.project_id, Project.project_name)
         q = q.filter(table.expired == old_flag)
         if resurrect:
-            q = q.filter(or_(table.expiration > text("now() at time zone 'utc'"),table.expiration == None))
+            q = q.filter(or_(table.expiration > text(nowAtUtc),
+                             table.expiration == None))
         else:
-            q = q.filter(table.expiration < text("now() at time zone 'utc'"))
+            q = q.filter(table.expiration < text(nowAtUtc))
 
         return q
 
@@ -176,29 +182,30 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         rows = q.all()
 
         if len(rows) > 0:
-            update_fields = {'expired' : new_flag}
+            update_fields = {'expired': new_flag}
             # Force execute query in DB for time comparisons to happen there
-            # And so if in this session we just updated a project expiration, it is seen
+            # And so if in this session we just updated a project expiration,
+            # it is seen
             q = q.update(update_fields, 'fetch')
 
         for row in rows:
             if type == 'slice':
                 name = row.slice_name
-                attrs = {"SLICE" : row.slice_id, "PROJECT" : row.project_id}
+                attrs = {"SLICE": row.slice_id, "PROJECT": row.project_id}
             else:
                 name = row.project_name
-                attrs = {"PROJECT" : row.project_id}
+                attrs = {"PROJECT": row.project_id}
             # Do not log as this user, log as the None UID
             logresult = None
             try:
                 lmessage = "%s %s %s" % (label, type, name)
-                args = {'message' : lmessage, 'attributes' : attrs}
+                args = {'message': lmessage, 'attributes': attrs}
                 chapi_log_invocation(LOG_LOG_PREFIX, "log_event", [], {}, args)
                 logresult = self.logging_service._delegate.log_event(None, lmessage, attrs, [], {}, session, none_user_id=True)
             except Exception, e:
                 if not isinstance(e, CHAPIv1BaseError):
                     e = CHAPIv1ServerError(str(e))
-                logresult = { 'code' : e.code , 'output' : str(e), 'value' : None }
+                logresult = {'code': e.code, 'output': str(e), 'value': None}
                 chapi_warn(SA_LOG_PREFIX, "Failed to log_event in update_expirations: %s" % e)
             finally:
                 chapi_log_result(LOG_LOG_PREFIX, 'log_event', logresult)
