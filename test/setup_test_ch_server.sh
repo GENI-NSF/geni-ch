@@ -19,6 +19,7 @@ HOSTNAME=`hostname -f`
 DATADIR=/usr/share/geni-ch
 CHAPIDIR=$HOME
 PSQL="psql -U chtest -h localhost chtest"
+AUTHORITY=testch
 
 # Install CH
 cd $CHAPIDIR
@@ -37,7 +38,7 @@ echo "[ca]" > /tmp/ca.ini
 echo "conf=$DATADIR/CA/openssl.cnf" >> /tmp/ca.ini
 echo "cert=$DATADIR/CA/cacert.pem" >> /tmp/ca.ini
 echo "key=$DATADIR/CA/private/cakey.pem" >> /tmp/ca.ini
-echo "authority=testch" >> /tmp/ca.ini
+echo "authority=$AUTHORITY" >> /tmp/ca.ini
 cat /tmp/ca.ini
 
 sudo $CHAPIDIR/bin/geni-init-ca /tmp/ca.ini
@@ -54,7 +55,7 @@ sudo chmod a+w /usr/share/geni-ch/CA
 cp $CHAPIDIR/templates/services.ini.tmpl /tmp/services.ini
 
 sed -i "s/@ch_admin_email@/www-data@localhost/g" /tmp/services.ini
-sed -i "s/@ch_authority@/$HOSTNAME/g" /tmp/services.ini
+sed -i "s/@ch_authority@/$AUTHORITY/g" /tmp/services.ini
 sed -i "s/@ch_host@/$HOSTNAME/g" /tmp/services.ini
 sed -i "s/@pkgdatadir@/\/usr\/share\/geni-ch/g" /tmp/services.ini
 sed -i "s/@datadir@/\/usr\/share\/geni-ch/g" /tmp/services.ini
