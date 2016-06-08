@@ -39,8 +39,8 @@ echo "conf=$DATADIR/CA/openssl.cnf" >> /tmp/ca.ini
 echo "cert=$DATADIR/CA/cacert.pem" >> /tmp/ca.ini
 echo "key=$DATADIR/CA/private/cakey.pem" >> /tmp/ca.ini
 echo "authority=$AUTHORITY" >> /tmp/ca.ini
-cat /tmp/ca.ini
 
+# Inilalize GENI CH CA
 sudo $CHAPIDIR/bin/geni-init-ca /tmp/ca.ini
 
 sudo mkdir $DATADIR/CA/newcerts
@@ -71,16 +71,6 @@ sudo mkdir $DATADIR/portal
 echo "Setting up GENI services"
 sudo $CHAPIDIR/bin/geni-init-services /tmp/services.ini
 
-echo "/usr/share/geni-ch/SA/openssl.cnf:"
-cat /usr/share/geni-ch/CA/openssl.cnf
-echo "/tmp/services.ini:"
-cat /tmp/services.ini
-
-echo "UNAME -a"
-uname -a
-echo "CONTENTS of /usr/share/geni-ch"
-find /usr/share/geni-ch -ls
-
 # Set up trusted roots
 sudo mkdir -p $DATADIR/portal/gcf.d/trusted_roots
 cat $DATADIR/CA/cacert.pem $DATADIR/ma/ma-cert.pem > /tmp/CATedCACerts.pem
@@ -100,8 +90,6 @@ done
 cp $CHAPIDIR/templates/install_service_registry.sql.tmpl /tmp/install_service_registry.sql
 sed -i "s/@ch_host@/$HOSTNAME/g" /tmp/install_service_registry.sql
 $PSQL < /tmp/install_service_registry.sql
-
-
 
 # Set up chapi.ini
 sudo cp $CHAPIDIR/templates/chapi.ini.tmpl /etc/geni-chapi/chapi.ini
@@ -134,8 +122,6 @@ export PYTHONPATH=$PYTHONPATH:$CHAPIDIR
 
 # Start test CH server
 $CHAPIDIR/tools/test_server.py >& /tmp/test_server.log &
-
-
 
 # When testing is done, run 
 # kill %1 or killall python to kill the server

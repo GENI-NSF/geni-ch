@@ -3,6 +3,7 @@
 # Unit tests for CH server functionality
 # Assumes test server is running on https://localhost:9999
 
+set -x
 
 # Set up environment
 HOSTNAME=`hostname -f`
@@ -10,7 +11,11 @@ DATADIR=/usr/share/geni-ch
 HOME=`pwd`
 CHAPIDIR=$HOME
 
-#echo "PYTHONPATH = $PYTHONPATH"
+netstat -an | grep 9999
+ps auxw | grep test
+tail /tmp/test_server.log
+
+echo "PYTHONPATH = $PYTHONPATH"
 # export PYTHONPATH=$HOME/geni-tools/src:$CHAPIDIR
 
 #    Make a first user, priv
