@@ -30,11 +30,11 @@ sudo make install
 
 # Set up CA
 sudo mkdir -p /usr/share/geni-ch/CA/private
-sudo cp $CHAPIDIR/templates/openssl.cnf.tmpl /usr/share/geni-ch/CA/openssl.cnf
+sudo cp $CHAPIDIR/templates/openssl.cnf.tmpl $DATADIR/CA/openssl.cnf
 
 # Create CA initialization file
 echo "[ca]" > /tmp/ca.ini
-echo "conf=$DATADIR/CA" >> /tmp/ca.ini
+echo "conf=$DATADIR/CA/openssl.cnf" >> /tmp/ca.ini
 echo "cert=$DATADIR/CA/cacert.pem" >> /tmp/ca.ini
 echo "key=$DATADIR/CA/private/cakey.pem" >> /tmp/ca.ini
 echo "authority=testch" >> /tmp/ca.ini
