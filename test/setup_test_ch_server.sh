@@ -76,6 +76,9 @@ sudo mkdir -p $DATADIR/portal/gcf.d/trusted_roots
 cat $DATADIR/CA/cacert.pem $DATADIR/ma/ma-cert.pem > /tmp/CATedCACerts.pem
 sudo mv /tmp/CATedCACerts.pem $DATADIR/portal/gcf.d/trusted_roots
 
+sudo ls -l $DATADIR/portal/gcf.d/trusted_roots
+sudo cat $DATADIR/portal/gcf.d/trusted_roots/CATedCACerts.pem
+
 # Set up database
 for sch in cs logging ma pa sa sr
 do
