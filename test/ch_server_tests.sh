@@ -15,6 +15,8 @@ netstat -an | grep 9999
 ps auxw | grep test
 tail /tmp/test_server.log
 
+curl -v -k --cert /usr/share/geni-ch/ma/ma-cert.pem --key /usr/share/geni-ch/ma/ma-key.pem -X POST -H "Content-Type: application/xml" -d "<?xml version='1.0'?>" https://localhost:9999/SA
+
 export PYTHONPATH=$PYTHONPATH:$CHAPIDIR
 echo "PYTHONPATH = $PYTHONPATH"
 
