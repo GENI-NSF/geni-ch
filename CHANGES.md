@@ -4,7 +4,8 @@
 
 ## Changes
 
-* None
+* Communicate max slice expiration in SA get_version
+([#464](https://github.com/GENI-NSF/geni-ch/issues/464))
 
 ## Installation Notes
 
