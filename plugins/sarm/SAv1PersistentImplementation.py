@@ -129,14 +129,17 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         versionNumber = plugins.chapiv1rpc.chapi.Parameters.VERSION_NUMBER
         api_versions = {versionNumber: serverURL}
         implementation_info = get_implementation_info(SA_LOG_PREFIX)
-        version_info = {"VERSION": versionNumber,
-                        "URN ": self.urn,
-                        "IMPLEMENTATION": implementation_info,
-                        "SERVICES": SA.services,
-                        "CREDENTIAL_TYPES": SA.credential_types,
-                        "ROLES": attribute_type_names.values(),
-                        "API_VERSIONS": api_versions,
-                        "FIELDS": SA.supplemental_fields}
+        version_info = {
+            "VERSION": versionNumber,
+            "URN ": self.urn,
+            "IMPLEMENTATION": implementation_info,
+            "SERVICES": SA.services,
+            "CREDENTIAL_TYPES": SA.credential_types,
+            "ROLES": attribute_type_names.values(),
+            "API_VERSIONS": api_versions,
+            "FIELDS": SA.supplemental_fields,
+            "_GENI_MAX_SLICE_EXPIRATION_DAYS": SA.SLICE_MAX_RENEWAL_DAYS
+        }
         result = self._successReturn(version_info)
         return result
 
