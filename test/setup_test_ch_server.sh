@@ -121,7 +121,8 @@ sudo service postfix restart
 export PYTHONPATH=$PYTHONPATH:$CHAPIDIR
 
 # Start test CH server
-$CHAPIDIR/tools/test_server.py >& /tmp/test_server.log &
+#$CHAPIDIR/tools/test_server.py >& /tmp/test_server.log &
+$CHAPIDIR/tools/test_server.py 
 
 # When testing is done, run 
 # kill %1 or killall python to kill the server
