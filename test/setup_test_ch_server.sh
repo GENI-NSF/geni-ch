@@ -73,6 +73,7 @@ sudo $CHAPIDIR/bin/geni-init-services /tmp/services.ini
 
 # Set up trusted roots
 sudo mkdir -p $DATADIR/portal/gcf.d/trusted_roots
+sudo cp $DATADIR/CA/cacert.pem $DATADIR/ma/ma-cert.pem $DATADIR/portal/gcf.d/trusted_roots
 cat $DATADIR/CA/cacert.pem $DATADIR/ma/ma-cert.pem > /tmp/CATedCACerts.pem
 sudo mv /tmp/CATedCACerts.pem $DATADIR/portal/gcf.d/trusted_roots
 
