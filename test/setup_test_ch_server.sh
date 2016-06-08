@@ -33,11 +33,11 @@ sudo mkdir -p /usr/share/geni-ch/CA/private
 sudo cp $CHAPIDIR/templates/openssl.cnf.tmpl /usr/share/geni-ch/CA/openssl.cnf
 
 # Create CA initialization file
-cat "[ca]" > /tmp/ca.ini
-cat "conf=$DATADIR/CA" >> /tmp/ca.ini
-cat "cert=$DATADIR/CA/cacert.pem" >> /tmp/ca.ini
-cat "key=$DATADIR/CA/private/cakey.pem" >> /tmp/ca.ini
-cat "authority=testch" >> /tmp/ca.ini
+echo "[ca]" > /tmp/ca.ini
+echo "conf=$DATADIR/CA" >> /tmp/ca.ini
+echo "cert=$DATADIR/CA/cacert.pem" >> /tmp/ca.ini
+echo "key=$DATADIR/CA/private/cakey.pem" >> /tmp/ca.ini
+echo "authority=testch" >> /tmp/ca.ini
 cat /tmp/ca.ini
 
 sudo $CHAPIDIR/bin/geni-init-ca /tmp/ca.ini
