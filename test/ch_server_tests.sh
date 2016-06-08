@@ -15,8 +15,8 @@ netstat -an | grep 9999
 ps auxw | grep test
 tail /tmp/test_server.log
 
+export PYTHONPATH=$HOME/geni-tools/src:$CHAPIDIR
 echo "PYTHONPATH = $PYTHONPATH"
-# export PYTHONPATH=$HOME/geni-tools/src:$CHAPIDIR
 
 #    Make a first user, priv
 PRIV_EPPN=priv@geni.net
