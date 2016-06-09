@@ -14,8 +14,8 @@ CHAPIDIR=$HOME
 netstat -an | grep 9999
 ps auxw | grep test
 cat /tmp/test_server.log
-
-curl -v -k --cert /usr/share/geni-ch/ma/ma-cert.pem --key /usr/share/geni-ch/ma/ma-key.pem -X POST -H "Content-Type: application/xml" -d  -d "<?xml version=\"1.0\"?><methodCall><methodName>get_version</methodName><params></params></methodCall>" https://localhost:9999/SA
+ 
+curl -v -k --cert /usr/share/geni-ch/ma/ma-cert.pem --key /usr/share/geni-ch/ma/ma-key.pem -X POST -H "Content-Type: application/xml" -d "<?xml version=\"1.0\"?><methodCall><methodName>get_version</methodName><params></params></methodCall>" https://localhost:9999/SA
 
 export PYTHONPATH=$PYTHONPATH:$CHAPIDIR
 echo "PYTHONPATH = $PYTHONPATH"
