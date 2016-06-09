@@ -37,6 +37,8 @@ python $CHAPIDIR/tools/client.py --method lookup_public_member_info --url https:
 PRIV_EPPN=priv@geni.net
 python $CHAPIDIR/tools/client.py --method create_member --url https://localhost:9999/MA --key /usr/share/geni-ch/ma/ma-key.pem --cert /usr/share/geni-ch/ma/ma-cert.pem --string_arg=$PRIV_EPPN --raw_output > /tmp/priv-raw.json
 cat /tmp/priv-raw.json
+cat /tmp/test_server.log
+
 PRIV_URN=`python $CHAPIDIR/tools/json_extractor.py value,name=urn,value /tmp/priv-raw.json`
 
 python $CHAPIDIR/tools/client.py --method create_certificate --url https://localhost:9999/MA --key /usr/share/geni-ch/ma/ma-key.pem  --cert /usr/share/geni-ch/ma/ma-cert.pem --urn $PRIV_URN
