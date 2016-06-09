@@ -22,6 +22,10 @@ echo "PYTHONPATH = $PYTHONPATH"
 
 python $CHAPIDIR/tools/client.py --method get_version --url https://localhost:9999/MA --key /usr/share/geni-ch/ma/ma-key.pem --cert /usr/share/geni-ch/ma/ma-cert.pem --raw_output 
 
+python $CHAPIDIR/tools/client.py --method get_version --url https://localhost:9999/MA --key /usr/share/geni-ch/ma/ma-key.pem --cert /usr/share/geni-ch/CA/cacert.pem --raw_output 
+
+python $CHAPIDIR/tools/client.py --method get_version --url https://localhost:9999/MA  --raw_output 
+
 #    Make a first user, priv
 PRIV_EPPN=priv@geni.net
 python $CHAPIDIR/tools/client.py --method create_member --url https://localhost:9999/MA --key /usr/share/geni-ch/ma/ma-key.pem --cert /usr/share/geni-ch/ma/ma-cert.pem --string_arg=$PRIV_EPPN --raw_output > /tmp/priv-raw.json
