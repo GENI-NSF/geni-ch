@@ -54,7 +54,7 @@ sudo chmod a+w /usr/share/geni-ch/CA
 # Set up GENI CH services
 cp $CHAPIDIR/templates/services.ini.tmpl /tmp/services.ini
 
-sed -i "s/@ch_admin_email@/www-data@localhost/g" /tmp/services.ini
+sed -i "s/@ch_admin_email@/None/g" /tmp/services.ini
 sed -i "s/@ch_authority@/$AUTHORITY/g" /tmp/services.ini
 sed -i "s/@ch_host@/$HOSTNAME/g" /tmp/services.ini
 sed -i "s/@pkgdatadir@/\/usr\/share\/geni-ch/g" /tmp/services.ini
@@ -99,7 +99,7 @@ $PSQL < /tmp/install_service_registry.sql
 sudo cp $CHAPIDIR/templates/chapi.ini.tmpl /etc/geni-chapi/chapi.ini
 sudo sed -i "s/@pkgdatadir@/\/usr\/share\/geni-ch/g" /etc/geni-chapi/chapi.ini
 sudo sed -i "s/@pkgsysconfdir@/\/usr\/share\/geni-ch/g" /etc/geni-chapi/chapi.ini
-sudo sed -i "s/@ch_admin_email@/www-data@localhost/g" /etc/geni-chapi/chapi.ini
+sudo sed -i "s/@ch_admin_email@None/g" /etc/geni-chapi/chapi.ini
 sudo sed -i "s/@ch_authority@/$HOSTNAME/g" /etc/geni-chapi/chapi.ini
 sudo sed -i "s/@db_user@/chtest/g" /etc/geni-chapi/chapi.ini
 sudo sed -i "s/@db_pass@/chtest/g" /etc/geni-chapi/chapi.ini
@@ -109,17 +109,17 @@ sudo sed -i "s/@db_name@/chtest/g" /etc/geni-chapi/chapi.ini
 cat /etc/geni-chapi/chapi.ini
 
 # Set up mail server
-sudo debconf-set-selections <<< "postfix postfix/mailname string $HOSTNAME"
-sudo debconf-set-selections <<<"postfix postfix/main_mailer_type string 'Local only'"
-sudo apt-get install -y postfix # Use the local option
-sudo apt-get install -y mailutils 
-sudo postconf myhostname=`hostname -f`
-sudo postconf mydomain=`hostname -d`
-sudo postconf myorigin=\$mydomain
-sudo postconf inet_protocols=ipv4
-sudo postfix set-permissions
-sudo rm /var/lib/postfix/master.lock
-sudo service postfix restart
+#sudo debconf-set-selections <<< "postfix postfix/mailname string $HOSTNAME"
+#sudo debconf-set-selections <<<"postfix postfix/main_mailer_type string 'Local only'"
+#sudo apt-get install -y postfix # Use the local option
+#sudo apt-get install -y mailutils 
+#sudo postconf myhostname=`hostname -f`
+#sudo postconf mydomain=`hostname -d`
+#sudo postconf myorigin=\$mydomain
+#sudo postconf inet_protocols=ipv4
+#sudo postfix set-permissions
+#sudo rm /var/lib/postfix/master.lock
+#sudo service postfix restart
 
 # pwd = /home/travis/build/GENI-NSF/geni-ch/geni-ch
 # whomi = travis
