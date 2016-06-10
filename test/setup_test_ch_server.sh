@@ -99,7 +99,7 @@ $PSQL < /tmp/install_service_registry.sql
 sudo cp $CHAPIDIR/templates/chapi.ini.tmpl /etc/geni-chapi/chapi.ini
 sudo sed -i "s/@pkgdatadir@/\/usr\/share\/geni-ch/g" /etc/geni-chapi/chapi.ini
 sudo sed -i "s/@pkgsysconfdir@/\/usr\/share\/geni-ch/g" /etc/geni-chapi/chapi.ini
-sudo sed -i "s/@ch_admin_email@None/g" /etc/geni-chapi/chapi.ini
+sudo sed -i "s/@ch_admin_email@/None/g" /etc/geni-chapi/chapi.ini
 sudo sed -i "s/@ch_authority@/$HOSTNAME/g" /etc/geni-chapi/chapi.ini
 sudo sed -i "s/@db_user@/chtest/g" /etc/geni-chapi/chapi.ini
 sudo sed -i "s/@db_pass@/chtest/g" /etc/geni-chapi/chapi.ini
