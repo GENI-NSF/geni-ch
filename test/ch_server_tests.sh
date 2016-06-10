@@ -36,6 +36,9 @@ python $CHAPIDIR/tools/client.py --method get_services --url https://localhost:9
 echo "{\"match\" : {}}" > /tmp/foo.json
 python $CHAPIDIR/tools/client.py --method lookup_public_member_info --url https://localhost:9999/MA --key /usr/share/geni-ch/ma/ma-key.pem --cert /usr/share/geni-ch/ma/ma-cert.pem --raw_output --options_file /tmp/foo.json
 
+sudo service postfix status
+postconf
+
 
 
 #    Make a first user, priv
