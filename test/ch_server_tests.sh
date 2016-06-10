@@ -16,11 +16,11 @@ DATADIR=/usr/share/geni-ch
 HOME=`pwd`
 CHAPIDIR=$HOME
 
-netstat -an | grep 9999
-ps auxw | grep test
-cat /tmp/test_server.log
+#netstat -an | grep 9999
+#ps auxw | grep test
+#cat /tmp/test_server.log
  
-curl -v -k --cert /usr/share/geni-ch/ma/ma-cert.pem --key /usr/share/geni-ch/ma/ma-key.pem -X POST -H "Content-Type: application/xml" -d "<?xml version=\"1.0\"?><methodCall><methodName>get_version</methodName><params></params></methodCall>" https://localhost:9999/SA
+#curl -v -k --cert /usr/share/geni-ch/ma/ma-cert.pem --key /usr/share/geni-ch/ma/ma-key.pem -X POST -H "Content-Type: application/xml" -d "<?xml version=\"1.0\"?><methodCall><methodName>get_version</methodName><params></params></methodCall>" https://localhost:9999/SA
 
 export PYTHONPATH=$PYTHONPATH:$CHAPIDIR
 echo "PYTHONPATH = $PYTHONPATH"
@@ -36,10 +36,11 @@ python $CHAPIDIR/tools/client.py --method get_services --url https://localhost:9
 echo "{\"match\" : {}}" > /tmp/foo.json
 python $CHAPIDIR/tools/client.py --method lookup_public_member_info --url https://localhost:9999/MA --key /usr/share/geni-ch/ma/ma-key.pem --cert /usr/share/geni-ch/ma/ma-cert.pem --raw_output --options_file /tmp/foo.json
 
-sudo service postfix status
-postconf
+#sudo service postfix status
+#postconf
 
 
+echo "Body of the mail." | mail -s "Hello world" www-data@localhost
 
 #    Make a first user, priv
 PRIV_EPPN=priv@geni.net
