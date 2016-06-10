@@ -23,10 +23,10 @@ AUTHORITY=testch
 
 # Install CH
 cd $CHAPIDIR
-./autogen.sh
+./autogen.sh >& /dev/null
 ./configure --prefix=/usr --sysconfdir=/etc --bindir=/usr/local/bin \
-    --sbindir=/usr/local/sbin --mandir=/usr/local/man --enable-gpo-lab
-make
+    --sbindir=/usr/local/sbin --mandir=/usr/local/man --enable-gpo-lab >& /dev/null
+make >& /dev/null
 sudo make install >& /dev/null
 
 # Set up CA
