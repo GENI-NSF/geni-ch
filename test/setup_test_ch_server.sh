@@ -27,7 +27,7 @@ cd $CHAPIDIR
 ./configure --prefix=/usr --sysconfdir=/etc --bindir=/usr/local/bin \
     --sbindir=/usr/local/sbin --mandir=/usr/local/man --enable-gpo-lab
 make
-sudo make install
+sudo make install >& /dev/null
 
 # Set up CA
 sudo mkdir -p /usr/share/geni-ch/CA/private
@@ -133,10 +133,10 @@ ls -l $CHAPIDIR/tools/test_server.py
 # Start test CH server
 $CHAPIDIR/tools/test_server.py >& /tmp/test_server.log &
 
-sleep 10
-set -x
-netstat -an | grep 9999
-netstat -an | grep 25
+#sleep 10
+#set -x
+#netstat -an | grep 9999
+#netstat -an | grep 25
 #tail /tmp/test_server.log
 #ps auxw | grep test_server
 
