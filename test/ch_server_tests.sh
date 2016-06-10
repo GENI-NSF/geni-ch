@@ -39,10 +39,9 @@ python $CHAPIDIR/tools/client.py --method lookup_public_member_info --url https:
 #sudo service postfix status
 #postconf
 
-netstat -an | grep 25
-
-echo "Body of the mail." | mail -s "Hello world" www-data@localhost
-python -c "import smtplib; smtplib.SMTP('localhost')"
+#netstat -an | grep 25
+#echo "Body of the mail." | mail -s "Hello world" www-data@localhost
+#python -c "import smtplib; smtplib.SMTP('localhost')"
 
 #    Make a first user, priv
 PRIV_EPPN=priv@geni.net
