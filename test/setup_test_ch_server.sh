@@ -110,7 +110,7 @@ cat /etc/geni-chapi/chapi.ini
 
 # Set up mail server
 sudo debconf-set-selections <<< "postfix postfix/mailname string $HOSTNAME"
-sudo debconf-set-selections <<<"postfix postfix/main_mailer_type string 'Local Only'"
+sudo debconf-set-selections <<<"postfix postfix/main_mailer_type string 'Local only'"
 sudo apt-get install -y postfix # Use the local option
 sudo apt-get install -y mailutils 
 sudo postconf myhostname=`hostname -f`
