@@ -2,7 +2,7 @@
 #
 # Temporarily, Go to test suite branch
 git checkout -b tkt504_test_suite
-set -x
+#set -x
 
 # Set up database
 echo "createdb chtest" > /tmp/createdb.sh
@@ -20,7 +20,7 @@ HOSTNAME=`hostname -f`
 DATADIR=/usr/share/geni-ch
 CHAPIDIR=$HOME
 PSQL="psql -U chtest -h localhost chtest"
-AUTHORITY=testch
+AUTHORITY=chtest
 
 # Install CH
 cd $CHAPIDIR
@@ -57,7 +57,7 @@ cp $CHAPIDIR/templates/services.ini.tmpl /tmp/services.ini
 
 sed -i "s/@ch_admin_email@/None/g" /tmp/services.ini
 sed -i "s/@ch_authority@/$AUTHORITY/g" /tmp/services.ini
-sed -i "s/@ch_host@/$HOSTNAME/g" /tmp/services.ini
+sed -i "s/@ch_host@/$AUTHORITY/g" /tmp/services.ini
 sed -i "s/@pkgdatadir@/\/usr\/share\/geni-ch/g" /tmp/services.ini
 sed -i "s/@datadir@/\/usr\/share\/geni-ch/g" /tmp/services.ini
 
@@ -96,7 +96,7 @@ do
 done
 
 cp $CHAPIDIR/templates/install_service_registry.sql.tmpl /tmp/install_service_registry.sql
-sed -i "s/@ch_host@/$HOSTNAME/g" /tmp/install_service_registry.sql
+sed -i "s/@ch_host@/$AUTHORITY/g" /tmp/install_service_registry.sql
 $PSQL < /tmp/install_service_registry.sql
 
 # Set up chapi.ini
@@ -111,22 +111,6 @@ sudo sed -i "s/@db_host@/localhost/g" /etc/geni-chapi/chapi.ini
 sudo sed -i "s/@db_name@/chtest/g" /etc/geni-chapi/chapi.ini
 
 cat /etc/geni-chapi/chapi.ini
-
-# Set up mail server
-#sudo debconf-set-selections <<< "postfix postfix/mailname string $HOSTNAME"
-#sudo debconf-set-selections <<<"postfix postfix/main_mailer_type string 'Local only'"
-#sudo apt-get install -y postfix # Use the local option
-#sudo apt-get install -y mailutils 
-#sudo postconf myhostname=`hostname -f`
-#sudo postconf mydomain=`hostname -d`
-#sudo postconf myorigin=\$mydomain
-#sudo postconf inet_protocols=ipv4
-#sudo postfix set-permissions
-#sudo rm /var/lib/postfix/master.lock
-#sudo service postfix restart
-
-# pwd = /home/travis/build/GENI-NSF/geni-ch/geni-ch
-# whomi = travis
 
 # Set up runtime
 export PYTHONPATH=$PYTHONPATH:$CHAPIDIR
