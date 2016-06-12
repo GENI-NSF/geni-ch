@@ -34,6 +34,9 @@ function invoke_client {
     fi
 }
 
+# Wait for the server to start up
+sleep 5
+
 # Test the "no authentication" methods
 invoke_client /usr/share/geni-ch/ma/ma MA get_version /tmp/ma_get_version.out \
     value,CREDENTIAL_TYPES,version=3,type geni_sfa
