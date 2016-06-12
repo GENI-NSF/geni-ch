@@ -133,12 +133,3 @@ ls -l $CHAPIDIR/tools/test_server.py
 # Start test CH server
 $CHAPIDIR/tools/test_server.py >& /tmp/test_server.log &
 
-#sleep 10
-#set -x
-#netstat -an | grep 9999
-#netstat -an | grep 25
-#tail /tmp/test_server.log
-#ps auxw | grep test_server
-
-# When testing is done, run 
-# kill %1 or killall python to kill the server
