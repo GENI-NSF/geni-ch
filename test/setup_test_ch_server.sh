@@ -2,6 +2,7 @@
 #
 # Temporarily, Go to test suite branch
 git checkout -b tkt504_test_suite
+set -x
 
 # Set up database
 echo "createdb chtest" > /tmp/createdb.sh
@@ -70,6 +71,9 @@ sudo mkdir $DATADIR/km
 sudo mkdir $DATADIR/portal
 echo "Setting up GENI services"
 sudo $CHAPIDIR/bin/geni-init-services /tmp/services.ini
+
+echo "DATADIR=$DATADIR"
+cat /tmp/services.ini
 
 # Set up trusted roots
 sudo mkdir -p $DATADIR/portal/gcf.d/trusted_roots
