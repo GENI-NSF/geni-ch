@@ -59,6 +59,7 @@ sed -i "s/@ch_admin_email@/None/g" /tmp/services.ini
 sed -i "s/@ch_authority@/$AUTHORITY/g" /tmp/services.ini
 sed -i "s/@ch_host@/$AUTHORITY/g" /tmp/services.ini
 sed -i "s/@pkgdatadir@/\/usr\/share\/geni-ch/g" /tmp/services.ini
+sed -i "s/@pkglogdir@/\/tmp/g" /tmp/services.ini
 sed -i "s/@datadir@/\/usr\/share\/geni-ch/g" /tmp/services.ini
 
 sudo mkdir $DATADIR/sr

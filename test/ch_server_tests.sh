@@ -49,6 +49,7 @@ invoke_client /usr/share/geni-ch/ma/ma SR get_services \
     urn:publicid:IDN+chtest+authority+sa
 
 cat /tmp/test_server.log 
+cat /tmp/chapi.log
 
 # Create a first user, priv
 PRIV_URN=urn:publicid:IDN+chtest+user+priv
