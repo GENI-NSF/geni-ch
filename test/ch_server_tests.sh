@@ -9,7 +9,7 @@ CHAPIDIR=$HOME
 #ls -l /usr/share/geni-ch/ma
 #ls -l /usr/share/geni-ch/sa
 
-# set -x
+set -x
  
 # Function to invoke client.py and save output in given file
 # pull single value from result and compare with expected result
