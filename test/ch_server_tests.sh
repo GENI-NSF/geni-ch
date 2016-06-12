@@ -9,7 +9,7 @@ CHAPIDIR=$HOME
 #ls -l /usr/share/geni-ch/ma
 #ls -l /usr/share/geni-ch/sa
 
-set -x
+# set -x
  
 # Function to invoke client.py and save output in given file
 # pull single value from result and compare with expected result
@@ -59,20 +59,20 @@ invoke_client /usr/share/geni-ch/ma/ma MA create_member /tmp/priv-raw.json \
 invoke_client /usr/share/geni-ch/ma/ma MA create_certificate \
     /tmp/create_cert.out code 0 --urn=$PRIV_URN
 printf "{\"match\" : {\"_GENI_MEMBER_EPPN\" : \"%s\"}}\n" $PRIV_EPPN \
-    > /tmp/lookup_priv.json
+    > /tmp/lookup_opts_priv.json
 
 invoke_client /usr/share/geni-ch/ma/ma MA lookup_login_info \
-    /tmp/lookup_priv.json \
-    code 0 --options_file=/tmp/lookup_priv.json
+    /tmp/lookup_lli_priv.json \
+    code 0 --options_file=/tmp/lookup_opts_priv.json
 cat /tmp/lookup_priv.json
 python $CHAPIDIR/tools/json_extractor.py \
     value,urn:$PRIV_URN,_GENI_MEMBER_SSL_PRIVATE_KEY  \
-    /tmp/lookup_priv.json > /tmp/priv-key.pem
+    /tmp/lookup_lli_priv.json > /tmp/priv-key.pem
 cat /tmp/priv-key.pem
 
 python $CHAPIDIR/tools/json_extractor.py \
     value,urn:$PRIV_URN,_GENI_MEMBER_SSL_CERTIFICATE  \
-    /tmp/lookup_priv.json > /tmp/priv-cert.pem
+    /tmp/lookup_lli_priv.json > /tmp/priv-cert.pem
 cat /tmp/priv-cert.pem
 
 # Create a second user, unpriv
@@ -84,21 +84,21 @@ invoke_client /usr/share/geni-ch/ma/ma MA create_member /tmp/unpriv-raw.json \
 invoke_client /usr/share/geni-ch/ma/ma MA create_certificate \
     /tmp/create_cert.out code 0 --urn=$UNPRIV_URN
 printf "{\"match\" : {\"_GENI_MEMBER_EPPN\" : \"%s\"}}\n" $UNPRIV_EPPN \
-    > /tmp/lookup_unpriv.json
+    > /tmp/lookup_opts_unpriv.json
 
 
 invoke_client /usr/share/geni-ch/ma/ma MA lookup_login_info \
-    /tmp/lookup_unpriv.json \
-    code 0 --options_file=/tmp/lookup_unpriv.json
+    /tmp/lookup_lli_unpriv.json \
+    code 0 --options_file=/tmp/lookup_opts_unpriv.json
 cat /tmp/lookup_unpriv.json
 python $CHAPIDIR/tools/json_extractor.py \
     value,urn:$UNPRIV_URN,_GENI_MEMBER_SSL_UNPRIVATE_KEY  \
-    /tmp/lookup_unpriv.json > /tmp/unpriv-key.pem
+    /tmp/lookup_lli_unpriv.json > /tmp/unpriv-key.pem
 cat /tmp/unpriv-key.pem
 
 python $CHAPIDIR/tools/json_extractor.py \
     value,urn:$UNPRIV_URN,_GENI_MEMBER_SSL_CERTIFICATE  \
-    /tmp/lookup_unpriv.json > /tmp/unpriv-cert.pem
+    /tmp/lookup_lli_unpriv.json > /tmp/unpriv-cert.pem
 cat /tmp/unpriv-cert.pem
 
 # From here...
