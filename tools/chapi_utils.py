@@ -31,10 +31,11 @@ import datetime
 from chapi_log import *
 
 def send_email(to_list,fromaddr,replyaddr,subject,msgbody,cc_list=None):
-    chapi_info("EMAILTEST", "FROM_ADDR = %s" % fromaddr)
-    if fromaddr == "None": return # If no fromaddr is set, email is disabled
-# Note that to make an address be pretty, create the string as 
-# "%s <%s>" % (pretty_name, email_address"
+    # If no fromaddr is set, email is disabled
+    if fromaddr == "" or fromaddr == None: return 
+
+    # Note that to make an address be pretty, create the string as 
+    # "%s <%s>" % (pretty_name, email_address"
     if msgbody is None:
         msgbody = ""
     if not isinstance(msgbody, unicode):
