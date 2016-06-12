@@ -50,6 +50,9 @@ def main():
     filename = sys.argv[2]
 
     data = open(filename).read()
+
+    print "DATA(%s) = %s" % (filename, data)
+
     jdata = json.loads(data)
 
     key_list = keys.split(',')

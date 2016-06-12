@@ -63,6 +63,7 @@ printf "{\"match\" : {\"_GENI_MEMBER_EPPN\" : \"%s\"}}\n" $PRIV_EPPN \
 invoke_client /usr/share/geni-ch/ma/ma MA lookup_login_info \
     /tmp/lookup_priv.json \
     code 0 --options_file=/tmp/lookup_priv.json
+cat /tmp/lookup_priv.json
 python $CHAPIDIR/tools/json_extractor.py \
     value,urn:$PRIV_URN,_GENI_MEMBER_SSL_PRIVATE_KEY  \
     /tmp/lookup_priv.json > /tmp/priv-key.pem
@@ -88,6 +89,7 @@ printf "{\"match\" : {\"_GENI_MEMBER_EPPN\" : \"%s\"}}\n" $UNPRIV_EPPN \
 invoke_client /usr/share/geni-ch/ma/ma MA lookup_login_info \
     /tmp/lookup_unpriv.json \
     code 0 --options_file=/tmp/lookup_unpriv.json
+cat /tmp/lookup_unpriv.json
 python $CHAPIDIR/tools/json_extractor.py \
     value,urn:$UNPRIV_URN,_GENI_MEMBER_SSL_UNPRIVATE_KEY  \
     /tmp/lookup_unpriv.json > /tmp/unpriv-key.pem
