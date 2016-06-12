@@ -5,9 +5,6 @@
 
 HOME=`pwd`
 CHAPIDIR=$HOME
-#ls -l /usr/share/geni-ch/CA
-#ls -l /usr/share/geni-ch/ma
-#ls -l /usr/share/geni-ch/sa
 
 # set -x
  
@@ -40,8 +37,10 @@ function invoke_client {
 # Test the "no authentication" methods
 invoke_client /usr/share/geni-ch/ma/ma MA get_version /tmp/ma_get_version.out \
     value,CREDENTIAL_TYPES,version=3,type geni_sfa
+cat /tmp/ma_get_version.out
 invoke_client /usr/share/geni-ch/sa/sa SA get_version /tmp/sa_get_version.out \
     value,CREDENTIAL_TYPES,version=3,type geni_sfa
+cat /tmp/sa_get_version.out
 invoke_client /usr/share/geni-ch/ma/ma SR get_version /tmp/sr_get_version.out \
     value,API_VERSIONS,2 https://127.0.0.1:9999/SR
 invoke_client /usr/share/geni-ch/ma/ma SR get_services \
@@ -89,7 +88,7 @@ invoke_client /usr/share/geni-ch/ma/ma MA lookup_login_info \
     /tmp/lookup_lli_unpriv.json \
     code 0 --options_file=/tmp/lookup_opts_unpriv.json
 python $CHAPIDIR/tools/json_extractor.py \
-    value,$UNPRIV_URN,_GENI_MEMBER_SSL_UNPRIVATE_KEY  \
+    value,$UNPRIV_URN,_GENI_MEMBER_SSL_PRIVATE_KEY  \
     /tmp/lookup_lli_unpriv.json > /tmp/unpriv-key.pem
 cat /tmp/unpriv-key.pem
 
