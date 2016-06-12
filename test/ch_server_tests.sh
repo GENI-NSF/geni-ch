@@ -54,14 +54,13 @@ PRIV_EPPN=priv@geni.net
 invoke_client /usr/share/geni-ch/ma/ma MA create_member /tmp/priv-raw.json \
     value,name=urn,value $PRIV_URN --string_arg=$PRIV_EPPN
 invoke_client /usr/share/geni-ch/ma/ma MA create_certificate \
-    /tmp/create_cert.out code 0 --urn $PRIV_URN
+    /tmp/create_cert.out code 0 --urn=$PRIV_URN
 printf "{\"match\" : {\"_GENI_MEMBER_EPPN\" : \"%s\"}}\n" $PRIV_EPPN \
     > /tmp/lookup_priv.json
 cat /tmp/lookup_priv.json
 
 invoke_client /usr/share/geni-ch/ma/ma MA lookup_login_info /tmp/lli.json \
-    code 0 \
-    --options_file /tmp/lookup_priv.json
+    code 0 --options_file=/tmp/lookup_priv.json
 python $CHAPIDIR/tools/json_extractor.py \
     value,urn:$PRIV_URN,_GENI_MEMBER_SSL_PRIVATE_KEY  \
     /tmp/priv.json > /tmp/priv-key.pem
@@ -78,12 +77,13 @@ UNPRIV_EPPN=unpriv@geni.net
 invoke_client /usr/share/geni-ch/ma/ma MA create_member /tmp/unpriv-raw.json \
     value,name=urn,value $UNPRIV_URN --string_arg=$UNPRIV_EPPN
 invoke_client /usr/share/geni-ch/ma/ma MA create_certificate \
-    /tmp/create_cert.out code 0 --urn $UNPRIV_URN
+    /tmp/create_cert.out code 0 --urn=$UNPRIV_URN
 printf "{\"match\" : {\"_GENI_MEMBER_EPPN\" : \"%s\"}}\n" $UNPRIV_EPPN \
     > /tmp/lookup_unpriv.json
+cat /tmp/lookup_unpriv.json
 
-invoke_client /usr/share/geni-ch/ma/ma MA lookup_login_info code 0 \
-    --options_file /tmp/lookup_unpriv.json
+invoke_client /usr/share/geni-ch/ma/ma MA lookup_login_info /tmp/lli.json \
+    code 0 --options_file=/tmp/lookup_unpriv.json
 python $CHAPIDIR/tools/json_extractor.py \
     value,urn:$UNPRIV_URN,_GENI_MEMBER_SSL_UNPRIVATE_KEY  \
     /tmp/unpriv.json > /tmp/unpriv-key.pem

@@ -110,7 +110,7 @@ sudo sed -i "s/@db_pass@/chtest/g" /etc/geni-chapi/chapi.ini
 sudo sed -i "s/@db_host@/localhost/g" /etc/geni-chapi/chapi.ini
 sudo sed -i "s/@db_name@/chtest/g" /etc/geni-chapi/chapi.ini
 
-cat /etc/geni-chapi/chapi.ini
+#cat /etc/geni-chapi/chapi.ini
 
 # Set up runtime
 export PYTHONPATH=$PYTHONPATH:$CHAPIDIR
