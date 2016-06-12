@@ -57,8 +57,10 @@ invoke_client /usr/share/geni-ch/ma/ma MA create_certificate \
     /tmp/create_cert.out code 0 --urn $PRIV_URN
 printf "{\"match\" : {\"_GENI_MEMBER_EPPN\" : \"%s\"}}\n" $PRIV_EPPN \
     > /tmp/lookup_priv.json
+cat /tmp/lookup_priv.json
 
-invoke_client /usr/share/geni-ch/ma/ma MA lookup_login_info code 0 \
+invoke_client /usr/share/geni-ch/ma/ma MA lookup_login_info /tmp/lli.json \
+    code 0 \
     --options_file /tmp/lookup_priv.json
 python $CHAPIDIR/tools/json_extractor.py \
     value,urn:$PRIV_URN,_GENI_MEMBER_SSL_PRIVATE_KEY  \
