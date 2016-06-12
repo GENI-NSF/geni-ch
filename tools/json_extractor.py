@@ -66,7 +66,7 @@ def main():
             key_value = key_parts[1]
             found = None
             for entry in result:
-                if entry[key_name] == key_value:
+                if str(entry[key_name]) == key_value:
                     found = entry
                     break
             if not found:
