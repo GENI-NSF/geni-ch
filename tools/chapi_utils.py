@@ -32,6 +32,7 @@ from chapi_log import *
 
 def send_email(to_list,fromaddr,replyaddr,subject,msgbody,cc_list=None):
     # If no fromaddr is set, email is disabled
+    chapi_info("SEND_EMAIL", "FROMADDR = %s" % fromaddr)
     if fromaddr == "" or fromaddr == None or fromaddr == "None": return 
 
     # Note that to make an address be pretty, create the string as 
