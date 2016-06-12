@@ -40,10 +40,10 @@ sleep 5
 # Test the "no authentication" methods
 invoke_client /usr/share/geni-ch/ma/ma MA get_version /tmp/ma_get_version.out \
     value,CREDENTIAL_TYPES,version=3,type geni_sfa
-cat /tmp/ma_get_version.out
+#cat /tmp/ma_get_version.out
 invoke_client /usr/share/geni-ch/sa/sa SA get_version /tmp/sa_get_version.out \
     value,CREDENTIAL_TYPES,version=3,type geni_sfa
-cat /tmp/sa_get_version.out
+#cat /tmp/sa_get_version.out
 invoke_client /usr/share/geni-ch/ma/ma SR get_version /tmp/sr_get_version.out \
     value,API_VERSIONS,2 https://127.0.0.1:9999/SR
 invoke_client /usr/share/geni-ch/ma/ma SR get_services \
@@ -68,12 +68,12 @@ invoke_client /usr/share/geni-ch/ma/ma MA lookup_login_info \
 python $CHAPIDIR/tools/json_extractor.py \
     value,$PRIV_URN,_GENI_MEMBER_SSL_PRIVATE_KEY  \
     /tmp/lookup_lli_priv.json > /tmp/priv-key.pem
-cat /tmp/priv-key.pem
+#cat /tmp/priv-key.pem
 
 python $CHAPIDIR/tools/json_extractor.py \
     value,$PRIV_URN,_GENI_MEMBER_SSL_CERTIFICATE  \
     /tmp/lookup_lli_priv.json > /tmp/priv-cert.pem
-cat /tmp/priv-cert.pem
+#cat /tmp/priv-cert.pem
 
 # Create a second user, unpriv
 
@@ -93,12 +93,12 @@ invoke_client /usr/share/geni-ch/ma/ma MA lookup_login_info \
 python $CHAPIDIR/tools/json_extractor.py \
     value,$UNPRIV_URN,_GENI_MEMBER_SSL_PRIVATE_KEY  \
     /tmp/lookup_lli_unpriv.json > /tmp/unpriv-key.pem
-cat /tmp/unpriv-key.pem
+#cat /tmp/unpriv-key.pem
 
 python $CHAPIDIR/tools/json_extractor.py \
     value,$UNPRIV_URN,_GENI_MEMBER_SSL_CERTIFICATE  \
     /tmp/lookup_lli_unpriv.json > /tmp/unpriv-cert.pem
-cat /tmp/unpriv-cert.pem
+#cat /tmp/unpriv-cert.pem
 
 # From here...
 # MA grants priv PI privileges
