@@ -55,7 +55,7 @@ sudo chmod a+w /usr/share/geni-ch/CA
 # Set up GENI CH services
 cp $CHAPIDIR/templates/services.ini.tmpl /tmp/services.ini
 
-sed -i "s/@ch_admin_email@//g" /tmp/services.ini
+sed -i "s/@ch_admin_email@/None/g" /tmp/services.ini
 sed -i "s/@ch_authority@/$AUTHORITY/g" /tmp/services.ini
 sed -i "s/@ch_host@/$HOSTNAME/g" /tmp/services.ini
 sed -i "s/@pkgdatadir@/\/usr\/share\/geni-ch/g" /tmp/services.ini
@@ -103,7 +103,7 @@ $PSQL < /tmp/install_service_registry.sql
 sudo cp $CHAPIDIR/templates/chapi.ini.tmpl /etc/geni-chapi/chapi.ini
 sudo sed -i "s/@pkgdatadir@/\/usr\/share\/geni-ch/g" /etc/geni-chapi/chapi.ini
 sudo sed -i "s/@pkgsysconfdir@/\/usr\/share\/geni-ch/g" /etc/geni-chapi/chapi.ini
-sudo sed -i "s/@ch_admin_email@//g" /etc/geni-chapi/chapi.ini
+sudo sed -i "s/@ch_admin_email@/None/g" /etc/geni-chapi/chapi.ini
 sudo sed -i "s/@ch_authority@/$HOSTNAME/g" /etc/geni-chapi/chapi.ini
 sudo sed -i "s/@db_user@/chtest/g" /etc/geni-chapi/chapi.ini
 sudo sed -i "s/@db_pass@/chtest/g" /etc/geni-chapi/chapi.ini
