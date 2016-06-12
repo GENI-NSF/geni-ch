@@ -51,7 +51,7 @@ def main():
 
     data = open(filename).read()
 
-    print "DATA(%s) = %s" % (filename, data)
+#    print "DATA(%s) = %s" % (filename, data)
 
     jdata = json.loads(data)
 
