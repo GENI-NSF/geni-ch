@@ -3,7 +3,7 @@
 # Unit tests for CH server functionality
 # Assumes test server is running on https://localhost:9999
 
-HOME=`pwd'
+HOME=`pwd`
 CHAPIDIR=$HOME
  
 # Function to invoke client.py and save output in given file
