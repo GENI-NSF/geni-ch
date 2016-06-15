@@ -1,11 +1,25 @@
 # GENI Clearinghouse Release Notes
 
+# [Release 2.14](https://github.com/GENI-NSF/geni-ch/milestones/2.14)
+
+## Changes
+
+* None
+
+## Installation Notes
+
+* None
+
 # [Release 2.13](https://github.com/GENI-NSF/geni-ch/milestones/2.13)
 
 ## Changes
 
 * Communicate max slice expiration in SA get_version
 ([#464](https://github.com/GENI-NSF/geni-ch/issues/464))
+* Update CentOS install for WSGI
+([#508](https://github.com/GENI-NSF/geni-ch/issues/508))
+* Updates to install document
+([#471](https://github.com/GENI-NSF/geni-ch/issues/471))
 
 ## Installation Notes
 
