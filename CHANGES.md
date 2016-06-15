@@ -6,6 +6,10 @@
 
 * Communicate max slice expiration in SA get_version
 ([#464](https://github.com/GENI-NSF/geni-ch/issues/464))
+* Update CentOS install for WSGI
+([#508](https://github.com/GENI-NSF/geni-ch/issues/508))
+* Updates to install document
+([#471](https://github.com/GENI-NSF/geni-ch/issues/471))
 
 ## Installation Notes
 
