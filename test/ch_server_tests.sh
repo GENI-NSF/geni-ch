@@ -45,15 +45,15 @@ function invoke_client {
 sleep 5
 
 # Test the "no authentication" methods
-invoke_client $MA_DIR/ma MA get_version /tmp/ma_get_version.out \
+invoke_client $MADIR/ma MA get_version /tmp/ma_get_version.out \
     value,CREDENTIAL_TYPES,version=3,type geni_sfa
 #cat /tmp/ma_get_version.out
-invoke_client $SA_DIR/sa SA get_version /tmp/sa_get_version.out \
+invoke_client $SADIR/sa SA get_version /tmp/sa_get_version.out \
     value,CREDENTIAL_TYPES,version=3,type geni_sfa
 #cat /tmp/sa_get_version.out
-invoke_client $MA_DIR/ma SR get_version /tmp/sr_get_version.out \
+invoke_client $MADIR/ma SR get_version /tmp/sr_get_version.out \
     value,API_VERSIONS,2 https://127.0.0.1:9999/SR
-invoke_client $MA_DIR/ma SR get_services \
+invoke_client $MADIR/ma SR get_services \
     /tmp/sr_get_services.out value,SERVICE_TYPE=2,SERVICE_URN \
     urn:publicid:IDN+chtest+authority+sa
 
@@ -62,15 +62,15 @@ invoke_client $MA_DIR/ma SR get_services \
 # Create a first user, priv
 PRIV_URN=urn:publicid:IDN+chtest+user+priv
 PRIV_EPPN=priv@geni.net
-invoke_client $MA_DIR/ma MA create_member /tmp/priv-raw.json \
+invoke_client $MADIR/ma MA create_member /tmp/priv-raw.json \
     value,name=urn,value $PRIV_URN --string_arg=$PRIV_EPPN
 cat /tmp/priv-raw.json
-invoke_client $MA_DIR/ma MA create_certificate \
+invoke_client $MADIR/ma MA create_certificate \
     /tmp/create_cert.out code 0 --urn=$PRIV_URN
 printf "{\"match\" : {\"_GENI_MEMBER_EPPN\" : \"%s\"}}\n" $PRIV_EPPN \
     > /tmp/lookup_opts_priv.json
 
-invoke_client $MA_DIR/ma MA lookup_login_info \
+invoke_client $MADIR/ma MA lookup_login_info \
     /tmp/lookup_lli_priv.json \
     code 0 --options_file=/tmp/lookup_opts_priv.json
 python $CHAPIDIR/tools/json_extractor.py \
@@ -87,15 +87,15 @@ python $CHAPIDIR/tools/json_extractor.py \
 
 UNPRIV_URN=urn:publicid:IDN+chtest+user+unpriv
 UNPRIV_EPPN=unpriv@geni.net
-invoke_client $MA_DIR/ma MA create_member /tmp/unpriv-raw.json \
+invoke_client $MADIR/ma MA create_member /tmp/unpriv-raw.json \
     value,name=urn,value $UNPRIV_URN --string_arg=$UNPRIV_EPPN
-invoke_client $MA_DIR/ma MA create_certificate \
+invoke_client $MADIR/ma MA create_certificate \
     /tmp/create_cert.out code 0 --urn=$UNPRIV_URN
 printf "{\"match\" : {\"_GENI_MEMBER_EPPN\" : \"%s\"}}\n" $UNPRIV_EPPN \
     > /tmp/lookup_opts_unpriv.json
 
 
-invoke_client $MA_DIR/ma MA lookup_login_info \
+invoke_client $MADIR/ma MA lookup_login_info \
     /tmp/lookup_lli_unpriv.json \
     code 0 --options_file=/tmp/lookup_opts_unpriv.json
 python $CHAPIDIR/tools/json_extractor.py \
@@ -109,13 +109,13 @@ python $CHAPIDIR/tools/json_extractor.py \
 #cat /tmp/unpriv-cert.pem
 
 # Grant MA PI privileges
-$CHAPIDIR/bin/geni-add-member-privilege --keyfile=$MA_DIR/ma/ma-key.pem \
-    --certfile=$MA_DIR/ma/ma-cert.pem -url $CH_URL --member priv --lead
+$CHAPIDIR/bin/geni-add-member-privilege --keyfile=$MADIR/ma/ma-key.pem \
+    --certfile=$MADIR/ma/ma-cert.pem -url $CH_URL --member priv --lead
 
 PROJECT_NAME=testproj
 
-{'fields': {'PROJECT_DESCRIPTION': '', 'PROJECT_NAME': 'FOO', '_GENI_PROJECT_OWNER': '8e405a75-3ff7-4288-bfa5-111552fa53ce'}
 printf "{\"fields\" : {\"PROJECT_DESCRIPTION\" : \"description\", \"PROJECT_NAME\" : \"$PROJECT_NAME\", \"_GENI_PROJECT_OWNER\" : $PRIV_UID}}" > /tmp/create_project_options.json
+cat /tmp/create_project_options.json
 invoke_client /tmp/priv SA create_project /tmp/create_project.json \
     --options_file=/tmp/create_project_options.json
 cat /tmp/create_project.json
