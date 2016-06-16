@@ -37,7 +37,7 @@ function invoke_client {
 	cat $outfile
         exit 1
     else
-	echo "Test $TESTCOUNT: $server.$method succeeded ($comment)"
+	echo "Test $TESTCOUNT: $server.$method succeeded"
     fi
 
     TESTCOUNT=$((TESTCOUNT+1))
@@ -188,10 +188,11 @@ invoke_client /tmp/unpriv SA lookup_slice_members /tmp/lookup_members.json \
 # priv adds unpriv to project
 echo "# Add unpriv to project $PROJECT_NAME"
 printf "{\"members_to_add\" : [{\"PROJECT_MEMBER\" : \"$UNPRIV_URN\", \"PROJECT_ROLE\" : \"MEMBER\"}]}" > /tmp/modify_project_membership.json
+cat /tmp/modify_project_membeship.json
 invoke_client /tmp/priv SA modify_membership /tmp/modify_membership.json \
     code 0 \
-    --type PROJECT \
-    --urn $PROJECT_URN --options_filename=/tmp/modify_project_membership.json 
+    --type=PROJECT \
+    --urn=$PROJECT_URN --options_filename=/tmp/modify_project_membership.json 
 
 
 # priv adds unpriv to slice
@@ -199,8 +200,8 @@ echo "# Add unpriv to slice $SLICE_NAME"
 printf "{\"members_to_add\" : [{\"SLICE_MEMBER\" : \"$UNPRIV_URN\", \"SLICE_ROLE\" : \"MEMBER\"}]}" > /tmp/modify_slice_membership.json
 invoke_client /tmp/priv SA modify_membership /tmp/modify_membership.json \
     code 0 \
-    --type SLICE \
-    --urn $SLICE_URN --options_filename=/tmp/modify_slice_membership.json 
+    --type=SLICE \
+    --urn=$SLICE_URN --options_filename=/tmp/modify_slice_membership.json 
 
 
 # From here...
