@@ -142,19 +142,15 @@ printf "{\"fields\" : {\"PROJECT_DESCRIPTION\" : \"description\", \"PROJECT_NAME
 #cat /tmp/create_project_options.json
 invoke_client /tmp/unpriv SA create_project /tmp/create_project.json \
     code 2 --options_file=/tmp/create_project_options.json
-cat /tmp/create_project.json
-PROJECT_URN=`python $CHAPIDIR/tools/json_extractor.py value,PROJECT_URN /tmp/create_project.json`
-echo $PROJECT_URN
+#cat /tmp/create_project.json
 
-# Let priv create a slice in the original project 
+# Let unpriv try (and fail) to create a slice in the original project 
 SLICE_NAME=testslice2
 printf "{\"fields\" : {\"SLICE_DESCRIPTION\" : \"description\", \"SLICE_PROJECT_URN\" : \"$PROJECT_URN\", \"SLICE_NAME\" : \"$SLICE_NAME\" }}" > /tmp/create_slice_options.json
 #cat /tmp/create_slice_options.json
 invoke_client /tmp/unpriv SA create_slice /tmp/create_slice.json \
-    code 2 --options_file=/tmp/create_slice_options.json
+    code 3 --options_file=/tmp/create_slice_options.json
 cat /tmp/create_slice.json
-SLICE_URN=`python $CHAPIDIR/tools/json_extractor.py value,SLICE_URN /tmp/create_slice.json`
-#echo $SLICE_URN
 
 
 # From here...
