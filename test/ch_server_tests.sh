@@ -87,8 +87,6 @@ python $CHAPIDIR/tools/json_extractor.py \
 
 # Create a second user, unpriv
 
-echo "H-1"
-
 UNPRIV_URN=urn:publicid:IDN+chtest+user+unpriv
 UNPRIV_EPPN=unpriv@geni.net
 invoke_client $MADIR/ma MA create_member /tmp/unpriv-raw.json \
@@ -100,9 +98,6 @@ invoke_client $MADIR/ma MA create_certificate \
 printf "{\"match\" : {\"_GENI_MEMBER_EPPN\" : \"%s\"}}\n" $UNPRIV_EPPN \
     > /tmp/lookup_opts_unpriv.json
 
-echo "H0"
-
-
 invoke_client $MADIR/ma MA lookup_login_info \
     /tmp/lookup_lli_unpriv.json \
     code 0 --options_file=/tmp/lookup_opts_unpriv.json
@@ -111,21 +106,14 @@ python $CHAPIDIR/tools/json_extractor.py \
     /tmp/lookup_lli_unpriv.json > /tmp/unpriv-key.pem
 #cat /tmp/unpriv-key.pem
 
-echo "H1"
-
 python $CHAPIDIR/tools/json_extractor.py \
     value,$UNPRIV_URN,_GENI_MEMBER_SSL_CERTIFICATE  \
     /tmp/lookup_lli_unpriv.json > /tmp/unpriv-cert.pem
 #cat /tmp/unpriv-cert.pem
 
-echo "H2"
-
-
 # Grant priv PI privileges
 $CHAPIDIR/bin/geni-add-member-privilege --keyfile=$MADIR/ma-key.pem \
-    --certfile=$MADIR/ma-cert.pem --url=$CH_URL --member priv --lead
-
-echo "H3"
+    --certfile=$MADIR/ma-cert.pem --url=$CH_URL --member priv --lead > /dev/null
 
 # Let priv create a project
 PROJECT_NAME=testproj
