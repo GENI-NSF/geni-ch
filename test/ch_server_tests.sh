@@ -64,7 +64,9 @@ PRIV_URN=urn:publicid:IDN+chtest+user+priv
 PRIV_EPPN=priv@geni.net
 invoke_client $MADIR/ma MA create_member /tmp/priv-raw.json \
     value,name=urn,value $PRIV_URN --string_arg=$PRIV_EPPN
-cat /tmp/priv-raw.json
+#cat /tmp/priv-raw.json
+PRIV_UID=`python $CHAPDIR/tools/json_extractor.py value:urn=$PRIV_URN:member_id /tmp/priv-raw.json`
+echo $PRIV_UID
 invoke_client $MADIR/ma MA create_certificate \
     /tmp/create_cert.out code 0 --urn=$PRIV_URN
 printf "{\"match\" : {\"_GENI_MEMBER_EPPN\" : \"%s\"}}\n" $PRIV_EPPN \
@@ -89,8 +91,10 @@ UNPRIV_URN=urn:publicid:IDN+chtest+user+unpriv
 UNPRIV_EPPN=unpriv@geni.net
 invoke_client $MADIR/ma MA create_member /tmp/unpriv-raw.json \
     value,name=urn,value $UNPRIV_URN --string_arg=$UNPRIV_EPPN
+UNPRIV_UID=`python $CHAPDIR/tools/json_extractor.py value:urn=$UNPRIV_URN:member_id /tmp/unpriv-raw.json`
+echo $UNPRIV_UID
 invoke_client $MADIR/ma MA create_certificate \
-    /tmp/create_cert.out code 0 --urn=$UNPRIV_URN
+    /tmp/create_cert.out code 0 --urn=$UNPRIV_URN 
 printf "{\"match\" : {\"_GENI_MEMBER_EPPN\" : \"%s\"}}\n" $UNPRIV_EPPN \
     > /tmp/lookup_opts_unpriv.json
 
@@ -117,7 +121,7 @@ PROJECT_NAME=testproj
 printf "{\"fields\" : {\"PROJECT_DESCRIPTION\" : \"description\", \"PROJECT_NAME\" : \"$PROJECT_NAME\", \"_GENI_PROJECT_OWNER\" : $PRIV_UID}}" > /tmp/create_project_options.json
 cat /tmp/create_project_options.json
 invoke_client /tmp/priv SA create_project /tmp/create_project.json \
-    --options_file=/tmp/create_project_options.json
+    code 0 --options_file=/tmp/create_project_options.json
 cat /tmp/create_project.json
 
 # From here...
