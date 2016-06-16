@@ -25,6 +25,7 @@ function invoke_client {
     local match=$5
     local expected=$6
     local additional=$7
+    local comment=$8
     python $CHAPIDIR/tools/client.py --method $method \
 	--url $CH_URL/$server \
 	--key $user_prefix-key.pem --cert $user_prefix-cert.pem \
@@ -35,7 +36,7 @@ function invoke_client {
 	echo "Test $TESTCOUNT: Expected $6, got $RESULT: METHOD $method, SERVER $server, USER $user_prefix"
         exit 1
     else
-	echo "Test $TESTCOUNT: $server.$method succeeded"
+	echo "Test $TESTCOUNT: $server.$method succeeded ($comment)"
     fi
 
     TESTCOUNT=$((TESTCOUNT+1))
@@ -141,7 +142,7 @@ PROJECT2_NAME=testproj2
 printf "{\"fields\" : {\"PROJECT_DESCRIPTION\" : \"description\", \"PROJECT_NAME\" : \"$PROJECT2_NAME\", \"_GENI_PROJECT_OWNER\" : \"$PRIV_UID\" }}" > /tmp/create_project_options.json
 #cat /tmp/create_project_options.json
 invoke_client /tmp/unpriv SA create_project /tmp/create_project.json \
-    code 2 --options_file=/tmp/create_project_options.json
+    code 2 --options_file=/tmp/create_project_options.json "UNPRIV can't create project"
 #cat /tmp/create_project.json
 
 # Let unpriv try (and fail) to create a slice in the original project 
@@ -149,8 +150,8 @@ SLICE_NAME=testslice2
 printf "{\"fields\" : {\"SLICE_DESCRIPTION\" : \"description\", \"SLICE_PROJECT_URN\" : \"$PROJECT_URN\", \"SLICE_NAME\" : \"$SLICE_NAME\" }}" > /tmp/create_slice_options.json
 #cat /tmp/create_slice_options.json
 invoke_client /tmp/unpriv SA create_slice /tmp/create_slice.json \
-    code 2 --options_file=/tmp/create_slice_options.json
-cat /tmp/create_slice.json
+    code 2 --options_file=/tmp/create_slice_options.json "UNPRIV can't create slice in testproj"
+#cat /tmp/create_slice.json
 
 
 # From here...
