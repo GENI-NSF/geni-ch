@@ -112,17 +112,20 @@ python $CHAPIDIR/tools/json_extractor.py \
     /tmp/lookup_lli_unpriv.json > /tmp/unpriv-cert.pem
 #cat /tmp/unpriv-cert.pem
 
-# Grant MA PI privileges
+# Grant priv PI privileges
 $CHAPIDIR/bin/geni-add-member-privilege --keyfile=$MADIR/ma-key.pem \
     --certfile=$MADIR/ma-cert.pem --url=$CH_URL --member priv --lead
 
+# Let priv create a project
 PROJECT_NAME=testproj
 
 printf "{\"fields\" : {\"PROJECT_DESCRIPTION\" : \"description\", \"PROJECT_NAME\" : \"$PROJECT_NAME\", \"_GENI_PROJECT_OWNER\" : \"$PRIV_UID\" }}" > /tmp/create_project_options.json
-cat /tmp/create_project_options.json
+#cat /tmp/create_project_options.json
 invoke_client /tmp/priv SA create_project /tmp/create_project.json \
     code 0 --options_file=/tmp/create_project_options.json
-cat /tmp/create_project.json
+#cat /tmp/create_project.json
+PROJECT_URN=`python $CHAPIDIR/tools/json_extractor.py value,PROJECT_URN
+echo $PROJECT_URN
 
 # From here...
 # priv succeeds to create a project
