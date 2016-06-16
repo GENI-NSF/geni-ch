@@ -385,6 +385,16 @@ def main(args=sys.argv, do_print=True):
             _do_ssl(framework, suppress_errors, reason, fcn, opts.type,
                     opts.credentials, client_options)
 
+    elif opts.method in ['lookup_slice_members', 'lookup_slices_for_member']:
+        (result, msg) = \
+            _do_ssl(framework, suppress_errors, reason, fcn, 'SLICE',
+                    opts.urn, opts.credentials, client_options)
+
+    elif opts.method in ['lookup_project_members', 'lookup_projects_for_member']:
+        (result, msg) = \
+            _do_ssl(framework, suppress_errors, reason, fcn, 'PROJECT',
+                    opts.urn, opts.credentials, client_options)
+
     elif opts.method in ['update', 'delete', 'modify_membership',
                          'lookup_members', 'lookup_for_member']:
         (result, msg) = \

@@ -153,10 +153,19 @@ invoke_client /tmp/unpriv SA create_slice /tmp/create_slice.json \
     code 2 --options_file=/tmp/create_slice_options.json "UNPRIV can't create slice in testproj"
 #cat /tmp/create_slice.json
 
+# Let unpriv try (and fail) to request members of testproj
+printf  "{\"match\" : {\"PROJECT_URN\" : \"$PROJECT_URN\"}}" > /tmp/lookup_project_members.json
+invoke_client /tmp/unpriv SA lookup_project_members /tmp/lookup_members.json \
+    code 2 --options_file=/tmp/lookup_project_members.json "UNPRIV can't lookup_members for testproj"
+
+# Let unpriv try (and fail) to request members of testslice
+printf  "{\"match\" : {\"SLICE_URN\" : \"$SLICE_URN\"}}" > /tmp/lookup_slice_members.json
+invoke_client /tmp/unpriv SA lookup_slice_members /tmp/lookup_members.json \
+    code 2 --options_file=/tmp/lookup_slice_members.json "UNPRIV can't lookup_members for testslice"
+
+
 
 # From here...
-# unpriv fails to create a project
-# unpriv fails to create a slice in project
 # unpriv fails to ask for members of given project
 # unpriv fails to ask for members of given slice
 # priv adds unpriv to the project
