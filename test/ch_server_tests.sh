@@ -114,7 +114,7 @@ python $CHAPIDIR/tools/json_extractor.py \
 
 # Grant MA PI privileges
 $CHAPIDIR/bin/geni-add-member-privilege --keyfile=$MADIR/ma/ma-key.pem \
-    --certfile=$MADIR/ma/ma-cert.pem -url $CH_URL --member priv --lead
+    --certfile=$MADIR/ma/ma-cert.pem -url=$CH_URL --member priv --lead
 
 PROJECT_NAME=testproj
 
