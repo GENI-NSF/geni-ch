@@ -124,11 +124,22 @@ printf "{\"fields\" : {\"PROJECT_DESCRIPTION\" : \"description\", \"PROJECT_NAME
 invoke_client /tmp/priv SA create_project /tmp/create_project.json \
     code 0 --options_file=/tmp/create_project_options.json
 #cat /tmp/create_project.json
-PROJECT_URN=`python $CHAPIDIR/tools/json_extractor.py value,PROJECT_URN
+PROJECT_URN=`python $CHAPIDIR/tools/json_extractor.py value,PROJECT_URN /tmp/create_project.json`
 echo $PROJECT_URN
 
+# Let priv create a slice in the project
+{'fields': {'SLICE_DESCRIPTION': '', 'SLICE_PROJECT_URN': 'urn:publicid:IDN+ch-mb.gpolab.bbn.com+project+FOO', 'SLICE_NAME': 'BAR'}
+SLICE_NAME=testslice
+printf "{\"fields\" : {\"SLICE_DESCRIPTION\" : \"description\", \"SLICE_PROJECT_URN\" : \"$PROJECT_URN\", \"SLICE_NAME\" : \"$SLICE_NAME\" }}" > /tmp/create_slice_options.json
+cat /tmp/create_slice_options.json
+invoke_client /tmp/priv SA create_slice /tmp/create_slice.json \
+    code 0 --options_file=/tmp/create_slice_options.json
+cat /tmp/create_slice.json
+SLICE_URN=`python $CHAPIDIR/tools/json_extractor.py value,SLICE_URN /tmp/create_slice.json`
+echo $SLICE_URN
+
+
 # From here...
-# priv succeeds to create a project
 # priv succeeds to create a slice in project
 # unpriv fails to create a project
 # unpriv fails to create a slice in project
