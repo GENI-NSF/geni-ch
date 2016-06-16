@@ -5,6 +5,7 @@
 
 HOME=`pwd`
 CHAPIDIR=$HOME
+TESTCOUNT=0
 
 # set -x
  
@@ -27,11 +28,13 @@ function invoke_client {
     RESULT=`python $CHAPIDIR/tools/json_extractor.py $match $outfile`
 
     if [ $RESULT != $6 ]; then
-	echo "Expected $6, got $RESULT: METHOD $method, SERVER $server, USER $user_prefix"
+	echo "Test $TESTCOUNT: Expected $6, got $RESULT: METHOD $method, SERVER $server, USER $user_prefix"
         exit 1
     else
-	echo "Match $RESULT: METHOD $method, SERVER $server, USER $user_prefix"
+	echo "Test $TESTCOUNT: $server.$method succeeded"
     fi
+
+    TESTCOUNT=$((TESTCOUNT+1))
 }
 
 # Wait for the server to start up
