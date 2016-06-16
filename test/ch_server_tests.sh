@@ -34,7 +34,7 @@ function invoke_client {
 
     if [ $RESULT != $6 ]; then
 	echo "Test $TESTCOUNT: Expected $6, got $RESULT: METHOD $method, SERVER $server, USER $user_prefix"
-	cat $OUTFILE
+	cat $outfile
         exit 1
     else
 	echo "Test $TESTCOUNT: $server.$method succeeded ($comment)"
