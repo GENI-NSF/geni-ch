@@ -188,7 +188,7 @@ invoke_client /tmp/unpriv SA lookup_slice_members /tmp/lookup_members.json \
 # priv adds unpriv to project
 echo "# Add unpriv to project $PROJECT_NAME"
 printf "{\"members_to_add\" : [{\"PROJECT_MEMBER\" : \"$UNPRIV_URN\", \"PROJECT_ROLE\" : \"MEMBER\"}]}" > /tmp/modify_project_membership.json
-cat /tmp/modify_project_membeship.json
+#cat /tmp/modify_project_membership.json
 invoke_client /tmp/priv SA modify_membership /tmp/modify_membership.json \
     code 0 \
     --type=PROJECT \
@@ -203,9 +203,29 @@ invoke_client /tmp/priv SA modify_membership /tmp/modify_membership.json \
     --type=SLICE \
     --urn=$SLICE_URN --options_filename=/tmp/modify_slice_membership.json 
 
+# Now unpriv should b eable to create a slice and ask for members in slice and project
 
-# From here...
-# unpriv succeeds to create a slice in project
-# unpriv succeeds to ask for members of given project
-# unpriv succeeds to ask for members of given slice
+# Let unpriv try (and fail) to create a slice in the original project 
+SLICE2_NAME=testslice2
+printf "{\"fields\" : {\"SLICE_DESCRIPTION\" : \"description\", \"SLICE_PROJECT_URN\" : \"$PROJECT_URN\", \"SLICE_NAME\" : \"$SLICE2_NAME\" }}" > /tmp/create_slice_options.json
+#cat /tmp/create_slice_options.json
+echo "# Attempt (and succeed) to create slice $SLICE_NAME by unpriv user"
+invoke_client /tmp/unpriv SA create_slice /tmp/create_slice.json \
+    code 2 --options_file=/tmp/create_slice_options.json "UNPRIV can't create slice in testproj"
+#cat /tmp/create_slice.json
+
+# Let unpriv try (and fail) to request members of testproj
+printf  "{\"match\" : {\"PROJECT_URN\" : \"$PROJECT_URN\"}}" > /tmp/lookup_project_members.json
+echo "# Attempt (and succeed) to lookup members of $PROJECT_NAME by unpriv user"
+invoke_client /tmp/unpriv SA lookup_project_members /tmp/lookup_members.json \
+    code 0 --options_file=/tmp/lookup_project_members.json "UNPRIV can't lookup_members for testproj"
+#cat /tmp/lookup_members.json
+
+# Let unpriv try (and fail) to request members of testslice
+printf  "{\"match\" : {\"SLICE_URN\" : \"$SLICE_URN\"}}" > /tmp/lookup_slice_members.json
+echo "# Attempt (and succeed) to lookup members of slice $SLICE_NAME by unpriv user"
+invoke_client /tmp/unpriv SA lookup_slice_members /tmp/lookup_members.json \
+    code 0 --options_file=/tmp/lookup_slice_members.json 
+#cat /tmp/lookup_members.json
+
 
