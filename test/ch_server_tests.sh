@@ -149,7 +149,7 @@ SLICE_NAME=testslice2
 printf "{\"fields\" : {\"SLICE_DESCRIPTION\" : \"description\", \"SLICE_PROJECT_URN\" : \"$PROJECT_URN\", \"SLICE_NAME\" : \"$SLICE_NAME\" }}" > /tmp/create_slice_options.json
 #cat /tmp/create_slice_options.json
 invoke_client /tmp/unpriv SA create_slice /tmp/create_slice.json \
-    code 3 --options_file=/tmp/create_slice_options.json
+    code 2 --options_file=/tmp/create_slice_options.json
 cat /tmp/create_slice.json
 
 
