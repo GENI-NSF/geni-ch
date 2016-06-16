@@ -168,8 +168,6 @@ cat /tmp/lookup_members.json
 
 
 # From here...
-# unpriv fails to ask for members of given project
-# unpriv fails to ask for members of given slice
 # priv adds unpriv to the project
 # unpriv succeeds to create a slice in project
 # unpriv succeeds to ask for members of given project
