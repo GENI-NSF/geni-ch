@@ -211,14 +211,21 @@ printf "{\"fields\" : {\"SLICE_DESCRIPTION\" : \"description\", \"SLICE_PROJECT_
 #cat /tmp/create_slice_options.json
 echo "# Attempt (and succeed) to create slice $SLICE_NAME by unpriv user"
 invoke_client /tmp/unpriv SA create_slice /tmp/create_slice.json \
-    code 2 --options_file=/tmp/create_slice_options.json "UNPRIV can't create slice in testproj"
+    code 2 --options_file=/tmp/create_slice_options.json 
 #cat /tmp/create_slice.json
 
 # Let unpriv try (and fail) to request members of testproj
 printf  "{\"match\" : {\"PROJECT_URN\" : \"$PROJECT_URN\"}}" > /tmp/lookup_project_members.json
 echo "# Attempt (and succeed) to lookup members of $PROJECT_NAME by unpriv user"
+invoke_client /tmp/priv SA lookup_project_members /tmp/lookup_members.json \
+    code 0 --options_file=/tmp/lookup_project_members.json 
+cat /tmp/lookup_members.json
+
+# Let unpriv try (and fail) to request members of testproj
+printf  "{\"match\" : {\"PROJECT_URN\" : \"$PROJECT_URN\"}}" > /tmp/lookup_project_members.json
+echo "# Attempt (and succeed) to lookup members of $PROJECT_NAME by unpriv user"
 invoke_client /tmp/unpriv SA lookup_project_members /tmp/lookup_members.json \
-    code 0 --options_file=/tmp/lookup_project_members.json "UNPRIV can't lookup_members for testproj"
+    code 0 --options_file=/tmp/lookup_project_members.json 
 #cat /tmp/lookup_members.json
 
 # Let unpriv try (and fail) to request members of testslice
