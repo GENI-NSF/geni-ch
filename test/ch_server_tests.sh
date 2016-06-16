@@ -65,7 +65,7 @@ PRIV_EPPN=priv@geni.net
 invoke_client $MADIR/ma MA create_member /tmp/priv-raw.json \
     value,name=urn,value $PRIV_URN --string_arg=$PRIV_EPPN
 #cat /tmp/priv-raw.json
-PRIV_UID=`python $CHAPIDIR/tools/json_extractor.py value:urn=$PRIV_URN:member_id /tmp/priv-raw.json`
+PRIV_UID=`python $CHAPIDIR/tools/json_extractor.py value:value=$PRIV_URN:member_id /tmp/priv-raw.json`
 echo $PRIV_UID
 invoke_client $MADIR/ma MA create_certificate \
     /tmp/create_cert.out code 0 --urn=$PRIV_URN
@@ -91,7 +91,7 @@ UNPRIV_URN=urn:publicid:IDN+chtest+user+unpriv
 UNPRIV_EPPN=unpriv@geni.net
 invoke_client $MADIR/ma MA create_member /tmp/unpriv-raw.json \
     value,name=urn,value $UNPRIV_URN --string_arg=$UNPRIV_EPPN
-UNPRIV_UID=`python $CHAPIDIR/tools/json_extractor.py value:urn=$UNPRIV_URN:member_id /tmp/unpriv-raw.json`
+UNPRIV_UID=`python $CHAPIDIR/tools/json_extractor.py value:value=$UNPRIV_URN:member_id /tmp/unpriv-raw.json`
 echo $UNPRIV_UID
 invoke_client $MADIR/ma MA create_certificate \
     /tmp/create_cert.out code 0 --urn=$UNPRIV_URN 
