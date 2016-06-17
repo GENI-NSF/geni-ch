@@ -193,7 +193,7 @@ invoke_client /tmp/priv SA modify_membership /tmp/modify_membership.json \
     code 0 \
     --type=PROJECT \
     --urn=$PROJECT_URN --options_filename=/tmp/modify_project_membership.json 
-
+cat /tmp/modify_membership.json
 
 # priv adds unpriv to slice
 echo "# Add unpriv to slice $SLICE_NAME"
@@ -202,6 +202,7 @@ invoke_client /tmp/priv SA modify_membership /tmp/modify_membership.json \
     code 0 \
     --type=SLICE \
     --urn=$SLICE_URN --options_filename=/tmp/modify_slice_membership.json 
+cat /tmp/modify_membership.json
 
 # Now unpriv should be able to create a slice and ask for members in slice and project
 
