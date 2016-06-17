@@ -13,9 +13,8 @@ before_script:
   - export PYTHONPATH=$PYTHONPATH:/tmp/geni-tools-2.10/src
   - test/setup_test_ch_server.sh
 script:
-#  - test/travis-build
+  - test/travis-build
   - python -m unittest discover test
-  - echo "MSB TESTING"
   - test/ch_server_tests.sh
 
 
