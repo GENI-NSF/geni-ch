@@ -25,11 +25,12 @@ function invoke_client {
     local match=$5
     local expected=$6
     local additional1=$7
-    local additional1=$8
+    local additional2=$8
+    local additional3=$9
     python $CHAPIDIR/tools/client.py --method $method \
 	--url $CH_URL/$server \
 	--key $user_prefix-key.pem --cert $user_prefix-cert.pem \
-        $7 $8 --raw_output > $outfile
+        $7 $8 $9 --raw_output > $outfile
     RESULT=`python $CHAPIDIR/tools/json_extractor.py $match $outfile`
 
     if [ $RESULT != $6 ]; then
