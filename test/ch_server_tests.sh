@@ -193,8 +193,8 @@ invoke_client /tmp/priv SA modify_membership /tmp/modify_membership.json \
     code 0 \
     --type=PROJECT \
     --urn=$PROJECT_URN --options_file=/tmp/modify_project_membership.json 
-#cat /tmp/modify_project_membership.json
-#cat /tmp/modify_membership.json
+cat /tmp/modify_project_membership.json
+cat /tmp/modify_membership.json
 
 # priv adds unpriv to slice
 echo "# Add unpriv to slice $SLICE_NAME"
@@ -203,9 +203,12 @@ invoke_client /tmp/priv SA modify_membership /tmp/modify_membership.json \
     code 0 \
     --type=SLICE \
     --urn=$SLICE_URN --options_file=/tmp/modify_slice_membership.json 
-#cat /tmp/modify_slice_membership.json
-#cat /tmp/modify_membership.json
-#cat /tmp/test_server.log
+cat /tmp/modify_slice_membership.json
+cat /tmp/modify_membership.json
+cat /tmp/test_server.log
+
+
+# *** TO BE REMOVED ***
 
 # Let priv try (and succeed) to request members of testproj
 printf  "{\"match\" : {\"PROJECT_URN\" : \"$PROJECT_URN\"}}" > /tmp/lookup_project_members.json
@@ -221,6 +224,7 @@ invoke_client /tmp/priv SA lookup_slice_members /tmp/lookup_members.json \
     code 0 --options_file=/tmp/lookup_slice_members.json 
 cat /tmp/lookup_members.json
 
+# *** TO BE REMOVED ***
 
 # Now unpriv should be able to create a slice and ask for members in slice and project
 
