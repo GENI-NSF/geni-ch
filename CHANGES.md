@@ -4,11 +4,17 @@
 
 ## Changes
 
-* None
+* Remove InstaGENI FOAM aggregates
+([#514](https://github.com/GENI-NSF/geni-ch/issues/514))
 
 ## Installation Notes
 
-* None
+* Delete outdated service registry files _prior_ to installation:
+
+```shell
+sudo rm -rf /usr/share/geni-chapi/sr/certs
+sudo rm -rf /usr/share/geni-chapi/sr/sql
+```
 
 # [Release 2.13](https://github.com/GENI-NSF/geni-ch/milestones/2.13)
 
