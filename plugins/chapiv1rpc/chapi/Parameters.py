@@ -1,4 +1,4 @@
-#----------------------------------------------------------------------
+# ----------------------------------------------------------------------
 # Copyright (c) 2011-2016 Raytheon BBN Technologies
 #
 # Permission is hereby granted, free of charge, to any person obtaining
@@ -19,7 +19,7 @@
 # WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE WORK OR THE USE OR OTHER DEALINGS
 # IN THE WORK.
-#----------------------------------------------------------------------
+# ----------------------------------------------------------------------
 
 import tools.pluginmanager as pm
 
@@ -179,6 +179,7 @@ def get_typed_value(parser, section, option, value_type):
                    msg % (value_type.__name__, pname))
     return value
 
+
 def param_to_secopt(param):
     """Convert a parameter name to INI section and option.
     Split on the first dot. If not dot exists, return name
@@ -193,6 +194,7 @@ def param_to_secopt(param):
         section = param[0:sep_loc]
         option = param[sep_loc+1:]
     return (section, option)
+
 
 def set_parameters():
     config = pm.getService("config")
@@ -237,7 +239,7 @@ def set_parameters():
                            msg % (pname, value, source))
                 config.set(pname, value)
                 if pname in required_config_params:
-                    required_config_params.remove(pname);
+                    required_config_params.remove(pname)
 
     # If any required parameters are not provided by chapi.ini, log
     # error and raise exception
@@ -384,7 +386,7 @@ def configure_logging():
     toremove = None
     handlers = amsoillogger.handlers
     if len(handlers) == 0:
-        #logging.debug("0 handlers for amsoil logger")
+        # logging.debug("0 handlers for amsoil logger")
         if amsoillogger.parent:
             handlers = amsoillogger.parent.handlers
             logging.debug("Looking at parent for the proper handlers (has %d)", len(handlers))
@@ -413,7 +415,7 @@ def configure_logging():
     toremove = None
     handlers = chapilogger.handlers
     if len(handlers) == 0:
-        #logging.debug("0 handlers for chapi logger")
+        # logging.debug("0 handlers for chapi logger")
         if chapilogger.parent:
             handlers = chapilogger.parent.handlers
             logging.debug("Looking at parent for the proper handlers (has %d)", len(handlers))
