@@ -61,9 +61,9 @@ default_parameters = [
     {
         NAME_KEY: 'chapiv1rpc.ch_cert_root',
         VALUE_KEY: os.path.join(GCF_ROOT, 'trusted_roots'),
-        DESC_KEY: ("Folder which includes trusted clearinghouse certificates"
-                   + " for GENI API v3 (in .pem format). If relative path,"
-                   + " the root is assumed to be git repo root.")
+        DESC_KEY: ("Folder which includes trusted clearinghouse certificates" +
+                   " for GENI API v3 (in .pem format). If relative path," +
+                   " the root is assumed to be git repo root.")
     },
     {
         NAME_KEY: "chapiv1rpc.ch_cert",
@@ -152,6 +152,7 @@ default_parameters = [
     }
 ]
 
+
 # Allow clients to set an optional auxiliary config file to
 # be parsed after CONFIG_FILE and DEV_CONFIG_FILE
 def set_auxiliary_config_file(filename):
@@ -197,7 +198,7 @@ def set_parameters():
     config = pm.getService("config")
 
     required_config_params = []
-    default_parameter_names = [] # Keep list of all defined parameter names
+    default_parameter_names = []  # Keep list of all defined parameter names
     for param in default_parameters:
         default_parameter_names.append(param[NAME_KEY])
 
@@ -243,12 +244,12 @@ def set_parameters():
     if len(required_config_params) > 0:
         for pname in required_config_params:
             chapi_info('PARAMETERS',
-                       'Required parameter not set in %s: %s' % \
-                           (CONFIG_FILE, pname))
+                       'Required parameter not set in %s: %s' %
+                       (CONFIG_FILE, pname))
 
-        raise CHAPIv1ConfigurationError("Required params missing %s: %s" %\
-                                            (CONFIG_FILE,
-                                             ",".join(required_config_params)))
+        raise CHAPIv1ConfigurationError("Required params missing %s: %s" %
+                                        (CONFIG_FILE,
+                                         ",".join(required_config_params)))
 
     # If any parameters are provided in chapi.ini but not in default_parameters
     # Warn but don't raise exception
@@ -268,6 +269,7 @@ def set_parameters():
     if AUX_CONFIG_FILE:
         override_parameters(AUX_CONFIG_FILE, "auxiliary")
 
+
 def override_parameters(config_filename, config_label):
 
     config = pm.getService("config")
@@ -277,11 +279,12 @@ def override_parameters(config_filename, config_label):
     if len(result) != 1:
         # file was not read, warn and return
         chapi_debug('PARAMETERS',
-                   'Unable to read developer %s file %s' % \
-                        (config_label, config_filename))
+                    'Unable to read developer %s file %s' %
+                    (config_label, config_filename))
     else:
-        chapi_warn('PARAMETERS', "Over-riding configs using %s config file %s"\
-                       % (config_label, config_filename))
+        chapi_warn('PARAMETERS',
+                   "Over-riding configs using %s config file %s" %
+                   (config_label, config_filename))
         # FIXME: Only allow log settings to be changed?
         for param in default_parameters:
             pname = param[NAME_KEY]
@@ -296,8 +299,9 @@ def override_parameters(config_filename, config_label):
                     # If a value was extracted, set it
                     msg = 'Setting parameter %s to %s from %s'
                     chapi_info('PARAMETERS',
-                                msg % (pname, value, config_filename))
+                               msg % (pname, value, config_filename))
                     config.set(pname, value)
+
 
 def configure_logging():
     config = pm.getService("config")
