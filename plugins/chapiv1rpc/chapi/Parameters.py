@@ -46,11 +46,11 @@ GCF_ROOT = os.path.join(GENI_CH_DIR, 'portal', 'gcf.d')
 
 VERSION_NUMBER = '2'
 
-# NOTE: Some parameters have default values and are thus optional in chapi.ini 
+# NOTE: Some parameters have default values and are thus optional in chapi.ini
 # Values in chapi.in override the defaults if they are there.
-# But some parameters do not have defaults, and if chapi.ini does not 
+# But some parameters do not have defaults, and if chapi.ini does not
 # provide them, an error message is logged and the process throws an exception.
-# If chapi.ini has a parameter no listed in default_parameters, 
+# If chapi.ini has a parameter no listed in default_parameters,
 # an message is logged but no exception is thrown.
 
 NAME_KEY = 'name'
@@ -59,7 +59,7 @@ DESC_KEY = 'desc'
 
 default_parameters = [
     {
-        NAME_KEY: 'chapiv1rpc.ch_cert_root', 
+        NAME_KEY: 'chapiv1rpc.ch_cert_root',
         VALUE_KEY: os.path.join(GCF_ROOT, 'trusted_roots'),
         DESC_KEY: ("Folder which includes trusted clearinghouse certificates"
                    + " for GENI API v3 (in .pem format). If relative path,"
@@ -152,7 +152,7 @@ default_parameters = [
     }
 ]
 
-# Allow clients to set an optional auxiliary config file to 
+# Allow clients to set an optional auxiliary config file to
 # be parsed after CONFIG_FILE and DEV_CONFIG_FILE
 def set_auxiliary_config_file(filename):
     global AUX_CONFIG_FILE
@@ -198,7 +198,7 @@ def set_parameters():
 
     required_config_params = []
     default_parameter_names = [] # Keep list of all defined parameter names
-    for param in default_parameters: 
+    for param in default_parameters:
         default_parameter_names.append(param[NAME_KEY])
 
     # Set up the defaults. Keep track of params with no defaults
@@ -223,7 +223,7 @@ def set_parameters():
             value = None
             value_type = str
             source = "default_parameters"
-            if VALUE_KEY in param: 
+            if VALUE_KEY in param:
                 value = param[VALUE_KEY]
                 value_type = type(value)
             if parser.has_option(section, option):
@@ -242,12 +242,12 @@ def set_parameters():
     # error and raise exception
     if len(required_config_params) > 0:
         for pname in required_config_params:
-            chapi_info('PARAMETERS', 
+            chapi_info('PARAMETERS',
                        'Required parameter not set in %s: %s' % \
                            (CONFIG_FILE, pname))
-        
+
         raise CHAPIv1ConfigurationError("Required params missing %s: %s" %\
-                                            (CONFIG_FILE, 
+                                            (CONFIG_FILE,
                                              ",".join(required_config_params)))
 
     # If any parameters are provided in chapi.ini but not in default_parameters
@@ -256,20 +256,20 @@ def set_parameters():
         for item in parser.items(section):
             pname = "%s.%s" % (section, item[0])
             if pname not in default_parameter_names:
-                chapi_info('PARAMETERS', 
-                           'Unrecognized parameter found in %s: %s' % 
+                chapi_info('PARAMETERS',
+                           'Unrecognized parameter found in %s: %s' %
                            (CONFIG_FILE, pname))
 
     # Overwrite the base settings with values from the developer config file
     override_parameters(DEV_CONFIG_FILE, "developer")
 
-    # If an 'auxiliary' config file is provided, 
+    # If an 'auxiliary' config file is provided,
     # override the parameters from that file
     if AUX_CONFIG_FILE:
         override_parameters(AUX_CONFIG_FILE, "auxiliary")
 
 def override_parameters(config_filename, config_label):
-    
+
     config = pm.getService("config")
 
     parser = ConfigParser.SafeConfigParser()
