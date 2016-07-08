@@ -33,9 +33,9 @@ from chapi_log import *
 def send_email(to_list,fromaddr,replyaddr,subject,msgbody,cc_list=None):
     # If no fromaddr is set, email is disabled
     chapi_info("SEND_EMAIL", "FROMADDR = %s" % fromaddr)
-    if fromaddr == "" or fromaddr == None or fromaddr == "None": return 
+    if fromaddr == "" or fromaddr == None or fromaddr == "None": return
 
-    # Note that to make an address be pretty, create the string as 
+    # Note that to make an address be pretty, create the string as
     # "%s <%s>" % (pretty_name, email_address"
     if msgbody is None:
         msgbody = ""
@@ -67,7 +67,7 @@ def send_email(to_list,fromaddr,replyaddr,subject,msgbody,cc_list=None):
                 continue
             cc_hdr += cc + ", "
         msg['Cc'] = Header(cc_hdr[:-2], 'utf-8')
-        toaddrs = to_list + cc_list 
+        toaddrs = to_list + cc_list
     else:
         toaddrs = to_list
     # Setting Precedence and Auto-Submitted seem to cause enough mail
@@ -97,7 +97,7 @@ def get_code_timestamp(log_prefix):
         code_timestamp = datetime.datetime.fromtimestamp(raw_timestamp)
     except Exception as e:
         code_timestamp = None
-        chapi_error(log_prefix, 
+        chapi_error(log_prefix,
                     "Can't find code tag file %s" % CHAPI_CODE_TAG_FILE)
     return code_timestamp
 
