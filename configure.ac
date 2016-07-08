@@ -1,4 +1,7 @@
-AC_INIT([geni-chapi], [2.14], [portal-help@geni.net])
+# Specify package name, version, bug report URL, tar name, and URL
+AC_INIT([GENI Clearinghouse], [2.14],
+        [https://github.com/GENI-NSF/geni-ch/issues], [geni-chapi],
+        [https://github.com/GENI-NSF/geni-ch])
 AM_INIT_AUTOMAKE([foreign -Wall -Wno-portability])
 AC_PROG_MKDIR_P
 AC_PROG_INSTALL
