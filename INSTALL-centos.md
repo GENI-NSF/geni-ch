@@ -1,15 +1,18 @@
 Installation on CentOS 7
 ========================
 
-Update the OS and install EPEL
+Introduction
+------------
+These instructions are for installing the GENI Clearinghouse.  Information on the Clearinghouse can be found at:
+
+http://groups.geni.net/geni/wiki/GeniClearinghouse
+
+Update the OS
 ------------------------------
 
 ```Shell
 # update the OS
 sudo yum update -y
-
-# Install the EPEL repository
-sudo yum install -y epel-release
 ```
 
 Ensure SELinux is disabled
@@ -50,7 +53,7 @@ sudo curl "${URL_BASE}"/centos/geni.repo -o /etc/yum.repos.d/geni.repo
 Installing the GENI Clearinghouse package
 -----------------------------------------
 
-Once the server knows about the RPM repository, it is easy to 
+Once the server knows about the RPM repository, it is easy to
 install the geni clearinghouse package:
 
 ```Shell
@@ -73,6 +76,14 @@ sudo cp /etc/geni-chapi/example-parameters.json /etc/geni-chapi/parameters.json
 
 Edit `/etc/geni-chapi/parameters.json`:
 * Make sure to set `db_host` and `ch_host`!!
+
+Do this by adding a line of the format:
+
+```
+"default" : "hostname.domain.tld"
+```
+
+to the appropriate sections of the file.
 
 ```Shell
 sudo /usr/sbin/geni-install-templates
@@ -198,37 +209,10 @@ cat /usr/share/geni-ch/CA/cacert.pem /usr/share/geni-ch/ma/ma-cert.pem > /tmp/ca
 sudo cp /tmp/ca-ma-cert.pem /usr/share/geni-ch/CA
 ```
 
-Install AMSoil
---------------
+Restart httpd
 
 ```Shell
-# Be sure wget is available
-sudo yum install -y wget
-
-cd $CH_DIR/chapi
-sudo wget https://github.com/GENI-NSF/geni-soil/archive/gpo-0.3.3.tar.gz
-sudo tar zxf gpo-0.3.3.tar.gz 
-sudo rm gpo-0.3.3.tar.gz
-sudo ln -s geni-soil-gpo-0.3.3 AMsoil
-
-sudo chown apache.apache $CH_DIR/chapi/AMsoil/deploy
-sudo touch $CH_DIR/chapi/AMsoil/log/amsoil.log
-sudo chmod a+w $CH_DIR/chapi/AMsoil/log/amsoil.log
-sudo mkdir /var/log/geni-chapi
-sudo touch /var/log/geni-chapi/chapi.log
-sudo chmod a+w /var/log/geni-chapi/chapi.log
-
-# Set up amsoil links to CHAPI plugins
-cd $CH_DIR/chapi/AMsoil/src/plugins
-for pl in chrm chapiv1rpc sarm marm csrm logging opsmon flaskrest
-do
-    sudo ln -s $CH_DIR/chapi/chapi/plugins/$pl .
-done
-
-cd /usr/share/geni-ch/chapi/AMsoil/src
-sudo ln -s main.py main.fcgi
-
-sudo systemctl restart httpd.service
+sudo systemctl start httpd.service
 ```
 
 Install and configure postfix
@@ -293,8 +277,6 @@ python /usr/share/geni-ch/chapi/chapi/tools/client.py \
 
 Test Slice Authority (port 443)
 ```Shell
-cd /usr/share/geni-ch/chapi/chapi/tools
-# export PYTHONPATH=/usr/share/geni-ch/gcf/src
 python /usr/share/geni-ch/chapi/chapi/tools/client.py \
        --cert /usr/share/geni-ch/ma/ma-cert.pem \
        --key /usr/share/geni-ch/ma/ma-key.pem \
@@ -304,9 +286,9 @@ python /usr/share/geni-ch/chapi/chapi/tools/client.py \
 Add portal as a trusted tool
 ----------------------------
 
-When you have a GENI Portal that you want to test with this clearinghouse
-you must configure the clearinghouse to expect communication from the
-portal. Use this command, 
+When you have a GENI Portal that you want to test with this Clearinghouse
+you must configure the Clearinghouse to expect communication from the
+portal. Use this command,
 
 ```Shell
 AUTHORITY=`geni-install-templates --print_parameter ch_authority`
@@ -315,3 +297,7 @@ PORTAL_URN=urn:publicid:IDN+${AUTHORITY}+authority+portal
 geni-add-trusted-tool -d portal -u portal -p portal --host localhost \
     'GENI Portal' "${PORTAL_URN}"
 ```
+
+Open up Firewall if necessary
+-----------------------------
+If your machine is running firewall software it may be necessary for you to add rules to allow connections to the Clearinghouse.  The ports that need to be open are 22(SSH), 80(HTTP), 443(HTTPS) and 8444(Clearinghouse).

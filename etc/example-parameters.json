@@ -33,7 +33,7 @@
 	   },
 	   {
 	      "name" : "db_host",
-	      "doc" : "Nost of CH database instance"
+	      "doc" : "Host of CH database instance"
 	   },
 	   {
 	      "name" : "db_name",

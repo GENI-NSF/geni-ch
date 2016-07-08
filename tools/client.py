@@ -102,7 +102,7 @@ def parseOptions(args):
     parser.add_option("--credentials",
                       help="List of comma-separated credential files",
                       default="")
-    parser.add_option("--raw_output", action="store_true", 
+    parser.add_option("--raw_output", action="store_true",
                       dest="raw_output", default=False)
 
     [opts, args] = parser.parse_args(args)
@@ -405,7 +405,7 @@ def main(args=sys.argv, do_print=True):
     # Lookup login info (authorities only)
     elif opts.method in ['lookup_login_info']:
         (result, msg) = \
-            _do_ssl(framework, suppress_errors, reason, fcn, 
+            _do_ssl(framework, suppress_errors, reason, fcn,
                     opts.credentials, client_options)
 
     # Portal query
