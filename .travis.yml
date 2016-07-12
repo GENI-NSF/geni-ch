@@ -11,6 +11,10 @@ before_script:
   - wget https://github.com/GENI-NSF/geni-tools/archive/v2.10.tar.gz -O /tmp/geni-tools.tar.gz
   - tar -xf /tmp/geni-tools.tar.gz -C /tmp
   - export PYTHONPATH=$PYTHONPATH:/tmp/geni-tools-2.10/src
+  - test/setup_test_ch_server.sh
 script:
   - test/travis-build
   - python -m unittest discover test
+  - test/ch_server_tests.sh
+
+

@@ -1,4 +1,4 @@
-#----------------------------------------------------------------------
+# ----------------------------------------------------------------------
 # Copyright (c) 2011-2016 Raytheon BBN Technologies
 #
 # Permission is hereby granted, free of charge, to any person obtaining
@@ -19,7 +19,7 @@
 # WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE WORK OR THE USE OR OTHER DEALINGS
 # IN THE WORK.
-#----------------------------------------------------------------------
+# ----------------------------------------------------------------------
 
 import tools.pluginmanager as pm
 
@@ -36,6 +36,7 @@ import os.path
 GENI_CH_CONF_DIR = '/etc/geni-chapi'
 CONFIG_FILE = os.path.join(GENI_CH_CONF_DIR, 'chapi.ini')
 DEV_CONFIG_FILE = os.path.join(GENI_CH_CONF_DIR, 'chapi-dev.ini')
+AUX_CONFIG_FILE = None
 
 GENI_CH_DIR = '/usr/share/geni-ch'
 CA_DIR = os.path.join(GENI_CH_DIR, 'CA')
@@ -45,11 +46,11 @@ GCF_ROOT = os.path.join(GENI_CH_DIR, 'portal', 'gcf.d')
 
 VERSION_NUMBER = '2'
 
-# NOTE: Some parameters have default values and are thus optional in chapi.ini 
+# NOTE: Some parameters have default values and are thus optional in chapi.ini
 # Values in chapi.in override the defaults if they are there.
-# But some parameters do not have defaults, and if chapi.ini does not 
+# But some parameters do not have defaults, and if chapi.ini does not
 # provide them, an error message is logged and the process throws an exception.
-# If chapi.ini has a parameter no listed in default_parameters, 
+# If chapi.ini has a parameter no listed in default_parameters,
 # an message is logged but no exception is thrown.
 
 NAME_KEY = 'name'
@@ -58,11 +59,11 @@ DESC_KEY = 'desc'
 
 default_parameters = [
     {
-        NAME_KEY: 'chapiv1rpc.ch_cert_root', 
+        NAME_KEY: 'chapiv1rpc.ch_cert_root',
         VALUE_KEY: os.path.join(GCF_ROOT, 'trusted_roots'),
-        DESC_KEY: ("Folder which includes trusted clearinghouse certificates"
-                   + " for GENI API v3 (in .pem format). If relative path,"
-                   + " the root is assumed to be git repo root.")
+        DESC_KEY: ("Folder which includes trusted clearinghouse certificates" +
+                   " for GENI API v3 (in .pem format). If relative path," +
+                   " the root is assumed to be git repo root.")
     },
     {
         NAME_KEY: "chapiv1rpc.ch_cert",
@@ -152,6 +153,13 @@ default_parameters = [
 ]
 
 
+# Allow clients to set an optional auxiliary config file to
+# be parsed after CONFIG_FILE and DEV_CONFIG_FILE
+def set_auxiliary_config_file(filename):
+    global AUX_CONFIG_FILE
+    AUX_CONFIG_FILE = os.path.join(GENI_CH_CONF_DIR, filename)
+
+
 def get_typed_value(parser, section, option, value_type):
     """Get a typed value from a ConfigParser.
 
@@ -171,6 +179,7 @@ def get_typed_value(parser, section, option, value_type):
                    msg % (value_type.__name__, pname))
     return value
 
+
 def param_to_secopt(param):
     """Convert a parameter name to INI section and option.
     Split on the first dot. If not dot exists, return name
@@ -186,12 +195,13 @@ def param_to_secopt(param):
         option = param[sep_loc+1:]
     return (section, option)
 
+
 def set_parameters():
     config = pm.getService("config")
 
     required_config_params = []
-    default_parameter_names = [] # Keep list of all defined parameter names
-    for param in default_parameters: 
+    default_parameter_names = []  # Keep list of all defined parameter names
+    for param in default_parameters:
         default_parameter_names.append(param[NAME_KEY])
 
     # Set up the defaults. Keep track of params with no defaults
@@ -216,7 +226,7 @@ def set_parameters():
             value = None
             value_type = str
             source = "default_parameters"
-            if VALUE_KEY in param: 
+            if VALUE_KEY in param:
                 value = param[VALUE_KEY]
                 value_type = type(value)
             if parser.has_option(section, option):
@@ -229,19 +239,19 @@ def set_parameters():
                            msg % (pname, value, source))
                 config.set(pname, value)
                 if pname in required_config_params:
-                    required_config_params.remove(pname);
+                    required_config_params.remove(pname)
 
     # If any required parameters are not provided by chapi.ini, log
     # error and raise exception
     if len(required_config_params) > 0:
         for pname in required_config_params:
-            chapi_info('PARAMETERS', 
-                       'Required parameter not set in %s: %s' % \
-                           (CONFIG_FILE, pname))
-        
-        raise CHAPIv1ConfigurationError("Required params missing %s: %s" %\
-                                            (CONFIG_FILE, 
-                                             ",".join(required_config_params)))
+            chapi_info('PARAMETERS',
+                       'Required parameter not set in %s: %s' %
+                       (CONFIG_FILE, pname))
+
+        raise CHAPIv1ConfigurationError("Required params missing %s: %s" %
+                                        (CONFIG_FILE,
+                                         ",".join(required_config_params)))
 
     # If any parameters are provided in chapi.ini but not in default_parameters
     # Warn but don't raise exception
@@ -249,32 +259,51 @@ def set_parameters():
         for item in parser.items(section):
             pname = "%s.%s" % (section, item[0])
             if pname not in default_parameter_names:
-                chapi_info('PARAMETERS', 
-                           'Unrecognized parameter found in %s: %s' % 
+                chapi_info('PARAMETERS',
+                           'Unrecognized parameter found in %s: %s' %
                            (CONFIG_FILE, pname))
 
     # Overwrite the base settings with values from the developer config file
+    override_parameters(DEV_CONFIG_FILE, "developer")
+
+    # If an 'auxiliary' config file is provided,
+    # override the parameters from that file
+    if AUX_CONFIG_FILE:
+        override_parameters(AUX_CONFIG_FILE, "auxiliary")
+
+
+def override_parameters(config_filename, config_label):
+
+    config = pm.getService("config")
+
     parser = ConfigParser.SafeConfigParser()
-    result = parser.read(DEV_CONFIG_FILE)
+    result = parser.read(config_filename)
     if len(result) != 1:
         # file was not read, warn and return
         chapi_debug('PARAMETERS',
-                   'Unable to read developer config file %s' % (DEV_CONFIG_FILE))
+                    'Unable to read developer %s file %s' %
+                    (config_label, config_filename))
     else:
-        chapi_warn('PARAMETERS', "Over-riding configs using developer config file %s" % (DEV_CONFIG_FILE))
+        chapi_warn('PARAMETERS',
+                   "Over-riding configs using %s config file %s" %
+                   (config_label, config_filename))
         # FIXME: Only allow log settings to be changed?
         for param in default_parameters:
             pname = param[NAME_KEY]
             (section, option) = param_to_secopt(pname)
             if parser.has_option(section, option):
-                value_type = type(param[VALUE_KEY])
+                if VALUE_KEY in param:
+                    value_type = type(param[VALUE_KEY])
+                else:
+                    value_type = str
                 value = get_typed_value(parser, section, option, value_type)
                 if value is not None:
                     # If a value was extracted, set it
                     msg = 'Setting parameter %s to %s from %s'
                     chapi_info('PARAMETERS',
-                                msg % (pname, value, DEV_CONFIG_FILE))
+                               msg % (pname, value, config_filename))
                     config.set(pname, value)
+
 
 def configure_logging():
     config = pm.getService("config")
@@ -357,7 +386,7 @@ def configure_logging():
     toremove = None
     handlers = amsoillogger.handlers
     if len(handlers) == 0:
-        #logging.debug("0 handlers for amsoil logger")
+        # logging.debug("0 handlers for amsoil logger")
         if amsoillogger.parent:
             handlers = amsoillogger.parent.handlers
             logging.debug("Looking at parent for the proper handlers (has %d)", len(handlers))
@@ -386,7 +415,7 @@ def configure_logging():
     toremove = None
     handlers = chapilogger.handlers
     if len(handlers) == 0:
-        #logging.debug("0 handlers for chapi logger")
+        # logging.debug("0 handlers for chapi logger")
         if chapilogger.parent:
             handlers = chapilogger.parent.handlers
             logging.debug("Looking at parent for the proper handlers (has %d)", len(handlers))
