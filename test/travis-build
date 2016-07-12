@@ -1,8 +1,8 @@
 #!/bin/sh
 
-# Limits as of May 13, 2016
-ERROR_LIMIT=3185
-WARNING_LIMIT=411
+# Limits as of July 8, 2016
+ERROR_LIMIT=3102
+WARNING_LIMIT=395
 
 RESULT=0
 ERROR_COUNT=`python test/pep8.py --ignore W . | wc -l`

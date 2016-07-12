@@ -151,7 +151,7 @@ class SRv1Delegate(CHv1PersistentImplementation):
         result = [s for s in services['value'] \
                                  if s['SERVICE_TYPE'] == service_type]
 
-        return result
+        return self._successReturn(result)
 
     def get_services(self, session):
 

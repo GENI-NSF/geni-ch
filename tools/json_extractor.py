@@ -27,13 +27,15 @@
 #
 # Usage: json_extractor.py keys filename
 # where
-#  keys is a comma-separated list of 
+#  keys is a comma-separated list of
 #      dictionary keys (Lookup the value for key f and continue)
 #      key=value pairs (for finding a dictionary in a list of dictionaries)
 #
 # Thus for JSON containing:
 #
-# {"a": [{"name": "foo", "value": "bar"}, {"name": "boo", "value": "baz"}], "b" : "3"}
+# {"a": [{"name": "foo", "value": "bar"},
+#        {"name": "boo", "value": "baz"}],
+#  "b" : "3"}
 #
 # json_extractor.py a,name=foo,value => bar
 # json_extractor.py b => 3
@@ -41,12 +43,13 @@
 import json
 import sys
 
+
 def main():
     if len(sys.argv) <= 2:
         print "Usage: json_extractor.py keys filename"
         sys.exit(1)
 
-    keys = sys.argv[1] # Comma separated
+    keys = sys.argv[1]  # Comma separated
     filename = sys.argv[2]
 
     data = open(filename).read()
@@ -77,7 +80,7 @@ def main():
                     (key_name, key_value, result, jdata)
                 sys.exit(1)
             result = found
-            
+
     print result
     return 0
 

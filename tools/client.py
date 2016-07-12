@@ -102,7 +102,7 @@ def parseOptions(args):
     parser.add_option("--credentials",
                       help="List of comma-separated credential files",
                       default="")
-    parser.add_option("--raw_output", action="store_true", 
+    parser.add_option("--raw_output", action="store_true",
                       dest="raw_output", default=False)
 
     [opts, args] = parser.parse_args(args)
@@ -386,14 +386,15 @@ def main(args=sys.argv, do_print=True):
                     opts.credentials, client_options)
 
     elif opts.method in ['lookup_slice_members', 'lookup_slices_for_member',
-                         'lookup_project_members', 'lookup_projects_for_member']:
+                         'lookup_project_members',
+                         'lookup_projects_for_member']:
         urn = None
         if 'match' in client_options and 'SLICE_URN' in client_options['match']:
             urn = client_options['match']['SLICE_URN']
         if 'match' in client_options and 'PROJECT_URN' in client_options['match']:
             urn = client_options['match']['PROJECT_URN']
         (result, msg) = \
-            _do_ssl(framework, suppress_errors, reason, fcn, 
+            _do_ssl(framework, suppress_errors, reason, fcn,
                     urn, opts.credentials, client_options)
 
     elif opts.method in ['update', 'delete', 'modify_membership',
@@ -405,7 +406,7 @@ def main(args=sys.argv, do_print=True):
     # Lookup login info (authorities only)
     elif opts.method in ['lookup_login_info']:
         (result, msg) = \
-            _do_ssl(framework, suppress_errors, reason, fcn, 
+            _do_ssl(framework, suppress_errors, reason, fcn,
                     opts.credentials, client_options)
 
     # Portal query

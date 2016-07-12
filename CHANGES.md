@@ -1,10 +1,31 @@
 # GENI Clearinghouse Release Notes
 
+# [Release 2.14](https://github.com/GENI-NSF/geni-ch/milestones/2.14)
+
+## Changes
+
+* Remove InstaGENI FOAM aggregates
+([#514](https://github.com/GENI-NSF/geni-ch/issues/514))
+
+## Installation Notes
+
+* Delete outdated service registry files _prior_ to installation:
+
+```shell
+sudo rm -rf /usr/share/geni-chapi/sr/certs
+sudo rm -rf /usr/share/geni-chapi/sr/sql
+```
+
 # [Release 2.13](https://github.com/GENI-NSF/geni-ch/milestones/2.13)
 
 ## Changes
 
-* None
+* Communicate max slice expiration in SA get_version
+([#464](https://github.com/GENI-NSF/geni-ch/issues/464))
+* Update CentOS install for WSGI
+([#508](https://github.com/GENI-NSF/geni-ch/issues/508))
+* Updates to install document
+([#471](https://github.com/GENI-NSF/geni-ch/issues/471))
 
 ## Installation Notes
 
