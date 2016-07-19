@@ -4,8 +4,12 @@
 
 ## Changes
 
+* Create automated test suite for geni-ch API calls
+([#504](https://github.com/GENI-NSF/geni-ch/issues/504))
 * Remove InstaGENI FOAM aggregates
 ([#514](https://github.com/GENI-NSF/geni-ch/issues/514))
+* Fix SR get_services_of_type to return the standard code/value/output triple
+([#516](https://github.com/GENI-NSF/geni-ch/issues/516))
 
 ## Installation Notes
 
