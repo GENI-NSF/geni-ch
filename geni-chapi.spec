@@ -303,6 +303,9 @@ rm -rf $RPM_BUILD_ROOT
 %{_datadir}/geni-ch/chapi/chapi/tools/portal_client.py
 %{_datadir}/geni-ch/chapi/chapi/tools/portal_client.pyc
 %{_datadir}/geni-ch/chapi/chapi/tools/portal_client.pyo
+%{_datadir}/geni-ch/chapi/chapi/tools/test_server.py
+%{_datadir}/geni-ch/chapi/chapi/tools/test_server.pyc
+%{_datadir}/geni-ch/chapi/chapi/tools/test_server.pyo
 
 # /usr/share/geni-chapi/
 %{_datadir}/%{name}/sr/sql/add-wvn-eg.sql
