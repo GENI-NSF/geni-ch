@@ -1,11 +1,35 @@
 # GENI Clearinghouse Release Notes
 
+# [Release 2.14](https://github.com/GENI-NSF/geni-ch/milestones/2.14)
+
+## Changes
+
+* Create automated test suite for geni-ch API calls
+([#504](https://github.com/GENI-NSF/geni-ch/issues/504))
+* Remove InstaGENI FOAM aggregates
+([#514](https://github.com/GENI-NSF/geni-ch/issues/514))
+* Fix SR get_services_of_type to return the standard code/value/output triple
+([#516](https://github.com/GENI-NSF/geni-ch/issues/516))
+
+## Installation Notes
+
+* Delete outdated service registry files _prior_ to installation:
+
+```shell
+sudo rm -rf /usr/share/geni-chapi/sr/certs
+sudo rm -rf /usr/share/geni-chapi/sr/sql
+```
+
 # [Release 2.13](https://github.com/GENI-NSF/geni-ch/milestones/2.13)
 
 ## Changes
 
 * Communicate max slice expiration in SA get_version
 ([#464](https://github.com/GENI-NSF/geni-ch/issues/464))
+* Update CentOS install for WSGI
+([#508](https://github.com/GENI-NSF/geni-ch/issues/508))
+* Updates to install document
+([#471](https://github.com/GENI-NSF/geni-ch/issues/471))
 
 ## Installation Notes
 

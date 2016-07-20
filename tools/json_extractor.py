@@ -53,6 +53,9 @@ def main():
     filename = sys.argv[2]
 
     data = open(filename).read()
+
+#    print "DATA(%s) = %s" % (filename, data)
+
     jdata = json.loads(data)
 
     key_list = keys.split(',')
@@ -69,7 +72,7 @@ def main():
             key_value = key_parts[1]
             found = None
             for entry in result:
-                if entry[key_name] == key_value:
+                if str(entry[key_name]) == key_value:
                     found = entry
                     break
             if not found:
