@@ -58,14 +58,18 @@ import plugins.chapiv1rpc.chapi.Parameters
 
 # classes for mapping to sql tables
 
+
 class OutsideCert(object):
     pass
+
 
 class InsideKey(object):
     pass
 
+
 class SshKey(object):
     pass
+
 
 def derive_username(email_address, session):
     # See http://www.linuxjournal.com/article/9585
@@ -119,6 +123,7 @@ def derive_username(email_address, session):
 
     raise CHAPIv1ArgumentError('Unable to find a username based on '+email_address)
 
+
 def username_exists(name, session):
     q = session.query(MemberAttribute.member_id)
     q = q.filter(MemberAttribute.name == 'username')
@@ -126,10 +131,12 @@ def username_exists(name, session):
     rows = q.all()
     return len(rows) > 0
 
+
 def make_member_urn(cert, username):
     ma_urn = get_urn_from_cert(cert)
     ma_authority, ma_type, ma_name = parse_urn(ma_urn)
     return make_urn(ma_authority, 'user', username)
+
 
 class MAv1Implementation(MAv1DelegateBase):
 
@@ -164,7 +171,6 @@ class MAv1Implementation(MAv1DelegateBase):
 
         self.logging_service = pm.getService('loggingv1handler')
 
-
     # get_version is unprotected: no checking of credentials
     def get_version(self, options, session):
         all_optional_fields = dict(MA.optional_fields.items() +
@@ -183,7 +189,6 @@ class MAv1Implementation(MAv1DelegateBase):
                         "FIELDS": all_optional_fields}
         result = self._successReturn(version_info)
         return result
-
 
     # ensure that all of a set of entries are attributes
     def check_attributes(self, attrs):
@@ -282,7 +287,6 @@ class MAv1Implementation(MAv1DelegateBase):
         else:
             # No other transformation so just return it
             return val
-
 
     # Common code for answering query
     def lookup_member_info(self, options, allowed_fields, session):
@@ -436,7 +440,6 @@ class MAv1Implementation(MAv1DelegateBase):
                                                     identifying_options, session)
         chapi_debug(MA_LOG_PREFIX, "ID = %s" % identifying_result)
 
-
         # 3. If I am asking for private fields (or no fields listed)
         #       accumulate a list of members for whom the guard says
         #       I can call lookup_private_member_info
@@ -533,7 +536,6 @@ class MAv1Implementation(MAv1DelegateBase):
                                          session)
         return result
 
-
     # This call is protected
     def update_member_info(self, client_cert, member_urn,
                            credentials, options, session):
@@ -597,7 +599,6 @@ class MAv1Implementation(MAv1DelegateBase):
             if value is not None:
                 q = q.filter(MemberAttribute.value == value)
             q.delete()
-
 
     # update or insert into one of the two SSL key tables
     def update_keys(self, session, table, keys, uid):
@@ -678,7 +679,6 @@ class MAv1Implementation(MAv1DelegateBase):
              for cred in abac_raw_creds]
         creds = sfa_creds + abac_creds
         return creds
-
 
     # build a user credential based on the user's cert
     def get_user_credential(self, session, uid, client_cert):
@@ -787,7 +787,6 @@ class MAv1Implementation(MAv1DelegateBase):
         fields["KEY_ID"] = key_id
         fields["KEY_MEMBER"] = member_urn
 
-
         # Log the creation of the SSH key
         client_uuid = get_uuid_from_cert(client_cert)
         attrs = {"MEMBER" : client_uuid}
@@ -802,7 +801,6 @@ class MAv1Implementation(MAv1DelegateBase):
 
     def delete_key(self, client_cert, key_id, \
                        credentials, options, session):
-
 
         q = session.query(SshKey)
         q = q.filter(SshKey.id == key_id)
@@ -902,7 +900,6 @@ class MAv1Implementation(MAv1DelegateBase):
                 if 'KEY_ID' in key_data:
                     key_id = key_data['KEY_ID']
                     key_data['KEY_ID'] = str(key_id)
-
 
         # Strip out any KEY_PRIVATE fields from key returns not for the
         # calling user
@@ -1154,7 +1151,6 @@ class MAv1Implementation(MAv1DelegateBase):
             did_something = True
             self.update_attr(session, '_GENI_MEMBER_ENABLED', enabled_str, member_id, 'f')
 
-
         if did_something:
             # log_event
             msg = "Set member %s status to %s" % \
@@ -1226,7 +1222,6 @@ Please see http://groups.geni.net/geni/wiki/ProjectLeadWelcome for information o
                              credentials, options, session):
         '''Mark a member/user as having a particular contextless privilege.
         privilege must be either OPERATOR or PROJECT_LEAD.'''
-
 
         user_email = get_email_from_cert(client_cert)
 #        chapi_audit(MA_LOG_PREFIX, "Called " + method+' '+member_uid+' '+privilege)
