@@ -1668,15 +1668,13 @@ Please see http://groups.geni.net/geni/wiki/ProjectLeadWelcome for information o
             return True
         except sqlalchemy.orm.exc.NoResultFound:
             # How did we get here?
-            msg = ('No row found for member_id %s'
-                   + ' in inside certificate table on renewal.'
-                   + ' Please notify portal-help@geni.net')
+            msg = ('No row found for member_id %s' +
+                   ' in inside certificate table on renewal.')
             raise Exception(msg % (member_id))
         except sqlalchemy.orm.exc.MultipleResultsFound:
             # Inconsistent database!
-            msg = ('Multiple rows found for member_id %s'
-                   + ' in inside certificate table. Please'
-                   + ' notify portal-help@geni.net')
+            msg = ('Multiple rows found for member_id %s' +
+                   ' in inside certificate table.')
             raise Exception(msg % (member_id))
 
     def _lookup_outside_cert_info(self, session, m_ids, fields, result):
