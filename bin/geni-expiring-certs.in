@@ -55,15 +55,15 @@ steps before the date listed at the top of the email:
       https://portal.geni.net/secure/renewcert.php
 
 2) Reconfigure any affected tools to use the new certificate.
-	To reconfigure omni, see:
-                http://trac.gpolab.bbn.com/gcf/wiki/OmniConfigure/Automatic
-	No additional action is needed for GENI Desktop.
+    To reconfigure omni, see:
+        https://github.com/GENI-NSF/geni-tools/wiki/Omni-Configuration-Automatically
+    No additional action is needed for GENI Desktop.
 
-If you have any questions, please email portal-help@geni.net for further assistance.
+If you have any questions, please visit http://groups.geni.net/geni/wiki/GENIExperimenter/GetHelp for further assistance.
 
 Thank you!
 
-[1] http://trac.gpolab.bbn.com/gcf/wiki
+[1] https://github.com/GENI-NSF/geni-tools/wiki/Omni
 """
 
 class Notifier:
