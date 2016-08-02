@@ -4,7 +4,8 @@
 
 ## Changes
 
-* None
+* Update links from Trac to GitHub; update help contact info
+  ([#522](https://github.com/GENI-NSF/geni-ch/issues/522))
 
 ## Installation Notes
 
