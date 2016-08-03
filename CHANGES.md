@@ -1,5 +1,16 @@
 # GENI Clearinghouse Release Notes
 
+# [Release 2.15](https://github.com/GENI-NSF/geni-ch/milestones/2.15)
+
+## Changes
+
+* Update links from Trac to GitHub; update help contact info
+  ([#522](https://github.com/GENI-NSF/geni-ch/issues/522))
+
+## Installation Notes
+
+* None
+
 # [Release 2.14](https://github.com/GENI-NSF/geni-ch/milestones/2.14)
 
 ## Changes
