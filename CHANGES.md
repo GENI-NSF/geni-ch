@@ -4,7 +4,8 @@
 
 ## Changes
 
-* None
+* Add xmlsec1 dependencies to RPM spec
+  ([#524](https://github.com/GENI-NSF/geni-ch/issues/524))
 
 ## Installation Notes
 
