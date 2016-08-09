@@ -10,6 +10,7 @@ Group:          Applications/Internet
 Requires:       httpd, mod_ssl, mod_wsgi
 Requires:       python-sqlalchemy, python-psycopg2
 Requires:       geni-tools, postgresql
+Requires:       xmlsec1, xmlsec1-openssl
 
 # BuildRequires: gettext
 # Requires(post): info
