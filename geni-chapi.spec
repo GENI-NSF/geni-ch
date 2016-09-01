@@ -71,9 +71,6 @@ rm -rf $RPM_BUILD_ROOT
 %{_bindir}/geni-ops-report
 %{_bindir}/geni-remove-member-attribute
 %{_bindir}/geni-remove-project-member
-%{_bindir}/gmoc_list_contacts
-%{_bindir}/gmoc_list_slices
-%{_bindir}/report_genich_relations
 
 # /usr/sbin
 %{_sbindir}/geni-add-member-privilege
