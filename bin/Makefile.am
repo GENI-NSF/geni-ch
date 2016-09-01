@@ -70,10 +70,7 @@ dist_bin_SCRIPTS = \
 	geni-enable-user \
 	geni-ops-report \
 	geni-remove-member-attribute \
-	geni-remove-project-member \
-	gmoc_list_contacts \
-	gmoc_list_slices \
-	report_genich_relations
+	geni-remove-project-member
 
 dist_sbin_SCRIPTS = \
 	geni-add-member-privilege \
