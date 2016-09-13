@@ -23,6 +23,9 @@
 # IN THE WORK.
 #----------------------------------------------------------------------
 
+# TODO: use autoconf/automake replacement of paths. Too many
+#       hardcoded paths below, not good.
+
 # Create an MA CRL file in /usr/share/geni-ch/chapi/ma
 
 CRLNUM=/usr/share/geni-ch/CA/crlnumber
@@ -30,7 +33,6 @@ TMP_CRLNUM=/tmp/crlnumber
 
 if [ ! -e "${CRLNUM}" ]; then
   echo "1000" > "${TMP_CRLNUM}"
-  chown www-data.www-data "${TMP_CRLNUM}"
   mv "${TMP_CRLNUM}" "${CRLNUM}"
 fi
 openssl ca -keyfile /usr/share/geni-ch/ma/ma-key.pem \
