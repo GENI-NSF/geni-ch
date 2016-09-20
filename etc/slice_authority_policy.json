@@ -149,6 +149,7 @@
    ],
    "policies" : [
      "ME.MAY_$METHOD<-ME.IS_OPERATOR",
+     "ME.MAY_$METHOD<-ME.IS_AUTHORITY",
      "ME.MAY_$METHOD_$PROJECT<-ME.BELONGS_TO_$PROJECT"
     ]
   },

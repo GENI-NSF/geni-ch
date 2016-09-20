@@ -1,5 +1,5 @@
 Name:           geni-chapi
-Version:        2.15
+Version:        2.16
 Release:        1%{?dist}
 Summary:        GENI clearinghouse
 BuildArch:      noarch
@@ -10,6 +10,7 @@ Group:          Applications/Internet
 Requires:       httpd, mod_ssl, mod_wsgi
 Requires:       python-sqlalchemy, python-psycopg2
 Requires:       geni-tools, postgresql
+Requires:       xmlsec1, xmlsec1-openssl
 
 # BuildRequires: gettext
 # Requires(post): info
@@ -70,9 +71,6 @@ rm -rf $RPM_BUILD_ROOT
 %{_bindir}/geni-ops-report
 %{_bindir}/geni-remove-member-attribute
 %{_bindir}/geni-remove-project-member
-%{_bindir}/gmoc_list_contacts
-%{_bindir}/gmoc_list_slices
-%{_bindir}/report_genich_relations
 
 # /usr/sbin
 %{_sbindir}/geni-add-member-privilege

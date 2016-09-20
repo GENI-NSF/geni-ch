@@ -1,5 +1,22 @@
 # GENI Clearinghouse Release Notes
 
+# [Release 2.16](https://github.com/GENI-NSF/geni-ch/milestones/2.16)
+
+## Changes
+
+* Add xmlsec1 dependencies to RPM spec
+  ([#525](https://github.com/GENI-NSF/geni-ch/issues/525))
+* Make geni-create-ma-crl work on CentOS
+  ([#526](https://github.com/GENI-NSF/geni-ch/issues/526))
+* Remove obsolete scripts related to GMOC monitoring
+  ([#527](https://github.com/GENI-NSF/geni-ch/issues/527))
+* Allow authorities to call lookup_project_members
+  ([#529](https://github.com/GENI-NSF/geni-ch/issues/529))
+
+## Installation Notes
+
+* None
+
 # [Release 2.15](https://github.com/GENI-NSF/geni-ch/milestones/2.15)
 
 ## Changes
