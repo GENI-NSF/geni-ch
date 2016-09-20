@@ -10,7 +10,7 @@
   ([#526](https://github.com/GENI-NSF/geni-ch/issues/526))
 * Remove obsolete scripts related to GMOC monitoring
   ([#527](https://github.com/GENI-NSF/geni-ch/issues/527))
-* Remove obsolete scripts related to GMOC monitoring
+* Allow authorities to call lookup_project_members
   ([#529](https://github.com/GENI-NSF/geni-ch/issues/529))
 
 ## Installation Notes
