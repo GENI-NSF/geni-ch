@@ -301,3 +301,20 @@ geni-add-trusted-tool -d portal -u portal -p portal --host localhost \
 Open up Firewall if necessary
 -----------------------------
 If your machine is running firewall software it may be necessary for you to add rules to allow connections to the Clearinghouse.  The ports that need to be open are 22(SSH), 80(HTTP), 443(HTTPS) and 8444(Clearinghouse).
+
+Enable HTTPD and SHIBD services to start at boot time
+-----------------------------------------------------
+
+The following command will enable the HTTPD service (Apache) to start
+at boot time:
+
+````sh
+sudo systemctl enable httpd.service
+````
+
+The following command will verify that the HTTPD service is set to start
+at boot time. This should report "enabled".
+
+````sh
+sudo systemctl is-enabled httpd.service
+````
