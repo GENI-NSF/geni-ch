@@ -4,7 +4,8 @@
 
 ## Changes
 
-* None
+* Add service enabling to CentOS install guide
+  ([#534](https://github.com/GENI-NSF/geni-ch/issues/534))
 
 ## Installation Notes
 
