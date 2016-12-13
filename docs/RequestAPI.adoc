@@ -1,0 +1,226 @@
+= Clearinghouse Request API =
+
+This API handles project join requests.
+
+_This document is incomplete. More information and detail is needed._
+_This should be considered a first draft._
+_https://github.com/GENI-NSF/geni-ch/issues/new[Bug reports] are welcome._
+
+== Common arguments ==
+
+=== Context Type ===
+
+These constants are enumerated in `tools/geni_constants.py`. Only `PROJECT_CONTEXT`
+is currently used in the clearinghouse.
+
+[source]
+--------
+PROJECT_CONTEXT = 1
+SLICE_CONTEXT = 2
+RESOURCE_CONTEXT = 3
+SERVICE_CONTEXT = 4
+MEMBER_CONTEXT = 5
+--------
+
+=== Status ===
+
+The status of a given request. Requests can have one of the following statuses:
+
+[source]
+--------
+PENDING = 0;
+APPROVED = 1;
+CANCELLED = 2;
+REJECTED = 3;
+--------
+
+Cancelled means the user withdrew the request.
+
+=== Return Values ===
+
+All return values are in the form of a three element struct. Each API
+method below only documents the 'value' entry of this triple.
+
+----------
+{
+  'code': <integer>,
+  'value': <some value>,
+  'output': <an error string if 'code' is non-zero>
+}
+----------
+
+== create_request ==
+
+Creates a new request.
+
+=== Synopsis ===
+
+[source,python]
+-------------
+create_request(context_type, context_id, request_type, request_text,
+               request_details, credentials, options)
+-------------
+
+=== Arguments ===
+
+* context_type - an integer indicating the type of `context_id`. Should always be PROJECT_CONTEXT. See "Context Type" above.
+* context_id - a UUID, usually a project ID
+* request_type - ?
+* request_text - ?
+* request_details - ?
+* credentials - a list of credentials, can be empty
+* options - an XML-RPC struct (Python dict). Ignored.
+
+=== Return value ===
+
+The request id as an integer.
+
+== resolve_pending_request ==
+
+Resolves the request by adding resolution columns in the database.
+
+_This call does not add members to projects, it only closes out the_
+_request object. If the request is approved, a separate call should_
+_be made to add members to the project._
+
+=== Synopsis ===
+
+[source,python]
+-------------
+resolve_pending_request(context_type, request_id, resolution_status,
+                        resolution_description, credentials, options)
+-------------
+
+=== Arguments ===
+
+* context_type - an integer indicating the type of `context_id`. Should always be PROJECT_CONTEXT. See "Context Type" above.
+* request_id - a integer id of a request
+* resolution_status - an integer status (see status above)
+* resolution_description - ?
+* credentials - a list of credentials, can be empty
+* options - an XML-RPC struct (Python dict). Ignored.
+
+=== Return value ===
+
+Boolean True
+
+== get_requests_for_context ==
+
+Gets the all the requests for a given project.
+
+=== Synopsis ===
+
+[source,python]
+-------------
+get_requests_for_context(context_type, context_id, status,
+                         credentials, options)
+-------------
+
+=== Arguments ===
+
+* context_type - an integer indicating the type of `context_id`. Should always be PROJECT_CONTEXT. See "Context Type" above.
+* context_id - a UUID, usually a project ID
+* status - an integer status, see above
+* credentials - a list of credentials, can be empty
+* options - an XML-RPC struct (Python dict). Ignored.
+
+=== Return value ===
+
+The request id as an integer.
+
+== get_requests_by_user ==
+
+Gets requests submitted by the given user.
+
+=== Synopsis ===
+
+[source,python]
+-------------
+get_requests_by_user(member_id, context_type, context_id, status,
+                     credentials, options)
+-------------
+
+=== Arguments ===
+
+* member_id - the UUID of the member who submitted the requests
+* context_type - an integer indicating the type of `context_id`. Should always be PROJECT_CONTEXT. See "Context Type" above.
+* context_id - a UUID, usually a project ID
+* status - an integer status, see above
+* credentials - a list of credentials, can be empty
+* options - an XML-RPC struct (Python dict). Ignored.
+
+=== Return value ===
+
+A list of request structs. If there are no requests submitted by
+the given member, the list will be empty.
+
+== get_pending_requests_for_user ==
+
+Get the pending requests that the given user can act upon.
+
+=== Synopsis ===
+
+[source,python]
+-------------
+get_pending_requests_for_user(member_id, context_type, context_id,
+                              credentials, options)
+-------------
+
+=== Arguments ===
+
+* member_id - the UUID of the member who may act on the requests
+* context_type - an integer indicating the type of `context_id`. Should always be PROJECT_CONTEXT. See "Context Type" above.
+* context_id - a UUID, usually a project ID
+* credentials - a list of credentials, can be empty
+* options - an XML-RPC struct (Python dict). Ignored.
+
+=== Return value ===
+
+A list of request structs. If there are no requests to be acted upon
+the list will be empty.
+
+== get_number_of_pending_requests_for_user ==
+
+Get the number of pending requests that the given user can act upon.
+
+=== Synopsis ===
+
+[source,python]
+-------------
+get_number_of_pending_requests_for_user(member_id, context_type, context_id,
+                                        credentials, options)
+-------------
+
+=== Arguments ===
+
+* member_id - the UUID of the member who may act on the requests
+* context_type - an integer indicating the type of `context_id`. Should always be PROJECT_CONTEXT. See "Context Type" above.
+* context_id - a UUID, usually a project ID
+* credentials - a list of credentials, can be empty
+* options - an XML-RPC struct (Python dict). Ignored.
+
+=== Return value ===
+
+An integer indicating the number of pending requests.
+
+== get_request_by_id ==
+
+Get a specific request by supplying the request id.
+
+=== Synopsis ===
+
+[source,python]
+-------------
+get_request_by_id(request_id, context_type, credentials, options)
+-------------
+
+=== Arguments ===
+
+* request_id - an integer id of a request
+* context_type - an integer indicating the type of the request. Should always be PROJECT_CONTEXT. See "Context Type" above.
+* credentials - a list of credentials, can be empty
+* options - an XML-RPC struct (Python dict). Ignored.
+
+=== Return value ===
+
+The request as an XML-RPC struct.
