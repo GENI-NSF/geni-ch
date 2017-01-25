@@ -6,6 +6,9 @@
 
 * Add service enabling to CentOS install guide
   ([#534](https://github.com/GENI-NSF/geni-ch/issues/534))
+* Move one-time initialization to WSGI files
+  ([#542](https://github.com/GENI-NSF/geni-ch/issues/542))
+
 
 ## Installation Notes
 

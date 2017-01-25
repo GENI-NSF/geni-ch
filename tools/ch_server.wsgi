@@ -1,5 +1,5 @@
 # ----------------------------------------------------------------------
-# Copyright (c) 2016 Raytheon BBN Technologies
+# Copyright (c) 2016-2017 Raytheon BBN Technologies
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and/or hardware specification (the "Work") to
@@ -21,7 +21,10 @@
 # IN THE WORK.
 # ----------------------------------------------------------------------
 
-import sys
-import os
+import tools.ch_server
 
-from tools.ch_server import application as application
+# Perform one-time initialization
+tools.ch_server.initialize()
+
+# This is the WSGI entry point
+application = tools.ch_server.application
