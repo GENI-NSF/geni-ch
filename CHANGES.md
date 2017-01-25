@@ -8,7 +8,8 @@
   ([#534](https://github.com/GENI-NSF/geni-ch/issues/534))
 * Move one-time initialization to WSGI files
   ([#542](https://github.com/GENI-NSF/geni-ch/issues/542))
-
+* Require client certificate httpd config template
+  ([#544](https://github.com/GENI-NSF/geni-ch/issues/544))
 
 ## Installation Notes
 

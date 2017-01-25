@@ -40,6 +40,13 @@ h/chapi/chapi
     WSGIScriptAlias /LOG @pkgdatadir@/chapi/chapi/tools/ch_server.wsgi
     WSGIScriptAliasMatch /info/*/* @pkgdatadir@/chapi/chapi/tools/ch_server.wsgi
 
+    # Use rewrite engine to show a relatively friendly page to
+    # clients who don't display SSL certs, regardless of what URL
+    # they requested on this vhost
+    RewriteEngine On
+    RewriteCond %{SSL:SSL_CLIENT_VERIFY} !^SUCCESS$
+    RewriteRule .* /index.html [L]
+
 </VirtualHost>
 
 Listen 8444
