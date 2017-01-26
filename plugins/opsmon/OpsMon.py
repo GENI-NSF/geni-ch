@@ -23,6 +23,7 @@
 
 import json
 import time
+import calendar
 import datetime
 import logging
 import tools.pluginmanager as pm
@@ -90,9 +91,9 @@ class OpsMonHandler:
 #        return {'urn' : urn, 'href' : href, 'id' : obj_id}
         return {'urn' : urn, 'href' : href}
 
-    # Turn a datetime into a timestamp (microseconds since 1-1-1970
+    # Turn a datetime into a timestamp (microseconds since 1-1-1970)
     def to_timestamp(self, dt):
-        return int(time.mktime(dt.timetuple()) * 1000000)
+        return int(calendar.timegm(dt.timetuple()) * 1000000)
 
     # Convert a slice_urn to slice_id by flattening the part after IDN+
     def slice_urn_to_id(self, slice_urn):
