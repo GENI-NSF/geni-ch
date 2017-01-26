@@ -1,5 +1,5 @@
-#----------------------------------------------------------------------
-# Copyright (c) 2011-2016 Raytheon BBN Technologies
+# ----------------------------------------------------------------------
+# Copyright (c) 2011-2017 Raytheon BBN Technologies
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and/or hardware specification (the "Work") to
@@ -19,7 +19,7 @@
 # WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE WORK OR THE USE OR OTHER DEALINGS
 # IN THE WORK.
-#----------------------------------------------------------------------
+# ----------------------------------------------------------------------
 
 import json
 import time
@@ -27,19 +27,22 @@ import calendar
 import datetime
 import logging
 import tools.pluginmanager as pm
-from  sqlalchemy import *
-from  sqlalchemy.orm import aliased
+from sqlalchemy import *
+from sqlalchemy.orm import aliased
 from tools.dbutils import STANDARD_DATETIME_FORMAT
 
 opsmon_logger = logging.getLogger('opsmon')
+
 
 # Replace : and + in URN to -
 def flatten(urn):
     return urn.replace(':', '_').replace('+', '_')
 
+
 # Generate a URL for given authority, object type and ID
 def generate_urn(authority, obj_type, obj_id):
     return "urn:publicid+IDN+%s+%s+%s" % (authority, obj_type, obj_id)
+
 
 # Extract the enty name (last) portion from a urn
 def extract_name_from_urn(urn):
@@ -58,7 +61,7 @@ class OpsMonHandler:
         "http://www.gpolab.bbn.com/monitoring/schema/20140828/user#"
 
     # class variables
-    _instance = None # Singleton instance
+    _instance = None  # Singleton instance
 
     # Constructor. Since we manage a singleton instance, should
     # be only called once (or at least be idempotent)
@@ -84,12 +87,12 @@ class OpsMonHandler:
     # For a given URN and object type
     # (and optional ID, otherwise derived from URN)
     # Return a dictionary of object URN, href and ID
-    def compute_reference_info(self, urn, obj_type, obj_id = None):
+    def compute_reference_info(self, urn, obj_type, obj_id=None):
         if obj_id is None:
             obj_id = flatten(self.truncate_urn(urn))
         href = self.generate_href(obj_type, obj_id)
 #        return {'urn' : urn, 'href' : href, 'id' : obj_id}
-        return {'urn' : urn, 'href' : href}
+        return {'urn': urn, 'href': href}
 
     # Turn a datetime into a timestamp (microseconds since 1-1-1970)
     def to_timestamp(self, dt):
@@ -127,7 +130,7 @@ class OpsMonHandler:
         rows = q.all()
         slices_info = [self.compute_reference_info(row.slice_urn, 'slice',
                                                    self.slice_urn_to_id(row.slice_urn))
-                           for row in rows]
+                       for row in rows]
 
         # Grab URNs of all leads
         lead_uuids = [row.owner_id for row in rows]
@@ -139,18 +142,18 @@ class OpsMonHandler:
             q = q.filter(self._db.MEMBER_ATTRIBUTE_TABLE.c.member_id == None)
         rows = q.all()
         users_info = [self.compute_reference_info(row.value, 'user',
-                                                  row.value.split('+')[-1]) \
-                          for row in rows]
+                                                  row.value.split('+')[-1])
+                      for row in rows]
 
         authority_data = {
-            "$schema" : self._authority_schema,
-            "id" : self._authority,
-            "selfRef" : self._authority_href,
-            "urn" : self._authority_urn,
-            "ts" : ts,
-            "users" : users_info,
-            "slices" : slices_info
-            }
+            "$schema": self._authority_schema,
+            "id": self._authority,
+            "selfRef": self._authority_href,
+            "urn": self._authority_urn,
+            "ts": ts,
+            "users": users_info,
+            "slices": slices_info
+        }
         return authority_data
 
     # Compute opsmon ifnormation about a given slice
@@ -173,9 +176,10 @@ class OpsMonHandler:
         q = q.filter(self._db.SLICE_TABLE.c.slice_urn == slice_urn)
 
         rows = q.all()
-        if len(rows) == 0: return ""
+        if len(rows) == 0:
+            return ""
         row = rows[0]
-        slice_uuid = row.slice_id;
+        slice_uuid = row.slice_id
 
         lead_urn = row.value
         lead_id = extract_name_from_urn(lead_urn)
@@ -193,24 +197,25 @@ class OpsMonHandler:
         for sliv_row in sliv_rows:
             member_urn = sliv_row.creator_urn
             member_id = extract_name_from_urn(member_urn)
-            member_info = self.compute_reference_info(member_urn, 'user', member_id)
+            member_info = self.compute_reference_info(member_urn, 'user',
+                                                      member_id)
             member_info['role'] = 'member'
             members.append(member_info)
 
         slice_data = {
-            '$schema' : self._slice_schema,
-            'id' : self.slice_urn_to_id(slice_urn),
-            'selfRef' : self.generate_href('slice', slice_id),
-            'urn' : slice_urn,
-            'uuid' : slice_uuid,
-            'ts' : ts,
-            'authority' : self.compute_reference_info(self._authority_urn,
-                                                      'authority',
-                                                      self._authority),
-            'created' : self.to_timestamp(row.creation),
-            'expires' : self.to_timestamp(row.expiration),
-            'members' : members
-            }
+            '$schema': self._slice_schema,
+            'id': self.slice_urn_to_id(slice_urn),
+            'selfRef': self.generate_href('slice', slice_id),
+            'urn': slice_urn,
+            'uuid': slice_uuid,
+            'ts': ts,
+            'authority': self.compute_reference_info(self._authority_urn,
+                                                     'authority',
+                                                     self._authority),
+            'created': self.to_timestamp(row.creation),
+            'expires': self.to_timestamp(row.expiration),
+            'members': members
+        }
         return slice_data
 
     # Generate the dictionary required for a given user by ID (username)
@@ -227,7 +232,8 @@ class OpsMonHandler:
         q = q.filter(ma1.c.value == user_id)
 
         rows = q.all()
-        if len(rows) == 0: return ""
+        if len(rows) == 0:
+            return ""
 
         user_fullname = None
         user_firstname = None
@@ -235,11 +241,16 @@ class OpsMonHandler:
         user_email = None
         user_urn = None
         for row in rows:
-            if row.name == 'displayName': user_fullname = row.value
-            if row.name == 'email_address': user_email = row.value
-            if row.name == 'first_name' : user_firstname = row.value
-            if row.name == 'last_name' : user_lastname = row.value
-            if row.name == 'urn' : user_urn = row.value
+            if row.name == 'displayName':
+                user_fullname = row.value
+            if row.name == 'email_address':
+                user_email = row.value
+            if row.name == 'first_name':
+                user_firstname = row.value
+            if row.name == 'last_name':
+                user_lastname = row.value
+            if row.name == 'urn':
+                user_urn = row.value
 
         if user_fullname is None:
             user_fullname = "%s %s" % (user_firstname, user_lastname)
@@ -247,21 +258,18 @@ class OpsMonHandler:
         user_href = self.generate_href('user', user_id)
 
         user_data = {
-            '$schema' : self._user_schema,
-            'id' : user_id,
-            'selfRef' : user_href,
-            'urn' : user_urn,
-            'ts' : ts,
-            'authority' : \
-                self.compute_reference_info(self._authority_urn, \
-                                           'authority', self._authority),
-            'fullname' : user_fullname,
-            'email' : user_email
-                }
-
+            '$schema': self._user_schema,
+            'id': user_id,
+            'selfRef': user_href,
+            'urn': user_urn,
+            'ts': ts,
+            'authority': self.compute_reference_info(self._authority_urn,
+                                                     'authority',
+                                                     self._authority),
+            'fullname': user_fullname,
+            'email': user_email
+        }
         return user_data
-
-
 
     @staticmethod
     # Registered REST handler for handling a request on information
@@ -270,7 +278,7 @@ class OpsMonHandler:
         id_data = ""
         opsmon = OpsMonHandler._instance
         session = opsmon._db.getSession()
-        ts = int(time.time()*1000000)
+        ts = int(time.time() * 1000000)
         if variety == "authority":
             id_data = opsmon.handle_authority_request(id, ts, session)
         elif variety == "slice":
