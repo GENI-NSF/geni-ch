@@ -11,8 +11,6 @@ RSYNC_EXCLUDE = --exclude .git --exclude '*~' \
 RSYNC_DELETE = --delete --delete-excluded
 RSYNC_ARGS = -aztv $(RSYNC_EXCLUDE)
 
-GITHASH = etc/geni-chapi-githash
-
 # This will probably be "../geni-ch"
 SRC_DIR = ../$(notdir $(CURDIR))
 
@@ -21,23 +19,20 @@ SRC_DIR = ../$(notdir $(CURDIR))
 default:
 	echo "Choose a specific sync target."
 
-$(GITHASH): .git
-	git rev-parse HEAD > $@
-
-syncb: $(GITHASH)
+syncb:
 	$(RSYNC) $(RSYNC_ARGS) $(SRC_DIR) bigslide.gpolab.bbn.com:
 
-syncd: $(GITHASH)
+syncd:
 	$(RSYNC) $(RSYNC_ARGS) $(SRC_DIR) dagoola.gpolab.bbn.com:
 
-syncm: $(GITHASH)
+syncm:
 	$(RSYNC) $(RSYNC_ARGS) $(SRC_DIR) marilac.gpolab.bbn.com:
 
-synci: $(GITHASH)
+synci:
 	$(RSYNC) $(RSYNC_ARGS) $(SRC_DIR) illyrica.gpolab.bbn.com:
 
-syncc: $(GITHASH)
+syncc:
 	$(RSYNC) $(RSYNC_ARGS) $(SRC_DIR) cascade.gpolab.bbn.com:
 
-syncn: $(GITHASH)
+syncn:
 	$(RSYNC) $(RSYNC_ARGS) $(SRC_DIR) nye.gpolab.bbn.com:
