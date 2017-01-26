@@ -1,12 +1,12 @@
 #!/bin/sh
 
-# Limits as of January 25, 2017
-ERROR_LIMIT=3020
+# Limits as of January 26, 2017
+ERROR_LIMIT=3019
 WARNING_LIMIT=379
 
 RESULT=0
-ERROR_COUNT=`python test/pep8.py --ignore W . | wc -l`
-WARNING_COUNT=`python test/pep8.py --ignore E . | wc -l`
+ERROR_COUNT=`python test/pep8.py --filename '*.py,*.py.in' --ignore W . | wc -l`
+WARNING_COUNT=`python test/pep8.py --filename '*.py,*.py.in' --ignore E . | wc -l`
 
 if test $ERROR_COUNT -gt $ERROR_LIMIT
 then

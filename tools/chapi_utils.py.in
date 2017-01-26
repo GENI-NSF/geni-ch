@@ -1,5 +1,5 @@
 # ----------------------------------------------------------------------
-# Copyright (c) 2011-2016 Raytheon BBN Technologies
+# Copyright (c) 2011-2017 Raytheon BBN Technologies
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and/or hardware specification (the "Work") to
@@ -119,4 +119,4 @@ def get_implementation_info(log_prefix):
         "code_url": CHAPI_CODE_URL,
         "code_release_date": str(code_timestamp),
         "site_update_date": str(code_timestamp)
-        }
+    }
