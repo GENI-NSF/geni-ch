@@ -107,7 +107,7 @@ def get_code_timestamp(log_prefix):
                     "Can't find code tag file %s" % CHAPI_CODE_TAG_FILE)
     return code_timestamp
 
-CHAPI_CODE_TAG_FILE = "/etc/geni-chapi/geni-chapi-githash"
+CHAPI_CODE_TAG_FILE = "@pkgsysconfdir@/geni-ch-version.txt"
 CHAPI_CODE_URL = "https://github.com/GENI-NSF/geni-ch"
 
 

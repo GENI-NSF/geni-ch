@@ -3,10 +3,28 @@
 #       /usr/share/geni-chapi or similar
 tooldir = $(pkgdatadir)/../geni-ch/chapi/chapi/tools
 
-# TODO: Weed out unnecessary files from install.
-#       Candidates include any file that doesn't end
-#       in '.py'
+pkgsysconfdir = $(sysconfdir)/$(PACKAGE)
 
+edit = sed -e 's|@pkgsysconfdir[@]|$(pkgsysconfdir)|g'
+
+TEMPLATES = chapi_utils.py
+
+TEMPLATES.IN = $(TEMPLATES:%=%.in)
+
+$(TEMPLATES): Makefile
+	rm -f $@ $@.tmp
+	srcdir=''; \
+		test -f ./$@.in || srcdir=$(srcdir)/; \
+		$(edit) $${srcdir}$@.in >$@.tmp
+	chmod a-w $@.tmp
+	mv $@.tmp $@
+
+%: $(srcdir)/%.in
+
+# Distribute but do not install
+EXTRA_DIST = $(TEMPLATES.IN)
+
+CLEANFILES = $(TEMPLATES)
 
 dist_tool_DATA = \
 	ABACManager.py \
