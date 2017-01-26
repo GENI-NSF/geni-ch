@@ -32,7 +32,7 @@ from tools.dbutils import STANDARD_DATETIME_FORMAT
 
 opsmon_logger = logging.getLogger('opsmon')
 
-# Replace : and + in URN to -                                            
+# Replace : and + in URN to -
 def flatten(urn):
     return urn.replace(':', '_').replace('+', '_')
 
@@ -80,9 +80,9 @@ class OpsMonHandler:
     def truncate_urn(self, urn):
         return '+'.join(urn.split('+')[1:])
 
-    # For a given URN and object type 
+    # For a given URN and object type
     # (and optional ID, otherwise derived from URN)
-    # Return a dictionary of object URN, href and ID 
+    # Return a dictionary of object URN, href and ID
     def compute_reference_info(self, urn, obj_type, obj_id = None):
         if obj_id is None:
             obj_id = flatten(self.truncate_urn(urn))
@@ -106,7 +106,7 @@ class OpsMonHandler:
         slice_name = slice_parts[1]
         project_parts = slice_parts[0].split(self._authority + '_')
         project_name = project_parts[1]
-        return "urn:publicid:IDN+%s:%s+slice+%s" % (self._authority, 
+        return "urn:publicid:IDN+%s:%s+slice+%s" % (self._authority,
                                                     project_name, slice_name)
 
     # Return the opsmon information about this authority (only this one)
@@ -119,8 +119,8 @@ class OpsMonHandler:
             return ""
 
         # Grab URN's and leads of all unexpired slices
-        q = session.query(self._db.SLICE_TABLE.c.slice_urn, 
-                          self._db.SLICE_TABLE.c.slice_id, 
+        q = session.query(self._db.SLICE_TABLE.c.slice_urn,
+                          self._db.SLICE_TABLE.c.slice_id,
                           self._db.SLICE_TABLE.c.owner_id)
         q = q.filter(self._db.SLICE_TABLE.c.expired == 'f')
         rows = q.all()
@@ -137,10 +137,10 @@ class OpsMonHandler:
         else:
             q = q.filter(self._db.MEMBER_ATTRIBUTE_TABLE.c.member_id == None)
         rows = q.all()
-        users_info = [self.compute_reference_info(row.value, 'user', 
+        users_info = [self.compute_reference_info(row.value, 'user',
                                                   row.value.split('+')[-1]) \
                           for row in rows]
-                      
+
         authority_data = {
             "$schema" : self._authority_schema,
             "id" : self._authority,
@@ -203,7 +203,7 @@ class OpsMonHandler:
             'urn' : slice_urn,
             'uuid' : slice_uuid,
             'ts' : ts,
-            'authority' : self.compute_reference_info(self._authority_urn, 
+            'authority' : self.compute_reference_info(self._authority_urn,
                                                       'authority',
                                                       self._authority),
             'created' : self.to_timestamp(row.creation),
@@ -224,7 +224,7 @@ class OpsMonHandler:
         q = q.filter(ma1.c.member_id == ma2.c.member_id)
         q = q.filter(ma1.c.name == 'username')
         q = q.filter(ma1.c.value == user_id)
-        
+
         rows = q.all()
         if len(rows) == 0: return ""
 
@@ -280,7 +280,5 @@ class OpsMonHandler:
             opsmon_logger.info("Unknown variety %s" % variety)
 
         session.close()
-        
+
         return json.dumps(id_data)
-
-
