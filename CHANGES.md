@@ -12,6 +12,8 @@
   ([#544](https://github.com/GENI-NSF/geni-ch/issues/544))
 * Convert timestamps for opsmon properly to GMT
   ([#546](https://github.com/GENI-NSF/geni-ch/issues/546))
+* Define "WSGIProcessGroup" in ch-ssl.conf template
+  ([#548](https://github.com/GENI-NSF/geni-ch/issues/548))
 
 ## Installation Notes
 
