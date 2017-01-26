@@ -14,8 +14,8 @@
 # Leave both in place so it works on both platforms.
 # ----------------------------------------------------------------------
 WSGIPythonPath /usr/share/geni-ch/chapi/chapi
-WSGIDaemonProcess ch_server display-name=%{GROUP} python-path=/usr/share/geni-c\
-h/chapi/chapi
+WSGIDaemonProcess ch_server display-name=%{GROUP} python-path=/usr/share/geni-ch/chapi/chapi
+WSGIProcessGroup ch_server
 
 <VirtualHost *:443>
     ServerName @ch_host@
