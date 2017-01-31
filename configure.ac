@@ -1,5 +1,5 @@
 # Specify package name, version, bug report URL, tar name, and URL
-AC_INIT([GENI Clearinghouse], [2.17],
+AC_INIT([GENI Clearinghouse], [2.18],
         [https://github.com/GENI-NSF/geni-ch/issues], [geni-chapi],
         [https://github.com/GENI-NSF/geni-ch])
 AM_INIT_AUTOMAKE([foreign -Wall -Wno-portability])
