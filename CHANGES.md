@@ -1,5 +1,26 @@
 # GENI Clearinghouse Release Notes
 
+# [Release 2.17](https://github.com/GENI-NSF/geni-ch/milestones/2.17)
+
+## Changes
+
+* Add service enabling to CentOS install guide
+  ([#534](https://github.com/GENI-NSF/geni-ch/issues/534))
+* Create a version file for get_version responses
+  ([#540](https://github.com/GENI-NSF/geni-ch/issues/540))
+* Move one-time initialization to WSGI files
+  ([#542](https://github.com/GENI-NSF/geni-ch/issues/542))
+* Require client certificate httpd config template
+  ([#544](https://github.com/GENI-NSF/geni-ch/issues/544))
+* Convert timestamps for opsmon properly to GMT
+  ([#546](https://github.com/GENI-NSF/geni-ch/issues/546))
+* Define "WSGIProcessGroup" in ch-ssl.conf template
+  ([#548](https://github.com/GENI-NSF/geni-ch/issues/548))
+
+## Installation Notes
+
+* None
+
 # [Release 2.16](https://github.com/GENI-NSF/geni-ch/milestones/2.16)
 
 ## Changes

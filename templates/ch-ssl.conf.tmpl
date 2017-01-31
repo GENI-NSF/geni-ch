@@ -14,8 +14,8 @@
 # Leave both in place so it works on both platforms.
 # ----------------------------------------------------------------------
 WSGIPythonPath /usr/share/geni-ch/chapi/chapi
-WSGIDaemonProcess ch_server display-name=%{GROUP} python-path=/usr/share/geni-c\
-h/chapi/chapi
+WSGIDaemonProcess ch_server display-name=%{GROUP} python-path=/usr/share/geni-ch/chapi/chapi
+WSGIProcessGroup ch_server
 
 <VirtualHost *:443>
     ServerName @ch_host@
@@ -39,6 +39,13 @@ h/chapi/chapi
     WSGIScriptAlias /CS @pkgdatadir@/chapi/chapi/tools/ch_server.wsgi
     WSGIScriptAlias /LOG @pkgdatadir@/chapi/chapi/tools/ch_server.wsgi
     WSGIScriptAliasMatch /info/*/* @pkgdatadir@/chapi/chapi/tools/ch_server.wsgi
+
+    # Use rewrite engine to show a relatively friendly page to
+    # clients who don't display SSL certs, regardless of what URL
+    # they requested on this vhost
+    RewriteEngine On
+    RewriteCond %{SSL:SSL_CLIENT_VERIFY} !^SUCCESS$
+    RewriteRule .* /index.html [L]
 
 </VirtualHost>
 

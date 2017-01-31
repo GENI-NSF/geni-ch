@@ -1,5 +1,5 @@
 # ----------------------------------------------------------------------
-# Copyright (c) 2011-2016 Raytheon BBN Technologies
+# Copyright (c) 2011-2017 Raytheon BBN Technologies
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and/or hardware specification (the "Work") to
@@ -37,34 +37,24 @@ import plugins.sarm.plugin
 
 from tools.chapi_log import *
 
-pm.registerService('xmlrpc', pm.XMLRPCHandler())
-pm.registerService('config', pm.ConfigDB())
-pm.registerService('rpcserver', pm.RESTServer())
-pm.registerService(pm.ENVIRONMENT_SERVICE, pm.WSGIEnvironment())
-
-initialized = False
-
 
 def initialize():
-    global initialized
-    if not initialized:
-        plugins.chapiv1rpc.plugin.setup()
-        plugins.chrm.plugin.setup()
-        plugins.csrm.plugin.setup()
-        plugins.flaskrest.plugin.setup()
-        plugins.logging.plugin.setup()
-        plugins.opsmon.plugin.setup()
-        plugins.marm.plugin.setup()
-        plugins.sarm.plugin.setup()
-        chapi_info("CH_SERVER",  "INITIALIZED CH_SERVER")
-        initialized = True
+    pm.registerService('xmlrpc', pm.XMLRPCHandler())
+    pm.registerService('config', pm.ConfigDB())
+    pm.registerService('rpcserver', pm.RESTServer())
+    pm.registerService(pm.ENVIRONMENT_SERVICE, pm.WSGIEnvironment())
+    plugins.chapiv1rpc.plugin.setup()
+    plugins.chrm.plugin.setup()
+    plugins.csrm.plugin.setup()
+    plugins.flaskrest.plugin.setup()
+    plugins.logging.plugin.setup()
+    plugins.opsmon.plugin.setup()
+    plugins.marm.plugin.setup()
+    plugins.sarm.plugin.setup()
+    chapi_info("CH_SERVER", "INITIALIZED CH_SERVER")
 
 
 def application(environ, start_response):
-
-    initialize()
-
-#    print "ENV = " + str(environ)
     start_response('200 OK', [('Content-Type', 'text/html')])
     try:
         result = handleCall(environ)
@@ -114,7 +104,8 @@ def handle_XMLRPC_call(environ):
         # Always clear the environment after the call is complete,
         # even if there was an exception
         envService.clearEnvironment()
-    response = xmlrpclib.dumps((method_response,), methodresponse=True, allow_none=True)
+    response = xmlrpclib.dumps((method_response,),
+                               methodresponse=True, allow_none=True)
     return response
 
 

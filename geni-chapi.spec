@@ -1,5 +1,5 @@
 Name:           geni-chapi
-Version:        2.16
+Version:        2.17
 Release:        1%{?dist}
 Summary:        GENI clearinghouse
 BuildArch:      noarch
@@ -47,6 +47,7 @@ rm -rf $RPM_BUILD_ROOT
 %config %{_sysconfdir}/%{name}/credential_store_policy.json
 %config %{_sysconfdir}/%{name}/example-chapi.ini
 %config %{_sysconfdir}/%{name}/example-parameters.json
+%config %{_sysconfdir}/%{name}/geni-ch-version.txt
 %config %{_sysconfdir}/%{name}/logging_config.conf
 %config %{_sysconfdir}/%{name}/logging_policy.json
 %config %{_sysconfdir}/%{name}/member_authority_policy.json

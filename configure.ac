@@ -1,5 +1,5 @@
 # Specify package name, version, bug report URL, tar name, and URL
-AC_INIT([GENI Clearinghouse], [2.16],
+AC_INIT([GENI Clearinghouse], [2.17],
         [https://github.com/GENI-NSF/geni-ch/issues], [geni-chapi],
         [https://github.com/GENI-NSF/geni-ch])
 AM_INIT_AUTOMAKE([foreign -Wall -Wno-portability])
@@ -19,8 +19,6 @@ AC_ARG_ENABLE([gpo_lab],
   *) AC_MSG_ERROR([bad value ${enableval} for --enable-gpo-lab]) ;;
 esac],[gpo_lab=false])
 AM_CONDITIONAL([GPO_LAB], [test x$gpo_lab = xtrue])
-
-AM_CONDITIONAL(INSTALL_GITHASH, [test -f etc/geni-chapi-githash])
 
 AC_CONFIG_FILES([Makefile plugins/Makefile tools/Makefile etc/Makefile])
 AC_CONFIG_FILES([bin/Makefile man/Makefile data/Makefile db/Makefile])
