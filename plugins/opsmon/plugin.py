@@ -32,11 +32,7 @@ def setup():
     rest = pm.getService("rest")
     opsmon_handler = OpsMonHandler()
     pm.registerService('opsmon_handler', opsmon_handler)
-    rest.registerREST('opsmon',  OpsMonHandler.handle_opsmon_request, 
+    rest.registerREST('opsmon',  OpsMonHandler.handle_opsmon_request,
                       '/info/<variety>/<id>',
                       methods=["GET"],
                       defaults={})
-
-
-
-

@@ -21,7 +21,7 @@
 # IN THE WORK.
 #----------------------------------------------------------------------
 
-# Base class for delegate bases that want to authenticate, authorize, 
+# Base class for delegate bases that want to authenticate, authorize,
 # Return GENI-style returns
 
 import tools.pluginmanager as pm
@@ -50,7 +50,7 @@ class DelegateBase(object):
         config = pm.getService("config")
   #      cert_root = expand_amsoil_path(config.get("chapiv1rpc.ch_cert_root"))
         cert_root = config.get("chapiv1rpc.ch_cert_root")
-        
+
         if client_cert == None:
             # work around if the certificate could not be acquired due to the shortcommings of the werkzeug library
             if config.get("flask.debug"):
@@ -64,7 +64,7 @@ class DelegateBase(object):
             cred_verifier.verify_from_strings(client_cert, geni_credentials, slice_urn, privileges)
         except Exception as e:
             raise CHAPIv1ForbiddenError(str(e))
-        
+
         user_gid = gid.GID(string=client_cert)
         user_urn = user_gid.get_urn()
         user_uuid = user_gid.get_uuid()
@@ -81,7 +81,7 @@ class DelegateBase(object):
         self.logger.error(e)
         self.logger.error(traceback.format_exc())
         return {'code' :  e.code , 'value' : None, 'output' : str(e) }
-        
+
     def _successReturn(self, result):
         """Assembles a GENI compliant return result for successful methods."""
         return { 'code' :  0 , 'value' : result, 'output' : '' }

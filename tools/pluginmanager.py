@@ -78,14 +78,14 @@ class ConfigDB(object):
 
     def set(self, key, value):
         self._mapping[key] = value
-        
+
     def get(self, key):
         return self._mapping[key]
 
     def getAll(self):
         return self._mapping.keys()
 
-# An entry registering a REST service: 
+# An entry registering a REST service:
 #    endpoint and handler are all we really care about
 class RESTEntry(object):
     def __init__(self, endpoint, rule, handler, defaults, methods):
@@ -95,7 +95,7 @@ class RESTEntry(object):
         self._defaults = defaults
         self._methods = methods
 
-# Dispatcher for REST calls, based on 
+# Dispatcher for REST calls, based on
 class RESTDispatcher(object):
     _entries_by_endpoint = {}
 
@@ -113,7 +113,7 @@ class RESTDispatcher(object):
         pieces = endpoint.split('/')
         if len(pieces) > 2:
             key = endpoint.split('/')[1]
-        
+
             if key in self._entries_by_endpoint:
                 return self._entries_by_endpoint[key]._handler
         return None

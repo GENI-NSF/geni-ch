@@ -27,7 +27,7 @@ import threading
 import time
 
 # Simple threaded base class that checks whether a particular
-# file has changed and calls the base class method handeFileChange 
+# file has changed and calls the base class method handeFileChange
 # when it has changed (based on change to OS file modified time
 class FileChecker(threading.Thread):
     def __init__(self, filename, interval):
@@ -38,7 +38,7 @@ class FileChecker(threading.Thread):
         self._running = False
 
     # Thread 'run' method: Loop and check if the file modify time has
-    # changed since last time around the loop. If so, update time 
+    # changed since last time around the loop. If so, update time
     # and invoke handleFileChange method
     def run(self):
         self._running = True
@@ -49,13 +49,13 @@ class FileChecker(threading.Thread):
                 self._file_time = new_file_time
                 self.handleFileChange()
 
-    # Base method called 
+    # Base method called
     def handleFileChange(self):
         print "File changed: %s %s" % (self._filename, self._file_time)
 
     # Kill the searching thread, to drop out of the 'run' loop after next sleep
     def stop(self): self._running = False
-        
+
 # Simple test program: Runs for 50 seconds, counting the seconds
 # And spawning a FileChecker to check on /tmp/foo.txt
 def main():
@@ -77,4 +77,3 @@ def main():
 
 if __name__ == "__main__":
     sys.exit(main())
-

@@ -34,11 +34,8 @@ def setup():
     log_delegate = Loggingv1Delegate()
     log_handler.setDelegate(log_delegate)
 
-    log_guard = Loggingv1Guard() 
+    log_guard = Loggingv1Guard()
     log_handler.setGuard(log_guard)
 
     xmlrpc = pm.getService('xmlrpc')
     xmlrpc.registerXMLRPC('log1', log_handler, '/LOG')
-
-
-

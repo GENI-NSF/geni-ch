@@ -35,7 +35,7 @@ def services_test(db):
         print str(k)
 
     import pdb; pdb.set_trace()
-    
+
     stmt = services.query('service_urn', 'service_url')
     rs = stmt.execute()
     for row in rs:
@@ -57,7 +57,7 @@ def slice_test(db):
     q = q.filter(SLICE_TABLE.c.slice_urn == urn)
     rows = q.all()
     session.close()
-    for row in rows: 
+    for row in rows:
         print "ROW = " + str(row.slice_urn) + " " + \
             str(row.project_id)  + " " + str(row.expiration) + " " + \
             str(row.project_name) + " " + \

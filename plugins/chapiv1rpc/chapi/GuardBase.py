@@ -38,19 +38,19 @@ class GuardBase(object):
 
     # Adjust the client identity in case the credentials and options
     # indicate that the caller of the method is not the 'true' caller
-    # This method is intended to be overwritten by clients that 
+    # This method is intended to be overwritten by clients that
     # support 'speaks-for' semantics
     # Returns:
-    #   agent_cert - The certificate of the true caller 
+    #   agent_cert - The certificate of the true caller
     #          (which may or may not be the client_cert)
-    #   revised_options - Any changes to optiosn to reflect the change in 
-    #         identity (e.g. placing the original client_cert in as an 
+    #   revised_options - Any changes to optiosn to reflect the change in
+    #         identity (e.g. placing the original client_cert in as an
     #         option for later accountability)
     def adjust_client_identity(self, client_cert, credentials, options,
                                trusted_roots):
         # Default implementation returns the given client_cert and options
         return client_cert, options
-        
+
 
 
     # Check that the results to the given method are permitted
