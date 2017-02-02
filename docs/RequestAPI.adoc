@@ -67,7 +67,7 @@ create_request(context_type, context_id, request_type, request_text,
 * context_id - a UUID, usually a project ID
 * request_type - ?
 * request_text - ?
-* request_details - ?
+* request_details - Unused? Pass an empty string.
 * credentials - a list of credentials, can be empty
 * options - an XML-RPC struct (Python dict). Ignored.
 
