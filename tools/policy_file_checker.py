@@ -1,7 +1,4 @@
-from tools.file_checker import FileChecker
-from tools.chapi_log import *
-
-#----------------------------------------------------------------------
+# ----------------------------------------------------------------------
 # Copyright (c) 2011-2016 Raytheon BBN Technologies
 #
 # Permission is hereby granted, free of charge, to any person obtaining
@@ -22,7 +19,10 @@ from tools.chapi_log import *
 # WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE WORK OR THE USE OR OTHER DEALINGS
 # IN THE WORK.
-#----------------------------------------------------------------------
+# ----------------------------------------------------------------------
+from tools.file_checker import FileChecker
+from tools.chapi_log import *
+
 
 # Thread to check if a policy file has changed, and if so, clear
 # out current invocation checks and cause them to be re-read

@@ -1,4 +1,4 @@
-#----------------------------------------------------------------------
+# ----------------------------------------------------------------------
 # Copyright (c) 2011-2016 Raytheon BBN Technologies
 #
 # Permission is hereby granted, free of charge, to any person obtaining
@@ -19,7 +19,7 @@
 # WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE WORK OR THE USE OR OTHER DEALINGS
 # IN THE WORK.
-#----------------------------------------------------------------------
+# ----------------------------------------------------------------------
 
 import tools.pluginmanager as pm
 from MAv1Implementation import MAv1Implementation
@@ -27,6 +27,7 @@ from MAv1Guard import MAv1Guard
 
 # Implementation of MA that works against GPO database. Replace
 # Default delegate with MAv1Implementation delegate
+
 
 def setup():
 

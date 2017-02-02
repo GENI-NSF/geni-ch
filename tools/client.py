@@ -389,9 +389,11 @@ def main(args=sys.argv, do_print=True):
                          'lookup_project_members',
                          'lookup_projects_for_member']:
         urn = None
-        if 'match' in client_options and 'SLICE_URN' in client_options['match']:
+        if ('match' in client_options and
+                'SLICE_URN' in client_options['match']):
             urn = client_options['match']['SLICE_URN']
-        if 'match' in client_options and 'PROJECT_URN' in client_options['match']:
+        if ('match' in client_options and
+                'PROJECT_URN' in client_options['match']):
             urn = client_options['match']['PROJECT_URN']
         (result, msg) = \
             _do_ssl(framework, suppress_errors, reason, fcn,
