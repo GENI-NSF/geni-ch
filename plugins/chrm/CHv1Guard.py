@@ -73,4 +73,3 @@ class CHv1Guard(ABACGuardBase):
 
     def get_row_check(self, method):
         return None
-

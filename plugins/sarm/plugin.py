@@ -37,4 +37,3 @@ def setup():
     handler = pm.getService('sav1handler')
     handler.setDelegate(delegate)
     handler.setGuard(guard)
-

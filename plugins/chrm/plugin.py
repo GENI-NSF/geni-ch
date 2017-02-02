@@ -51,5 +51,3 @@ def setup():
 
     xmlrpc = pm.getService('xmlrpc')
     xmlrpc.registerXMLRPC('sr1', sr_handler, '/SR')
-
-

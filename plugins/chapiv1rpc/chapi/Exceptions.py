@@ -111,4 +111,3 @@ class CHAPIv1ConfigurationError(CHAPIv1BaseError):
         super(self.__class__, self).__init__(CONFIGURATION_ERROR, \
                                                  'CONFIGURATION', \
                                                  'CONFIG_ERROR', comment)
-
