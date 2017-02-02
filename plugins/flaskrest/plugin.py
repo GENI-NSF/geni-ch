@@ -48,6 +48,3 @@ def setup():
     flask_server = pm.getService('rpcserver')
     flask_rest = FlaskREST(flask_server)
     pm.registerService('rest', flask_rest)
-
-
-

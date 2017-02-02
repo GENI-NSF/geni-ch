@@ -22,7 +22,7 @@
 #----------------------------------------------------------------------
 
 # A tool to add/remove attributes to service entries
-# Check that the name and value are valid as defined in the 
+# Check that the name and value are valid as defined in the
 # CH_constants.defined_attfibutes
 
 import CH_constants as CH
@@ -128,4 +128,3 @@ def validate_name_value(name, value, service_type):
 
 if __name__ == "__main__":
     sys.exit(main())
-

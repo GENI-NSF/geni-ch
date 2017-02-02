@@ -172,7 +172,7 @@ def make_cert(uuid, email, urn, signer_cert_file, signer_key_file, csr_file,
         "authorityKeyIdentifier=keyid:always,issuer:always\n" + \
         "basicConstraints = CA:false\n"
     extdata = extdata_template % extname
-        
+
     if email:
         extdata = extdata + \
             "subjectAltName=email:copy,URI:%s,URI:urn:uuid:%s\n" \

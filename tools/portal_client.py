@@ -25,7 +25,7 @@ from gcf.omnilib.util.dossl import _do_ssl
 import xmlrpclib
 from gcf.omnilib.frameworks.framework_base import Framework_Base
 
-# Emulate CHAPI traffic supporting specific portal pages: 
+# Emulate CHAPI traffic supporting specific portal pages:
 # e.g. home, projects, slices
 
 class MAClientFramework(Framework_Base):
@@ -56,23 +56,23 @@ def emulate_portal_page(opts, verbose = False):
         print "Fetching home page for %s" % opts.eppn
         # Lookup public member info by EPPN
         client_options = {'match' : {'_GENI_MEMBER_EPPN' : opts.eppn}}
-        (public_info, msg) = _do_ssl(framework, suppress_errors, reason, 
-                                     ma_client.lookup_public_member_info, 
+        (public_info, msg) = _do_ssl(framework, suppress_errors, reason,
+                                     ma_client.lookup_public_member_info,
                                      opts.credentials, client_options)
         member_urn = public_info['value'].keys()[0]
         member_uid = public_info['value'][member_urn]['MEMBER_UID']
 
         # Lookup identifying info by UID
         client_options = {'match' : {'MEMBER_UID': [member_uid]}}
-        (identifying_info, msg) = _do_ssl(framework, suppress_errors, reason, 
-                                          ma_client.lookup_identifying_member_info, 
+        (identifying_info, msg) = _do_ssl(framework, suppress_errors, reason,
+                                          ma_client.lookup_identifying_member_info,
                                           opts.credentials, client_options)
 
         # Lookup private key by UID
-        client_options = {'match' : {'MEMBER_UID': [member_uid]}, 
+        client_options = {'match' : {'MEMBER_UID': [member_uid]},
                           'filter' : ['_GENI_MEMBER_INSIDE_PRIVATE_KEY']}
-        (private_info, msg) = _do_ssl(framework, suppress_errors, reason, 
-                                      ma_client.lookup_private_member_info, 
+        (private_info, msg) = _do_ssl(framework, suppress_errors, reason,
+                                      ma_client.lookup_private_member_info,
                                       opts.credentials, client_options)
         if verbose:
             print "Result = %s " % public_info
@@ -82,26 +82,26 @@ def emulate_portal_page(opts, verbose = False):
         # Lookup public inside cert by UID
         client_options = {'match' : {'MEMBER_UID' : [member_uid]},
                           'filter' : ['_GENI_MEMBER_INSIDE_CERTIFICATE']}
-        (public_info, msg) = _do_ssl(framework, suppress_errors, reason, 
-                                      ma_client.lookup_public_member_info, 
+        (public_info, msg) = _do_ssl(framework, suppress_errors, reason,
+                                      ma_client.lookup_public_member_info,
                                       opts.credentials, client_options)
         if verbose:
             print "Result = %s " % public_info
 
         # get_permissions
         client_options = {'_dummy' : ''}
-        (permissions, msg) = _do_ssl(framework, suppress_errors, reason, 
+        (permissions, msg) = _do_ssl(framework, suppress_errors, reason,
                                       cs_client.get_permissions,
-                                     member_uid, 
+                                     member_uid,
                                       opts.credentials, client_options)
         if verbose:
             print "Result = %s " % permissions
 
         # Lookup projects for member
         client_options = {'_dummy' : ''}
-        (projects_info, msg) = _do_ssl(framework, suppress_errors, reason, 
+        (projects_info, msg) = _do_ssl(framework, suppress_errors, reason,
                                        sa_client.lookup_projects_for_member,
-                                       member_urn, 
+                                       member_urn,
                                        opts.credentials, client_options)
         if verbose:
             print "Result = %s " % projects_info
@@ -111,7 +111,7 @@ def emulate_portal_page(opts, verbose = False):
                             for project_info in projects_info['value']
                         if not project_info['EXPIRED']]
         client_options = {'match' : {'PROJECT_UID' : project_uids}}
-        (projects, msg) = _do_ssl(framework, suppress_errors, reason, 
+        (projects, msg) = _do_ssl(framework, suppress_errors, reason,
                                        sa_client.lookup_projects,
                                        opts.credentials, client_options)
         if verbose:
@@ -119,9 +119,9 @@ def emulate_portal_page(opts, verbose = False):
 
         # Lookup slices for member
         client_options = {'_dummy' : ''}
-        (slices_info, msg) = _do_ssl(framework, suppress_errors, reason, 
+        (slices_info, msg) = _do_ssl(framework, suppress_errors, reason,
                                        sa_client.lookup_slices_for_member,
-                                       member_urn, 
+                                       member_urn,
                                        opts.credentials, client_options)
         if verbose:
             print "Result = %s " % slices_info
@@ -131,7 +131,7 @@ def emulate_portal_page(opts, verbose = False):
                             for slice_info in slices_info['value']
                       if not slice_info['EXPIRED']]
         client_options = {'match' : {'SLICE_UID' : slice_uids}}
-        (slices, msg) = _do_ssl(framework, suppress_errors, reason, 
+        (slices, msg) = _do_ssl(framework, suppress_errors, reason,
                                        sa_client.lookup_slices,
                                        opts.credentials, client_options)
         if verbose:
@@ -142,24 +142,24 @@ def emulate_portal_page(opts, verbose = False):
         for slice_urn, slice_data in slices['value'].items():
             if slice_data['SLICE_EXPIRED']: continue
             slice_owner_uid = slice_data['_GENI_SLICE_OWNER']
-            if slice_owner_uid not in member_uids: 
+            if slice_owner_uid not in member_uids:
                 member_uids.append(slice_owner_uid)
         for project_urn, project_data in projects['value'].items():
             if project_data['PROJECT_EXPIRED']: continue
             project_lead_uid = project_data['_GENI_PROJECT_OWNER']
-            if project_lead_uid not in member_uids: 
+            if project_lead_uid not in member_uids:
                 member_uids.append(project_lead_uid)
         client_options = {'match' : {'MEMBER_UID' : member_uids}}
-        (members_public_info, msg) = _do_ssl(framework, suppress_errors, reason, 
+        (members_public_info, msg) = _do_ssl(framework, suppress_errors, reason,
                                        ma_client.lookup_public_member_info,
                                        opts.credentials, client_options)
         if verbose:
             print "Result = %s " % members_public_info
-        
+
         # Lookup identifying member info for all project leads, slice_owners
         client_options = {'match' : {'MEMBER_UID' : member_uids}}
-        (members_identifying_info, msg) = _do_ssl(framework, 
-                                                  suppress_errors, reason, 
+        (members_identifying_info, msg) = _do_ssl(framework,
+                                                  suppress_errors, reason,
                                                   ma_client.lookup_identifying_member_info,
                                                   opts.credentials, client_options)
         if verbose:
@@ -167,9 +167,9 @@ def emulate_portal_page(opts, verbose = False):
 
         # Lookup pending requests for user
         client_options = {'_dummy' : ''}
-        (pending_requests, msg) = _do_ssl(framework, suppress_errors, reason, 
+        (pending_requests, msg) = _do_ssl(framework, suppress_errors, reason,
                                           sa_client.get_pending_requests_for_user,
-                                          member_uid, 1, '', 
+                                          member_uid, 1, '',
                                           opts.credentials, client_options)
         if verbose:
             print "Result = %s " % pending_requests
@@ -177,8 +177,8 @@ def emulate_portal_page(opts, verbose = False):
         # Lookup identifying member info for all project leads and slice owners
         # *** Looks like we're doing this twice...
         client_options = {'match' : {'MEMBER_UID' : member_uids}}
-        (members_identifying_info, msg) = _do_ssl(framework, 
-                                                  suppress_errors, reason, 
+        (members_identifying_info, msg) = _do_ssl(framework,
+                                                  suppress_errors, reason,
                                                   ma_client.lookup_identifying_member_info,
                                                   opts.credentials, client_options)
         if verbose:
@@ -186,8 +186,8 @@ def emulate_portal_page(opts, verbose = False):
 
         # Lookup requests by user
         client_options = {'_dummy' : ''}
-        (pending_requests, msg) = _do_ssl(framework, 
-                                         suppress_errors, reason, 
+        (pending_requests, msg) = _do_ssl(framework,
+                                         suppress_errors, reason,
                                          sa_client.get_requests_by_user,
                                           member_uid, 1, '', 0,
                                          opts.credentials, client_options)
@@ -200,8 +200,8 @@ def emulate_portal_page(opts, verbose = False):
             project_uid = pending_request['context_id']
             project_uids.append(project_uid)
         client_options = {'match' : {'PROJECT_UID' : project_uids}}
-        (pending_projects, msg) = _do_ssl(framework, 
-                                         suppress_errors, reason, 
+        (pending_projects, msg) = _do_ssl(framework,
+                                         suppress_errors, reason,
                                          sa_client.lookup_projects,
                                          opts.credentials, client_options)
         if verbose:
@@ -213,28 +213,28 @@ def emulate_portal_page(opts, verbose = False):
             lead_uid = pending_project_data['_GENI_PROJECT_OWNER']
             if lead_uid not in member_uids: member_uids.append(lead_uid)
         client_options = {'match' : {'MEMBER_UID' : member_uids}}
-        (pending_project_leads, msg) = _do_ssl(framework, 
-                                         suppress_errors, reason, 
+        (pending_project_leads, msg) = _do_ssl(framework,
+                                         suppress_errors, reason,
                                          ma_client.lookup_identifying_member_info,
                                          opts.credentials, client_options)
         if verbose:
             print "Result = %s " % pending_project_leads
 
         # Lookup log entries for context
-        (log_entries, msg) = _do_ssl(framework, 
-                                     suppress_errors, reason, 
+        (log_entries, msg) = _do_ssl(framework,
+                                     suppress_errors, reason,
                                      log_client.get_log_entries_for_context,
                                      5, member_uid, 24, opts.credentials, client_options)
-            
+
         if verbose:
             print "Result = %s " % log_entries
 
         # Lookup log entries for author
-        (log_entries, msg) = _do_ssl(framework, 
-                                     suppress_errors, reason, 
+        (log_entries, msg) = _do_ssl(framework,
+                                     suppress_errors, reason,
                                      log_client.get_log_entries_by_author,
                                      member_uid, 24, opts.credentials, client_options)
-            
+
         if verbose:
             print "Result = %s " % log_entries
 
@@ -243,5 +243,3 @@ def emulate_portal_page(opts, verbose = False):
 
     else:
         print "Page not supported: %s" % page_name
-
-

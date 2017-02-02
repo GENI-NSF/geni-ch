@@ -47,12 +47,12 @@ class CHv1Handler(HandlerBase):
                 mc._result = \
                     self._delegate.get_version(options, mc._session)
         return mc._result
-    
+
     # This call is unprotected: no checking of credentials
     # Return list of member authorities with matching and filter criteria
     # specified in options
     def lookup_member_authorities(self, options):
-        with MethodContext(self, SR_LOG_PREFIX, 'lookup_member_authorities', 
+        with MethodContext(self, SR_LOG_PREFIX, 'lookup_member_authorities',
                            {}, [], options, read_only=True, cert_required=False) as mc:
             if not mc._error:
                 mc._result = \
@@ -65,7 +65,7 @@ class CHv1Handler(HandlerBase):
     # Return list of slice authorities with matching and filter criteria
     # specified in options
     def lookup_slice_authorities(self, options):
-        with MethodContext(self, SR_LOG_PREFIX, 'lookup_slice_authorities', 
+        with MethodContext(self, SR_LOG_PREFIX, 'lookup_slice_authorities',
                            {}, [], options, read_only=True, cert_required=False) as mc:
             if not mc._error:
                 mc._result = \
@@ -78,7 +78,7 @@ class CHv1Handler(HandlerBase):
     # Return list of aggregates with matching and filter criteria`
     # specified in options
     def lookup_aggregates(self, options):
-         with MethodContext(self, SR_LOG_PREFIX, 'lookup_aggregates', 
+         with MethodContext(self, SR_LOG_PREFIX, 'lookup_aggregates',
                            {}, [], options, read_only=True, cert_required=False) as mc:
             if not mc._error:
                 mc._result = \
@@ -101,12 +101,12 @@ class CHv1Handler(HandlerBase):
     # This call is unprotected: no checking of credentials
     # Return URL of authority (slice or member) for given URN
     def lookup_authorities_for_urns(self, urns):
-         with MethodContext(self, SR_LOG_PREFIX, 
-                            'lookup_authorities_for_urns', 
+         with MethodContext(self, SR_LOG_PREFIX,
+                            'lookup_authorities_for_urns',
                            {'urns' : urns}, [], {}, read_only=True, cert_required=False) as mc:
             if not mc._error:
                 mc._result = \
-                    self._delegate.lookup_authorities__for_urns(mc._client_cert, 
+                    self._delegate.lookup_authorities__for_urns(mc._client_cert,
                                                                 urns,
                                                                 mc._session)
          return mc._result
@@ -115,12 +115,12 @@ class CHv1Handler(HandlerBase):
     # Return list of trust roots trusted by authorities and aggregates of
     # the federation associated with this Clearinghouse
     def get_trust_roots(self):
-         with MethodContext(self, SR_LOG_PREFIX, 
+         with MethodContext(self, SR_LOG_PREFIX,
                             'get_trust_roots',
                            {}, [], {}, read_only=True, cert_required=False) as mc:
             if not mc._error:
                 mc._result = \
-                    self._delegate.get_trust_roots(mc._client_cert, 
+                    self._delegate.get_trust_roots(mc._client_cert,
                                                    mc._session)
          return mc._result
 
@@ -128,10 +128,10 @@ class CHv1Handler(HandlerBase):
 # Must be  implemented in a derived class, and that derived class
 # must call setDelegate on the handler
 class CHv1DelegateBase(DelegateBase):
-    
+
     def __init__(self):
         super(CHv1DelegateBase, self).__init__(ch_logger)
-    
+
     def get_version(self, options, session):
         raise CHAPIv1NotImplementedError('')
 
@@ -152,5 +152,3 @@ class CHv1DelegateBase(DelegateBase):
 
     def lookup_services(self, client_cert, options, session):
         raise CHAPIv1NotImplementedError('')
-        
-

@@ -57,7 +57,7 @@ class MAv1Handler(HandlerBase):
         else:
             result = self._errorReturn(CHAPIv1ArgumentError("Invalid type: %s" % type))
         return result
-            
+
     def update(self, type, urn, credentials, options):
         if type == "MEMBER":
             result = \
@@ -68,7 +68,7 @@ class MAv1Handler(HandlerBase):
         else:
             result = self._errorReturn(CHAPIv1ArgumentError("Invalid type: %s" % type))
         return result
-            
+
     def delete(self, type, urn, credentials, options):
         if type == "MEMBER":
             result = \
@@ -79,7 +79,7 @@ class MAv1Handler(HandlerBase):
         else:
              result = self._errorReturn(CHAPIv1ArgumentError("Invalid type: %s" % type))
         return result
-            
+
     def lookup(self, type, credentials, options):
         if not isinstance(options, dict):
             return self._errorReturn(CHAPIv1ArgumentError("Options argument must be dictionary"))
@@ -120,7 +120,7 @@ class MAv1Handler(HandlerBase):
                            {}, credentials, options, read_only=True) as mc:
             if not mc._error:
                 mc._result = self._delegate.lookup_allowed_member_info(mc._client_cert,
-                                                                       credentials, 
+                                                                       credentials,
                                                                        options,
                                                                        mc._session)
         return mc._result
@@ -128,15 +128,15 @@ class MAv1Handler(HandlerBase):
     def lookup_public_member_info(self, credentials, options):
         """Return public information about members specified in options
         filter and query fields
-        
+
         This call is unprotected: no checking of credentials
         """
-        with MethodContext(self, MA_LOG_PREFIX, 'lookup_public_member_info', 
+        with MethodContext(self, MA_LOG_PREFIX, 'lookup_public_member_info',
                            {}, credentials, options, read_only=True) as mc:
             if not mc._error:
                 mc._result = \
-                    self._delegate.lookup_public_member_info(mc._client_cert, 
-                                                             credentials, 
+                    self._delegate.lookup_public_member_info(mc._client_cert,
+                                                             credentials,
                                                              options,
                                                              mc._session)
         return mc._result
@@ -148,12 +148,12 @@ class MAv1Handler(HandlerBase):
         This call is protected
         Authorized by client cert and credentials
         """
-        with MethodContext(self, MA_LOG_PREFIX, 'lookup_private_member_info', 
+        with MethodContext(self, MA_LOG_PREFIX, 'lookup_private_member_info',
                            {}, credentials, options, read_only=True) as mc:
             if not mc._error:
                 mc._result = \
-                    self._delegate.lookup_private_member_info(mc._client_cert, 
-                                                              credentials, 
+                    self._delegate.lookup_private_member_info(mc._client_cert,
+                                                              credentials,
                                                               options,
                                                               mc._session)
         return mc._result
@@ -165,13 +165,13 @@ class MAv1Handler(HandlerBase):
         This call is protected
         Authorized by client cert and credentials
         """
-        with MethodContext(self, MA_LOG_PREFIX, 
-                           'lookup_identifying_member_info', 
+        with MethodContext(self, MA_LOG_PREFIX,
+                           'lookup_identifying_member_info',
                            {}, credentials, options, read_only=True) as mc:
             if not mc._error:
                 mc._result = \
-                    self._delegate.lookup_identifying_member_info(mc._client_cert, 
-                                                                  credentials, 
+                    self._delegate.lookup_identifying_member_info(mc._client_cert,
+                                                                  credentials,
                                                                   options,
                                                                   mc._session)
         return mc._result
@@ -183,89 +183,89 @@ class MAv1Handler(HandlerBase):
         This call is protected
         Authorized by client cert and credentials
         """
-        with MethodContext(self, MA_LOG_PREFIX, 
-                           'lookup_public_identifying_member_info', 
+        with MethodContext(self, MA_LOG_PREFIX,
+                           'lookup_public_identifying_member_info',
                            {}, credentials, options, read_only=True) as mc:
             if not mc._error:
                 mc._result = \
-                    self._delegate.lookup_public_identifying_member_info(mc._client_cert, 
-                                                                  credentials, 
+                    self._delegate.lookup_public_identifying_member_info(mc._client_cert,
+                                                                  credentials,
                                                                   options,
                                                                   mc._session)
         return mc._result
 
     def lookup_login_info(self, credentials, options):
-        """Return member public cert/key and private key for user by EPPN. 
+        """Return member public cert/key and private key for user by EPPN.
         For authorities only.
         This call is protected
         Authorized by client cert and credentials
         """
-        with MethodContext(self, MA_LOG_PREFIX, 
+        with MethodContext(self, MA_LOG_PREFIX,
                            'lookup_login_info',
                            {}, credentials, options, read_only=True) as mc:
             if not mc._error:
                 mc._result = \
-                    self._delegate.lookup_login_info(mc._client_cert, 
-                                                     credentials, 
+                    self._delegate.lookup_login_info(mc._client_cert,
+                                                     credentials,
                                                      options,
                                                      mc._session)
         return mc._result
 
     def get_credentials(self, member_urn, credentials, options):
         """Get credentials for given user
-        
+
         This call is protected
         Authorization based on client cert and given credentials
         """
-        with MethodContext(self, MA_LOG_PREFIX, 
-                           'get_credentials', 
-                           {'member_urn' : member_urn}, 
+        with MethodContext(self, MA_LOG_PREFIX,
+                           'get_credentials',
+                           {'member_urn' : member_urn},
                            credentials, options, read_only=True) as mc:
             if not mc._error:
                 mc._result = \
-                    self._delegate.get_credentials(mc._client_cert, 
-                                                   member_urn, 
-                                                   credentials, 
+                    self._delegate.get_credentials(mc._client_cert,
+                                                   member_urn,
+                                                   credentials,
                                                    options,
                                                    mc._session)
         return mc._result
 
     def update_member_info(self, member_urn, credentials, options):
         """Update given member with new data provided in options
-        
+
         This call is protected
         Authorized by client cert and credentials
         """
-        with MethodContext(self, MA_LOG_PREFIX, 
-                           'update_member_info', 
+        with MethodContext(self, MA_LOG_PREFIX,
+                           'update_member_info',
                            {'member_urn' : member_urn},
                            credentials, options, read_only=False) as mc:
             if not mc._error:
                 mc._result = \
-                    self._delegate.update_member_info(mc._client_cert, 
+                    self._delegate.update_member_info(mc._client_cert,
                                                       member_urn,
-                                                      credentials, 
+                                                      credentials,
                                                       options,
                                                       mc._session)
         return mc._result
 
     def create_member(self, attributes, credentials, options):
-        """Create a new member using the specified attributes.  Attribute email is 
+        """Create a new member using the specified attributes.  Attribute email is
         required.  Returns the attributes of the resulting member record, including
         the uid and urn.
-        
+
         This call is protected
         Authorized by client cert and credentials
         """
-        with MethodContext(self, MA_LOG_PREFIX, 
+        with MethodContext(self, MA_LOG_PREFIX,
                            'create_member',
-                           {'attributes' : attributes}, 
+                           {'attributes' : attributes},
                            credentials, options, read_only=False) as mc:
             if not mc._error:
                 mc._result = \
-                    self._delegate.create_member(mc._client_cert, 
+                    self._delegate.create_member(mc._client_cert,
                                                  attributes,
-                                                 credentials, 
+                                                 credentials,
                                                  options,
                                                  mc._session)
         return mc._result
@@ -278,18 +278,18 @@ class MAv1Handler(HandlerBase):
             member_urn: URN of member for which to retrieve credentials
             options: 'fields' containing the fields for the key pair being stored
         Return:
-            Dictionary of name/value pairs for created key record 
+            Dictionary of name/value pairs for created key record
             including the KEY_ID
-       Should return DUPLICATE_ERROR if a key with the same KEY_ID is 
+       Should return DUPLICATE_ERROR if a key with the same KEY_ID is
        already stored for given user
        """
-        with MethodContext(self, MA_LOG_PREFIX, 
-                           'create_key', 
+        with MethodContext(self, MA_LOG_PREFIX,
+                           'create_key',
                            {}, credentials, options, read_only=False) as mc:
             if not mc._error:
                 mc._result = \
-                    self._delegate.create_key(mc._client_cert, 
-                                              credentials, 
+                    self._delegate.create_key(mc._client_cert,
+                                              credentials,
                                               options,
                                               mc._session)
         return mc._result
@@ -300,18 +300,18 @@ class MAv1Handler(HandlerBase):
             key_id: KEY_ID (unique for member/key fingerprint) of key(s) to be deleted
         Return:
             True if succeeded
-            
+
         Should return ARGUMENT_ERROR if no such key is found for user
         """
-        with MethodContext(self, MA_LOG_PREFIX, 
-                           'delete_key', 
-                           {'key_id' : key_id}, 
+        with MethodContext(self, MA_LOG_PREFIX,
+                           'delete_key',
+                           {'key_id' : key_id},
                            credentials, options, read_only=False) as mc:
             if not mc._error:
                 mc._result = \
-                    self._delegate.delete_key(mc._client_cert, 
+                    self._delegate.delete_key(mc._client_cert,
                                               key_id,
-                                              credentials, 
+                                              credentials,
                                               options,
                                               mc._session)
         return mc._result
@@ -319,65 +319,65 @@ class MAv1Handler(HandlerBase):
     def update_key(self, key_id, credentials, options):
         """
         Update the details of a key pair for given member
-        
+
         Arguments:
           member_urn: urn of member for which to delete key pair
           key_id: KEY_ID (fingerprint) of key pair to be deleted
-          options: 'fields' containing fields for key pairs that are permitted 
+          options: 'fields' containing fields for key pairs that are permitted
         for update
         Return:
             True if succeeded
         Should return ARGUMENT_ERROR if no such key is found for user
         """
-        with MethodContext(self, MA_LOG_PREFIX, 
-                           'update_key', 
-                           {'key_id' : key_id}, 
+        with MethodContext(self, MA_LOG_PREFIX,
+                           'update_key',
+                           {'key_id' : key_id},
                            credentials, options, read_only=False) as mc:
             if not mc._error:
                 mc._result = \
-                    self._delegate.update_key(mc._client_cert, 
+                    self._delegate.update_key(mc._client_cert,
                                               key_id,
-                                              credentials, 
+                                              credentials,
                                               options,
                                               mc._session)
         return mc._result
 
     def lookup_keys(self, credentials, options):
-        """Lookup keys for given match criteria return fields in given 
+        """Lookup keys for given match criteria return fields in given
         #  filter criteria
         #
         # Arguments:
-        # options: 'match' for query match criteria, 'filter' for fields 
+        # options: 'match' for query match criteria, 'filter' for fields
         #    to be returned
         # Return:
-        #  Dictionary (indexed by member_urn) of dictionaries containing 
+        #  Dictionary (indexed by member_urn) of dictionaries containing
         #     name/value pairs for all keys registered for that given user.
         """
-        with MethodContext(self, MA_LOG_PREFIX, 
-                           'lookup_keys', 
+        with MethodContext(self, MA_LOG_PREFIX,
+                           'lookup_keys',
                            {}, credentials, options, read_only=True) as mc:
             if not mc._error:
                 mc._result = \
-                    self._delegate.lookup_keys(mc._client_cert, 
-                                              credentials, 
+                    self._delegate.lookup_keys(mc._client_cert,
+                                              credentials,
                                               options,
                                               mc._session)
         return mc._result
 
     def create_certificate(self, member_urn, credentials, options):
         """Methods for managing user certs
-        # options: 
+        # options:
         # 'csr' => certificate signing request (if null, create cert/key)
         """
-        with MethodContext(self, MA_LOG_PREFIX, 
-                           'create_certificate', 
-                           {'member_urn' : member_urn}, 
+        with MethodContext(self, MA_LOG_PREFIX,
+                           'create_certificate',
+                           {'member_urn' : member_urn},
                            credentials, options, read_only=False) as mc:
             if not mc._error:
                 mc._result = \
-                    self._delegate.create_certificate(mc._client_cert, 
+                    self._delegate.create_certificate(mc._client_cert,
                                               member_urn,
-                                              credentials, 
+                                              credentials,
                                               options,
                                               mc._session)
         return mc._result
@@ -386,8 +386,8 @@ class MAv1Handler(HandlerBase):
     def list_clients(self):
         """
         """
-        with MethodContext(self, MA_LOG_PREFIX, 
-                           'list_clients', 
+        with MethodContext(self, MA_LOG_PREFIX,
+                           'list_clients',
                            {}, [], {}, read_only=True) as mc:
             if not mc._error:
                 mc._result = \
@@ -397,9 +397,9 @@ class MAv1Handler(HandlerBase):
     def list_authorized_clients(self, member_id):
         """
         """
-        with MethodContext(self, MA_LOG_PREFIX, 
-                           'list_authorized_clients', 
-                           {'member_id' : member_id}, [], {}, 
+        with MethodContext(self, MA_LOG_PREFIX,
+                           'list_authorized_clients',
+                           {'member_id' : member_id}, [], {},
                            read_only=True) as mc:
             if not mc._error:
                 mc._result = \
@@ -411,8 +411,8 @@ class MAv1Handler(HandlerBase):
     def authorize_client(self, member_id, client_urn, authorize_sense):
         """
         """
-        with MethodContext(self, MA_LOG_PREFIX, 
-                           'authorize_client', 
+        with MethodContext(self, MA_LOG_PREFIX,
+                           'authorize_client',
                            {'member_id' : member_id,'client_urn' : client_urn,
                             'authorize_sense' : authorize_sense},
                            [], {}, read_only=False) as mc:
@@ -428,11 +428,11 @@ class MAv1Handler(HandlerBase):
 
     # member disable API
     def enable_user(self, member_urn, enable_sense, credentials, options):
-        """Enable or disable a user based on URN. If enable_sense is False, then user 
+        """Enable or disable a user based on URN. If enable_sense is False, then user
         will be disabled.
         """
-        with MethodContext(self, MA_LOG_PREFIX, 
-                           'enable_user', 
+        with MethodContext(self, MA_LOG_PREFIX,
+                           'enable_user',
                            {'member_urn' : member_urn,
                             'enable_sense' : enable_sense},
                            credentials, options, read_only=False) as mc:
@@ -451,8 +451,8 @@ class MAv1Handler(HandlerBase):
         """Add a privilege to a member.
         privilege is either OPERATOR or PROJECT_LEAD
         """
-        with MethodContext(self, MA_LOG_PREFIX, 
-                           'add_member_privilege', 
+        with MethodContext(self, MA_LOG_PREFIX,
+                           'add_member_privilege',
                            {'member_uid' : member_uid,'privilege' : privilege},
                            credentials, options, read_only=False) as mc:
             if not mc._error:
@@ -467,8 +467,8 @@ class MAv1Handler(HandlerBase):
 
     def revoke_member_privilege(self, member_uid, privilege, credentials, options):
         """Revoke a privilege for a member."""
-        with MethodContext(self, MA_LOG_PREFIX, 
-                           'revoke_member_privilege', 
+        with MethodContext(self, MA_LOG_PREFIX,
+                           'revoke_member_privilege',
                            {'member_uid' : member_uid,'privilege' : privilege},
                            credentials, options, read_only=False) as mc:
             if not mc._error:
@@ -485,17 +485,17 @@ class MAv1Handler(HandlerBase):
                              member_urn, name, value, self_asserted,
                              credentials, options):
         """Add an attribute to member"""
-        with MethodContext(self, MA_LOG_PREFIX, 
-                           'add_member_attribute', 
-                           {'member_urn' : member_urn, 
-                            'name' : name, 'value' : value, 
+        with MethodContext(self, MA_LOG_PREFIX,
+                           'add_member_attribute',
+                           {'member_urn' : member_urn,
+                            'name' : name, 'value' : value,
                             'self_asserted' : self_asserted},
                            credentials, options, read_only=False) as mc:
             if not mc._error:
                 mc._result = \
                     self._delegate.add_member_attribute(mc._client_cert,
                                                         member_urn,
-                                                        name, 
+                                                        name,
                                                         value,
                                                         self_asserted,
                                                         credentials,
@@ -503,20 +503,20 @@ class MAv1Handler(HandlerBase):
                                                         mc._session)
         return mc._result
 
-    def remove_member_attribute(self, 
+    def remove_member_attribute(self,
                                 member_urn, name,
                                 credentials, options, value=None):
         """Remove attribute to member"""
-        with MethodContext(self, MA_LOG_PREFIX, 
-                           'remove_member_attribute', 
-                           {'member_urn' : member_urn, 'name' : name, 
+        with MethodContext(self, MA_LOG_PREFIX,
+                           'remove_member_attribute',
+                           {'member_urn' : member_urn, 'name' : name,
                             'value' : value},
                            credentials, options, read_only=False) as mc:
             if not mc._error:
                 mc._result = \
                     self._delegate.remove_member_attribute(mc._client_cert,
                                                         member_urn,
-                                                        name, 
+                                                        name,
                                                         credentials,
                                                         options,
                                                         mc._session, value)
@@ -530,7 +530,7 @@ class MAv1DelegateBase(DelegateBase):
 
     def __init__(self):
         super(MAv1DelegateBase, self).__init__(ma_logger)
-    
+
     # This call is unprotected: no checking of credentials
     def get_version(self, options):
         raise CHAPIv1NotImplementedError('')
@@ -547,17 +547,17 @@ class MAv1DelegateBase(DelegateBase):
         raise CHAPIv1NotImplementedError('')
 
     # This call is unprotected: no checking of credentials
-    def lookup_public_member_info(self, client_cert, 
+    def lookup_public_member_info(self, client_cert,
                                   credentials, options, session):
         raise CHAPIv1NotImplementedError('')
 
     # This call is protected
-    def lookup_private_member_info(self, client_cert, 
+    def lookup_private_member_info(self, client_cert,
                                    credentials, options, session):
         raise CHAPIv1NotImplementedError('')
 
     # This call is protected
-    def lookup_identifying_member_info(self, client_cert, 
+    def lookup_identifying_member_info(self, client_cert,
                                        credentials, options, session):
         raise CHAPIv1NotImplementedError('')
 
@@ -570,17 +570,17 @@ class MAv1DelegateBase(DelegateBase):
         raise CHAPIv1NotImplementedError('')
 
     # This call is protected
-    def get_credentials(self, client_cert, member_urn, 
+    def get_credentials(self, client_cert, member_urn,
                         credentials, options, session):
         raise CHAPIv1NotImplementedError('')
 
     # This call is protected
-    def update_member_info(self, client_cert, member_urn, 
+    def update_member_info(self, client_cert, member_urn,
                            credentials, options, session):
         raise CHAPIv1NotImplementedError('')
 
     # This call is protected
-    def create_member(self, client_cert, attributes, 
+    def create_member(self, client_cert, attributes,
                       credentials, options, session):
         raise CHAPIv1NotImplementedError('')
 
@@ -589,11 +589,11 @@ class MAv1DelegateBase(DelegateBase):
     def create_key(self, client_cert, credentials, options, session):
         raise CHAPIv1NotImplementedError('')
 
-    def delete_key(self, client_cert, key_id, 
+    def delete_key(self, client_cert, key_id,
                    credentials, options, session):
         raise CHAPIv1NotImplementedError('')
 
-    def update_key(self, client_cert, key_id, 
+    def update_key(self, client_cert, key_id,
                    credentials, options, session):
         raise CHAPIv1NotImplementedError('')
 
@@ -620,7 +620,7 @@ class MAv1DelegateBase(DelegateBase):
         raise CHAPIv1NotImplementedError('')
 
     # Private API
-    def enable_user(self, client_cert, member_urn, enable_sense, 
+    def enable_user(self, client_cert, member_urn, enable_sense,
                     credentials, options, session):
         raise CHAPIv1NotImplementedError('')
 
@@ -632,8 +632,8 @@ class MAv1DelegateBase(DelegateBase):
                                 credentials, options, session):
         raise CHAPIv1NotImplementedError('')
 
-    def add_member_attribute(self, client_cert, member_urn, att_name, 
-                             att_value, att_self_asserted, 
+    def add_member_attribute(self, client_cert, member_urn, att_name,
+                             att_value, att_self_asserted,
                              credentials, options, session):
         raise CHAPIv1NotImplementedError('')
 

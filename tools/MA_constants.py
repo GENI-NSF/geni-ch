@@ -1,24 +1,24 @@
-#----------------------------------------------------------------------         
+#----------------------------------------------------------------------
 # Copyright (c) 2011-2016 Raytheon BBN Technologies
-#                                                                               
-# Permission is hereby granted, free of charge, to any person obtaining         
-# a copy of this software and/or hardware specification (the "Work") to         
-# deal in the Work without restriction, including without limitation the        
-# rights to use, copy, modify, merge, publish, distribute, sublicense,          
-# and/or sell copies of the Work, and to permit persons to whom the Work        
-# is furnished to do so, subject to the following conditions:                   
-#                                                                               
-# The above copyright notice and this permission notice shall be                
-# included in all copies or substantial portions of the Work.                   
-#                                                                               
-# THE WORK IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS           
-# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF                    
-# MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND                         
-# NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT                   
-# HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,                  
-# WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,            
-# OUT OF OR IN CONNECTION WITH THE WORK OR THE USE OR OTHER DEALINGS            
-# IN THE WORK.                                                                  
+#
+# Permission is hereby granted, free of charge, to any person obtaining
+# a copy of this software and/or hardware specification (the "Work") to
+# deal in the Work without restriction, including without limitation the
+# rights to use, copy, modify, merge, publish, distribute, sublicense,
+# and/or sell copies of the Work, and to permit persons to whom the Work
+# is furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be
+# included in all copies or substantial portions of the Work.
+#
+# THE WORK IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+# MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+# NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+# HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+# WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE WORK OR THE USE OR OTHER DEALINGS
+# IN THE WORK.
 #----------------------------------------------------------------------
 
 credential_types = [
@@ -77,14 +77,14 @@ optional_fields = {
 
 standard_plus_optional = dict(standard_fields.items() + optional_fields.items())
 
-standard_key_fields = { 
+standard_key_fields = {
     "KEY_MEMBER" : {"TYPE" : "URN", "CREATE" : "REQUIRED"}, \
     "KEY_ID" : {"TYPE" : "STRING"}, \
     "KEY_TYPE" : {"TYPE" : "STRING", "CREATE" : "ALLOWED"}, \
     "KEY_PUBLIC" : {"TYPE" : "KEY", "CREATE" : "REQUIRED"},  \
     "KEY_PRIVATE" : {"TYPE" : "KEY", "CREATE" : "ALLOWED"}, \
     "KEY_DESCRIPTION" : \
-         {"TYPE" : "STRING", "CREATE" : "ALLOWED", "UPDATE" : True} 
+         {"TYPE" : "STRING", "CREATE" : "ALLOWED", "UPDATE" : True}
 }
 
 optional_key_fields = {
@@ -128,7 +128,7 @@ field_mapping = {
 }
 
 key_fields = ["KEY_MEMBER", "KEY_ID", "KEY_PUBLIC", "KEY_PRIVATE", "KEY_TYPE",
-              "KEY_DESCRIPTION", "_GENI_KEY_MEMBER_UID", 
+              "KEY_DESCRIPTION", "_GENI_KEY_MEMBER_UID",
               "_GENI_KEY_FILENAME" ]
 
 key_field_mapping = {
@@ -149,10 +149,10 @@ attributes = [
     "MEMBER_URN", "MEMBER_UID", "MEMBER_FIRSTNAME", "MEMBER_LASTNAME",
     "MEMBER_USERNAME", "MEMBER_EMAIL", "_GENI_MEMBER_DISPLAYNAME",
     "_GENI_MEMBER_PHONE_NUMBER", "_GENI_MEMBER_AFFILIATION",
-    "_GENI_MEMBER_EPPN", "KEY_MEMBER", "KEY_ID", 
+    "_GENI_MEMBER_EPPN", "KEY_MEMBER", "KEY_ID",
     "KEY_PUBLIC", "KEY_PRIVATE", "KEY_TYPE",
     "KEY_DESCRIPTION", "_GENI_KEY_MEMBER_UID", "_GENI_KEY_FILENAME",
-    "_GENI_MEMBER_ENABLED", "_GENI_ENABLE_WIMAX", "_GENI_ENABLE_WIMAX_BUTTON", 
+    "_GENI_MEMBER_ENABLED", "_GENI_ENABLE_WIMAX", "_GENI_ENABLE_WIMAX_BUTTON",
     "_GENI_ENABLE_IRODS", "_GENI_IRODS_USERNAME", "_GENI_WIMAX_USERNAME",
     "_GENI_MEMBER_URL", "_GENI_MEMBER_REASON", "_GENI_MEMBER_REFERENCE"
 ]
@@ -194,4 +194,3 @@ updatable_key_fields = ["KEY_DESCRIPTION", "_GENI_KEY_FILENAME"]
 
 USER_CRED_LIFE_YEARS = 1 # See MA.get_user_credential
 # FIXME: username regex
-

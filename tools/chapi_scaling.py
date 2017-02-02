@@ -29,7 +29,7 @@ import tempfile
 import time
 
 class ScalingTester:
-    def __init__(self, url, object_file, user_file, 
+    def __init__(self, url, object_file, user_file,
                  match_field, filter_fields, method, client_location):
         self._url = url
         self._method = method
@@ -42,21 +42,21 @@ class ScalingTester:
         self._options_file = self._generateOptionsFile()
         self._users = self._parseUsers()
 
-    def _parseObjectIDs(self): 
+    def _parseObjectIDs(self):
         ids_raw = open(self._object_file).read()
         ids = ids_raw.split('\n')
         return [id.strip() for id in ids if len(id.strip()) > 0]
 
-    def _parseUsers(self): 
+    def _parseUsers(self):
         users_raw = open(self._user_file).read()
         return json.loads(users_raw)
-    
+
     def _parseFilterFields(self, filter_fields):
         if not filter_fields: return None
         return [ff.strip() for ff in filter_fields.split(',')]
 
     # Make an options file for querying all objects by ID by field
-    def _generateOptionsFile(self): 
+    def _generateOptionsFile(self):
         (fd, filename) = tempfile.mkstemp()
         os.close(fd)
         options = {'match' : {self._match_field : self._object_ids}}
@@ -75,7 +75,7 @@ class ScalingTester:
             user_cert = self._users[user_index]['cert']
             user_key = self._users[user_index]['key']
 #            print "CERT = %s KEY = %s" % (user_cert, user_key)
-        
+
             command_template = "time (python %s --key %s --cert %s " + \
                 "--options_file %s --method %s --url %s 2&>1 > /dev/null) &\n"
             command =  command_template % \
@@ -90,10 +90,10 @@ class ScalingTester:
             [line for line in output.split('\n') if line.startswith('real')]
         real_timing = [rt.split('\t')[1] for rt in real_timing_raw]
         secs = [self.parseTime(rt) for rt in real_timing]
-        mean = 0; 
+        mean = 0;
         for sec in secs: mean = mean + sec
         mean = mean / num_concurrent
-        print "Mean  %s : %s" % (mean, secs) 
+        print "Mean  %s : %s" % (mean, secs)
 
     def run_script(self, script_filename):
         run_script_command = ["/bin/bash", script_filename]
@@ -108,7 +108,7 @@ class ScalingTester:
 
     def parseTime(self, time_min_sec):
         parts = time_min_sec.split('m')
-        min = int(parts[0]) 
+        min = int(parts[0])
         sec = float(parts[1].split('s')[0])
         sec = 60*min + sec
         return sec
@@ -117,22 +117,22 @@ def parseOptions(args):
     parser = optparse.OptionParser()
     parser.add_option("--url", help="URL of service to which to connect",
                       default=None)
-    parser.add_option("--object_file", 
-                      help="File containing list of object IDs", 
+    parser.add_option("--object_file",
+                      help="File containing list of object IDs",
                       default=None)
-    parser.add_option("--user_file", 
+    parser.add_option("--user_file",
                       help="JSON File containing list {cert, key} dicts",
                       default=None)
-    parser.add_option("--method", 
+    parser.add_option("--method",
                       help="Name of method to invoke",
                       default='lookup_slices')
-    parser.add_option("--match_field", help="Name of object field to match", 
+    parser.add_option("--match_field", help="Name of object field to match",
                       default="SLICE_UID")
     parser.add_option("--filter_fields", help="List of object fields to select",
                       default=None)
     parser.add_option("--client_location", help="Location of client.py",
                       default = "client.py")
-    parser.add_option("--num_concurrent", 
+    parser.add_option("--num_concurrent",
                       help="Number concurrent calls", default=1)
     parser.add_option("--frequency", help='Time to wait between invocations',
                       default=5)
@@ -145,8 +145,8 @@ def parseOptions(args):
         sys.exit(0)
 
     return opts
-     
-     
+
+
 def main(args = sys.argv):
     opts = parseOptions(args)
     st = ScalingTester(opts.url, opts.object_file, opts.user_file, \
@@ -158,9 +158,7 @@ def main(args = sys.argv):
         st.invoke(int(opts.num_concurrent))
         if iter < num_iters-1:
             time.sleep(int(opts.frequency))
-    
+
 
 if __name__ == "__main__":
     sys.exit(main())
-    
-    
