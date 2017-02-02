@@ -4,7 +4,8 @@
 
 ## Changes
 
-* None
+* Fix authorization for get_requests_for_context
+  ([#536](https://github.com/GENI-NSF/geni-ch/issues/536))
 
 ## Installation Notes
 

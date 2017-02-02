@@ -554,6 +554,10 @@ class SubjectInvocationCheck(InvocationCheck):
                 if subject_type == "REQUEST_ID":
                     for subject in subjects:
                         bindings_by_subject[subject][binding] = subject
+                elif subject_type == "PROJECT_URN":
+                    for subject in subjects:
+                        bindings_by_subject[subject][binding] = subject
+
             elif binding == "$REQUEST_ROLE":
                 if subject_type == "REQUEST_ID":
                     for subject in subjects:
@@ -568,6 +572,16 @@ class SubjectInvocationCheck(InvocationCheck):
                                 role_name = attribute_type_names[role]
                                 bindings_by_subject[subject][binding] = \
                                     role_name
+                elif subject_type == "PROJECT_URN":
+                    rows = get_project_role_for_member(caller_urn, subjects,
+                                                       session)
+                    for row in rows:
+                        role = row.role
+                        role_name = attribute_type_names[role]
+                        project_name = row.project_name
+                        subject = to_project_urn(authority, project_name)
+                        bindings_by_subject[subject][binding] = role_name
+
             elif binding == "$REQUESTOR":
                 if subject_type == "REQUEST_ID":
                     for subject in subjects:
