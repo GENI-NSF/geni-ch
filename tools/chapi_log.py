@@ -21,7 +21,7 @@
 # IN THE WORK.
 #----------------------------------------------------------------------
 
-# Methods to provide standard logging within CHAPI for 
+# Methods to provide standard logging within CHAPI for
 # invocations, errors, exceptions and other information events
 
 # In this way, the handling of CHAPI messages (what level, to what
@@ -160,4 +160,3 @@ def chapi_log_result(prefix, method, result, extra=None):
     if verboseObj.isVerbose():
         # Send to syslog at INFO level
         chapi_audit(prefix, msg, logging.INFO, extra=extra)
-

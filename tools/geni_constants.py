@@ -21,7 +21,7 @@
 # IN THE WORK.
 #----------------------------------------------------------------------
 
-# Sets of constants for defining relationships and roles in GENI 
+# Sets of constants for defining relationships and roles in GENI
 # Registry and Authorities
 
 # Context Types
@@ -32,7 +32,7 @@ SERVICE_CONTEXT = 4
 MEMBER_CONTEXT = 5
 
 # For translating context types to names (if stored that way in database)
-context_type_names = {PROJECT_CONTEXT : "PROJECT", SLICE_CONTEXT : "SLICE", 
+context_type_names = {PROJECT_CONTEXT : "PROJECT", SLICE_CONTEXT : "SLICE",
                       RESOURCE_CONTEXT : "RESOURCE", SERVICE_CONTEXT : "SERVICE",
                       MEMBER_CONTEXT : "MEMBER"}
 
@@ -43,7 +43,7 @@ MEMBER_ATTRIBUTE = 3
 AUDITOR_ATTRIBUTE = 4
 OPERATOR_ATTRIBUTE = 5
 
-attribute_type_names = { LEAD_ATTRIBUTE : "LEAD", ADMIN_ATTRIBUTE : "ADMIN", 
+attribute_type_names = { LEAD_ATTRIBUTE : "LEAD", ADMIN_ATTRIBUTE : "ADMIN",
                          MEMBER_ATTRIBUTE : "MEMBER", AUDITOR_ATTRIBUTE : "AUDITOR",
                          OPERATOR_ATTRIBUTE : "OPERATOR"}
 

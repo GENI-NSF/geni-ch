@@ -32,6 +32,3 @@ def add_attribute(db, session, signer, principal, attribute, context_type, conte
 # Obsolete: CS_ASSERTION table no longer supported
 def delete_attribute(db, session, principal, context_type, context):
     pass
-
-
-

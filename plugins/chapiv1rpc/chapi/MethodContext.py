@@ -33,7 +33,7 @@ import traceback
 
 # Class to wrap all calls from handlers to delegates
 # Holding method context
-# 
+#
 # Call should :
 #  set method
 #  grab request cert and pull out email
@@ -64,7 +64,7 @@ import traceback
 #  return mc._result
 
 class MethodContext:
-    def __init__(self, 
+    def __init__(self,
                  handler, # Handler object (e.g. SliceAuthority, MemberAuthority)
                  log_prefix, # Prefix (e.g. SA, LOG, MA) to use for logging messages
                  method_name, # Name of invoked method
@@ -74,7 +74,7 @@ class MethodContext:
                  read_only, # Whether the method is read-only (and thus no need to commit)
                  session=None, # Optionally provide an existing session in which to perform method
                  cert_required=True, # Whether the client_cert is required
-                 create_session=True):  # Whether the method requires a DB session 
+                 create_session=True):  # Whether the method requires a DB session
         self._handler = handler
         self._log_prefix = log_prefix
         self._method_name = method_name
@@ -123,7 +123,7 @@ class MethodContext:
         new_client_cert, new_options = \
             self._handler._guard.adjust_client_identity(self._client_cert,
                                                         self._credentials,
-                                                        self._options, 
+                                                        self._options,
                                                         trusted_roots)
 
         if (self._client_cert != new_client_cert):
@@ -177,7 +177,7 @@ class MethodContext:
             # If a guard is provided validate the call
             if self._handler._guard:
                 # Validate the call (arguments and authorization)
-                self._handler._guard.validate_call(self._client_cert, 
+                self._handler._guard.validate_call(self._client_cert,
                                                    self._method_name,
                                                    self._credentials,
                                                    self._options,
@@ -190,7 +190,7 @@ class MethodContext:
         finally:
             return self
 
-    # Handle any error in MethodContext processing 
+    # Handle any error in MethodContext processing
     # Set the error and result fields
     # log traceback for certain errors
     def _handleError(self, e, tb=None):
@@ -229,7 +229,7 @@ class MethodContext:
                     self._handler._log.error(pretty_db_error_traceback)
                 else:
                     self._handleError(db_error, exc_traceback)
-                
+
 
         # Log the result
         chapi_log_result(self._log_prefix, self._method_name,
@@ -237,10 +237,3 @@ class MethodContext:
 
         # Returning True means not to propagate the exception. We've handled it here.
         return True
-
-
-
-
-
-
-

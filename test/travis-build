@@ -1,8 +1,8 @@
 #!/bin/sh
 
-# Limits as of January 26, 2017
-ERROR_LIMIT=3019
-WARNING_LIMIT=379
+# Limits as of February 2, 2017
+ERROR_LIMIT=2898
+WARNING_LIMIT=46
 
 RESULT=0
 ERROR_COUNT=`python test/pep8.py --filename '*.py,*.py.in' --ignore W . | wc -l`
