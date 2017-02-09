@@ -194,3 +194,8 @@ updatable_key_fields = ["KEY_DESCRIPTION", "_GENI_KEY_FILENAME"]
 
 USER_CRED_LIFE_YEARS = 1 # See MA.get_user_credential
 # FIXME: username regex
+
+SWAP_NONCE = 'ncsa_nonce'
+SWAP_NONCE_TS = 'ncsa_nonce_ts'
+MEMBER_URN = 'MEMBER_URN'
+MEMBER_EPPN = '_GENI_MEMBER_EPPN'

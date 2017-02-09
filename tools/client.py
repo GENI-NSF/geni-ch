@@ -421,6 +421,13 @@ def main(args=sys.argv, do_print=True):
             _do_ssl(framework, suppress_errors, reason, fcn,
                     member_eppn, project_id, slice_id)
 
+    # MA Swap nonce method
+    elif opts.method in ['set_swap_nonce']:
+        options = {}
+        (result, msg) = \
+            _do_ssl(framework, suppress_errors, reason, fcn, opts.urn,
+                    opts.string_arg, opts.credentials, options)
+
     # Methods that take attributes and options
     elif client_attributes:
         (result, msg) = _do_ssl(framework, suppress_errors, reason, fcn,

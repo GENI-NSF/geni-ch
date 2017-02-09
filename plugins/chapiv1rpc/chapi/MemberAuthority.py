@@ -522,6 +522,19 @@ class MAv1Handler(HandlerBase):
                                                         mc._session, value)
         return mc._result
 
+    def set_swap_nonce(self, member_urn, nonce, credentials, options):
+        """Remove attribute to member"""
+        with MethodContext(self, MA_LOG_PREFIX,
+                           'set_swap_nonce',
+                           {'member_urn': member_urn, 'nonce': nonce},
+                           credentials, options, read_only=False) as mc:
+            if not mc._error:
+                mc._result = \
+                    self._delegate.set_swap_nonce(mc._client_cert, member_urn,
+                                                  nonce, credentials, options,
+                                                  mc._session)
+        return mc._result
+
 
 # Base class for implementations of MA API
 # Must be  implemented in a derived class, and that derived class
@@ -639,4 +652,8 @@ class MAv1DelegateBase(DelegateBase):
 
     def remove_member_attribute(self, client_cert, member_urn, att_name, \
                                     credentials, options, session, att_value=None):
+        raise CHAPIv1NotImplementedError('')
+
+    def set_swap_nonce(self, client_cert, member_urn, nonce, credentials,
+                       options, session):
         raise CHAPIv1NotImplementedError('')

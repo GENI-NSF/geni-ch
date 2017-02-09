@@ -1698,3 +1698,67 @@ Please see http://groups.geni.net/geni/wiki/ProjectLeadWelcome for information o
                 val = getattr(row, MA.field_mapping[f])
                 result[row.member_id][f] = self.transform_for_result(val)
         return result
+
+    def set_swap_nonce(self, client_cert, member_urn, nonce, credentials,
+                       options, session):
+        """Add a swap nonce attribute to a member account. This account can
+        then be a source account for a swap operation.
+
+        For now this operation is limited to accounts from the GPO IdP.
+        """
+        # find the uid
+        uids = self.get_uids_for_attribute(session, MA.MEMBER_URN, member_urn)
+        if len(uids) == 0:
+            raise CHAPIv1ArgumentError('No member with URN ' + member_urn)
+        member_uid = uids[0]
+
+        # Determine if the eppn is valid for swapping (is from the GPO IdP)
+        rows = self.get_attr_for_uid(session, MA.MEMBER_EPPN, member_uid)
+        if not rows:
+            msg = 'No EPPN found for %s (%s)'
+            chapi_warn(MA_LOG_PREFIX, msg % (member_urn, eppn))
+            raise CHAPIv1ArgumentError('No EPPN for %s' % (member_urn))
+        eppn = rows[0]
+        eppn_regex = '.*@gpolab.bbn.com$'
+        if not re.match(eppn_regex, eppn):
+            msg = 'EPPN %s is invalid for swap operation, must be from GPO IdP'
+            chapi_warn(MA_LOG_PREFIX, msg % (eppn))
+            raise CHAPIv1ArgumentError('Account is invalid for swap')
+
+        # Everything checks out, add the swap nonce attribute
+        result = self.add_member_attribute(client_cert, member_urn,
+                                           MA.SWAP_NONCE, nonce, True,
+                                           credentials, options, session)
+        # If adding the attribute failed, return the error
+        if result['code']:
+            return result
+        nonce_ts = datetime.datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%S')
+        result2 = self.add_member_attribute(client_cert, member_urn,
+                                            MA.SWAP_NONCE_TS, nonce_ts, True,
+                                            credentials, options, session)
+        if result2['code']:
+            msg = 'Unable to set attribute %s on %s. Continuing without it.'
+            chapi_warn(MA_LOG_PREFIX, msg % (MA.SWAP_NONCE_TS, member_urn))
+            raise CHAPIv1ArgumentError('Account is invalid for swap')
+
+        # Return the NONCE result, not the NONCE_TS result.
+        return result
+
+    def swap_identities(self, client_cert, member_urn, nonce, credentials,
+                        options, session):
+        """Swaps two identities by swapping their ePPNs. Will
+        also swap the email addresses if they differ.
+
+        The source account is identified by a nonce which has previously
+        been established by a call to `set_swap_nonce`.
+
+        Also adds an attribute to the destination account indicating that it
+        has already been swapped. Accounts can only be swapped once. The
+        value of this attribute is a timestamp to indicate when the swap
+        occurred.
+
+        Destination URN must be an account based in the NCSA identity provider.
+        """
+
+        # Can we clear the NONCE and NONCE_TS from the source account?
+        pass
