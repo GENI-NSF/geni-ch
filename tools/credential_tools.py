@@ -32,10 +32,13 @@ import tempfile
 import xml.dom.minidom as minidom
 
 
-# Main: python credential_tools.py template_file mapping_file signer_cert signer_key output_filename=None
+# Main: python credential_tools.py template_file mapping_file \
+#              signer_cert signer_key output_filename=None
 def main(args):
     if len(args) < 5:
-        print "Usage: credential_tools.py template_file mapping_file signer_cert signer_key output_file=None"
+        usage = "Usage: credential_tools.py template_file mapping_file"
+        usage += " signer_cert signer_key output_file=None"
+        print usage
         sys.exit(0)
 
     template_file = args[1]
@@ -87,7 +90,9 @@ def generate_credential(template, mapping, signer_cert, signer_key):
     template_doc = minidom.parseString(template)
     credential_elts = template_doc.getElementsByTagName('credential')
     if not credential_elts or not credential_elts[0].getAttribute('xml:id'):
-        print "Template doesn't contain credential element with xml:id attribute"
+        msg = "Template does not contain credential element"
+        msg += " with xml:id attribute"
+        print msg
         return None
 
     refid = credential_elts[0].getAttribute('xml:id')
