@@ -28,6 +28,8 @@ from email.mime.text import MIMEText
 from email.header import Header
 import os.path
 import datetime
+import string
+import random
 from chapi_log import *
 
 
@@ -120,3 +122,10 @@ def get_implementation_info(log_prefix):
         "code_release_date": str(code_timestamp),
         "site_update_date": str(code_timestamp)
     }
+
+def random_id(length=6):
+    chars = string.digits + string.uppercase
+    result = '';
+    for i in range(length):
+        result += chars[random.randint(0, 35)]
+    return result

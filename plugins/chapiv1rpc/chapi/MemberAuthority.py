@@ -522,18 +522,18 @@ class MAv1Handler(HandlerBase):
                                                         mc._session, value)
         return mc._result
 
-    def set_swap_nonce(self, member_urn, nonce, credentials, options):
+    def create_swap_id(self, member_urn, credentials, options):
         """Set a swap nonce attribute on the member for later use
         to swap identities.
         """
         with MethodContext(self, MA_LOG_PREFIX,
-                           'set_swap_nonce',
-                           {'member_urn': member_urn, 'nonce': nonce},
+                           'create_swap_id',
+                           {'member_urn': member_urn},
                            credentials, options, read_only=False) as mc:
             if not mc._error:
                 mc._result = \
-                    self._delegate.set_swap_nonce(mc._client_cert, member_urn,
-                                                  nonce, credentials, options,
+                    self._delegate.create_swap_id(mc._client_cert, member_urn,
+                                                  credentials, options,
                                                   mc._session)
         return mc._result
 
@@ -671,8 +671,8 @@ class MAv1DelegateBase(DelegateBase):
                                     credentials, options, session, att_value=None):
         raise CHAPIv1NotImplementedError('')
 
-    def set_swap_nonce(self, client_cert, member_urn, nonce, credentials,
-                       options, session):
+    def create_swap_id(self, client_cert, member_urn, credentials, options,
+                       session):
         raise CHAPIv1NotImplementedError('')
 
     def swap_identities(self, client_cert, member_urn, nonce, credentials,

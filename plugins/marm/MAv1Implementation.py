@@ -1726,10 +1726,12 @@ Please see http://groups.geni.net/geni/wiki/ProjectLeadWelcome for information o
         q = self._make_attr_query(session, uid, name, value)
         return q.delete()
 
-    def set_swap_nonce(self, client_cert, member_urn, nonce, credentials,
+    def create_swap_id(self, client_cert, member_urn, credentials,
                        options, session):
-        """Add a swap nonce attribute to a member account. This account can
-        then be a source account for a swap operation.
+        """Create a swap id that can be used later with swap_identities
+        to swap two accounts. The account that calls this method is the
+        source of the identity swap. The account that calls swap_identities
+        with this swap_id is the destination of the identity swap.
 
         For now this operation is limited to accounts from the GPO IdP.
         """
@@ -1751,38 +1753,35 @@ Please see http://groups.geni.net/geni/wiki/ProjectLeadWelcome for information o
             chapi_warn(MA_LOG_PREFIX, msg % (eppn))
             raise CHAPIv1ArgumentError('Account is invalid for swap')
 
-        # TODO: does this user already have a nonce?
-        # TODO: is this a duplicate nonce?
+        # Does this user already have a nonce? If so, return it
+        nonce = self._get_first_attr(session, member.member_id, MA.SWAP_NONCE)
+        if nonce:
+            return self._successReturn(nonce.value)
 
-        # TODO: Is there a better way to create the new nonce row?
-        # TODO:   YES! -- see below for an example
+        # Avoid duplicate nonces. Get all nonces, then generate random id
+        # until it is not in the list of all nonces
+        nonces = [n.value for n in self._get_all_attrs(session, None,
+                                                       MA.SWAP_NONCE, None)]
+        nonce = random_id(8)
+        while nonce in nonces:
+            nonce = random_id(8)
 
-        # Everything checks out, add the swap nonce attribute
-        result = self.add_member_attribute(client_cert, member_urn,
-                                           MA.SWAP_NONCE, nonce, True,
-                                           credentials, options, session)
-        # If adding the attribute failed, return the error
-        if result['code']:
-            return result
-        nonce_ts = datetime.datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%S')
-        result2 = self.add_member_attribute(client_cert, member_urn,
-                                            MA.SWAP_NONCE_TS, nonce_ts, True,
-                                            credentials, options, session)
-        if result2['code']:
-            msg = 'Unable to set attribute %s on %s. Continuing without it.'
-            chapi_warn(MA_LOG_PREFIX, msg % (MA.SWAP_NONCE_TS, member_urn))
-            raise CHAPIv1ArgumentError('Account is invalid for swap')
-
-        # Return the NONCE result, not the NONCE_TS result.
-        return result
+        nonce_attr = MemberAttribute(MA.SWAP_NONCE, nonce, member.member_id,
+                                     False)
+        session.add(nonce_attr)
+        ts = datetime.datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%S')
+        ts_attr = MemberAttribute(MA.SWAP_NONCE_TS, ts, member.member_id,
+                                  False)
+        session.add(ts_attr)
+        return self._successReturn(nonce)
 
     def swap_identities(self, client_cert, member_urn, nonce, credentials,
                         options, session):
         """Swaps two identities by swapping their ePPNs. Will
         also swap the email addresses if they differ.
 
-        The source account is identified by a nonce which has previously
-        been established by a call to `set_swap_nonce`.
+        The source account is identified by an id which has previously
+        been established by a call to `create_swap_id`.
 
         Also adds an attribute to the destination account indicating that it
         has already been swapped. Accounts can only be swapped once. The
@@ -1814,7 +1813,8 @@ Please see http://groups.geni.net/geni/wiki/ProjectLeadWelcome for information o
         dest_eppn.value = source_eppn.value
         source_eppn.value = tmp
 
-        # Swap the email addresses if they differ
+        # Swap the email addresses if they differ so that the user
+        # gets the email address they most recently used, at NCSA.
         if dest_email.value != source_email.value:
             tmp = dest_email.value
             dest_email.value = source_email.value

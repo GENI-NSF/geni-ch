@@ -253,7 +253,7 @@
       ]
     },
 
-    "set_swap_nonce" : {
+    "create_swap_id" : {
       "__DOC__" : "self",
        "assertions" : [
          "ME.INVOKING_ON_$MEMBER<-CALLER"
