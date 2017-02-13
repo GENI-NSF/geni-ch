@@ -1,5 +1,5 @@
 # ----------------------------------------------------------------------
-# Copyright (c) 2013-2016 Raytheon BBN Technologies
+# Copyright (c) 2013-2017 Raytheon BBN Technologies
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and/or hardware specification (the "Work") to
@@ -1699,6 +1699,33 @@ Please see http://groups.geni.net/geni/wiki/ProjectLeadWelcome for information o
                 result[row.member_id][f] = self.transform_for_result(val)
         return result
 
+    def _map_attr(self, attr):
+        if attr in MA.field_mapping:
+            attr = MA.field_mapping[attr]
+        return attr
+
+    def _make_attr_query(self, session, uid=None, name=None, value=None):
+        q = session.query(MemberAttribute)
+        if uid is not None:
+            q = q.filter(MemberAttribute.member_id == uid)
+        if name is not None:
+            q = q.filter(MemberAttribute.name == self._map_attr(name))
+        if value is not None:
+            q = q.filter(MemberAttribute.value == value)
+        return q
+
+    def _get_first_attr(self, session, uid=None, name=None, value=None):
+        q = self._make_attr_query(session, uid, name, value)
+        return q.first()
+
+    def _get_all_attrs(self, session, uid=None, name=None, value=None):
+        q = self._make_attr_query(session, uid, name, value)
+        return q.all()
+
+    def _delete_attr(self, session, uid, name, value=None):
+        q = self._make_attr_query(session, uid, name, value)
+        return q.delete()
+
     def set_swap_nonce(self, client_cert, member_urn, nonce, credentials,
                        options, session):
         """Add a swap nonce attribute to a member account. This account can
@@ -1707,23 +1734,28 @@ Please see http://groups.geni.net/geni/wiki/ProjectLeadWelcome for information o
         For now this operation is limited to accounts from the GPO IdP.
         """
         # find the uid
-        uids = self.get_uids_for_attribute(session, MA.MEMBER_URN, member_urn)
-        if len(uids) == 0:
+        member = self._get_first_attr(session, None, MA.MEMBER_URN, member_urn)
+        if not member:
             raise CHAPIv1ArgumentError('No member with URN ' + member_urn)
-        member_uid = uids[0]
 
         # Determine if the eppn is valid for swapping (is from the GPO IdP)
-        rows = self.get_attr_for_uid(session, MA.MEMBER_EPPN, member_uid)
-        if not rows:
+        eppn = self._get_first_attr(session, member.member_id, MA.MEMBER_EPPN)
+        if not eppn:
             msg = 'No EPPN found for %s (%s)'
-            chapi_warn(MA_LOG_PREFIX, msg % (member_urn, eppn))
+            chapi_warn(MA_LOG_PREFIX, msg % (member_urn, member.member_id))
             raise CHAPIv1ArgumentError('No EPPN for %s' % (member_urn))
-        eppn = rows[0]
+        eppn = eppn.value
         eppn_regex = '.*@gpolab.bbn.com$'
         if not re.match(eppn_regex, eppn):
             msg = 'EPPN %s is invalid for swap operation, must be from GPO IdP'
             chapi_warn(MA_LOG_PREFIX, msg % (eppn))
             raise CHAPIv1ArgumentError('Account is invalid for swap')
+
+        # TODO: does this user already have a nonce?
+        # TODO: is this a duplicate nonce?
+
+        # TODO: Is there a better way to create the new nonce row?
+        # TODO:   YES! -- see below for an example
 
         # Everything checks out, add the swap nonce attribute
         result = self.add_member_attribute(client_cert, member_urn,
@@ -1759,6 +1791,42 @@ Please see http://groups.geni.net/geni/wiki/ProjectLeadWelcome for information o
 
         Destination URN must be an account based in the NCSA identity provider.
         """
+        # find the uid
+        dest = self._get_first_attr(session, None, MA.MEMBER_URN, member_urn)
+        if not dest:
+            raise CHAPIv1ArgumentError('No member with URN ' + member_urn)
+
+        source = self._get_first_attr(session, None, MA.SWAP_NONCE, nonce)
+        if not source:
+            raise CHAPIv1ArgumentError('Invalid swap tag ' + nonce)
+
+        dest_eppn = self._get_first_attr(session, dest.member_id,
+                                         MA.MEMBER_EPPN)
+        dest_email = self._get_first_attr(session, dest.member_id,
+                                          MA.MEMBER_EMAIL)
+        source_eppn = self._get_first_attr(session, source.member_id,
+                                           MA.MEMBER_EPPN)
+        source_email = self._get_first_attr(session, source.member_id,
+                                          MA.MEMBER_EMAIL)
+
+        # Swap the EPPNS
+        tmp = dest_eppn.value
+        dest_eppn.value = source_eppn.value
+        source_eppn.value = tmp
+
+        # Swap the email addresses if they differ
+        if dest_email.value != source_email.value:
+            tmp = dest_email.value
+            dest_email.value = source_email.value
+            source_email.value = tmp
+
+        # Add a timestamp for when the swap was made
+        ts = datetime.datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%S')
+        ts_attr = MemberAttribute(MA.SWAP_DONE_TS, ts, dest.member_id, False)
+        session.add(ts_attr)
 
         # Can we clear the NONCE and NONCE_TS from the source account?
-        pass
+        self._delete_attr(session, source.member_id, MA.SWAP_NONCE, nonce)
+        self._delete_attr(session, source.member_id, MA.SWAP_NONCE_TS)
+
+        return self._successReturn(True)

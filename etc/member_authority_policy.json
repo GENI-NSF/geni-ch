@@ -28,11 +28,11 @@
      ],
      "policies" : [
        "ME.MAY_$METHOD<-ME.IS_AUTHORITY",
-       "ME.MAY_$METHOD<-ME.IS_OPERATOR", 
+       "ME.MAY_$METHOD<-ME.IS_OPERATOR",
        "ME.MAY_$METHOD<-ME.INVOKING_ON_$SELF",
        "ME.MAY_$METHOD_$MEMBER<-ME.SHARES_PROJECT_$MEMBER",
-       "ME.MAY_$METHOD<-ME.IS_PROJECT_LEAD_AND_SEARCHING_BY_EMAIL", 
-       "ME.MAY_$METHOD<-ME.IS_PROJECT_ADMIN_AND_SEARCHING_BY_EMAIL", 
+       "ME.MAY_$METHOD<-ME.IS_PROJECT_LEAD_AND_SEARCHING_BY_EMAIL",
+       "ME.MAY_$METHOD<-ME.IS_PROJECT_ADMIN_AND_SEARCHING_BY_EMAIL",
        "ME.MAY_$METHOD<-ME.IS_SEARCHING_FOR_PROJECT_LEAD_BY_UID",
        "ME.MAY_$METHOD<-ME.HAS_PENDING_REQUEST_TO_MEMBER",
        "ME.MAY_$METHOD<-ME.HAS_PENDING_REQUEST_FROM_MEMBER"
@@ -58,11 +58,11 @@
     ],
     "policies" : [
        "ME.MAY_$METHOD<-ME.IS_AUTHORITY",
-       "ME.MAY_$METHOD<-ME.IS_OPERATOR", 
+       "ME.MAY_$METHOD<-ME.IS_OPERATOR",
        "ME.MAY_$METHOD<-ME.INVOKING_ON_$SELF",
        "ME.MAY_$METHOD_$MEMBER<-ME.SHARES_PROJECT_$MEMBER",
-       "ME.MAY_$METHOD<-ME.IS_PROJECT_LEAD_AND_SEARCHING_BY_EMAIL", 
-       "ME.MAY_$METHOD<-ME.IS_PROJECT_ADMIN_AND_SEARCHING_BY_EMAIL", 
+       "ME.MAY_$METHOD<-ME.IS_PROJECT_LEAD_AND_SEARCHING_BY_EMAIL",
+       "ME.MAY_$METHOD<-ME.IS_PROJECT_ADMIN_AND_SEARCHING_BY_EMAIL",
        "ME.MAY_$METHOD<-ME.IS_SEARCHING_FOR_PROJECT_LEAD_BY_UID",
        "ME.MAY_$METHOD<-ME.HAS_PENDING_REQUEST_TO_MEMBER",
        "ME.MAY_$METHOD<-ME.HAS_PENDING_REQUEST_FROM_MEMBER"
@@ -75,8 +75,8 @@
        "ME.INVOKING_ON_$MEMBER<-CALLER"
      ],
     "policies" : [
-      "ME.MAY_$METHOD<-ME.IS_AUTHORITY", 
-      "ME.MAY_$METHOD<-ME.IS_OPERATOR", 
+      "ME.MAY_$METHOD<-ME.IS_AUTHORITY",
+      "ME.MAY_$METHOD<-ME.IS_OPERATOR",
       "ME.MAY_$METHOD<-ME.INVOKING_ON_$SELF"
     ]
   },
@@ -87,8 +87,8 @@
        "ME.INVOKING_ON_$MEMBER<-CALLER"
      ],
     "policies" : [
-      "ME.MAY_$METHOD<-ME.IS_AUTHORITY", 
-      "ME.MAY_$METHOD<-ME.IS_OPERATOR", 
+      "ME.MAY_$METHOD<-ME.IS_AUTHORITY",
+      "ME.MAY_$METHOD<-ME.IS_OPERATOR",
       "ME.MAY_$METHOD<-ME.INVOKING_ON_$SELF"
     ]
   },
@@ -99,8 +99,8 @@
        "ME.INVOKING_ON_$MEMBER<-CALLER"
      ],
     "policies" : [
-      "ME.MAY_$METHOD<-ME.IS_AUTHORITY", 
-      "ME.MAY_$METHOD<-ME.IS_OPERATOR", 
+      "ME.MAY_$METHOD<-ME.IS_AUTHORITY",
+      "ME.MAY_$METHOD<-ME.IS_OPERATOR",
       "ME.MAY_$METHOD<-ME.INVOKING_ON_$SELF"
     ]
   },
@@ -111,7 +111,7 @@
        "ME.INVOKING_ON_$MEMBER<-CALLER"
      ],
     "policies" : [
-      "ME.MAY_$METHOD<-ME.IS_OPERATOR", 
+      "ME.MAY_$METHOD<-ME.IS_OPERATOR",
       "ME.MAY_$METHOD<-ME.INVOKING_ON_$SELF"
     ]
   },
@@ -218,7 +218,7 @@
       "policies" : [
         "ME.MAY_$METHOD<-ME.IS_AUTHORITY",
         "ME.MAY_$METHOD<-ME.IS_OPERATOR"
-      ] 
+      ]
     },
 
     "revoke_member_privilege" : {
@@ -226,7 +226,7 @@
       "policies" : [
         "ME.MAY_$METHOD<-ME.IS_AUTHORITY",
         "ME.MAY_$METHOD<-ME.IS_OPERATOR"
-      ] 
+      ]
     },
 
     "add_member_attribute" : {
@@ -249,6 +249,26 @@
       "policies" : [
         "ME.MAY_$METHOD<-ME.IS_AUTHORITY",
         "ME.MAY_$METHOD<-ME.IS_OPERATOR",
+        "ME.MAY_$METHOD<-ME.INVOKING_ON_$SELF"
+      ]
+    },
+
+    "set_swap_nonce" : {
+      "__DOC__" : "self",
+       "assertions" : [
+         "ME.INVOKING_ON_$MEMBER<-CALLER"
+       ],
+      "policies" : [
+        "ME.MAY_$METHOD<-ME.INVOKING_ON_$SELF"
+      ]
+    },
+
+    "swap_identities" : {
+      "__DOC__" : "self",
+       "assertions" : [
+         "ME.INVOKING_ON_$MEMBER<-CALLER"
+       ],
+      "policies" : [
         "ME.MAY_$METHOD<-ME.INVOKING_ON_$SELF"
       ]
     }

@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # ----------------------------------------------------------------------
-# Copyright (c) 2013-2016 Raytheon BBN Technologies
+# Copyright (c) 2013-2017 Raytheon BBN Technologies
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and/or hardware specification (the "Work") to
@@ -422,7 +422,7 @@ def main(args=sys.argv, do_print=True):
                     member_eppn, project_id, slice_id)
 
     # MA Swap nonce method
-    elif opts.method in ['set_swap_nonce']:
+    elif opts.method in ['set_swap_nonce', 'swap_identities']:
         options = {}
         (result, msg) = \
             _do_ssl(framework, suppress_errors, reason, fcn, opts.urn,

@@ -1,5 +1,5 @@
 #----------------------------------------------------------------------
-# Copyright (c) 2011-2016 Raytheon BBN Technologies
+# Copyright (c) 2011-2017 Raytheon BBN Technologies
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and/or hardware specification (the "Work") to
@@ -197,5 +197,7 @@ USER_CRED_LIFE_YEARS = 1 # See MA.get_user_credential
 
 SWAP_NONCE = 'ncsa_nonce'
 SWAP_NONCE_TS = 'ncsa_nonce_ts'
+SWAP_DONE_TS = 'ncsa_swapped'
 MEMBER_URN = 'MEMBER_URN'
 MEMBER_EPPN = '_GENI_MEMBER_EPPN'
+MEMBER_EMAIL = 'MEMBER_EMAIL'

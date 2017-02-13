@@ -1,5 +1,5 @@
 #----------------------------------------------------------------------
-# Copyright (c) 2011-2016 Raytheon BBN Technologies
+# Copyright (c) 2011-2017 Raytheon BBN Technologies
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and/or hardware specification (the "Work") to
@@ -523,7 +523,9 @@ class MAv1Handler(HandlerBase):
         return mc._result
 
     def set_swap_nonce(self, member_urn, nonce, credentials, options):
-        """Remove attribute to member"""
+        """Set a swap nonce attribute on the member for later use
+        to swap identities.
+        """
         with MethodContext(self, MA_LOG_PREFIX,
                            'set_swap_nonce',
                            {'member_urn': member_urn, 'nonce': nonce},
@@ -533,6 +535,21 @@ class MAv1Handler(HandlerBase):
                     self._delegate.set_swap_nonce(mc._client_cert, member_urn,
                                                   nonce, credentials, options,
                                                   mc._session)
+        return mc._result
+
+    def swap_identities(self, member_urn, nonce, credentials, options):
+        """Swap identities by making this user point to the identity with
+        the matching nonce.
+        """
+        with MethodContext(self, MA_LOG_PREFIX,
+                           'swap_identities',
+                           {'member_urn': member_urn, 'nonce': nonce},
+                           credentials, options, read_only=False) as mc:
+            if not mc._error:
+                mc._result = \
+                    self._delegate.swap_identities(mc._client_cert, member_urn,
+                                                   nonce, credentials, options,
+                                                   mc._session)
         return mc._result
 
 
@@ -656,4 +673,8 @@ class MAv1DelegateBase(DelegateBase):
 
     def set_swap_nonce(self, client_cert, member_urn, nonce, credentials,
                        options, session):
+        raise CHAPIv1NotImplementedError('')
+
+    def swap_identities(self, client_cert, member_urn, nonce, credentials,
+                        options, session):
         raise CHAPIv1NotImplementedError('')
