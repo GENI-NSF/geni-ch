@@ -123,9 +123,10 @@ def get_implementation_info(log_prefix):
         "site_update_date": str(code_timestamp)
     }
 
+
 def random_id(length=6):
     chars = string.digits + string.uppercase
-    result = '';
+    result = ''
     for i in range(length):
         result += chars[random.randint(0, 35)]
     return result
