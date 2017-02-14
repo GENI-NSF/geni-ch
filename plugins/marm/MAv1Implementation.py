@@ -1754,23 +1754,24 @@ Please see http://groups.geni.net/geni/wiki/ProjectLeadWelcome for information o
             raise CHAPIv1ArgumentError('Account is invalid for swap')
 
         # Does this user already have a nonce? If so, return it
-        nonce = self._get_first_attr(session, member.member_id, MA.SWAP_NONCE)
+        nonce = self._get_first_attr(session, member.member_id,
+                                     MA.SWAP_ID_ATTR)
         if nonce:
             return self._successReturn(nonce.value)
 
         # Avoid duplicate nonces. Get all nonces, then generate random id
         # until it is not in the list of all nonces
         nonces = [n.value for n in self._get_all_attrs(session, None,
-                                                       MA.SWAP_NONCE, None)]
+                                                       MA.SWAP_ID_ATTR, None)]
         nonce = random_id(8)
         while nonce in nonces:
             nonce = random_id(8)
 
-        nonce_attr = MemberAttribute(MA.SWAP_NONCE, nonce, member.member_id,
+        nonce_attr = MemberAttribute(MA.SWAP_ID_ATTR, nonce, member.member_id,
                                      False)
         session.add(nonce_attr)
-        ts = datetime.datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%S')
-        ts_attr = MemberAttribute(MA.SWAP_NONCE_TS, ts, member.member_id,
+        ts = datetime.datetime.utcnow().replace(microsecond=0)
+        ts_attr = MemberAttribute(MA.SWAP_TS_ATTR, ts, member.member_id,
                                   False)
         session.add(ts_attr)
         return self._successReturn(nonce)
@@ -1787,15 +1788,13 @@ Please see http://groups.geni.net/geni/wiki/ProjectLeadWelcome for information o
         has already been swapped. Accounts can only be swapped once. The
         value of this attribute is a timestamp to indicate when the swap
         occurred.
-
-        Destination URN must be an account based in the NCSA identity provider.
         """
         # find the uid
         dest = self._get_first_attr(session, None, MA.MEMBER_URN, member_urn)
         if not dest:
             raise CHAPIv1ArgumentError('No member with URN ' + member_urn)
 
-        source = self._get_first_attr(session, None, MA.SWAP_NONCE, nonce)
+        source = self._get_first_attr(session, None, MA.SWAP_ID_ATTR, nonce)
         if not source:
             raise CHAPIv1ArgumentError('Invalid swap tag ' + nonce)
 
@@ -1806,7 +1805,9 @@ Please see http://groups.geni.net/geni/wiki/ProjectLeadWelcome for information o
         source_eppn = self._get_first_attr(session, source.member_id,
                                            MA.MEMBER_EPPN)
         source_email = self._get_first_attr(session, source.member_id,
-                                          MA.MEMBER_EMAIL)
+                                            MA.MEMBER_EMAIL)
+        source_urn = self._get_first_attr(session, source.member_id,
+                                          MA.MEMBER_URN)
 
         # Swap the EPPNS
         tmp = dest_eppn.value
@@ -1821,12 +1822,15 @@ Please see http://groups.geni.net/geni/wiki/ProjectLeadWelcome for information o
             source_email.value = tmp
 
         # Add a timestamp for when the swap was made
-        ts = datetime.datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%S')
-        ts_attr = MemberAttribute(MA.SWAP_DONE_TS, ts, dest.member_id, False)
+        ts = datetime.datetime.utcnow().replace(microsecond=0)
+        ts_attr = MemberAttribute(MA.SWAP_TS_ATTR, ts, dest.member_id, False)
         session.add(ts_attr)
+        from_attr = MemberAttribute(MA.SWAP_FROM_ATTR, source_urn.value,
+                                    dest.member_id, False)
+        session.add(from_attr)
 
         # Can we clear the NONCE and NONCE_TS from the source account?
-        self._delete_attr(session, source.member_id, MA.SWAP_NONCE, nonce)
-        self._delete_attr(session, source.member_id, MA.SWAP_NONCE_TS)
+        self._delete_attr(session, source.member_id, MA.SWAP_ID_ATTR, nonce)
+        self._delete_attr(session, source.member_id, MA.SWAP_TS_ATTR)
 
         return self._successReturn(True)
