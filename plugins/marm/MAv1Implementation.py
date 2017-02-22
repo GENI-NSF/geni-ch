@@ -1776,7 +1776,7 @@ Please see http://groups.geni.net/geni/wiki/ProjectLeadWelcome for information o
         session.add(ts_attr)
         return self._successReturn(nonce)
 
-    def swap_identities(self, client_cert, member_urn, nonce, credentials,
+    def swap_identities(self, client_cert, source_urn, dest_urn, credentials,
                         options, session):
         """Swaps two identities by swapping their ePPNs. Will
         also swap the email addresses if they differ.
@@ -1790,13 +1790,13 @@ Please see http://groups.geni.net/geni/wiki/ProjectLeadWelcome for information o
         occurred.
         """
         # find the uid
-        dest = self._get_first_attr(session, None, MA.MEMBER_URN, member_urn)
+        dest = self._get_first_attr(session, None, MA.MEMBER_URN, dest_urn)
         if not dest:
-            raise CHAPIv1ArgumentError('No member with URN ' + member_urn)
+            raise CHAPIv1ArgumentError('No member with URN ' + dest_urn)
 
-        source = self._get_first_attr(session, None, MA.SWAP_ID_ATTR, nonce)
+        source = self._get_first_attr(session, None, MA.MEMBER_URN, source_urn)
         if not source:
-            raise CHAPIv1ArgumentError('Invalid swap tag ' + nonce)
+            raise CHAPIv1ArgumentError('No member with URN ' + source_urn)
 
         dest_eppn = self._get_first_attr(session, dest.member_id,
                                          MA.MEMBER_EPPN)
@@ -1806,8 +1806,6 @@ Please see http://groups.geni.net/geni/wiki/ProjectLeadWelcome for information o
                                            MA.MEMBER_EPPN)
         source_email = self._get_first_attr(session, source.member_id,
                                             MA.MEMBER_EMAIL)
-        source_urn = self._get_first_attr(session, source.member_id,
-                                          MA.MEMBER_URN)
 
         # Swap the EPPNS
         tmp = dest_eppn.value
@@ -1825,12 +1823,8 @@ Please see http://groups.geni.net/geni/wiki/ProjectLeadWelcome for information o
         ts = datetime.datetime.utcnow().replace(microsecond=0)
         ts_attr = MemberAttribute(MA.SWAP_TS_ATTR, ts, dest.member_id, False)
         session.add(ts_attr)
-        from_attr = MemberAttribute(MA.SWAP_FROM_ATTR, source_urn.value,
+        from_attr = MemberAttribute(MA.SWAP_FROM_ATTR, source_urn,
                                     dest.member_id, False)
         session.add(from_attr)
-
-        # Can we clear the NONCE and NONCE_TS from the source account?
-        self._delete_attr(session, source.member_id, MA.SWAP_ID_ATTR, nonce)
-        self._delete_attr(session, source.member_id, MA.SWAP_TS_ATTR)
 
         return self._successReturn(True)

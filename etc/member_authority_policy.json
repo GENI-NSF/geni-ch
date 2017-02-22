@@ -269,7 +269,7 @@
          "ME.INVOKING_ON_$MEMBER<-CALLER"
        ],
       "policies" : [
-        "ME.MAY_$METHOD<-ME.INVOKING_ON_$SELF"
+        "ME.MAY_$METHOD<-ME.IS_AUTHORITY"
       ]
     }
 }
