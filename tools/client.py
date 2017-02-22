@@ -87,6 +87,8 @@ def parseOptions(args):
                       default=None)
     parser.add_option("--uuid3_arg", help="third UUID argument for some calls",
                       default=None)
+    parser.add_option("--urn2_arg", help="second URN argument for some calls",
+                      default=None)
     parser.add_option("--file_arg", help="FILE argument for some calls",
                       default=None)
     parser.add_option("--options", help="JSON of options argument",
@@ -422,11 +424,11 @@ def main(args=sys.argv, do_print=True):
                     member_eppn, project_id, slice_id)
 
     # MA Swap nonce method
-    elif opts.method in ['set_swap_nonce', 'swap_identities']:
+    elif opts.method in ['swap_identities']:
         options = {}
         (result, msg) = \
             _do_ssl(framework, suppress_errors, reason, fcn, opts.urn,
-                    opts.string_arg, opts.credentials, options)
+                    opts.urn2_arg, opts.credentials, options)
 
     # Methods that take attributes and options
     elif client_attributes:

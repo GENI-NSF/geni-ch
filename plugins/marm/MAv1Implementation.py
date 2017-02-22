@@ -1726,68 +1726,14 @@ Please see http://groups.geni.net/geni/wiki/ProjectLeadWelcome for information o
         q = self._make_attr_query(session, uid, name, value)
         return q.delete()
 
-    def create_swap_id(self, client_cert, member_urn, credentials,
-                       options, session):
-        """Create a swap id that can be used later with swap_identities
-        to swap two accounts. The account that calls this method is the
-        source of the identity swap. The account that calls swap_identities
-        with this swap_id is the destination of the identity swap.
-
-        For now this operation is limited to accounts from the GPO IdP.
-        """
-        # find the uid
-        member = self._get_first_attr(session, None, MA.MEMBER_URN, member_urn)
-        if not member:
-            raise CHAPIv1ArgumentError('No member with URN ' + member_urn)
-
-        # Determine if the eppn is valid for swapping (is from the GPO IdP)
-        eppn = self._get_first_attr(session, member.member_id, MA.MEMBER_EPPN)
-        if not eppn:
-            msg = 'No EPPN found for %s (%s)'
-            chapi_warn(MA_LOG_PREFIX, msg % (member_urn, member.member_id))
-            raise CHAPIv1ArgumentError('No EPPN for %s' % (member_urn))
-        eppn = eppn.value
-        eppn_regex = '.*@gpolab.bbn.com$'
-        if not re.match(eppn_regex, eppn):
-            msg = 'EPPN %s is invalid for swap operation, must be from GPO IdP'
-            chapi_warn(MA_LOG_PREFIX, msg % (eppn))
-            raise CHAPIv1ArgumentError('Account is invalid for swap')
-
-        # Does this user already have a nonce? If so, return it
-        nonce = self._get_first_attr(session, member.member_id,
-                                     MA.SWAP_ID_ATTR)
-        if nonce:
-            return self._successReturn(nonce.value)
-
-        # Avoid duplicate nonces. Get all nonces, then generate random id
-        # until it is not in the list of all nonces
-        nonces = [n.value for n in self._get_all_attrs(session, None,
-                                                       MA.SWAP_ID_ATTR, None)]
-        nonce = random_id(8)
-        while nonce in nonces:
-            nonce = random_id(8)
-
-        nonce_attr = MemberAttribute(MA.SWAP_ID_ATTR, nonce, member.member_id,
-                                     False)
-        session.add(nonce_attr)
-        ts = datetime.datetime.utcnow().replace(microsecond=0)
-        ts_attr = MemberAttribute(MA.SWAP_TS_ATTR, ts, member.member_id,
-                                  False)
-        session.add(ts_attr)
-        return self._successReturn(nonce)
-
     def swap_identities(self, client_cert, source_urn, dest_urn, credentials,
                         options, session):
         """Swaps two identities by swapping their ePPNs. Will
-        also swap the email addresses if they differ.
-
-        The source account is identified by an id which has previously
-        been established by a call to `create_swap_id`.
+        also swap the email addresses if they differ. Both identities
+        are identified by their URNs.
 
         Also adds an attribute to the destination account indicating that it
-        has already been swapped. Accounts can only be swapped once. The
-        value of this attribute is a timestamp to indicate when the swap
-        occurred.
+        has already been swapped.
         """
         # find the uid
         dest = self._get_first_attr(session, None, MA.MEMBER_URN, dest_urn)

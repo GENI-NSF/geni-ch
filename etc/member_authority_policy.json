@@ -253,16 +253,6 @@
       ]
     },
 
-    "create_swap_id" : {
-      "__DOC__" : "self",
-       "assertions" : [
-         "ME.INVOKING_ON_$MEMBER<-CALLER"
-       ],
-      "policies" : [
-        "ME.MAY_$METHOD<-ME.INVOKING_ON_$SELF"
-      ]
-    },
-
     "swap_identities" : {
       "__DOC__" : "self",
        "assertions" : [

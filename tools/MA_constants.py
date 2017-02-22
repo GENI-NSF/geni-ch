@@ -195,7 +195,6 @@ updatable_key_fields = ["KEY_DESCRIPTION", "_GENI_KEY_FILENAME"]
 USER_CRED_LIFE_YEARS = 1  # See MA.get_user_credential
 # FIXME: username regex
 
-SWAP_ID_ATTR = 'gpo_swap_id'
 SWAP_TS_ATTR = 'gpo_swap_ts'
 SWAP_FROM_ATTR = 'gpo_swap_from'
 MEMBER_URN = 'MEMBER_URN'
