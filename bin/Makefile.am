@@ -26,6 +26,7 @@ TEMPLATES = \
 	geni-install-templates \
 	geni-list-idp-members \
 	geni-list-pending-requests \
+	geni-maintenance \
 	geni-sign-tool-csr \
 	geni-expiring-certs
 
@@ -51,6 +52,7 @@ sbin_SCRIPTS = \
 	geni-install-templates \
 	geni-list-idp-members \
 	geni-list-pending-requests \
+	geni-maintenance \
 	geni-sign-tool-csr \
 	geni-expiring-certs
 

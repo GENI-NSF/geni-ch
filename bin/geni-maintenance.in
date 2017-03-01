@@ -1,0 +1,73 @@
+#!/usr/bin/env python
+# ----------------------------------------------------------------------
+# Copyright (c) 2017 Raytheon BBN Technologies
+#
+# Permission is hereby granted, free of charge, to any person obtaining
+# a copy of this software and/or hardware specification (the "Work") to
+# deal in the Work without restriction, including without limitation the
+# rights to use, copy, modify, merge, publish, distribute, sublicense,
+# and/or sell copies of the Work, and to permit persons to whom the Work
+# is furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be
+# included in all copies or substantial portions of the Work.
+#
+# THE WORK IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+# MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+# NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+# HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+# WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE WORK OR THE USE OR OTHER DEALINGS
+# IN THE WORK.
+# ----------------------------------------------------------------------
+
+import argparse
+import os
+import sys
+import ConfigParser
+
+
+def parse_args(argv):
+    parser = argparse.ArgumentParser(description='Set/Clear maintenance mode')
+
+    default_conf = '@pkgsysconfdir@/chapi.ini'
+    parser.add_argument("-c", "--conf", default=default_conf,
+                        help='chapi config file (default:%s)' % (default_conf))
+    parser.add_argument('--clear', action="store_true", default=False,
+                        help='clear maintenance mode')
+    parser.add_argument('message', nargs='?', default=None,
+                        help='the maintenance message')
+    args = parser.parse_args()
+    return args
+
+
+def load_ini(ini_file):
+    config = ConfigParser.SafeConfigParser()
+    config.read(ini_file)
+    return config
+
+
+def main(argv=None):
+    if argv is None:
+        argv = sys.argv
+    args = parse_args(argv)
+    if not args.clear and not args.message:
+        print 'You must specify a message or use the --clear option'
+        return 2
+    config = load_ini(args.conf)
+    maint_file = config.get('geni', 'maintenance_outage_location')
+    print 'Found maintenance file %s' % (maint_file)
+    if args.clear:
+        # Delete the file
+        os.remove(maint_file)
+        print 'Cleared maintenance mode'
+    else:
+        # Write/create the file with message as the contents
+        with open(maint_file, 'wb') as dest:
+            dest.write(args.message)
+        print 'Set maintenance mode to %r' % (args.message)
+    return 0
+
+if __name__ == "__main__":
+    sys.exit(main())
