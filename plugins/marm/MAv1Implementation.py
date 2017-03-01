@@ -1,5 +1,5 @@
 # ----------------------------------------------------------------------
-# Copyright (c) 2013-2016 Raytheon BBN Technologies
+# Copyright (c) 2013-2017 Raytheon BBN Technologies
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and/or hardware specification (the "Work") to
@@ -1698,3 +1698,79 @@ Please see http://groups.geni.net/geni/wiki/ProjectLeadWelcome for information o
                 val = getattr(row, MA.field_mapping[f])
                 result[row.member_id][f] = self.transform_for_result(val)
         return result
+
+    def _map_attr(self, attr):
+        if attr in MA.field_mapping:
+            attr = MA.field_mapping[attr]
+        return attr
+
+    def _make_attr_query(self, session, uid=None, name=None, value=None):
+        q = session.query(MemberAttribute)
+        if uid is not None:
+            q = q.filter(MemberAttribute.member_id == uid)
+        if name is not None:
+            q = q.filter(MemberAttribute.name == self._map_attr(name))
+        if value is not None:
+            q = q.filter(MemberAttribute.value == value)
+        return q
+
+    def _get_first_attr(self, session, uid=None, name=None, value=None):
+        q = self._make_attr_query(session, uid, name, value)
+        return q.first()
+
+    def _get_all_attrs(self, session, uid=None, name=None, value=None):
+        q = self._make_attr_query(session, uid, name, value)
+        return q.all()
+
+    def _delete_attr(self, session, uid, name, value=None):
+        q = self._make_attr_query(session, uid, name, value)
+        return q.delete()
+
+    def swap_identities(self, client_cert, source_urn, dest_urn, credentials,
+                        options, session):
+        """Swaps two identities by swapping their ePPNs. Will
+        also swap the email addresses if they differ. Both identities
+        are identified by their URNs.
+
+        Also adds an attribute to the destination account indicating that it
+        has already been swapped.
+        """
+        # find the uid
+        dest = self._get_first_attr(session, None, MA.MEMBER_URN, dest_urn)
+        if not dest:
+            raise CHAPIv1ArgumentError('No member with URN ' + dest_urn)
+
+        source = self._get_first_attr(session, None, MA.MEMBER_URN, source_urn)
+        if not source:
+            raise CHAPIv1ArgumentError('No member with URN ' + source_urn)
+
+        dest_eppn = self._get_first_attr(session, dest.member_id,
+                                         MA.MEMBER_EPPN)
+        dest_email = self._get_first_attr(session, dest.member_id,
+                                          MA.MEMBER_EMAIL)
+        source_eppn = self._get_first_attr(session, source.member_id,
+                                           MA.MEMBER_EPPN)
+        source_email = self._get_first_attr(session, source.member_id,
+                                            MA.MEMBER_EMAIL)
+
+        # Swap the EPPNS
+        tmp = dest_eppn.value
+        dest_eppn.value = source_eppn.value
+        source_eppn.value = tmp
+
+        # Swap the email addresses if they differ so that the user
+        # gets the email address they most recently used, at NCSA.
+        if dest_email.value != source_email.value:
+            tmp = dest_email.value
+            dest_email.value = source_email.value
+            source_email.value = tmp
+
+        # Add a timestamp for when the swap was made
+        ts = datetime.datetime.utcnow().replace(microsecond=0)
+        ts_attr = MemberAttribute(MA.SWAP_TS_ATTR, ts, dest.member_id, False)
+        session.add(ts_attr)
+        from_attr = MemberAttribute(MA.SWAP_FROM_ATTR, source_urn,
+                                    dest.member_id, False)
+        session.add(from_attr)
+
+        return self._successReturn(True)

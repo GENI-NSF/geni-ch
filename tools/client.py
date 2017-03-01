@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # ----------------------------------------------------------------------
-# Copyright (c) 2013-2016 Raytheon BBN Technologies
+# Copyright (c) 2013-2017 Raytheon BBN Technologies
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and/or hardware specification (the "Work") to
@@ -86,6 +86,8 @@ def parseOptions(args):
                       help="second UUID argument for some calls",
                       default=None)
     parser.add_option("--uuid3_arg", help="third UUID argument for some calls",
+                      default=None)
+    parser.add_option("--urn2_arg", help="second URN argument for some calls",
                       default=None)
     parser.add_option("--file_arg", help="FILE argument for some calls",
                       default=None)
@@ -420,6 +422,13 @@ def main(args=sys.argv, do_print=True):
         (result, msg) = \
             _do_ssl(framework, suppress_errors, reason, fcn,
                     member_eppn, project_id, slice_id)
+
+    # MA Swap nonce method
+    elif opts.method in ['swap_identities']:
+        options = {}
+        (result, msg) = \
+            _do_ssl(framework, suppress_errors, reason, fcn, opts.urn,
+                    opts.urn2_arg, opts.credentials, options)
 
     # Methods that take attributes and options
     elif client_attributes:

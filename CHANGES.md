@@ -6,6 +6,8 @@
 
 * Fix authorization for get_requests_for_context
   ([#536](https://github.com/GENI-NSF/geni-ch/issues/536))
+* Add support for swapping identities to support IdP changes
+  ([#557](https://github.com/GENI-NSF/geni-ch/issues/557))
 
 ## Installation Notes
 

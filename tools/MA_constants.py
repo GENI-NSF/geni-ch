@@ -1,5 +1,5 @@
-#----------------------------------------------------------------------
-# Copyright (c) 2011-2016 Raytheon BBN Technologies
+# ----------------------------------------------------------------------
+# Copyright (c) 2011-2017 Raytheon BBN Technologies
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and/or hardware specification (the "Work") to
@@ -19,7 +19,7 @@
 # WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE WORK OR THE USE OR OTHER DEALINGS
 # IN THE WORK.
-#----------------------------------------------------------------------
+# ----------------------------------------------------------------------
 
 credential_types = [
     {"type" : "geni_sfa", "version" : "3"},
@@ -192,5 +192,11 @@ allowed_create_key_fields = [
 ]
 updatable_key_fields = ["KEY_DESCRIPTION", "_GENI_KEY_FILENAME"]
 
-USER_CRED_LIFE_YEARS = 1 # See MA.get_user_credential
+USER_CRED_LIFE_YEARS = 1  # See MA.get_user_credential
 # FIXME: username regex
+
+SWAP_TS_ATTR = 'gpo_swap_ts'
+SWAP_FROM_ATTR = 'gpo_swap_from'
+MEMBER_URN = 'MEMBER_URN'
+MEMBER_EPPN = '_GENI_MEMBER_EPPN'
+MEMBER_EMAIL = 'MEMBER_EMAIL'
