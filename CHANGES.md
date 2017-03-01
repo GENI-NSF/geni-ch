@@ -6,6 +6,8 @@
 
 * Fix authorization for get_requests_for_context
   ([#536](https://github.com/GENI-NSF/geni-ch/issues/536))
+* Add geni-maintenance script to set and clear maintenance mode
+  ([#552](https://github.com/GENI-NSF/geni-ch/issues/552))
 * Add support for swapping identities to support IdP changes
   ([#557](https://github.com/GENI-NSF/geni-ch/issues/557))
 

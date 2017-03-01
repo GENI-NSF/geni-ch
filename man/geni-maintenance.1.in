@@ -1,0 +1,41 @@
+.TH GENI-MAINTENANCE 1 "March 1, 2017"
+.SH NAME
+geni-maintenance \- set or clear maintenance mode
+.SH SYNOPSIS
+.B geni-maintenance
+.I <message>
+.br
+.B geni-maintenance
+.I \-\-clear
+.SH DESCRIPTION
+.B geni-maintenance
+allows a GENI operator to set or clear a maintenance outage.
+
+The first form enables maintenance mode and sets the maintenance message
+to the message argument. Use a quoted string for multiple words. See EXAMPLES
+for an example.
+
+The second form clears maintenance mode.
+.SH OPTIONS
+These programs follow the usual GNU command line syntax, with long
+options starting with two dashes (`-').
+.TP
+.B \-\-clear
+Clear the maintenance message. The message is ignored if the \-\-clear
+option is present.
+.TP
+.B \-c <conf file>, \-\-conf <conf file>
+The clearinghouse config file. This defaults to @pkgsysconfdir@/chapi.ini
+.TP
+.B \-h, \-\-help
+Show summary of options.
+.SH EXAMPLES
+Set maintenance outage:
+
+    geni-maintenance 'The GENI Clearinghouse is in maintenance'
+
+Clear maintenance outage:
+
+    geni-maintenance --clear
+.SH AUTHOR
+geni-maintenance was written by Raytheon BBN Technologies.

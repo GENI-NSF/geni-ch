@@ -84,6 +84,7 @@ rm -rf $RPM_BUILD_ROOT
 %{_sbindir}/geni-list-idp-members
 %{_sbindir}/geni-list-member-projects
 %{_sbindir}/geni-list-pending-requests
+%{_sbindir}/geni-maintenance
 %{_sbindir}/geni-revoke-member-certificate
 %{_sbindir}/geni-revoke-member-privilege
 %{_sbindir}/geni-sign-tool-csr
@@ -565,6 +566,7 @@ rm -rf $RPM_BUILD_ROOT
 %{_mandir}/man1/geni-list-idp-members.1.gz
 %{_mandir}/man1/geni-list-member-projects.1.gz
 %{_mandir}/man1/geni-list-pending-requests.1.gz
+%{_mandir}/man1/geni-maintenance.1.gz
 %{_mandir}/man1/geni-revoke-member-certificate.1.gz
 %{_mandir}/man1/geni-revoke-member-privilege.1.gz
 %{_mandir}/man1/geni-sign-tool-csr.1.gz

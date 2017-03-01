@@ -1,7 +1,16 @@
-edit = sed \
-	-e 's|@pkgdatadir[@]|$(pkgdatadir)|g'
+pkgsysconfdir = $(sysconfdir)/$(PACKAGE)
 
-geni-check-errors.1: Makefile
+edit = sed \
+	-e 's|@pkgdatadir[@]|$(pkgdatadir)|g' \
+	-e 's|@pkgsysconfdir[@]|$(pkgsysconfdir)|g'
+
+TEMPLATES = \
+	geni-check-errors.1 \
+	geni-maintenance.1
+
+TEMPLATES.IN = $(TEMPLATES:%=%.in)
+
+$(TEMPLATES): Makefile
 	rm -f $@ $@.tmp
 	srcdir=''; \
 	  test -f ./$@.in || srcdir=$(srcdir)/; \
@@ -9,17 +18,16 @@ geni-check-errors.1: Makefile
 	chmod a-w $@.tmp
 	mv $@.tmp $@
 
-geni-check-errors.1: $(srcdir)/geni-check-errors.1.in
+%: $(srcdir)/%.in
 
 # Distribute but do not install
-EXTRA_DIST = \
-	geni-check-errors.1.in
+EXTRA_DIST = $(TEMPLATES.IN)
 
-CLEANFILES = \
-	geni-check-errors.1
+CLEANFILES = $(TEMPLATES)
 
 man_MANS = \
-	geni-check-errors.1
+	geni-check-errors.1 \
+	geni-maintenance.1
 
 dist_man_MANS = \
 	geni-add-member-privilege.1 \
