@@ -10,6 +10,8 @@
   ([#552](https://github.com/GENI-NSF/geni-ch/issues/552))
 * Add support for swapping identities to support IdP changes
   ([#557](https://github.com/GENI-NSF/geni-ch/issues/557))
+* Update travis build to use pycodestyle
+  ([#560](https://github.com/GENI-NSF/geni-ch/issues/560))
 
 ## Installation Notes
 
