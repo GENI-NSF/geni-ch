@@ -1,4 +1,6 @@
 language: python
+# Force use of trusty until it is the default build
+# platform in late 2017
 dist: trusty
 virtualenv:
   system_site_packages: true
