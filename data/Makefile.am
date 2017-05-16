@@ -64,8 +64,6 @@ AM_SQL = \
 	sr/sql/add-starlight-vts.sql \
 	sr/sql/add-tamu-eg-of.sql \
 	sr/sql/add-tamu-eg.sql \
-	sr/sql/add-ucdavis-eg-of.sql \
-	sr/sql/add-ucdavis-eg.sql \
 	sr/sql/add-uchicago-ig.sql \
 	sr/sql/add-ucla-ig.sql \
 	sr/sql/add-ufl-eg-of.sql \
@@ -210,8 +208,6 @@ dist_srcerts_DATA = \
 	sr/certs/stanford-ig-cm.pem \
 	sr/certs/tamu-eg-of.pem \
 	sr/certs/tamu-eg.pem \
-	sr/certs/ucdavis-eg-of.pem \
-	sr/certs/ucdavis-eg.pem \
 	sr/certs/uchicago-ig-boss.pem \
 	sr/certs/uchicago-ig-cm.pem \
 	sr/certs/ucla-ig-boss.pem \

@@ -437,8 +437,6 @@ rm -rf $RPM_BUILD_ROOT
 %{_datadir}/%{name}/sr/certs/stanford-ig-cm.pem
 %{_datadir}/%{name}/sr/certs/tamu-eg-of.pem
 %{_datadir}/%{name}/sr/certs/tamu-eg.pem
-%{_datadir}/%{name}/sr/certs/ucdavis-eg-of.pem
-%{_datadir}/%{name}/sr/certs/ucdavis-eg.pem
 %{_datadir}/%{name}/sr/certs/uchicago-ig-boss.pem
 %{_datadir}/%{name}/sr/certs/uchicago-ig-cm.pem
 %{_datadir}/%{name}/sr/certs/ucla-ig-boss.pem
@@ -527,8 +525,6 @@ rm -rf $RPM_BUILD_ROOT
 %{_datadir}/%{name}/sr/sql/add-starlight-vts.sql
 %{_datadir}/%{name}/sr/sql/add-tamu-eg-of.sql
 %{_datadir}/%{name}/sr/sql/add-tamu-eg.sql
-%{_datadir}/%{name}/sr/sql/add-ucdavis-eg-of.sql
-%{_datadir}/%{name}/sr/sql/add-ucdavis-eg.sql
 %{_datadir}/%{name}/sr/sql/add-uchicago-ig.sql
 %{_datadir}/%{name}/sr/sql/add-ucla-ig.sql
 %{_datadir}/%{name}/sr/sql/add-ufl-eg-of.sql
