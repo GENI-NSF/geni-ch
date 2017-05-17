@@ -9,8 +9,8 @@
 
 ## Installation Notes
 
-* Manually remove UC Davis from the service registry database
-  table if it exists
+* [Manually remove UC Davis from the service registry database
+  table if it exists](https://github.com/GENI-NSF/geni-ch/issues/564#issuecomment-302068665).
 
 # [Release 2.18](https://github.com/GENI-NSF/geni-ch/milestones/2.18)
 
