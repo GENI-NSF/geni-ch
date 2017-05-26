@@ -31,33 +31,19 @@ sudo sed -i -e "s/SELINUX=enforcing/SELINUX=disabled/g" /etc/selinux/config
 sudo reboot
 ```
 
-Teach CentOS about the GENI RPM repository
-------------------------------------------
-
-To teach CentOS about a new RPM repository a file can be added to
-`/etc/yum.repos.d` with repository information. A sample file
-might look like this:
-
-```INI
-[geni]
-name = GENI software repository
-baseurl = http://www.gpolab.bbn.com/experiment-support/gposw/centos/$releasever/os/$basearch/
-```
-
-Another approach is to publish this data for download:
-```Shell
-export URL_BASE='http://www.gpolab.bbn.com/experiment-support/gposw'
-sudo curl "${URL_BASE}"/centos/geni.repo -o /etc/yum.repos.d/geni.repo
-```
-
 Installing the GENI Clearinghouse package
 -----------------------------------------
 
-Once the server knows about the RPM repository, it is easy to
-install the geni clearinghouse package:
+GENI Clearinghouse RPMs are available on [GitHub](https://github.com).
+`yum` can download and install these RPMs.
+
+_N.B. The link in the example below may not be the latest RPM.
+You can find the URL of the latest RPM at_
+ https://github.com/GENI-NSF/geni-ch/releases/latest
 
 ```Shell
-sudo yum install -y --nogpgcheck geni-chapi
+sudo yum install -y \
+    https://github.com/GENI-NSF/geni-ch/releases/download/v2.18/geni-chapi-2.18-1.el7.centos.noarch.rpm
 ```
 
 You can see exactly what files have been installed and what directories
