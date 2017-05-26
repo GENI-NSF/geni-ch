@@ -31,6 +31,21 @@ sudo sed -i -e "s/SELINUX=enforcing/SELINUX=disabled/g" /etc/selinux/config
 sudo reboot
 ```
 
+Installing the GENI Tools package
+-----------------------------------------
+
+GENI Tools RPMs are available on [GitHub](https://github.com).
+`yum` can download and install these RPMs.
+
+_N.B. The link in the example below may not be the latest RPM.
+You can find the URL of the latest RPM at_
+https://github.com/GENI-NSF/geni-tools/releases/latest
+
+```Shell
+sudo yum install -y \
+    https://github.com/GENI-NSF/geni-tools/releases/download/v2.9/geni-tools-2.9-1.el7.centos.noarch.rpm
+```
+
 Installing the GENI Clearinghouse package
 -----------------------------------------
 
@@ -39,7 +54,7 @@ GENI Clearinghouse RPMs are available on [GitHub](https://github.com).
 
 _N.B. The link in the example below may not be the latest RPM.
 You can find the URL of the latest RPM at_
- https://github.com/GENI-NSF/geni-ch/releases/latest
+https://github.com/GENI-NSF/geni-ch/releases/latest
 
 ```Shell
 sudo yum install -y \
