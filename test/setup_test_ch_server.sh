@@ -1,8 +1,10 @@
 #!/bin/bash
 #
-# Temporarily, Go to test suite branch
-git checkout -b tkt504_test_suite
-#set -x
+# Uncomment for detailed trace of commands
+# set -x
+
+# Halt and error on the first command that errors
+set -e
 
 # Set up database
 echo "createdb chtest" > /tmp/createdb.sh
@@ -121,4 +123,3 @@ ls -l $CHAPIDIR/tools/test_server.py
 
 # Start test CH server
 $CHAPIDIR/tools/test_server.py >& /tmp/test_server.log &
-
