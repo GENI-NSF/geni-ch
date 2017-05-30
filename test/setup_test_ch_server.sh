@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# set -x
+set -x
 
 # Set up database
 echo "createdb chtest" > /tmp/createdb.sh
