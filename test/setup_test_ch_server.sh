@@ -1,6 +1,10 @@
 #!/bin/bash
 #
-set -x
+# Uncomment for detailed trace of commands
+# set -x
+
+# Halt and error on the first command that errors
+set -e
 
 # Set up database
 echo "createdb chtest" > /tmp/createdb.sh
