@@ -342,10 +342,14 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                                       SA.slice_field_mapping,
                                       "slice_urn", "slice_id",
                                       options, session)
-        slices = [{"SLICE_ROLE" : row.name, \
-                       "SLICE_UID" : row.slice_id, \
-                       "SLICE_URN": row.slice_urn, \
-                      "EXPIRED": row.expired } \
+        slices = [{"SLICE_ROLE": row.name,
+                   "SLICE_UID": row.slice_id,
+                   "SLICE_URN": row.slice_urn,
+                   "SLICE_EXPIRED": row.expired,
+                   # FIXME: 14-Jun-2017 "EXPIRED" is for backward compatibility
+                   # with omni until a new version of omni is released that
+                   # handles "SLICE_EXPIRED".
+                   "EXPIRED": row.expired}
                   for row in rows]
 
         result = self._successReturn(slices)
@@ -1032,10 +1036,14 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                                       SA.project_field_mapping,
                                       "project_name", "project_id",
                                       options, session)
-        projects = [{"PROJECT_ROLE" : row.name,
-                     "PROJECT_UID" : row.project_id,
+        projects = [{"PROJECT_ROLE": row.name,
+                     "PROJECT_UID": row.project_id,
                      "PROJECT_URN": row_to_project_urn(self.authority, row),
-                     "EXPIRED" : row.expired }
+                     "PROJECT_EXPIRED": row.expired,
+                     # FIXME: 14-Jun-2017 "EXPIRED" is for backward
+                     # compatibility with omni until a new version of omni
+                     # is released that handles "PROJECT_EXPIRED".
+                     "EXPIRED": row.expired}
                     for row in rows]
         result = self._successReturn(projects)
 
@@ -1332,10 +1340,14 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                                       SA.project_field_mapping,
                                       "project_name", "project_id",
                                       {}, session)
-        projects = [{"PROJECT_ROLE" : row.name,
-                     "PROJECT_UID" : row.project_id,
+        projects = [{"PROJECT_ROLE": row.name,
+                     "PROJECT_UID": row.project_id,
                      "PROJECT_URN": row_to_project_urn(self.authority, row),
-                     "EXPIRED" : row.expired }
+                     "PROJECT_EXPIRED": row.expired,
+                     # FIXME: 14-Jun-2017 "EXPIRED" is for backward
+                     # compatibility with omni until a new version of omni
+                     # is released that handles "PROJECT_EXPIRED".
+                     "EXPIRED": row.expired}
                     for row in rows]
         role = None
         for proj in projects:

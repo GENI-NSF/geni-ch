@@ -4,7 +4,8 @@
 
 ## Changes
 
-* None
+* Consistently use PROJECT_EXPIRED and SLICE_EXPIRED
+  ([#537](https://github.com/GENI-NSF/geni-ch/issues/537))
 
 ## Installation Notes
 
