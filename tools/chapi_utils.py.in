@@ -88,12 +88,11 @@ def get_code_tag(log_prefix):
     try:
         with open(CHAPI_CODE_TAG_FILE, 'r') as f:
             code_tag = f.readline().strip()
-    except:
+    except IOError:
         msg = 'Cannot read code tag file %r.'
         msg = msg % (CHAPI_CODE_TAG_FILE)
         chapi_error(log_prefix, msg)
         code_tag = 'unknown'
-
     return code_tag
 
 
@@ -106,6 +105,7 @@ def get_code_timestamp(log_prefix):
         chapi_error(log_prefix,
                     "Can't find code tag file %s" % CHAPI_CODE_TAG_FILE)
     return code_timestamp
+
 
 CHAPI_CODE_TAG_FILE = "@pkgsysconfdir@/geni-ch-version.txt"
 CHAPI_CODE_URL = "https://github.com/GENI-NSF/geni-ch"

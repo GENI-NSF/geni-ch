@@ -1,7 +1,7 @@
 #!/bin/sh
 
-# Limits as of February 22, 2017
-ERROR_LIMIT=2798
+# Limits as of June 14, 2017
+ERROR_LIMIT=2776
 WARNING_LIMIT=46
 
 RESULT=0
