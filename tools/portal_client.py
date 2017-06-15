@@ -109,7 +109,7 @@ def emulate_portal_page(opts, verbose = False):
         # Lookup projects
         project_uids = [project_info['PROJECT_UID'] \
                             for project_info in projects_info['value']
-                        if not project_info['EXPIRED']]
+                        if not project_info['PROJECT_EXPIRED']]
         client_options = {'match' : {'PROJECT_UID' : project_uids}}
         (projects, msg) = _do_ssl(framework, suppress_errors, reason,
                                        sa_client.lookup_projects,
@@ -129,7 +129,7 @@ def emulate_portal_page(opts, verbose = False):
         # Lookup slices
         slice_uids = [slice_info['SLICE_UID'] \
                             for slice_info in slices_info['value']
-                      if not slice_info['EXPIRED']]
+                      if not slice_info['SLICE_EXPIRED']]
         client_options = {'match' : {'SLICE_UID' : slice_uids}}
         (slices, msg) = _do_ssl(framework, suppress_errors, reason,
                                        sa_client.lookup_slices,

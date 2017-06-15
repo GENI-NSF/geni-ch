@@ -122,7 +122,7 @@ def main(argv=None):
             raise Exception("Could not disable user %s" % (options.member))
     projects = result['value']
     for project in projects:
-        project_expired = project['EXPIRED']
+        project_expired = project['PROJECT_EXPIRED']
         if project_expired and not options.expired:
             continue
         project_urn = project['PROJECT_URN']
