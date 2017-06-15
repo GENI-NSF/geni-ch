@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 # -*- Mode: python -*-
 #
-#----------------------------------------------------------------------
-# Copyright (c) 2013-2016 Raytheon BBN Technologies
+# ----------------------------------------------------------------------
+# Copyright (c) 2013-2017 Raytheon BBN Technologies
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and/or hardware specification (the "Work") to
@@ -22,20 +22,22 @@
 # WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE WORK OR THE USE OR OTHER DEALINGS
 # IN THE WORK.
-#----------------------------------------------------------------------
+# ----------------------------------------------------------------------
 
-#----------------------------------------------------------------------
+# ----------------------------------------------------------------------
 #
-# Disable the given user so they can do no operations
+# Lists a user's projects.
 #
-# Communicates with a GENI Member Authority via its public API
+# Communicates with a GENI Member Authority and a GENI Slice Authority
+# via their public APIs
 #
-#----------------------------------------------------------------------
+# ----------------------------------------------------------------------
 
 import sys
 import optparse
 from urlparse import urlparse
 from chapiclient import chapi
+
 
 def parse_args(argv):
     parser = optparse.OptionParser(usage="List projects for the given user")
@@ -44,25 +46,27 @@ def parse_args(argv):
     parser.add_option("-c", "--certfile", metavar="FILE",
                       help="Invoker's GENI certificate")
     parser.add_option("-u", "--url",
-                             help="base authority URL (https://chSOMETHING)")
+                      help="base authority URL (https://chSOMETHING)")
     parser.add_option("-m", "--member", help="member id (a UUID or username)")
     parser.add_option("-e", "--expired", action="store_true", default=False,
                       help="Show expired projects")
-    options,args = parser.parse_args()
+    options, args = parser.parse_args()
     if not (options.keyfile and options.certfile and options.url
             and options.member):
         parser.print_usage()
         raise Exception("Missing some required arguments")
-    return options,args
+    return options, args
+
 
 def verify_url(url):
     parsed = urlparse(url)
     if (parsed.scheme in ('http', 'https')
-        and parsed.netloc
-        and parsed.path):
+            and parsed.netloc
+            and parsed.path):
         return parsed.geturl()
     else:
         raise Exception("Invalid url %r" % (url))
+
 
 def load_cert(certfile):
     f = open(certfile)
@@ -72,6 +76,7 @@ def load_cert(certfile):
     # Or will that be taken care of downstream, by the ch_interface?
     return cert
 
+
 def load_private_key(certfile):
     f = open(certfile)
     key = f.read()
@@ -80,6 +85,7 @@ def load_private_key(certfile):
     # Or will that be taken care of downstream, by the ch_interface?
     return key
 
+
 def project_name_from_urn(urn):
     plus_pos = urn.rfind('+')
     if plus_pos == -1:
@@ -87,11 +93,12 @@ def project_name_from_urn(urn):
     else:
         return urn[plus_pos+1:]
 
+
 def main(argv=None):
     if argv is None:
         argv = sys.argv
     try:
-        options,args = parse_args(argv)
+        options, args = parse_args(argv)
         ma_url = verify_url(chapi.service_url(options.url, 'MA'))
         sa_url = verify_url(chapi.service_url(options.url, 'SA'))
         cert = load_cert(options.certfile)
@@ -110,16 +117,17 @@ def main(argv=None):
     opts = dict()
     result = proxy.lookup_projects_for_member(member_urn, credentials, opts)
 
-    if not 'code' in result:
+    if 'code' not in result:
         raise Exception("Could not list projects for user %s. Result: %s" %
                         (options.member, result))
     status = result['code']
     if not status == 0:
-        if result.has_key('output'):
+        if 'output' in result:
             raise Exception("Could not list projects for user %s. Error %d: %s"
                             % (options.member, status, result['output']))
         else:
-            raise Exception("Could not disable user %s" % (options.member))
+            raise Exception("Could not list projects for user %s" %
+                            (options.member))
     projects = result['value']
     for project in projects:
         project_expired = project['PROJECT_EXPIRED']
@@ -133,6 +141,7 @@ def main(argv=None):
             annotation = ' (expired)'
         print '%s\t%s%s' % (project_role, project_name, annotation)
     return 0
+
 
 if __name__ == "__main__":
     sys.exit(main())
