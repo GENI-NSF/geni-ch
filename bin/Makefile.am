@@ -1,13 +1,13 @@
 #----------------------------------------------------------------------
-# 'tooldir' and 'gcfdir' are here for substitution into scripts.
+# 'chapidir' and 'gcfdir' are here for substitution into scripts.
 #
-# TODO: keep 'tooldir' in sync with ../tools/Makefile.am (see note
-#       there)
+# TODO: keep 'chapidir' in sync with variables in ../tools/Makefile.am
+#       and ../plugins/Makefile.am (see notes there)
 #
 # TODO: add gcfdir to configure so it can be specified for all of
 #       chapi in one place, and even hunted for in known locations.
 #----------------------------------------------------------------------
-tooldir = $(pkgdatadir)/../geni-ch/chapi/chapi/tools
+chapidir = $(pkgdatadir)/../geni-ch/chapi/chapi
 gcfdir = $(pkgdatadir)/../geni-ch/gcf/src
 pkgsysconfdir = $(sysconfdir)/$(PACKAGE)
 templatesdir = $(pkgdatadir)/templates
@@ -17,7 +17,7 @@ edit = sed \
 	-e 's|@pkgdatadir[@]|$(pkgdatadir)|g' \
 	-e 's|@pkgsysconfdir[@]|$(pkgsysconfdir)|g' \
 	-e 's|@prefix[@]|$(prefix)|g' \
-	-e 's|@tooldir[@]|$(tooldir)|g' \
+	-e 's|@chapidir[@]|$(chapidir)|g' \
 	-e 's|@gcfdir[@]|$(gcfdir)|g' \
 	-e 's|@templatesdir[@]|$(templatesdir)|g'
 
