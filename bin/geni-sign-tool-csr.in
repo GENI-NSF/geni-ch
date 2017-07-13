@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 # -*- Mode: python -*-
 
-#----------------------------------------------------------------------
-# Copyright (c) 2013-2016 Raytheon BBN Technologies
+# ----------------------------------------------------------------------
+# Copyright (c) 2013-2017 Raytheon BBN Technologies
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and/or hardware specification (the "Work") to
@@ -22,13 +22,13 @@
 # WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE WORK OR THE USE OR OTHER DEALINGS
 # IN THE WORK.
-#----------------------------------------------------------------------
+# ----------------------------------------------------------------------
 
-#----------------------------------------------------------------------
+# ----------------------------------------------------------------------
 #
 # Sign a CSR for a tool certificate.
 #
-#----------------------------------------------------------------------
+# ----------------------------------------------------------------------
 
 import sys
 import optparse
@@ -40,14 +40,15 @@ sys.path.insert(1, '@tooldir@')
 
 import cert_utils as cu
 
+
 def parse_args(argv):
     parser = optparse.OptionParser(usage="Sign a CSR for a GENI tool")
     parser.add_option("-k", "--keyfile", metavar="FILE",
                       help="Signing private key")
     parser.add_option("-c", "--certfile", metavar="FILE",
                       help="Signing certificate")
-    parser.add_option("-d", "--days", metavar="NUMBER", default=365, type='int',
-                      help="Validity period in days")
+    parser.add_option("-d", "--days", metavar="NUMBER", default=365,
+                      type='int', help="Validity period in days")
     parser.add_option("-e", "--email", metavar="TOOL_ADMIN_EMAIL",
                       help="Tool administrator email address")
     parser.add_option("-i", "--id",
@@ -61,12 +62,13 @@ def parse_args(argv):
     parser.add_option("--use-csr-subject",
                       action="store_true", default=False,
                       help="Use subject provided by CSR")
-    options,args = parser.parse_args()
+    options, args = parser.parse_args()
     if not (options.keyfile and options.certfile and options.email
             and options.id and options.authority and options.csr):
         parser.print_usage()
         raise Exception("Missing some required arguments")
-    return options,args
+    return options, args
+
 
 def load_signer_chain(pemfile):
     # Read the file line by line, loading everything between a begin
@@ -89,11 +91,12 @@ def load_signer_chain(pemfile):
             pemline = f.readline()
     return chain
 
+
 def main(argv=None):
     if argv is None:
         argv = sys.argv
     try:
-        options,args = parse_args(argv)
+        options, args = parse_args(argv)
     except Exception as e:
         sys.stderr.write(str(e) + '\n')
         return 1
@@ -132,6 +135,7 @@ def main(argv=None):
         # send cert to stdout
         print chain
     return 0
+
 
 if __name__ == '__main__':
     sys.exit(main())
