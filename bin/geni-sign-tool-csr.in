@@ -36,9 +36,17 @@ import uuid
 
 # Add sfa include path after script directory but before system path
 sys.path.insert(1, '@gcfdir@')
-sys.path.insert(1, '@tooldir@')
+sys.path.insert(1, '@chapidir@')
 
-import cert_utils as cu
+# Wrap these in a try/finally block to appease pycodestyle
+try:
+    import tools.cert_utils as cu
+    import tools.pluginmanager as pm
+    import tools.chapi_log
+    import logging
+    from plugins.chapiv1rpc.chapi.Parameters import set_parameters
+finally:
+    pass
 
 
 def parse_args(argv):
@@ -113,6 +121,11 @@ def main(argv=None):
             return 1
 
     signer_chain = load_signer_chain(options.certfile)
+
+    # set up the environment for make_cert()
+    pm.registerService('config', pm.ConfigDB())
+    tools.chapi_log.chapi_logging_basic_config(level=logging.WARN)
+    set_parameters()
 
     # make_cert() prepends the 'URI:' part.
     tool_urn = 'urn:publicid:IDN+%s+tool+%s' % (options.authority, options.id)
