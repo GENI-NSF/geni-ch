@@ -4,7 +4,8 @@
 
 ## Changes
 
-* None
+* Fix import error in geni-sign-tool-csr
+  ([#577](https://github.com/GENI-NSF/geni-ch/issues/577))
 
 ## Installation Notes
 
