@@ -75,6 +75,7 @@ AM_SQL = \
 	sr/sql/add-uky-pg.sql \
 	sr/sql/add-ukypks2-ig.sql \
 	sr/sql/add-ukypks2-vts.sql \
+	sr/sql/add-ullafayette-ig.sql \
 	sr/sql/add-umich-ig.sql \
 	sr/sql/add-umkc-ig.sql \
 	sr/sql/add-utah-clab.sql \
@@ -83,6 +84,8 @@ AM_SQL = \
 	sr/sql/add-utah-stitch.sql \
 	sr/sql/add-utahddc-ig.sql \
 	sr/sql/add-utc-ig.sql \
+	sr/sql/add-utdallas-ig.sql \
+	sr/sql/add-uvm-ig.sql \
 	sr/sql/add-uwashington-ig.sql \
 	sr/sql/add-vt-ig.sql \
 	sr/sql/add-wall2.sql \

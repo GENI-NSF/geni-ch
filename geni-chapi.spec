@@ -536,6 +536,7 @@ rm -rf $RPM_BUILD_ROOT
 %{_datadir}/%{name}/sr/sql/add-ukymcv-ig.sql
 %{_datadir}/%{name}/sr/sql/add-ukypks2-ig.sql
 %{_datadir}/%{name}/sr/sql/add-ukypks2-vts.sql
+%{_datadir}/%{name}/sr/sql/add-ullafayette-ig.sql
 %{_datadir}/%{name}/sr/sql/add-umich-ig.sql
 %{_datadir}/%{name}/sr/sql/add-umkc-ig.sql
 %{_datadir}/%{name}/sr/sql/add-utah-clab.sql
@@ -544,6 +545,8 @@ rm -rf $RPM_BUILD_ROOT
 %{_datadir}/%{name}/sr/sql/add-utah-stitch.sql
 %{_datadir}/%{name}/sr/sql/add-utahddc-ig.sql
 %{_datadir}/%{name}/sr/sql/add-utc-ig.sql
+%{_datadir}/%{name}/sr/sql/add-utdallas-ig.sql
+%{_datadir}/%{name}/sr/sql/add-uvm-ig.sql
 %{_datadir}/%{name}/sr/sql/add-wall2.sql
 %{_datadir}/%{name}/sr/sql/add-uwashington-ig.sql
 %{_datadir}/%{name}/sr/sql/add-vt-ig.sql
