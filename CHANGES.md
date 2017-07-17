@@ -4,6 +4,12 @@
 
 ## Changes
 
+* Add UVM US Ignite rack
+  ([#574](https://github.com/GENI-NSF/geni-ch/issues/574))
+* Add UT Dallas US Ignite rack
+  ([#575](https://github.com/GENI-NSF/geni-ch/issues/575))
+* Add University of Louisiana Lafayette US Ignite rack
+  ([#576](https://github.com/GENI-NSF/geni-ch/issues/576))
 * Fix import error in geni-sign-tool-csr
   ([#577](https://github.com/GENI-NSF/geni-ch/issues/577))
 
