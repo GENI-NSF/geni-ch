@@ -549,6 +549,7 @@ rm -rf $RPM_BUILD_ROOT
 %{_datadir}/%{name}/sr/sql/add-uvm-ig.sql
 %{_datadir}/%{name}/sr/sql/add-wall2.sql
 %{_datadir}/%{name}/sr/sql/add-uwashington-ig.sql
+%{_datadir}/%{name}/sr/sql/add-vcu-ig.sql
 %{_datadir}/%{name}/sr/sql/add-vt-ig.sql
 %{_datadir}/%{name}/sr/sql/add-wisconsin-ig.sql
 %{_datadir}/%{name}/sr/sql/add-wsu-eg-of.sql

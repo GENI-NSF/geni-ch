@@ -87,6 +87,7 @@ AM_SQL = \
 	sr/sql/add-utdallas-ig.sql \
 	sr/sql/add-uvm-ig.sql \
 	sr/sql/add-uwashington-ig.sql \
+	sr/sql/add-vcu-ig.sql \
 	sr/sql/add-vt-ig.sql \
 	sr/sql/add-wall2.sql \
 	sr/sql/add-wisconsin-ig.sql \
