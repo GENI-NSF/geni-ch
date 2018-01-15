@@ -66,6 +66,7 @@ AM_SQL = \
 	sr/sql/add-tamu-eg.sql \
 	sr/sql/add-uchicago-ig.sql \
 	sr/sql/add-ucla-ig.sql \
+	sr/sql/add-ucsd-ig.sql \
 	sr/sql/add-ufl-eg-of.sql \
 	sr/sql/add-ufl-eg.sql \
 	sr/sql/add-uh-eg.sql \
