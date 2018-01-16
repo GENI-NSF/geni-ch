@@ -58,7 +58,7 @@ https://github.com/GENI-NSF/geni-ch/releases/latest
 
 ```Shell
 sudo yum install -y \
-    https://github.com/GENI-NSF/geni-ch/releases/download/v2.20/geni-chapi-2.20-1.el7.centos.noarch.rpm
+    https://github.com/GENI-NSF/geni-ch/releases/download/v2.21/geni-chapi-2.21-1.el7.centos.noarch.rpm
 ```
 
 You can see exactly what files have been installed and what directories
