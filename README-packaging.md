@@ -26,7 +26,7 @@ follow these steps to build the package:
 VERSION=2.2
 tar zxf geni-chapi-${VERSION}.tar.gz
 mv geni-chapi-${VERSION}.tar.gz "${HOME}"/rpmbuild/SOURCES
-mv geni-ch-${VERSION}/geni-chapi.spec "${HOME}"/rpmbuild/SPECS
+mv geni-chapi-${VERSION}/geni-chapi.spec "${HOME}"/rpmbuild/SPECS
 cd "${HOME}"/rpmbuild/SPECS
 rpmbuild -ba geni-chapi.spec
 ```
