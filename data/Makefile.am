@@ -66,6 +66,7 @@ AM_SQL = \
 	sr/sql/add-tamu-eg.sql \
 	sr/sql/add-uchicago-ig.sql \
 	sr/sql/add-ucla-ig.sql \
+	sr/sql/add-ucsd-ig.sql \
 	sr/sql/add-ufl-eg-of.sql \
 	sr/sql/add-ufl-eg.sql \
 	sr/sql/add-uh-eg.sql \
@@ -87,6 +88,7 @@ AM_SQL = \
 	sr/sql/add-utdallas-ig.sql \
 	sr/sql/add-uvm-ig.sql \
 	sr/sql/add-uwashington-ig.sql \
+	sr/sql/add-vcu-ig.sql \
 	sr/sql/add-vt-ig.sql \
 	sr/sql/add-wall2.sql \
 	sr/sql/add-wisconsin-ig.sql \

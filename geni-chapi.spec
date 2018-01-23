@@ -527,6 +527,7 @@ rm -rf $RPM_BUILD_ROOT
 %{_datadir}/%{name}/sr/sql/add-tamu-eg.sql
 %{_datadir}/%{name}/sr/sql/add-uchicago-ig.sql
 %{_datadir}/%{name}/sr/sql/add-ucla-ig.sql
+%{_datadir}/%{name}/sr/sql/add-ucsd-ig.sql
 %{_datadir}/%{name}/sr/sql/add-ufl-eg-of.sql
 %{_datadir}/%{name}/sr/sql/add-ufl-eg.sql
 %{_datadir}/%{name}/sr/sql/add-uh-eg.sql
@@ -549,6 +550,7 @@ rm -rf $RPM_BUILD_ROOT
 %{_datadir}/%{name}/sr/sql/add-uvm-ig.sql
 %{_datadir}/%{name}/sr/sql/add-wall2.sql
 %{_datadir}/%{name}/sr/sql/add-uwashington-ig.sql
+%{_datadir}/%{name}/sr/sql/add-vcu-ig.sql
 %{_datadir}/%{name}/sr/sql/add-vt-ig.sql
 %{_datadir}/%{name}/sr/sql/add-wisconsin-ig.sql
 %{_datadir}/%{name}/sr/sql/add-wsu-eg-of.sql
