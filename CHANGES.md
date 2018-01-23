@@ -4,7 +4,12 @@
 
 ## Changes
 
-* None
+* Add VCU-IG to GENI portal
+  ([#584](https://github.com/GENI-NSF/geni-ch/issues/584))
+* Add ucsd-ig to Geni CH
+  ([#585](https://github.com/GENI-NSF/geni-ch/issues/585))
+* Enable stitching and federation flag for hawaii-ig
+  ([#586](https://github.com/GENI-NSF/geni-ch/issues/586))
 
 ## Installation Notes
 
