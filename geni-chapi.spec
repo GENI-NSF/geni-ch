@@ -508,6 +508,7 @@ rm -rf $RPM_BUILD_ROOT
 %{_datadir}/%{name}/sr/sql/add-nysernet-of.sql
 %{_datadir}/%{name}/sr/sql/add-nyu-ig.sql
 %{_datadir}/%{name}/sr/sql/add-ohmetrodc-ig.sql
+%{_datadir}/%{name}/sr/sql/add-osu-ig.sql
 %{_datadir}/%{name}/sr/sql/add-osf-eg-of.sql
 %{_datadir}/%{name}/sr/sql/add-osf-eg.sql
 %{_datadir}/%{name}/sr/sql/add-princeton-ig.sql
@@ -539,7 +540,6 @@ rm -rf $RPM_BUILD_ROOT
 %{_datadir}/%{name}/sr/sql/add-umich-ig.sql
 %{_datadir}/%{name}/sr/sql/add-umkc-ig.sql
 %{_datadir}/%{name}/sr/sql/add-utah-clab.sql
-%{_datadir}/%{name}/sr/sql/add-utah-ig.sql
 %{_datadir}/%{name}/sr/sql/add-utah-pg.sql
 %{_datadir}/%{name}/sr/sql/add-utah-stitch.sql
 %{_datadir}/%{name}/sr/sql/add-utahddc-ig.sql
