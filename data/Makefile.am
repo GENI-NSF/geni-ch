@@ -80,7 +80,6 @@ AM_SQL = \
 	sr/sql/add-umich-ig.sql \
 	sr/sql/add-umkc-ig.sql \
 	sr/sql/add-utah-clab.sql \
-	sr/sql/add-utah-ig.sql \
 	sr/sql/add-utah-pg.sql \
 	sr/sql/add-utah-stitch.sql \
 	sr/sql/add-utahddc-ig.sql \

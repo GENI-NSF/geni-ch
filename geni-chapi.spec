@@ -455,8 +455,6 @@ rm -rf $RPM_BUILD_ROOT
 %{_datadir}/%{name}/sr/certs/umkc-ig-cm.pem
 %{_datadir}/%{name}/sr/certs/utah-clab-boss.pem
 %{_datadir}/%{name}/sr/certs/utah-clab-cm.pem
-%{_datadir}/%{name}/sr/certs/utah-ig-boss.pem
-%{_datadir}/%{name}/sr/certs/utah-ig-cm.pem
 %{_datadir}/%{name}/sr/certs/utah-pg.pem
 %{_datadir}/%{name}/sr/certs/utah-stitch-boss.pem
 %{_datadir}/%{name}/sr/certs/utah-stitch-cm.pem
