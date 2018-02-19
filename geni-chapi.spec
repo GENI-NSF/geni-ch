@@ -509,6 +509,7 @@ rm -rf $RPM_BUILD_ROOT
 %{_datadir}/%{name}/sr/sql/add-nyu-ig.sql
 %{_datadir}/%{name}/sr/sql/add-ohmetrodc-ig.sql
 %{_datadir}/%{name}/sr/sql/add-osu-ig.sql
+%{_datadir}/%{name}/sr/sql/add-odu-ig.sql
 %{_datadir}/%{name}/sr/sql/add-osf-eg-of.sql
 %{_datadir}/%{name}/sr/sql/add-osf-eg.sql
 %{_datadir}/%{name}/sr/sql/add-princeton-ig.sql
