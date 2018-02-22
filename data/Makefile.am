@@ -231,8 +231,6 @@ dist_srcerts_DATA = \
 	sr/certs/umkc-ig-cm.pem \
 	sr/certs/utah-clab-boss.pem \
 	sr/certs/utah-clab-cm.pem \
-	sr/certs/utah-ig-boss.pem \
-	sr/certs/utah-ig-cm.pem \
 	sr/certs/utah-pg.pem \
 	sr/certs/utah-stitch-boss.pem \
 	sr/certs/utah-stitch-cm.pem \
