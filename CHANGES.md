@@ -4,6 +4,20 @@
 
 ## Changes
 
+* Move colorado-ig from experimental rack to production rack
+  ([#595](https://github.com/GENI-NSF/geni-ch/issues/595))
+* Add odu-ig to Geni CH
+  ([#594](https://github.com/GENI-NSF/geni-ch/issues/594))
+* Add princeton-ig to Geni CH
+  ([#593](https://github.com/GENI-NSF/geni-ch/issues/593))
+* Add osu-ig to Geni CH
+  ([#592](https://github.com/GENI-NSF/geni-ch/issues/592))
+* Add vt-ig to Geni CH
+  ([#591](https://github.com/GENI-NSF/geni-ch/issues/591))
+* Decommision utah-ig
+  ([#590](https://github.com/GENI-NSF/geni-ch/issues/590))
+ 
+
 ## Installation Notes
 
 * None
