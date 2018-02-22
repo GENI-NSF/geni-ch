@@ -51,6 +51,8 @@ AM_SQL = \
 	sr/sql/add-ohmetrodc-ig.sql \
 	sr/sql/add-osf-eg-of.sql \
 	sr/sql/add-osf-eg.sql \
+	sr/sql/add-osu-ig.sql \
+	sr/sql/add-odu-ig.sql \
 	sr/sql/add-princeton-ig.sql \
 	sr/sql/add-renci-eg-of.sql \
 	sr/sql/add-renci-eg.sql \
@@ -80,7 +82,6 @@ AM_SQL = \
 	sr/sql/add-umich-ig.sql \
 	sr/sql/add-umkc-ig.sql \
 	sr/sql/add-utah-clab.sql \
-	sr/sql/add-utah-ig.sql \
 	sr/sql/add-utah-pg.sql \
 	sr/sql/add-utah-stitch.sql \
 	sr/sql/add-utahddc-ig.sql \

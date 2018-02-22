@@ -455,8 +455,6 @@ rm -rf $RPM_BUILD_ROOT
 %{_datadir}/%{name}/sr/certs/umkc-ig-cm.pem
 %{_datadir}/%{name}/sr/certs/utah-clab-boss.pem
 %{_datadir}/%{name}/sr/certs/utah-clab-cm.pem
-%{_datadir}/%{name}/sr/certs/utah-ig-boss.pem
-%{_datadir}/%{name}/sr/certs/utah-ig-cm.pem
 %{_datadir}/%{name}/sr/certs/utah-pg.pem
 %{_datadir}/%{name}/sr/certs/utah-stitch-boss.pem
 %{_datadir}/%{name}/sr/certs/utah-stitch-cm.pem
@@ -510,6 +508,8 @@ rm -rf $RPM_BUILD_ROOT
 %{_datadir}/%{name}/sr/sql/add-nysernet-of.sql
 %{_datadir}/%{name}/sr/sql/add-nyu-ig.sql
 %{_datadir}/%{name}/sr/sql/add-ohmetrodc-ig.sql
+%{_datadir}/%{name}/sr/sql/add-osu-ig.sql
+%{_datadir}/%{name}/sr/sql/add-odu-ig.sql
 %{_datadir}/%{name}/sr/sql/add-osf-eg-of.sql
 %{_datadir}/%{name}/sr/sql/add-osf-eg.sql
 %{_datadir}/%{name}/sr/sql/add-princeton-ig.sql
@@ -541,7 +541,6 @@ rm -rf $RPM_BUILD_ROOT
 %{_datadir}/%{name}/sr/sql/add-umich-ig.sql
 %{_datadir}/%{name}/sr/sql/add-umkc-ig.sql
 %{_datadir}/%{name}/sr/sql/add-utah-clab.sql
-%{_datadir}/%{name}/sr/sql/add-utah-ig.sql
 %{_datadir}/%{name}/sr/sql/add-utah-pg.sql
 %{_datadir}/%{name}/sr/sql/add-utah-stitch.sql
 %{_datadir}/%{name}/sr/sql/add-utahddc-ig.sql
