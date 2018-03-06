@@ -161,13 +161,13 @@ def make_cert(uuid, email, urn, signer_cert_file, signer_key_file, csr_file,
     config = pm.getService('config')
     ssl_config_file = config.get("chapi.ssl_config_file")
 
-    # Cert Expiry time cannot be greater than signer expiry. 
+    # Cert Expiry time cannot be greater than signer expiry.
     signer_cert = open(signer_cert_file).read()
     signer_cert_expires = get_expiration_from_cert(signer_cert)
     remaining = signer_cert_expires - datetime.datetime.utcnow()
     # Ensure days is an integer, raise exception otherwise
     days = int(min(days,remaining.days - 1))
-        
+
     # sign the csr to create cert
     extname = 'v3_user'
     extdata_template = "[ %s ]\n" + \
