@@ -662,10 +662,10 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
         slice.slice_id = str(uuid.uuid4())
         slice.owner_id = client_uuid
         slice.slice_urn = urn_for_slice(slice.slice_name, project_name)
-        # FIXME: Why is the cert lifeDays 365 days more than the diff between slice expiration and creation?
+        # Slice Certs now set to expire with slice expiry time . +1 added to offset the hours roundoff during cert generation
         cert, k = cert_util.create_cert(slice.slice_urn, \
             issuer_key = self.key, issuer_cert = self.cert, \
-            lifeDays = (slice.expiration - dt.datetime.utcnow()).days,\
+            lifeDays = (slice.expiration - dt.datetime.utcnow()).days + 1,\
   #          lifeDays = (slice.expiration - slice.creation).days + \
   #                     SA.SLICE_CERT_LIFETIME, \
             email = slice.slice_email, uuidarg=slice.slice_id)
@@ -792,7 +792,7 @@ class SAv1PersistentImplementation(SAv1DelegateBase):
                     cert, k = cert_util.create_cert(slice_urn, \
                                                         issuer_key = self.key, issuer_cert = self.cert, \
                                                         #lifeDays = (new_exp - slice_info.creation).days + SA.SLICE_CERT_LIFETIME, \
-                                                        lifeDays = (new_exp - dt.datetime.utcnow()).days , \
+                                                        lifeDays = (new_exp - dt.datetime.utcnow()).days + 1, \
                                                         email = slice_info.slice_email, uuidarg=slice_info.slice_id)
                     # FIXME: Ticket #149: Save the slice key and
                     # re-use it when re-generating the slice certifate
