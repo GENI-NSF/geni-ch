@@ -125,7 +125,7 @@ def make_csr():
     (key_fd, key_file) = tempfile.mkstemp()
     os.close(key_fd)
     csr_request_args = ['/usr/bin/openssl', 'req', '-new', \
-                            '-newkey', 'rsa:1024', \
+                            '-newkey', 'rsa:2048', \
                             '-nodes', \
                             '-keyout', key_file, \
                             '-out', csr_file, '-batch']

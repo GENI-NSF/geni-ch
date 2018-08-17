@@ -16,7 +16,7 @@ OPENSSL=/usr/bin/openssl
 UUID=`/usr/bin/uuidgen -t`
 SUBJECT="/O=${SHORT_HOST}/OU=authority/OU=${AUTHORITY}/CN=${UUID}/emailAddress=${EMAIL}"
 
-"${OPENSSL}" req -new -newkey rsa:1024 -nodes \
+"${OPENSSL}" req -new -newkey rsa:2048 -nodes \
                  -subj "${SUBJECT}" \
                  -keyout "${KEYFILE}" \
                  -out "${REQFILE}"

@@ -236,7 +236,7 @@ def init_ca(config, options):
     cmd = ['/usr/bin/openssl', 'req', '-x509', '-nodes',
            '-days', '1825',
            '-subj', '/CN=%s' % (config.authority),
-           '-newkey', 'rsa:1024',
+           '-newkey', 'rsa:2048',
            '-keyout', config.key,
            '-out', config.cert,
            '-config', ca_conf,
