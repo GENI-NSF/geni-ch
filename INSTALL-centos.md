@@ -43,7 +43,7 @@ https://github.com/GENI-NSF/geni-tools/releases/latest
 
 ```Shell
 sudo yum install -y \
-    https://github.com/GENI-NSF/geni-tools/releases/download/v2.9/geni-tools-2.9-1.el7.centos.noarch.rpm
+    https://github.com/GENI-NSF/geni-tools/releases/download/v2.10/geni-tools-2.10-1.el7.centos.noarch.rpm
 ```
 
 Installing the GENI Clearinghouse package
@@ -58,7 +58,7 @@ https://github.com/GENI-NSF/geni-ch/releases/latest
 
 ```Shell
 sudo yum install -y \
-    https://github.com/GENI-NSF/geni-ch/releases/download/v2.22/geni-chapi-2.22-1.el7.centos.noarch.rpm
+    https://github.com/GENI-NSF/geni-ch/releases/download/v2.24/geni-chapi-2.24-1.el7.centos.noarch.rpm
 ```
 
 You can see exactly what files have been installed and what directories

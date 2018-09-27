@@ -1,5 +1,21 @@
 # GENI Clearinghouse Release Notes
 
+# [Release 2.24](https://github.com/GENI-NSF/geni-ch/milestones/2.24)
+
+## Changes
+
+* Fix code for slice certificate expiry time generations to expire with slice expiry plus 1 days (rounding off)
+  ([#605](https://github.com/GENI-NSF/geni-ch/issues/605))
+* Change private key size to 2014 bits
+  ([#607](https://github.com/GENI-NSF/geni-ch/issues/607))
+* Add ExtendedKeyUsage options to SSL Certificates
+  ([#608](https://github.com/GENI-NSF/geni-ch/issues/608))
+ 
+
+## Installation Notes
+
+* None
+
 # [Release 2.23](https://github.com/GENI-NSF/geni-ch/milestones/2.23)
 
 ## Changes
