@@ -32,7 +32,7 @@ EOF
 
 # Create the root certificate
 /usr/bin/openssl req -x509 -nodes -days 365 -subj "/CN=${FQDN}" \
-                     -newkey rsa:1024 -keyout "${CAKEY}" -out "${CACERT}" \
+                     -newkey rsa:2048 -keyout "${CAKEY}" -out "${CACERT}" \
                      -config "${EXT_FILE}" -extensions "${EXT_NAME}"
 
 /bin/rm "${EXT_FILE}"
