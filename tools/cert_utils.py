@@ -174,6 +174,7 @@ def make_cert(uuid, email, urn, signer_cert_file, signer_key_file, csr_file,
     extdata_template = "[ %s ]\n" + \
         "subjectKeyIdentifier=hash\n" + \
         "authorityKeyIdentifier=keyid:always,issuer:always\n" + \
+        "extendedKeyUsage=serverAuth, clientAuth, timeStamping, codeSigning, emailProtection\n" + \
         "basicConstraints = CA:false\n"
     extdata = extdata_template % extname
 
