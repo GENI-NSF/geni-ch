@@ -458,8 +458,6 @@ rm -rf $RPM_BUILD_ROOT
 %{_datadir}/%{name}/sr/certs/utah-pg.pem
 %{_datadir}/%{name}/sr/certs/utah-stitch-boss.pem
 %{_datadir}/%{name}/sr/certs/utah-stitch-cm.pem
-%{_datadir}/%{name}/sr/certs/utahddc-ig-boss.pem
-%{_datadir}/%{name}/sr/certs/utahddc-ig-cm.pem
 %{_datadir}/%{name}/sr/certs/utc-ig-boss.pem
 %{_datadir}/%{name}/sr/certs/utc-ig-cm.pem
 %{_datadir}/%{name}/sr/certs/wall2-ca.pem
@@ -543,7 +541,6 @@ rm -rf $RPM_BUILD_ROOT
 %{_datadir}/%{name}/sr/sql/add-utah-clab.sql
 %{_datadir}/%{name}/sr/sql/add-utah-pg.sql
 %{_datadir}/%{name}/sr/sql/add-utah-stitch.sql
-%{_datadir}/%{name}/sr/sql/add-utahddc-ig.sql
 %{_datadir}/%{name}/sr/sql/add-utc-ig.sql
 %{_datadir}/%{name}/sr/sql/add-utdallas-ig.sql
 %{_datadir}/%{name}/sr/sql/add-uvm-ig.sql

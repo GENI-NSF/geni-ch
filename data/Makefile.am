@@ -84,7 +84,6 @@ AM_SQL = \
 	sr/sql/add-utah-clab.sql \
 	sr/sql/add-utah-pg.sql \
 	sr/sql/add-utah-stitch.sql \
-	sr/sql/add-utahddc-ig.sql \
 	sr/sql/add-utc-ig.sql \
 	sr/sql/add-utdallas-ig.sql \
 	sr/sql/add-uvm-ig.sql \
@@ -234,8 +233,6 @@ dist_srcerts_DATA = \
 	sr/certs/utah-pg.pem \
 	sr/certs/utah-stitch-boss.pem \
 	sr/certs/utah-stitch-cm.pem \
-	sr/certs/utahddc-ig-boss.pem \
-	sr/certs/utahddc-ig-cm.pem \
 	sr/certs/utc-ig-boss.pem \
 	sr/certs/utc-ig-cm.pem \
 	sr/certs/wall2-ca.pem \
