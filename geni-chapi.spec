@@ -493,6 +493,7 @@ rm -rf $RPM_BUILD_ROOT
 %{_datadir}/%{name}/sr/sql/add-irods.sql
 %{_datadir}/%{name}/sr/sql/add-kansas-ig.sql
 %{_datadir}/%{name}/sr/sql/add-kettering-ig.sql
+%{_datadir}/%{name}/sr/sql/add-lat-eg.sql
 %{_datadir}/%{name}/sr/sql/add-max-ig.sql
 %{_datadir}/%{name}/sr/sql/add-max.sql
 %{_datadir}/%{name}/sr/sql/add-missouri-ig.sql

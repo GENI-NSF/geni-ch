@@ -36,6 +36,7 @@ AM_SQL = \
 	sr/sql/add-im-wilab.sql \
 	sr/sql/add-kansas-ig.sql \
 	sr/sql/add-kettering-ig.sql \
+	sr/sql/add-lat-eg.sql \
 	sr/sql/add-max-ig.sql \
 	sr/sql/add-max.sql \
 	sr/sql/add-missouri-ig.sql \
