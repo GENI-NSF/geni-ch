@@ -1,5 +1,11 @@
 # GENI Clearinghouse Release Notes
+# [Release 2.25](https://github.com/GENI-NSF/geni-ch/milestones/2.25)
 
+## Changes
+* Add lat-eg
+  (#613)
+
+ 
 # [Release 2.24](https://github.com/GENI-NSF/geni-ch/milestones/2.24)
 
 ## Changes
