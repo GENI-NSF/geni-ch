@@ -1,5 +1,5 @@
 Name:           geni-chapi
-Version:        2.24
+Version:        2.25
 Release:        1%{?dist}
 Summary:        GENI clearinghouse
 BuildArch:      noarch
