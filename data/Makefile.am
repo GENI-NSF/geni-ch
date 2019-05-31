@@ -37,11 +37,13 @@ AM_SQL = \
 	sr/sql/add-kansas-ig.sql \
 	sr/sql/add-kettering-ig.sql \
 	sr/sql/add-lat-eg.sql \
+	sr/sql/add-maki-pg.sql \
 	sr/sql/add-max-ig.sql \
 	sr/sql/add-max.sql \
 	sr/sql/add-missouri-ig.sql \
 	sr/sql/add-moxi-ig.sql \
 	sr/sql/add-moxi-of.sql \
+	sr/sql/add-ncsu-eg.sql \
 	sr/sql/add-nicta-eg.sql \
 	sr/sql/add-northwestern-ig.sql \
 	sr/sql/add-nps-ig.sql \

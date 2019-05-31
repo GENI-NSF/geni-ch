@@ -497,8 +497,10 @@ rm -rf $RPM_BUILD_ROOT
 %{_datadir}/%{name}/sr/sql/add-max-ig.sql
 %{_datadir}/%{name}/sr/sql/add-max.sql
 %{_datadir}/%{name}/sr/sql/add-missouri-ig.sql
+%{_datadir}/%{name}/sr/sql/add-maki-pg.sql
 %{_datadir}/%{name}/sr/sql/add-moxi-ig.sql
 %{_datadir}/%{name}/sr/sql/add-moxi-of.sql
+%{_datadir}/%{name}/sr/sql/add-ncsu-eg.sql
 %{_datadir}/%{name}/sr/sql/add-nicta-eg.sql
 %{_datadir}/%{name}/sr/sql/add-northwestern-ig.sql
 %{_datadir}/%{name}/sr/sql/add-nps-ig.sql
