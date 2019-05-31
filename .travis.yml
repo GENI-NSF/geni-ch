@@ -5,6 +5,9 @@ dist: trusty
 group: deprecated-2017Q2
 virtualenv:
   system_site_packages: true
+
+# Set the python version to 2.7
+python: 2.7
 sudo: required
 before_install:
   - sudo apt-get -qq update
