@@ -3,8 +3,8 @@ language: python
 # platform in late 2017
 dist: trusty
 group: deprecated-2017Q2
-virtualenv:
-  system_site_packages: true
+# virtualenv:
+#   system_site_packages: true
 sudo: required
 before_install:
   - sudo apt-get -qq update
