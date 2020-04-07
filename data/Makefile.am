@@ -81,7 +81,6 @@ AM_SQL = \
 	sr/sql/add-uky-pg.sql \
 	sr/sql/add-ukypks2-ig.sql \
 	sr/sql/add-ukypks2-vts.sql \
-	sr/sql/add-ullafayette-ig.sql \
 	sr/sql/add-umich-ig.sql \
 	sr/sql/add-umkc-ig.sql \
 	sr/sql/add-utah-clab.sql \
