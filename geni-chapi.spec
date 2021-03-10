@@ -501,7 +501,6 @@ rm -rf $RPM_BUILD_ROOT
 %{_datadir}/%{name}/sr/sql/add-ukymcv-ig.sql
 %{_datadir}/%{name}/sr/sql/add-ukypks2-ig.sql
 %{_datadir}/%{name}/sr/sql/add-ukypks2-vts.sql
-%{_datadir}/%{name}/sr/sql/add-ullafayette-ig.sql
 %{_datadir}/%{name}/sr/sql/add-umich-ig.sql
 %{_datadir}/%{name}/sr/sql/add-umkc-ig.sql
 %{_datadir}/%{name}/sr/sql/add-utc-ig.sql
