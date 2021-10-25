@@ -102,7 +102,7 @@ def derive_username(email_address, session):
         username = username[0:8]
 
     if not username:
-        username = "geni1"
+        username = "geni3"
 
     if not username_exists(username, session):
         # print "no conflict with $username<br/>\n";
