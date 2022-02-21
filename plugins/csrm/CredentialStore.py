@@ -149,7 +149,10 @@ class CSv1Delegate(DelegateBase):
 
         q = session.query(self.db.CS_ACTION_TABLE.c.name,
                           self.db.CS_ACTION_TABLE.c.context_type,
-                          self.db.PROJECT_MEMBER_TABLE.c.project_id.label('context'))
+                          self.db.PROJECT_MEMBER_TABLE.c.project_id.label('context'),
+                          self.db.PROJECT_TABLE)
+        q = q.filter(self.db.PROJECT_TABLE.c.project_id == self.db.PROJECT_MEMBER_TABLE.c.project_id)
+        q = q.filter(self.db.PROJECT_TABLE.c.expired == 'f')
         q = q.filter(self.db.PROJECT_MEMBER_TABLE.c.member_id == principal)
         q = q.filter(self.db.PROJECT_MEMBER_TABLE.c.role == self.db.CS_POLICY_TABLE.c.attribute)
         q = q.filter(self.db.CS_ACTION_TABLE.c.privilege == self.db.CS_POLICY_TABLE.c.privilege)
@@ -161,7 +164,10 @@ class CSv1Delegate(DelegateBase):
 
         q = session.query(self.db.CS_ACTION_TABLE.c.name,
                           self.db.CS_ACTION_TABLE.c.context_type,
-                          self.db.SLICE_MEMBER_TABLE.c.slice_id.label('context'))
+                          self.db.SLICE_MEMBER_TABLE.c.slice_id.label('context'),
+                          self.db.SLICE_TABLE)
+        q = q.filter(self.db.SLICE_TABLE.c.slice_id == self.db.SLICE_MEMBER_TABLE.c.slice_id)
+        q = q.filter(self.db.SLICE_TABLE.c.expired == 'f')
         q = q.filter(self.db.SLICE_MEMBER_TABLE.c.member_id == principal)
         q = q.filter(self.db.SLICE_MEMBER_TABLE.c.role == self.db.CS_POLICY_TABLE.c.attribute)
         q = q.filter(self.db.CS_ACTION_TABLE.c.privilege == self.db.CS_POLICY_TABLE.c.privilege)
