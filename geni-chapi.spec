@@ -308,7 +308,6 @@ rm -rf $RPM_BUILD_ROOT
 %{_datadir}/geni-ch/chapi/chapi/tools/test_server.pyo
 
 # /usr/share/geni-chapi/
-%{_datadir}/%{name}/sr/sql/add-wvn-eg.sql
 %{_datadir}/%{name}/abac_credential.xml
 %{_datadir}/%{name}/amsoil-log-out.txt
 %{_datadir}/%{name}/apache-error-log-out.txt
@@ -449,7 +448,6 @@ rm -rf $RPM_BUILD_ROOT
 %{_datadir}/%{name}/sr/sql/add-moxi-ig.sql
 %{_datadir}/%{name}/sr/sql/add-northwestern-ig.sql
 %{_datadir}/%{name}/sr/sql/add-nysernet-ig.sql
-%{_datadir}/%{name}/sr/sql/add-nysernet-of.sql
 %{_datadir}/%{name}/sr/sql/add-nyu-ig.sql
 %{_datadir}/%{name}/sr/sql/add-ohmetrodc-ig.sql
 %{_datadir}/%{name}/sr/sql/add-osu-ig.sql

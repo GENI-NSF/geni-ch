@@ -46,8 +46,6 @@ AM_SQL = \
 	sr/sql/add-uchicago-ig.sql \
 	sr/sql/add-ucla-ig.sql \
 	sr/sql/add-ucsd-ig.sql \
-	sr/sql/add-uky-ig.sql \
-	sr/sql/add-ukymcv-ig.sql \
 	sr/sql/add-umich-ig.sql \
 	sr/sql/add-umkc-ig.sql \
 	sr/sql/add-utc-ig.sql \
@@ -143,8 +141,6 @@ dist_srcerts_DATA = \
 	sr/certs/nyu-ig-cm.pem \
 	sr/certs/ohmetrodc-ig-boss.pem \
 	sr/certs/ohmetrodc-ig-cm.pem \
-	sr/certs/rutgers-ig-boss.pem \
-	sr/certs/rutgers-ig-cm.pem \
 	sr/certs/sox-ig-boss.pem \
 	sr/certs/sox-ig-cm.pem \
 	sr/certs/stanford-ig-boss.pem \
